@@ -149,7 +149,7 @@ public:
         this->dFunc()->mFinished = false;
         this->init();
     }
-    ~AdoptedPlatformThread() override { CXXKIT_TRACE("~AdoptedPlatformThread = %p\n", (void*)this); }
+    ~AdoptedPlatformThread() override { CXXKIT_TRACE("~AdoptedPlatformThread = %p\n", (void *)this); }
 
     void init(); // impl
 

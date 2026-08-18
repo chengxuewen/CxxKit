@@ -63,7 +63,7 @@
 /***********************************************************************************************************************
  * compiler specific cmds for export and import code to DLL and declare namespace
 ***********************************************************************************************************************/
-#ifdef CXXKIT_BUILD_SHARED // compiled as a dynamic lib.
+#ifdef CXXKIT_BUILD_SHARED          // compiled as a dynamic lib.
 #    ifdef CXXKIT_BUILDING_CORE_LIB // defined if we are building the lib
 #        define CXXKIT_CORE_API CXXKIT_DECLARE_EXPORT
 #    else

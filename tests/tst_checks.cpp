@@ -55,9 +55,9 @@ TEST(ChecksDeathTest, Checks)
                  "# Check failed: false\n"
                  "# Hi there!");
 
-//    StructWithStringfy t;
-//    EXPECT_DEATH(CXXKIT_CHECK(false) << t, HasSubstr("absl-stringify"));
+    //    StructWithStringfy t;
+    //    EXPECT_DEATH(CXXKIT_CHECK(false) << t, HasSubstr("absl-stringify"));
 }
-#endif  // GTEST_HAS_DEATH_TEST && !defined(CXXKIT_ANDROID)
+#endif // GTEST_HAS_DEATH_TEST && !defined(CXXKIT_ANDROID)
 
-}  // namespace
+} // namespace

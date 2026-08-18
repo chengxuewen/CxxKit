@@ -1,0 +1,38 @@
+name: CI
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+    branches: [main]
+
+jobs:
+  build:
+    strategy:
+      fail-fast: false
+      matrix:
+        os: [ubuntu-latest, macos-latest]
+    runs-on: ${{ matrix.os }}
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Format check
+        run: |
+          if command -v clang-format >/dev/null 2>&1; then
+            clang-format --dry-run --Werror $(find cxxkit src tests -name '*.hpp' -o -name '*.cpp') || exit 1
+          fi
+
+      - name: Install dependencies (Linux)
+        if: runner.os == 'Linux'
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y ninja-build pkg-config
+
+      - name: Configure
+        run: cmake -S . -B build -G Ninja -DCXXKIT_BUILD_TESTS=ON -DCXXKIT_ENABLE_LIB_NETWORK=ON
+
+      - name: Build
+        run: cmake --build build --parallel 2
+
+      - name: Test
+        run: ctest --test-dir build --output-on-failure

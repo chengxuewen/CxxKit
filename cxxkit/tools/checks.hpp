@@ -42,13 +42,19 @@
 //     if (!(condition))                                                                                                  \
 //     cxxkit::Logger::FatalLogCall("Check "" #condition "" failed!") & CXXKIT_FATAL()
 
-#define CXXKIT_CHECK(condition)                                                                                          \
+#define CXXKIT_CHECK(condition)                                                                                        \
     if (!(condition))                                                                                                  \
-    CXXKIT_FATAL() << "Check "" #condition "" failed!"
+    CXXKIT_FATAL() << "Check "                                                                                         \
+                      " #condition "                                                                                   \
+                      " failed!"
 
-#define CXXKIT_CHECK_OP(name, op, val1, val2)                                                                            \
-    if (!cxxkit::Safe##name((val1), (val2)))                                                                             \
-    CXXKIT_FATAL(cxxkit::StringView("Check "" #val1 " " #op " " #val2 "" failed!"))
+#define CXXKIT_CHECK_OP(name, op, val1, val2)                                                                          \
+    if (!cxxkit::Safe##name((val1), (val2)))                                                                           \
+    CXXKIT_FATAL(cxxkit::StringView("Check "                                                                           \
+                                    " #val1 "                                                                          \
+                                    " #op "                                                                            \
+                                    " #val2 "                                                                          \
+                                    " failed!"))
 
 #define CXXKIT_CHECK_EQ(val1, val2) CXXKIT_CHECK_OP(Eq, ==, val1, val2)
 #define CXXKIT_CHECK_NE(val1, val2) CXXKIT_CHECK_OP(Ne, !=, val1, val2)

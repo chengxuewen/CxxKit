@@ -79,7 +79,6 @@ CXXKIT_END_NAMESPACE
  * Thus current implementation creates a noop lambda and calls it.
  * @param x
  */
-#define CXXKIT_DCHECK_RUN_ON(x)                                                                                          \
-    CXXKIT_DCHECK((x)->isCurrent()) << "\n" << ContextChecker::expectationToString(x);                                   \
-    []() CXXKIT_ATTRIBUTE_ASSERT_EXCLUSIVE_LOCK(x) { }()
-
+#define CXXKIT_DCHECK_RUN_ON(x)                                                                                        \
+    CXXKIT_DCHECK((x)->isCurrent()) << "\n" << ContextChecker::expectationToString(x);                                 \
+    []() CXXKIT_ATTRIBUTE_ASSERT_EXCLUSIVE_LOCK(x) {}()

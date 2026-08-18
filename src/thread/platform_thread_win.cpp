@@ -551,8 +551,8 @@ void PlatformThread::setTerminationEnabled(bool enabled)
 {
     auto thread = PlatformThread::currentThread();
     CXXKIT_ASSERT_X(thread != nullptr,
-                  "PlatformThread::setTerminationEnabled()",
-                  "Current thread was not started with PlatformThread.");
+                    "PlatformThread::setTerminationEnabled()",
+                    "Current thread was not started with PlatformThread.");
     CXXKIT_UNUSED(thread)
 
     auto d = thread->dFunc();

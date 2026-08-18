@@ -41,7 +41,7 @@ class CXXKIT_CORE_API SharedMemory
 {
 public:
 #if defined(CXXKIT_OS_WINDOWS)
-    typedef void* Handle;
+    typedef void *Handle;
     static const Handle kInvalidHandle;
 #else
     typedef int Handle;
@@ -58,7 +58,7 @@ public:
     // interface to identify shared memory buffers it created.
     int id() const { return mId; }
 
-    virtual ~SharedMemory() {}
+    virtual ~SharedMemory() { }
 
     SharedMemory(const SharedMemory &) = delete;
     SharedMemory &operator=(const SharedMemory &) = delete;
@@ -76,8 +76,8 @@ protected:
 class SharedMemoryFactory
 {
 public:
-    SharedMemoryFactory() {}
-    virtual ~SharedMemoryFactory() {}
+    SharedMemoryFactory() { }
+    virtual ~SharedMemoryFactory() { }
 
     SharedMemoryFactory(const SharedMemoryFactory &) = delete;
     SharedMemoryFactory &operator=(const SharedMemoryFactory &) = delete;

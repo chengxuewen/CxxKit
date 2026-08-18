@@ -188,7 +188,8 @@ private:
 //
 // sizeof(MyInt) on a 32 bit system would then be 8, int + refcount and no
 // vtable generated.
-template <typename T> class RefCountedNonVirtual
+template <typename T>
+class RefCountedNonVirtual
 {
 public:
     RefCountedNonVirtual() = default;

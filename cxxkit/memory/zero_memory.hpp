@@ -36,9 +36,8 @@ CXXKIT_BEGIN_NAMESPACE
 // even if the pointer is not used afterwards.
 CXXKIT_CORE_API void ExplicitZeroMemory(void *ptr, size_t len);
 
-template <typename T, typename std::enable_if<!std::is_const<T>::value &&
-                                              std::is_trivial<T>::value>::type * = nullptr>
-void ExplicitZeroMemory(ArrayView <T> a)
+template <typename T, typename std::enable_if<!std::is_const<T>::value && std::is_trivial<T>::value>::type * = nullptr>
+void ExplicitZeroMemory(ArrayView<T> a)
 {
     ExplicitZeroMemory(a.data(), a.size());
 }

@@ -40,13 +40,13 @@ NtpTime TimeMicrosToNtp(int64_t time_us)
     static int64_t ntp_offset_us = NtpOffsetUsCalledOnce();
 
     int64_t time_ntp_us = time_us + ntp_offset_us;
-    CXXKIT_DCHECK_GE(time_ntp_us, 0);  // Time before year 1900 is unsupported.
+    CXXKIT_DCHECK_GE(time_ntp_us, 0); // Time before year 1900 is unsupported.
 
-// Convert seconds to uint32 through uint64 for a well-defined cast.
-// A wrap around, which will happen in 2036, is expected for NTP time.
+    // Convert seconds to uint32 through uint64 for a well-defined cast.
+    // A wrap around, which will happen in 2036, is expected for NTP time.
     uint32_t ntp_seconds = static_cast<uint64_t>(time_ntp_us / DateTime::kUSecsPerSec);
 
-// Scale fractions of the second to NTP resolution.
+    // Scale fractions of the second to NTP resolution.
     constexpr int64_t kNtpFractionsInSecond = 1LL << 32;
     int64_t us_fractions = time_ntp_us % DateTime::kUSecsPerSec;
     uint32_t ntp_fractions = us_fractions * kNtpFractionsInSecond / DateTime::kUSecsPerSec;
@@ -59,15 +59,9 @@ class RealTimeClock : public Clock
 public:
     RealTimeClock() = default;
 
-    Timestamp CurrentTime() override
-    {
-        return Timestamp::Micros(DateTime::TimeMicros());
-    }
+    Timestamp CurrentTime() override { return Timestamp::Micros(DateTime::TimeMicros()); }
 
-    NtpTime ConvertTimestampToNtpTime(Timestamp timestamp) override
-    {
-        return TimeMicrosToNtp(timestamp.us());
-    }
+    NtpTime ConvertTimestampToNtpTime(Timestamp timestamp) override { return TimeMicrosToNtp(timestamp.us()); }
 };
 
 Clock *Clock::GetRealTimeClock()
@@ -77,12 +71,18 @@ Clock *Clock::GetRealTimeClock()
 }
 
 SimulatedClock::SimulatedClock(int64_t initial_time_us)
-    : time_us_(initial_time_us) {}
+    : time_us_(initial_time_us)
+{
+}
 
 SimulatedClock::SimulatedClock(Timestamp initial_time)
-    : SimulatedClock(initial_time.us()) {}
+    : SimulatedClock(initial_time.us())
+{
+}
 
-SimulatedClock::~SimulatedClock() {}
+SimulatedClock::~SimulatedClock()
+{
+}
 
 Timestamp SimulatedClock::CurrentTime()
 {

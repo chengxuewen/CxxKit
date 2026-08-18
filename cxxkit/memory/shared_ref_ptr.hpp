@@ -35,10 +35,17 @@ class SharedRefPtr
 public:
     using ElementType = T;
 
-    SharedRefPtr() : mPtr(nullptr) {}
-    SharedRefPtr(std::nullptr_t) : mPtr(nullptr) {}  // NOLINT(runtime/explicit)
+    SharedRefPtr()
+        : mPtr(nullptr)
+    {
+    }
+    SharedRefPtr(std::nullptr_t)
+        : mPtr(nullptr)
+    {
+    } // NOLINT(runtime/explicit)
 
-    explicit SharedRefPtr(T *p) : mPtr(p)
+    explicit SharedRefPtr(T *p)
+        : mPtr(p)
     {
         if (mPtr)
         {
@@ -46,7 +53,8 @@ public:
         }
     }
 
-    SharedRefPtr(const SharedRefPtr<T> &other) : mPtr(other.mPtr)
+    SharedRefPtr(const SharedRefPtr<T> &other)
+        : mPtr(other.mPtr)
     {
         if (mPtr)
         {
@@ -55,7 +63,8 @@ public:
     }
 
     template <typename U>
-    SharedRefPtr(const SharedRefPtr<U> &other) : mPtr(other.get())
+    SharedRefPtr(const SharedRefPtr<U> &other)
+        : mPtr(other.get())
     {
         if (mPtr)
         {
@@ -64,10 +73,16 @@ public:
     }
 
     // Move constructors.
-    SharedRefPtr(SharedRefPtr<T> &&other) noexcept: mPtr(other.release()) {}
+    SharedRefPtr(SharedRefPtr<T> &&other) noexcept
+        : mPtr(other.release())
+    {
+    }
 
     template <typename U>
-    SharedRefPtr(SharedRefPtr<U> &&other) noexcept : mPtr(other.release()) {}
+    SharedRefPtr(SharedRefPtr<U> &&other) noexcept
+        : mPtr(other.release())
+    {
+    }
 
     ~SharedRefPtr()
     {
@@ -109,10 +124,7 @@ public:
         return *this;
     }
 
-    SharedRefPtr<T> &operator=(const SharedRefPtr<T> &other)
-    {
-        return *this = other.mPtr;
-    }
+    SharedRefPtr<T> &operator=(const SharedRefPtr<T> &other) { return *this = other.mPtr; }
 
     template <typename U>
     SharedRefPtr<T> &operator=(const SharedRefPtr<U> &other)
@@ -214,7 +226,9 @@ bool operator<(const SharedRefPtr<T> &lhs, const SharedRefPtr<U> &rhs)
 namespace detail
 {
 template <typename T>
-struct IsSupportedType<SharedRefPtr<T>> : std::true_type {};
+struct IsSupportedType<SharedRefPtr<T>> : std::true_type
+{
+};
 } // namespace detail
 
 CXXKIT_END_NAMESPACE

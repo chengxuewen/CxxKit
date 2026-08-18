@@ -73,10 +73,7 @@ public:
      * @param message The error message.
      * @param cause The cause of this error (optional).
      */
-    Status(const Error::Domain &domain,
-           ErrorId code,
-           const StringView message,
-           const Error::SharedDataPtr &cause = {})
+    Status(const Error::Domain &domain, ErrorId code, const StringView message, const Error::SharedDataPtr &cause = {})
         : mError(Error::create(domain, code, message, cause))
     {
     }

@@ -74,4 +74,4 @@ struct AlignedFreeDeleter
 };
 CXXKIT_END_NAMESPACE
 
-#endif  // _CXXKIT_ALIGNED_MALLOC_HPP
+#endif // _CXXKIT_ALIGNED_MALLOC_HPP

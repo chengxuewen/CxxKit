@@ -100,4 +100,5 @@ stash
 
 # Don't ignore files
 # --------
-.vscode/settings.json
+!.vscode/settings.json
+!.omo/omo.jsonc

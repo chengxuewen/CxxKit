@@ -41,7 +41,11 @@ public:
         return SourceLocation(functionName, filePath, lineNumber);
     }
     constexpr SourceLocation(const char *functionName, const char *filePath, int lineNumber) noexcept
-        : mFunctionName(functionName), mFilePath(filePath), mLineNumber(lineNumber) {}
+        : mFunctionName(functionName)
+        , mFilePath(filePath)
+        , mLineNumber(lineNumber)
+    {
+    }
 
     constexpr SourceLocation() noexcept = default;
     constexpr SourceLocation(const SourceLocation &other) noexcept = default;
@@ -63,7 +67,8 @@ private:
 CXXKIT_END_NAMESPACE
 
 // Define a macro to record the current source location.
-#define CXXKIT_SOURCE_LOCATION_WITH_FUNCTION(function_name) cxxkit::SourceLocation(function_name, CXXKIT_STRFILE, CXXKIT_LINE)
+#define CXXKIT_SOURCE_LOCATION_WITH_FUNCTION(function_name)                                                            \
+    cxxkit::SourceLocation(function_name, CXXKIT_STRFILE, CXXKIT_LINE)
 #define CXXKIT_SOURCE_LOCATION CXXKIT_SOURCE_LOCATION_WITH_FUNCTION(CXXKIT_STRFUNC)
 
 #endif // _CXXKIT_SOURCE_LOCATION_HPP

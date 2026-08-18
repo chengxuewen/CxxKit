@@ -27,9 +27,9 @@
 #include <cxxkit/tools/checks.hpp>
 
 #if defined(CXXKIT_OS_WIN)
-#   include <windows.h>
+#    include <windows.h>
 #else
-#   include <string.h>
+#    include <string.h>
 #endif
 
 CXXKIT_BEGIN_NAMESPACE
@@ -41,12 +41,12 @@ void ExplicitZeroMemory(void *ptr, size_t len)
     SecureZeroMemory(ptr, len);
 #else
     memset(ptr, 0, len);
-#   if !defined(__pnacl__)
+#    if !defined(__pnacl__)
     /* As best as we can tell, this is sufficient to break any optimisations that
        might try to eliminate "superfluous" memsets. If there's an easy way to
        detect memset_s, it would be better to use that. */
-    __asm__ __volatile__("" : : "r"(ptr) : "memory");  // NOLINT
-#   endif
-#endif  // !CXXKIT_OS_WIN
+    __asm__ __volatile__("" : : "r"(ptr) : "memory"); // NOLINT
+#    endif
+#endif // !CXXKIT_OS_WIN
 }
 CXXKIT_END_NAMESPACE

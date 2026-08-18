@@ -140,9 +140,9 @@ void ThreadPoolTaskThread::run()
                 CXXKIT_TRY
                 {
                     CXXKIT_LOGGING_TRACE(CXXKIT_THREAD_POOL_LOGGER(),
-                                       "thread {} do run task:{}",
-                                       utils::fmt::ptr(this),
-                                       utils::fmt::ptr(task.get()));
+                                         "thread {} do run task:{}",
+                                         utils::fmt::ptr(this),
+                                         utils::fmt::ptr(task.get()));
                     mManager->mTasksDispatchedCount.fetch_add(1);
                     task->run();
                     mManager->mTasksCompletedCount.fetch_add(1);
@@ -150,9 +150,9 @@ void ThreadPoolTaskThread::run()
                 CXXKIT_CATCH(...)
                 {
                     CXXKIT_LOGGING_WARNING(CXXKIT_THREAD_POOL_LOGGER(),
-                                         "\nOCTK Concurrent has caught an exception thrown from a worker thread.\n"
-                                         "This is not supported, exceptions thrown in worker threads must be\n"
-                                         "caught before control returns to OCTK Concurrent.");
+                                           "\nOCTK Concurrent has caught an exception thrown from a worker thread.\n"
+                                           "This is not supported, exceptions thrown in worker threads must be\n"
+                                           "caught before control returns to OCTK Concurrent.");
                     this->registerThreadInactive();
                     CXXKIT_RETHROW;
                 }
@@ -163,15 +163,17 @@ void ThreadPoolTaskThread::run()
             if (mManager->isTooManyThreadsActive())
             {
                 CXXKIT_LOGGING_TRACE(CXXKIT_THREAD_POOL_LOGGER(),
-                                   "thread {} do isTooManyThreadsActive true",
-                                   utils::fmt::ptr(this));
+                                     "thread {} do isTooManyThreadsActive true",
+                                     utils::fmt::ptr(this));
                 break;
             }
             // if task queue is empty, exit do task loop
             task = mManager->mTaskQueue.pop();
             if (!task)
             {
-                CXXKIT_LOGGING_TRACE(CXXKIT_THREAD_POOL_LOGGER(), "thread {} do task queue empty", utils::fmt::ptr(this));
+                CXXKIT_LOGGING_TRACE(CXXKIT_THREAD_POOL_LOGGER(),
+                                     "thread {} do task queue empty",
+                                     utils::fmt::ptr(this));
                 break;
             }
         } while (!mExit.load());
@@ -187,22 +189,24 @@ void ThreadPoolTaskThread::run()
             this->registerThreadInactive();
             if (mExit.load())
             {
-                CXXKIT_LOGGING_TRACE(CXXKIT_THREAD_POOL_LOGGER(), "thread {} is exit set expired", utils::fmt::ptr(this));
+                CXXKIT_LOGGING_TRACE(CXXKIT_THREAD_POOL_LOGGER(),
+                                     "thread {} is exit set expired",
+                                     utils::fmt::ptr(this));
                 expired = true;
             }
             else
             {
                 // wait for work, exiting after the expiry timeout is reached
                 CXXKIT_LOGGING_TRACE(CXXKIT_THREAD_POOL_LOGGER(),
-                                   "thread {} TaskReadyCondition start wait, expiry timeout: {} ms, joinable:{}",
-                                   utils::fmt::ptr(this),
-                                   mManager->mExpiryTimeout,
-                                   mThread.joinable());
+                                     "thread {} TaskReadyCondition start wait, expiry timeout: {} ms, joinable:{}",
+                                     utils::fmt::ptr(this),
+                                     mManager->mExpiryTimeout,
+                                     mThread.joinable());
                 mTaskReadyCondition.wait_for(lock, std::chrono::milliseconds(mManager->mExpiryTimeout));
                 CXXKIT_LOGGING_TRACE(CXXKIT_THREAD_POOL_LOGGER(),
-                                   "thread {} TaskReadyCondition finish wait, expiry timeout: {} ms",
-                                   utils::fmt::ptr(this),
-                                   mManager->mExpiryTimeout);
+                                     "thread {} TaskReadyCondition finish wait, expiry timeout: {} ms",
+                                     utils::fmt::ptr(this),
+                                     mManager->mExpiryTimeout);
                 // start exit waiting state
                 ++mManager->mActiveThreadCount;
             }
@@ -212,8 +216,8 @@ void ThreadPoolTaskThread::run()
                 if (mManager->mWaitingThreads.end() != iter)
                 {
                     CXXKIT_LOGGING_TRACE(CXXKIT_THREAD_POOL_LOGGER(),
-                                       "thread {} is still in the waiting list",
-                                       utils::fmt::ptr(this));
+                                         "thread {} is still in the waiting list",
+                                         utils::fmt::ptr(this));
                     mManager->mWaitingThreads.erase(iter);
                     expired = true;
                 }
@@ -225,8 +229,8 @@ void ThreadPoolTaskThread::run()
                 {
                     // can not use "expired = true;", avoid mExpiredThreads set
                     CXXKIT_LOGGING_TRACE(CXXKIT_THREAD_POOL_LOGGER(),
-                                       "thread {} is not in the all threads list",
-                                       utils::fmt::ptr(this));
+                                         "thread {} is not in the all threads list",
+                                         utils::fmt::ptr(this));
                     this->registerThreadInactive();
                     break;
                 }
@@ -248,14 +252,14 @@ void ThreadPoolTaskThread::run()
 void ThreadPoolTaskThread::registerThreadInactive()
 {
     CXXKIT_ASSERT_X(mManager->mActiveThreadCount > 0,
-                  "ThreadPoolThread::registerThreadInactive()",
-                  "mActiveThreadCount must be greater than 0");
+                    "ThreadPoolThread::registerThreadInactive()",
+                    "mActiveThreadCount must be greater than 0");
     CXXKIT_LOGGING_TRACE(CXXKIT_THREAD_POOL_LOGGER(), "thread {} registerThreadInactive", utils::fmt::ptr(this));
     if (--mManager->mActiveThreadCount == 0)
     {
         CXXKIT_LOGGING_TRACE(CXXKIT_THREAD_POOL_LOGGER(),
-                           "thread {} registerThreadInactive mNoActiveThreadsCondition",
-                           utils::fmt::ptr(this));
+                             "thread {} registerThreadInactive mNoActiveThreadsCondition",
+                             utils::fmt::ptr(this));
         mManager->mNoActiveThreadsCondition.notify_all();
     }
 }
@@ -461,8 +465,8 @@ void ThreadPoolPrivate::reset()
         if (!thread->isFinished())
         {
             CXXKIT_LOGGING_TRACE(CXXKIT_THREAD_POOL_LOGGER(),
-                               "thread {} is not finished, wake and exitWait",
-                               utils::fmt::ptr(thread.get()));
+                                 "thread {} is not finished, wake and exitWait",
+                                 utils::fmt::ptr(thread.get()));
             thread->wakeAll();
             thread->exitWait();
             CXXKIT_LOGGING_TRACE(CXXKIT_THREAD_POOL_LOGGER(), "thread {} exitWait done", utils::fmt::ptr(thread.get()));

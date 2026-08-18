@@ -11,7 +11,8 @@
 
 CXXKIT_BEGIN_NAMESPACE
 
-template <typename T> using FlatSet = std::set<T>;
+template <typename T>
+using FlatSet = std::set<T>;
 
 CXXKIT_END_NAMESPACE
 

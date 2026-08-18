@@ -621,9 +621,9 @@
  */
 #define CXXKIT_PP_MUL(X, Y) CXXKIT_PP_GET_TUPLE(0, CXXKIT_PP_WHILE(CXXKIT_PP_MUL_P, CXXKIT_PP_MUL_O, (0, X, Y)))
 #define CXXKIT_PP_MUL_P(V)  CXXKIT_PP_GET_TUPLE(2, V)
-#define CXXKIT_PP_MUL_O(V)                                                                                               \
-    (CXXKIT_PP_ADD(CXXKIT_PP_GET_TUPLE(0, V), CXXKIT_PP_GET_TUPLE(1, V)),                                                    \
-     CXXKIT_PP_GET_TUPLE(1, V),                                                                                          \
+#define CXXKIT_PP_MUL_O(V)                                                                                             \
+    (CXXKIT_PP_ADD(CXXKIT_PP_GET_TUPLE(0, V), CXXKIT_PP_GET_TUPLE(1, V)),                                              \
+     CXXKIT_PP_GET_TUPLE(1, V),                                                                                        \
      CXXKIT_PP_DEC(CXXKIT_PP_GET_TUPLE(2, V)))
 
 /**
@@ -635,8 +635,9 @@
  * @endcode
  */
 #define CXXKIT_PP_CMP(X, Y) CXXKIT_PP_WHILE(CXXKIT_PP_CMP_P, CXXKIT_PP_CMP_O, (X, Y))
-#define CXXKIT_PP_CMP_P(V)  CXXKIT_PP_AND(CXXKIT_PP_BOOL(CXXKIT_PP_GET_TUPLE(0, V)), CXXKIT_PP_BOOL(CXXKIT_PP_GET_TUPLE(1, V)))
-#define CXXKIT_PP_CMP_O(V)  (CXXKIT_PP_DEC(CXXKIT_PP_GET_TUPLE(0, V)), CXXKIT_PP_DEC(CXXKIT_PP_GET_TUPLE(1, V)))
+#define CXXKIT_PP_CMP_P(V)                                                                                             \
+    CXXKIT_PP_AND(CXXKIT_PP_BOOL(CXXKIT_PP_GET_TUPLE(0, V)), CXXKIT_PP_BOOL(CXXKIT_PP_GET_TUPLE(1, V)))
+#define CXXKIT_PP_CMP_O(V) (CXXKIT_PP_DEC(CXXKIT_PP_GET_TUPLE(0, V)), CXXKIT_PP_DEC(CXXKIT_PP_GET_TUPLE(1, V)))
 
 #define CXXKIT_PP_EQUAL(X, Y)        CXXKIT_PP_IDENTITY(CXXKIT_PP_EQUAL_IMPL PP_CMP(X, Y))
 #define CXXKIT_PP_EQUAL_IMPL(RX, RY) CXXKIT_PP_AND(CXXKIT_PP_NOT(CXXKIT_PP_BOOL(RX)), CXXKIT_PP_NOT(CXXKIT_PP_BOOL(RY)))
@@ -675,10 +676,11 @@
  * @endcode
  */
 #define CXXKIT_PP_DIV_BASE(X, Y) CXXKIT_PP_WHILE(CXXKIT_PP_DIV_BASE_P, CXXKIT_PP_DIV_BASE_O, (0, X, Y))
-#define CXXKIT_PP_DIV_BASE_P(V)  CXXKIT_PP_NOT(CXXKIT_PP_LESS(CXXKIT_PP_GET_TUPLE(1, V), CXXKIT_PP_GET_TUPLE(2, V))) // X >= Y
-#define CXXKIT_PP_DIV_BASE_O(V)                                                                                          \
-    (CXXKIT_PP_INC(CXXKIT_PP_GET_TUPLE(0, V)),                                                                             \
-     CXXKIT_PP_SUB(CXXKIT_PP_GET_TUPLE(1, V), CXXKIT_PP_GET_TUPLE(2, V)),                                                    \
+#define CXXKIT_PP_DIV_BASE_P(V)                                                                                        \
+    CXXKIT_PP_NOT(CXXKIT_PP_LESS(CXXKIT_PP_GET_TUPLE(1, V), CXXKIT_PP_GET_TUPLE(2, V))) // X >= Y
+#define CXXKIT_PP_DIV_BASE_O(V)                                                                                        \
+    (CXXKIT_PP_INC(CXXKIT_PP_GET_TUPLE(0, V)),                                                                         \
+     CXXKIT_PP_SUB(CXXKIT_PP_GET_TUPLE(1, V), CXXKIT_PP_GET_TUPLE(2, V)),                                              \
      CXXKIT_PP_GET_TUPLE(2, V))
 
 #define CXXKIT_PP_DIV(X, Y) CXXKIT_PP_GET_TUPLE(0, CXXKIT_PP_DIV_BASE(X, Y))
@@ -796,7 +798,8 @@
  * CXXKIT_PP_NARG(, , , )          // -> 4
  * @endcode
  */
-#define CXXKIT_PP_NARG(...) CXXKIT_PP_GET_N(8, __VA_ARGS__ CXXKIT_PP_VA_OPT_COMMA(__VA_ARGS__) 8, 7, 6, 5, 4, 3, 2, 1, 0)
+#define CXXKIT_PP_NARG(...)                                                                                            \
+    CXXKIT_PP_GET_N(8, __VA_ARGS__ CXXKIT_PP_VA_OPT_COMMA(__VA_ARGS__) 8, 7, 6, 5, 4, 3, 2, 1, 0)
 
 /**
  * @brief Length judgment empty preprocessor macro
@@ -813,11 +816,11 @@
  * CXXKIT_PP_IS_EMPTY(, , , )          // -> 0
  * @endcode
  */
-#define CXXKIT_PP_IS_EMPTY(...)                                                                                          \
-    CXXKIT_PP_AND(                                                                                                       \
-        CXXKIT_PP_AND(CXXKIT_PP_NOT(CXXKIT_PP_HAS_COMMA(__VA_ARGS__)), CXXKIT_PP_NOT(CXXKIT_PP_HAS_COMMA(__VA_ARGS__()))),       \
-        CXXKIT_PP_AND(CXXKIT_PP_NOT(CXXKIT_PP_HAS_COMMA(CXXKIT_PP_COMMA_V __VA_ARGS__)),                                       \
-                    CXXKIT_PP_HAS_COMMA(CXXKIT_PP_COMMA_V __VA_ARGS__())))
+#define CXXKIT_PP_IS_EMPTY(...)                                                                                        \
+    CXXKIT_PP_AND(CXXKIT_PP_AND(CXXKIT_PP_NOT(CXXKIT_PP_HAS_COMMA(__VA_ARGS__)),                                       \
+                                CXXKIT_PP_NOT(CXXKIT_PP_HAS_COMMA(__VA_ARGS__()))),                                    \
+                  CXXKIT_PP_AND(CXXKIT_PP_NOT(CXXKIT_PP_HAS_COMMA(CXXKIT_PP_COMMA_V __VA_ARGS__)),                     \
+                                CXXKIT_PP_HAS_COMMA(CXXKIT_PP_COMMA_V __VA_ARGS__())))
 #define CXXKIT_PP_HAS_COMMA(...) CXXKIT_PP_GET_N_8(__VA_ARGS__, 1, 1, 1, 1, 1, 1, 1, 0, 0)
 #define CXXKIT_PP_COMMA_V(...)   ,
 
@@ -831,14 +834,14 @@
  * CXXKIT_PP_FOR_EACH(DO_EACH, bool, x)       // -> bool x
  * @endcode
  */
-#define CXXKIT_PP_FOR_EACH(DO, CTX, ...)                                                                                 \
+#define CXXKIT_PP_FOR_EACH(DO, CTX, ...)                                                                               \
     CXXKIT_PP_CONCAT(CXXKIT_PP_FOR_EACH_, CXXKIT_PP_NARG(__VA_ARGS__))(DO, CTX, 0, __VA_ARGS__)
 #define CXXKIT_PP_FOR_EACH_0(DO, CTX, IDX, ...)
 #define CXXKIT_PP_FOR_EACH_1(DO, CTX, IDX, VAR, ...) DO(VAR, IDX, CTX)
-#define CXXKIT_PP_FOR_EACH_2(DO, CTX, IDX, VAR, ...)                                                                     \
+#define CXXKIT_PP_FOR_EACH_2(DO, CTX, IDX, VAR, ...)                                                                   \
     DO(VAR, IDX, CTX)                                                                                                  \
     CXXKIT_PP_FOR_EACH_1(DO, CTX, CXXKIT_PP_INC(IDX), __VA_ARGS__)
-#define CXXKIT_PP_FOR_EACH_3(DO, CTX, IDX, VAR, ...)                                                                     \
+#define CXXKIT_PP_FOR_EACH_3(DO, CTX, IDX, VAR, ...)                                                                   \
     DO(VAR, IDX, CTX)                                                                                                  \
     CXXKIT_PP_FOR_EACH_2(DO, CTX, CXXKIT_PP_INC(IDX), __VA_ARGS__)
 // ...
@@ -874,8 +877,9 @@
 #define CXXKIT_PP_IS_SYMBOL(PREFIX, SYMBOL) CXXKIT_PP_IS_EMPTY(CXXKIT_PP_CONCAT(PREFIX, SYMBOL))
 #define CXXKIT_PP_IS_PARENS(SYMBOL)         CXXKIT_PP_IS_EMPTY(CXXKIT_PP_EMPTY_V SYMBOL)
 #define CXXKIT_PP_EMPTY_V(...)
-#define CXXKIT_PP_IDENTITY(N)          N
-#define CXXKIT_PP_TRY_REMOVE_PARENS(T) CXXKIT_PP_IF(CXXKIT_PP_IS_PARENS(T), CXXKIT_PP_REMOVE_PARENS, CXXKIT_PP_IDENTITY)(T)
+#define CXXKIT_PP_IDENTITY(N) N
+#define CXXKIT_PP_TRY_REMOVE_PARENS(T)                                                                                 \
+    CXXKIT_PP_IF(CXXKIT_PP_IS_PARENS(T), CXXKIT_PP_REMOVE_PARENS, CXXKIT_PP_IDENTITY)(T)
 
 /**
  * @brief Recursive Reentry preprocessor macro
@@ -885,8 +889,10 @@
  * @endcode
  */
 #define CXXKIT_PP_OUTER(N, T) CXXKIT_PP_FOR_EACH(CXXKIT_PP_DO_EACH_1, N, CXXKIT_PP_REMOVE_PARENS(T))
-#define CXXKIT_PP_DO_EACH_1(VAR, IDX, CTX)                                                                               \
-    CXXKIT_PP_FOR_EACH(CXXKIT_PP_DO_EACH_2, CTX.CXXKIT_PP_GET_TUPLE(0, VAR), CXXKIT_PP_REMOVE_PARENS(CXXKIT_PP_GET_TUPLE(1, VAR)))
+#define CXXKIT_PP_DO_EACH_1(VAR, IDX, CTX)                                                                             \
+    CXXKIT_PP_FOR_EACH(CXXKIT_PP_DO_EACH_2,                                                                            \
+                       CTX.CXXKIT_PP_GET_TUPLE(0, VAR),                                                                \
+                       CXXKIT_PP_REMOVE_PARENS(CXXKIT_PP_GET_TUPLE(1, VAR)))
 #define CXXKIT_PP_DO_EACH_2(VAR, IDX, CTX) CTX.VAR = VAR;
 
 /**

@@ -393,26 +393,30 @@ CXXKIT_ATTRIBUTE_MUST_USE_RESULT constexpr typename std::enable_if<std::is_unsig
 // not be marked as constexpr due to constraints of the compiler/available
 // intrinsics.
 template <class T>
-CXXKIT__BITS_CONSTEXPR_CLZ inline typename std::enable_if<std::is_unsigned<T>::value, int>::type countl_zero(T x) noexcept
+CXXKIT__BITS_CONSTEXPR_CLZ inline typename std::enable_if<std::is_unsigned<T>::value, int>::type countl_zero(
+    T x) noexcept
 {
     return detail::CountLeadingZeroes(x);
 }
 
 template <class T>
-CXXKIT__BITS_CONSTEXPR_CLZ inline typename std::enable_if<std::is_unsigned<T>::value, int>::type countl_one(T x) noexcept
+CXXKIT__BITS_CONSTEXPR_CLZ inline typename std::enable_if<std::is_unsigned<T>::value, int>::type countl_one(
+    T x) noexcept
 {
     // Avoid integer promotion to a wider type
     return countl_zero(static_cast<T>(~x));
 }
 
 template <class T>
-CXXKIT__BITS_CONSTEXPR_CTZ inline typename std::enable_if<std::is_unsigned<T>::value, int>::type countr_zero(T x) noexcept
+CXXKIT__BITS_CONSTEXPR_CTZ inline typename std::enable_if<std::is_unsigned<T>::value, int>::type countr_zero(
+    T x) noexcept
 {
     return detail::CountTrailingZeroes(x);
 }
 
 template <class T>
-CXXKIT__BITS_CONSTEXPR_CTZ inline typename std::enable_if<std::is_unsigned<T>::value, int>::type countr_one(T x) noexcept
+CXXKIT__BITS_CONSTEXPR_CTZ inline typename std::enable_if<std::is_unsigned<T>::value, int>::type countr_one(
+    T x) noexcept
 {
     // Avoid integer promotion to a wider type
     return countr_zero(static_cast<T>(~x));

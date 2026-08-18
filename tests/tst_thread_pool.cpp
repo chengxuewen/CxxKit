@@ -43,9 +43,14 @@ namespace
 static std::atomic<int> testFunctionCount;
 static std::mutex *functionTestMutex{nullptr};
 
-void emptyFunct() { }
+void emptyFunct()
+{
+}
 
-void noSleepTestFunction() { ++testFunctionCount; }
+void noSleepTestFunction()
+{
+    ++testFunctionCount;
+}
 
 void noSleepTestFunctionMutex()
 {
@@ -763,8 +768,8 @@ TEST(ThreadPoolTest, TryStartCount)
 
 TEST(ThreadPoolTest, PriorityStart)
 {
-     std::vector<int> priorities = {0, 1, 2, 3, 4, 5, 6, 7, 8, 9};
-//    std::vector<int> priorities = {2};
+    std::vector<int> priorities = {0, 1, 2, 3, 4, 5, 6, 7, 8, 9};
+    //    std::vector<int> priorities = {2};
     for (auto otherCount : priorities)
     {
         class Holder : public Task
@@ -787,7 +792,7 @@ TEST(ThreadPoolTest, PriorityStart)
             }
             void run()
             {
-//                 CXXKIT_DEBUG("run %p", this);
+                //                 CXXKIT_DEBUG("run %p", this);
                 Task *expected = nullptr;
                 ptr.compare_exchange_strong(expected, this);
             }
@@ -805,15 +810,16 @@ TEST(ThreadPoolTest, PriorityStart)
         while (otherCount--)
         {
             auto task = new Runner(firstStarted);
-//             CXXKIT_DEBUG("Runner %p", task);
+            //             CXXKIT_DEBUG("Runner %p", task);
             threadPool.start(task, true, ThreadPool::Priority::kNormal); // priority kNormal
         }
         threadPool.start(expected = new Runner(firstStarted),
                          true,
                          ThreadPool::Priority::kHighest); // priority kHighest, expected
-        threadPool.start(new Runner(firstStarted), true,
+        threadPool.start(new Runner(firstStarted),
+                         true,
                          ThreadPool::Priority::kHighest); // priority kHighest
-//         CXXKIT_DEBUG("expected %p", expected);
+                                                          //         CXXKIT_DEBUG("expected %p", expected);
 
         sem.release();
         EXPECT_TRUE(threadPool.waitForDone());
@@ -1176,7 +1182,10 @@ public:
 private:
     FunctionPointer function;
 };
-Task *createTask(FunctionPointer pointer) { return new FunctionPointerTask(pointer); }
+Task *createTask(FunctionPointer pointer)
+{
+    return new FunctionPointerTask(pointer);
+}
 } // namespace
 TEST(ThreadPoolTest, WaitForDoneAfterCancel)
 {

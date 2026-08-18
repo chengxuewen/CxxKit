@@ -257,8 +257,8 @@ void TaskQueueThread::processTasks()
         if (nextTask.runTask)
         {
             CXXKIT_LOGGING_TRACE(CXXKIT_TASK_QUEUE_LOGGER(),
-                               "TaskQueueThread::processTasks() runTask:{}",
-                               utils::fmt::ptr(nextTask.runTask.get()));
+                                 "TaskQueueThread::processTasks() runTask:{}",
+                                 utils::fmt::ptr(nextTask.runTask.get()));
             // process entry immediately then try again
             nextTask.runTask->run();
             // Attempt to run more tasks before going to sleep.
@@ -267,8 +267,8 @@ void TaskQueueThread::processTasks()
 
         lock.lock();
         CXXKIT_LOGGING_TRACE(CXXKIT_TASK_QUEUE_LOGGER(),
-                           "TaskQueueThread::processTasks() wait {} us",
-                           nextTask.sleepTime.us());
+                             "TaskQueueThread::processTasks() wait {} us",
+                             nextTask.sleepTime.us());
         const auto deadline = std::chrono::steady_clock::now() +
                               std::chrono::microseconds(std::min(nextTask.sleepTime.us(), (int64_t)1'000'000LL));
         d->mTaskReadyCondition.wait_until(lock, deadline);

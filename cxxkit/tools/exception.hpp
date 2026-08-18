@@ -37,7 +37,9 @@ CXXKIT_BEGIN_NAMESPACE
 
 namespace detail
 {
-static inline void noop(void) { }
+static inline void noop(void)
+{
+}
 
 struct ExceptionWhat final
 {
@@ -65,15 +67,28 @@ struct ExceptionWhat final
     std::string what;
 };
 
-static inline const char *getCStrHelper(const char *string) { return string; }
-static inline const char *getCStrHelper(const StringView &string) { return string.data(); }
-static inline const char *getCStrHelper(const std::string &string) { return string.data(); }
-static inline const char *getCStrHelper(const ExceptionWhat &exceptionWhat) { return exceptionWhat.what.c_str(); }
+static inline const char *getCStrHelper(const char *string)
+{
+    return string;
+}
+static inline const char *getCStrHelper(const StringView &string)
+{
+    return string.data();
+}
+static inline const char *getCStrHelper(const std::string &string)
+{
+    return string.data();
+}
+static inline const char *getCStrHelper(const ExceptionWhat &exceptionWhat)
+{
+    return exceptionWhat.what.c_str();
+}
 }; // namespace detail
 
 namespace utils
 {
-template <typename R> Expected<R, std::string> tryCatchCall(const std::function<R()> func)
+template <typename R>
+Expected<R, std::string> tryCatchCall(const std::function<R()> func)
 {
 #if CXXKIT_HAS_EXCEPTIONS
     try

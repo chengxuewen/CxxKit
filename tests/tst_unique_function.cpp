@@ -36,7 +36,10 @@ CXXKIT_BEGIN_NAMESPACE
 
 namespace
 {
-static int call(FunctionView<int()> fun) { return fun(); }
+static int call(FunctionView<int()> fun)
+{
+    return fun();
+}
 
 static UniqueFunction<void()> moveUniqueFunction()
 {

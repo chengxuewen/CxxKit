@@ -31,10 +31,10 @@
 #include <algorithm>
 
 #ifdef min
-#   undef min
+#    undef min
 #endif
 #ifdef max
-#   undef max
+#    undef max
 #endif
 
 CXXKIT_BEGIN_NAMESPACE
@@ -76,9 +76,15 @@ CXXKIT_STATIC_CONSTANT_NUMBER(kULongLongMax, std::numeric_limits<ulonglong_t>::m
 namespace utils
 {
 template <typename T>
-static constexpr T numericMin() noexcept { return std::numeric_limits<T>::min(); }
+static constexpr T numericMin() noexcept
+{
+    return std::numeric_limits<T>::min();
+}
 template <typename T>
-static constexpr T mathMin(const T &left, const T &right) noexcept { return std::min<T>(left, right); }
+static constexpr T mathMin(const T &left, const T &right) noexcept
+{
+    return std::min<T>(left, right);
+}
 template <typename T, typename P>
 static constexpr T mathMin(const T &left, const T &right, P pred) noexcept
 {
@@ -86,15 +92,21 @@ static constexpr T mathMin(const T &left, const T &right, P pred) noexcept
 }
 
 template <typename T>
-static constexpr T numericMax() noexcept { return std::numeric_limits<T>::max(); }
+static constexpr T numericMax() noexcept
+{
+    return std::numeric_limits<T>::max();
+}
 template <typename T>
-static constexpr T mathMax(const T &left, const T &right) noexcept { return std::max<T>(left, right); }
+static constexpr T mathMax(const T &left, const T &right) noexcept
+{
+    return std::max<T>(left, right);
+}
 template <typename T, typename P>
 static constexpr T mathMax(const T &left, const T &right, P pred) noexcept
 {
     return std::max<T, P>(left, right, pred);
 }
-};
+}; // namespace utils
 CXXKIT_END_NAMESPACE
 
 #endif // _CXXKIT_LIMITS_HPP

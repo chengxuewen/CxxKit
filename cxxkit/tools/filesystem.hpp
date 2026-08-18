@@ -28,15 +28,15 @@
 #include <cxxkit/base/global.hpp>
 
 #if defined(__cplusplus) && __cplusplus >= 201703L && defined(__has_include)
-#   if __has_include(<filesystem>)
-#       define CXXKIT_USE_STD_FS
-#   endif
+#    if __has_include(<filesystem>)
+#        define CXXKIT_USE_STD_FS
+#    endif
 #endif
 
 #ifdef CXXKIT_USE_STD_FS
-#   include <filesystem>
+#    include <filesystem>
 #else
-#   include <cxxkit/3rdparty/ghc/filesystem.hpp>
+#    include <cxxkit/3rdparty/ghc/filesystem.hpp>
 #endif
 
 CXXKIT_BEGIN_NAMESPACE

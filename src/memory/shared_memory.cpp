@@ -32,8 +32,11 @@ const SharedMemory::Handle SharedMemory::kInvalidHandle = NULL;
 const SharedMemory::Handle SharedMemory::kInvalidHandle = -1;
 #endif
 
-SharedMemory::SharedMemory(void* data, size_t size, Handle handle, int id)
-    : mData(data), mSize(size), mHandle(handle), mId(id)
+SharedMemory::SharedMemory(void *data, size_t size, Handle handle, int id)
+    : mData(data)
+    , mSize(size)
+    , mHandle(handle)
+    , mId(id)
 {
 }
 

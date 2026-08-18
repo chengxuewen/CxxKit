@@ -389,24 +389,27 @@ CXXKIT_END_NAMESPACE
 #define CXXKIT_STRFUNC_NAME cxxkit::utils::extractFunctionName(CXXKIT_STRFUNC).c_str()
 
 #define CXXKIT_DECLARE_LOGGER(export, logger) export cxxkit::Logger &logger();
-#define CXXKIT_DEFINE_LOGGER_WITH_LEVEL(name, logger, level)                                                             \
-    cxxkit::Logger &logger()                                                                                             \
+#define CXXKIT_DEFINE_LOGGER_WITH_LEVEL(name, logger, level)                                                           \
+    cxxkit::Logger &logger()                                                                                           \
     {                                                                                                                  \
         static constexpr char loggerName[] = name;                                                                     \
-        static cxxkit::Logger loggerInstance(loggerName, level);                                                         \
+        static cxxkit::Logger loggerInstance(loggerName, level);                                                       \
         return loggerInstance;                                                                                         \
     }                                                                                                                  \
     static struct logger##_builder                                                                                     \
     {                                                                                                                  \
-        logger##_builder() { logger(); }                                                                               \
+        logger##_builder()                                                                                             \
+        {                                                                                                              \
+            logger();                                                                                                  \
+        }                                                                                                              \
     } init_##logger;
 
 #define CXXKIT_DEFINE_LOGGER(name, logger) CXXKIT_DEFINE_LOGGER_WITH_LEVEL(name, logger, cxxkit::LogLevel::Debug)
 
-#define CXXKIT_LOGGING(logger, level, ...)                                                                               \
+#define CXXKIT_LOGGING(logger, level, ...)                                                                             \
     for (bool enabled = logger.isLevelEnabled(level); enabled; enabled = false)                                        \
     cxxkit::Logger::Streamer(logger, level, __FILE__, CXXKIT_STRFUNC, __LINE__).logging(__VA_ARGS__)
-#define CXXKIT_LOGGING_FULL(logger, level, file, func, line, ...)                                                        \
+#define CXXKIT_LOGGING_FULL(logger, level, file, func, line, ...)                                                      \
     for (bool enabled = logger.isLevelEnabled(level); enabled; enabled = false)                                        \
     cxxkit::Logger::Streamer(logger, level, file, func, line).logging(__VA_ARGS__)
 
@@ -419,23 +422,23 @@ CXXKIT_END_NAMESPACE
 #define CXXKIT_LOGGING_FATAL(logger, ...)    CXXKIT_LOGGING(logger, cxxkit::LogLevel::Fatal, __VA_ARGS__)
 
 CXXKIT_DECLARE_LOGGER(CXXKIT_CORE_API, CXXKIT_LOGGER)
-#define CXXKIT_TRACE                                                                                                     \
-    for (bool enabled = CXXKIT_LOGGER().isLevelEnabled(cxxkit::LogLevel::Trace); enabled; enabled = false)                 \
+#define CXXKIT_TRACE                                                                                                   \
+    for (bool enabled = CXXKIT_LOGGER().isLevelEnabled(cxxkit::LogLevel::Trace); enabled; enabled = false)             \
     cxxkit::Logger::Streamer(CXXKIT_LOGGER(), cxxkit::LogLevel::Trace, __FILE__, CXXKIT_STRFUNC, __LINE__).logging
-#define CXXKIT_DEBUG                                                                                                     \
-    for (bool enabled = CXXKIT_LOGGER().isLevelEnabled(cxxkit::LogLevel::Debug); enabled; enabled = false)                 \
+#define CXXKIT_DEBUG                                                                                                   \
+    for (bool enabled = CXXKIT_LOGGER().isLevelEnabled(cxxkit::LogLevel::Debug); enabled; enabled = false)             \
     cxxkit::Logger::Streamer(CXXKIT_LOGGER(), cxxkit::LogLevel::Debug, __FILE__, CXXKIT_STRFUNC, __LINE__).logging
-#define CXXKIT_INFO                                                                                                      \
-    for (bool enabled = CXXKIT_LOGGER().isLevelEnabled(cxxkit::LogLevel::Info); enabled; enabled = false)                  \
+#define CXXKIT_INFO                                                                                                    \
+    for (bool enabled = CXXKIT_LOGGER().isLevelEnabled(cxxkit::LogLevel::Info); enabled; enabled = false)              \
     cxxkit::Logger::Streamer(CXXKIT_LOGGER(), cxxkit::LogLevel::Info, __FILE__, CXXKIT_STRFUNC, __LINE__).logging
-#define CXXKIT_WARNING                                                                                                   \
-    for (bool enabled = CXXKIT_LOGGER().isLevelEnabled(cxxkit::LogLevel::Warning); enabled; enabled = false)               \
+#define CXXKIT_WARNING                                                                                                 \
+    for (bool enabled = CXXKIT_LOGGER().isLevelEnabled(cxxkit::LogLevel::Warning); enabled; enabled = false)           \
     cxxkit::Logger::Streamer(CXXKIT_LOGGER(), cxxkit::LogLevel::Warning, __FILE__, CXXKIT_STRFUNC, __LINE__).logging
-#define CXXKIT_ERROR                                                                                                     \
-    for (bool enabled = CXXKIT_LOGGER().isLevelEnabled(cxxkit::LogLevel::Error); enabled; enabled = false)                 \
+#define CXXKIT_ERROR                                                                                                   \
+    for (bool enabled = CXXKIT_LOGGER().isLevelEnabled(cxxkit::LogLevel::Error); enabled; enabled = false)             \
     cxxkit::Logger::Streamer(CXXKIT_LOGGER(), cxxkit::LogLevel::Error, __FILE__, CXXKIT_STRFUNC, __LINE__).logging
-#define CXXKIT_CRITICAL                                                                                                  \
-    for (bool enabled = CXXKIT_LOGGER().isLevelEnabled(cxxkit::LogLevel::Critical); enabled; enabled = false)              \
+#define CXXKIT_CRITICAL                                                                                                \
+    for (bool enabled = CXXKIT_LOGGER().isLevelEnabled(cxxkit::LogLevel::Critical); enabled; enabled = false)          \
     cxxkit::Logger::Streamer(CXXKIT_LOGGER(), cxxkit::LogLevel::Critical, __FILE__, CXXKIT_STRFUNC, __LINE__).logging
-#define CXXKIT_FATAL                                                                                                     \
+#define CXXKIT_FATAL                                                                                                   \
     cxxkit::Logger::Streamer(CXXKIT_LOGGER(), cxxkit::LogLevel::Fatal, __FILE__, CXXKIT_STRFUNC, __LINE__).logging

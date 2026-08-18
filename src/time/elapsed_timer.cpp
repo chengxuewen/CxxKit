@@ -29,13 +29,21 @@
 
 CXXKIT_BEGIN_NAMESPACE
 
-ElapsedTimer::~ElapsedTimer() { }
+ElapsedTimer::~ElapsedTimer()
+{
+}
 
 #if CXXKIT_FEATURE_USE_STD_STEADY_CLOCK
 
-ElapsedTimer::ClockType ElapsedTimer::clockType() noexcept { return ClockType::kStdSteadyClock; }
+ElapsedTimer::ClockType ElapsedTimer::clockType() noexcept
+{
+    return ClockType::kStdSteadyClock;
+}
 
-bool ElapsedTimer::isMonotonic() noexcept { return true; }
+bool ElapsedTimer::isMonotonic() noexcept
+{
+    return true;
+}
 
 int64_t ElapsedTimer::restart() noexcept
 {
@@ -46,7 +54,10 @@ int64_t ElapsedTimer::restart() noexcept
     return (mStart - old) / 1000000;
 }
 
-void ElapsedTimer::start() noexcept { this->restart(); }
+void ElapsedTimer::start() noexcept
+{
+    this->restart();
+}
 
 int64_t ElapsedTimer::nsecsElapsed() const noexcept
 {
@@ -54,18 +65,33 @@ int64_t ElapsedTimer::nsecsElapsed() const noexcept
     return std::chrono::duration_cast<std::chrono::nanoseconds>(now.time_since_epoch()).count() - mStart;
 }
 
-int64_t ElapsedTimer::elapsed() const noexcept { return this->nsecsElapsed() / 1000000; }
+int64_t ElapsedTimer::elapsed() const noexcept
+{
+    return this->nsecsElapsed() / 1000000;
+}
 
-int64_t ElapsedTimer::msecsTo(const ElapsedTimer &other) const noexcept { return (other.mStart - mStart) / 1000000; }
+int64_t ElapsedTimer::msecsTo(const ElapsedTimer &other) const noexcept
+{
+    return (other.mStart - mStart) / 1000000;
+}
 
-int64_t ElapsedTimer::secsTo(const ElapsedTimer &other) const noexcept { return this->msecsTo(other) / 1000; }
+int64_t ElapsedTimer::secsTo(const ElapsedTimer &other) const noexcept
+{
+    return this->msecsTo(other) / 1000;
+}
 
-int64_t ElapsedTimer::msecsSinceReference() const noexcept { return mStart / 1000000; }
+int64_t ElapsedTimer::msecsSinceReference() const noexcept
+{
+    return mStart / 1000000;
+}
 
 #else
 #    error "unknown elapsed timer backend"
 #endif
 
-bool operator<(const ElapsedTimer &v1, const ElapsedTimer &v2) noexcept { return v1.mStart < v2.mStart; }
+bool operator<(const ElapsedTimer &v1, const ElapsedTimer &v2) noexcept
+{
+    return v1.mStart < v2.mStart;
+}
 
 CXXKIT_END_NAMESPACE

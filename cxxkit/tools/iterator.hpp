@@ -47,9 +47,15 @@ std::reverse_iterator<Iterator> makeReverseIterator(Iterator it)
   * like cxx17 std::size
 ***********************************************************************************************************************/
 template <typename C> // SFINAE
-constexpr auto size(const C &c) -> decltype(c.size()) { return c.size(); }
+constexpr auto size(const C &c) -> decltype(c.size())
+{
+    return c.size();
+}
 template <typename T, std::size_t N>
-constexpr std::size_t size(const T (&)[N]) noexcept { return N; }
+constexpr std::size_t size(const T (&)[N]) noexcept
+{
+    return N;
+}
 } // namespace utils
 
 CXXKIT_END_NAMESPACE

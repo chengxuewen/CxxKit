@@ -194,7 +194,7 @@ std::string stringFormat(const char *format, ...)
     va_end(args);
     CXXKIT_DCHECK_GE(result, 0) << "ERROR: vsnprintf() failed with error " << result;
     CXXKIT_DCHECK_LT(result, kMaxSize) << "WARNING: string was truncated from " << result << " to " << (kMaxSize - 1)
-                                     << " characters";
+                                       << " characters";
     return std::string(buffer);
 }
 } // namespace utils

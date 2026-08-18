@@ -69,15 +69,15 @@ RepeatingTaskClosure::RepeatingTaskClosure(TaskQueueBase *taskQueue,
     , mAliveFlag(aliveFlag)
 {
     CXXKIT_LOGGING_TRACE(CXXKIT_TASK_QUEUE_LOGGER(),
-                       "RepeatingTaskClosure::RepeatingTaskClosure() ctor:{}",
-                       utils::fmt::ptr(this));
+                         "RepeatingTaskClosure::RepeatingTaskClosure() ctor:{}",
+                         utils::fmt::ptr(this));
 }
 
 RepeatingTaskClosure::~RepeatingTaskClosure()
 {
     CXXKIT_LOGGING_TRACE(CXXKIT_TASK_QUEUE_LOGGER(),
-                       "RepeatingTaskClosure::~RepeatingTaskClosure() dtor:{}",
-                       utils::fmt::ptr(this));
+                         "RepeatingTaskClosure::~RepeatingTaskClosure() dtor:{}",
+                         utils::fmt::ptr(this));
 }
 
 void RepeatingTaskClosure::operator()() &&
@@ -86,8 +86,8 @@ void RepeatingTaskClosure::operator()() &&
     if (!mAliveFlag->isAlive())
     {
         CXXKIT_LOGGING_TRACE(CXXKIT_TASK_QUEUE_LOGGER(),
-                           "RepeatingTaskClosure::operator() not Alive:{}",
-                           utils::fmt::ptr(this));
+                             "RepeatingTaskClosure::operator() not Alive:{}",
+                             utils::fmt::ptr(this));
         return;
     }
 
@@ -100,8 +100,8 @@ void RepeatingTaskClosure::operator()() &&
     if (delay.IsPlusInfinity() || !mAliveFlag->isAlive())
     {
         CXXKIT_LOGGING_TRACE(CXXKIT_TASK_QUEUE_LOGGER(),
-                           "RepeatingTaskHandle::operator() not be run again {}",
-                           utils::fmt::ptr(this));
+                             "RepeatingTaskHandle::operator() not be run again {}",
+                             utils::fmt::ptr(this));
         return;
     }
 
@@ -117,8 +117,8 @@ void RepeatingTaskClosure::operator()() &&
 RepeatingTaskHandle::~RepeatingTaskHandle()
 {
     CXXKIT_LOGGING_TRACE(CXXKIT_TASK_QUEUE_LOGGER(),
-                       "RepeatingTaskHandle::RepeatingTaskHandle() dtor:{}",
-                       utils::fmt::ptr(this));
+                         "RepeatingTaskHandle::RepeatingTaskHandle() dtor:{}",
+                         utils::fmt::ptr(this));
 }
 
 RepeatingTaskHandle RepeatingTaskHandle::start(TaskQueueBase *taskQueue,

@@ -146,10 +146,7 @@ public:
      * @param message The error message.
      * @param cause Optional cause of the error.
      */
-    Result(const Error::Domain &domain,
-           ErrorId code,
-           const StringView message,
-           const Error::SharedDataPtr &cause = {})
+    Result(const Error::Domain &domain, ErrorId code, const StringView message, const Error::SharedDataPtr &cause = {})
         : mData(Error::create(domain, code, message, cause))
     {
     }

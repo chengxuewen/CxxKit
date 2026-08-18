@@ -1617,10 +1617,10 @@ public:
      * @return the number of disconnected slots
      */
     template <typename Callable>
-    std::enable_if_t<(trait::is_callable_v<arg_list, Callable> || trait::is_callable_v<ext_arg_list, Callable> ||
-                      trait::is_member_function_pointer_v<Callable>) &&
-                         detail::function_traits<Callable>::is_disconnectable,
-                     size_t>
+    std::enable_if_t<
+        (trait::is_callable_v<arg_list, Callable> || trait::is_callable_v<ext_arg_list, Callable> ||
+         trait::is_member_function_pointer_v<Callable>)&&detail::function_traits<Callable>::is_disconnectable,
+        size_t>
     disconnect(const Callable &c)
     {
         return disconnect_if([&](const auto &s) { return s->has_full_callable(c); });

@@ -44,7 +44,7 @@ const double kMagicNtpFractionalUnit = 4.294967296E+9;
 class CXXKIT_CORE_API Clock
 {
 public:
-    virtual ~Clock() {}
+    virtual ~Clock() { }
 
     // Return a timestamp relative to an unspecified epoch.
     virtual Timestamp CurrentTime() = 0;

@@ -19,7 +19,7 @@ SourceLocation WhereAmI(const SourceLocation &location = SourceLocation::current
 {
     return location;
 }
-}  // namespace
+} // namespace
 
 TEST(LocationTest, CurrentYieldsCorrectValue)
 {
@@ -29,9 +29,9 @@ TEST(LocationTest, CurrentYieldsCorrectValue)
     const char *const functionName = "TestBody";
     EXPECT_THAT(here.filePath(), ::testing::EndsWith(fileName));
     EXPECT_EQ(here.fileName(), std::string(fileName));
-    EXPECT_EQ(here.fileLine(), std::string(fileName) +":" + std::to_string(previous_line + 1));
+    EXPECT_EQ(here.fileLine(), std::string(fileName) + ":" + std::to_string(previous_line + 1));
     EXPECT_EQ(here.lineNumber(), previous_line + 1);
     EXPECT_EQ(here.toString(),
-              std::string(functionName) +"@" + std::string(fileName) + ":" + std::to_string(previous_line + 1));
+              std::string(functionName) + "@" + std::string(fileName) + ":" + std::to_string(previous_line + 1));
     EXPECT_STREQ(functionName, here.functionName());
 }

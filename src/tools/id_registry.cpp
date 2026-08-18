@@ -47,14 +47,18 @@ IdRegistryPrivate::IdRegistryPrivate(IdRegistry *p)
 {
 }
 
-IdRegistryPrivate::~IdRegistryPrivate() { }
+IdRegistryPrivate::~IdRegistryPrivate()
+{
+}
 
 IdRegistry::IdRegistry()
     : mDPtr(new IdRegistryPrivate(this))
 {
 }
 
-IdRegistry::~IdRegistry() { }
+IdRegistry::~IdRegistry()
+{
+}
 
 int64_t IdRegistry::registeredIdCount() const
 {

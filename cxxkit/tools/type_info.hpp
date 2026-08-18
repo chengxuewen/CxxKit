@@ -145,29 +145,30 @@ struct TypeInfoFlags
 #define CXXKIT_PRIMITIVE_TYPE   cxxkit::TypeInfoFlags::kPrimitiveType
 #define CXXKIT_RELOCATABLE_TYPE cxxkit::TypeInfoFlags::kRelocatableType
 
-#define CXXKIT_DECLARE_TYPEINFO_BODY(TYPE, FLAGS)                                                                        \
-    class cxxkit::TypeInfo<TYPE>                                                                                         \
+#define CXXKIT_DECLARE_TYPEINFO_BODY(TYPE, FLAGS)                                                                      \
+    class cxxkit::TypeInfo<TYPE>                                                                                       \
     {                                                                                                                  \
     public:                                                                                                            \
-        CXXKIT_WARNING_PUSH                                                                                              \
-        CXXKIT_WARNING_DISABLE_CLANG("-Wdeprecated-anon-enum-enum-conversion")                                           \
+        CXXKIT_WARNING_PUSH                                                                                            \
+        CXXKIT_WARNING_DISABLE_CLANG("-Wdeprecated-anon-enum-enum-conversion")                                         \
         enum                                                                                                           \
         {                                                                                                              \
             isSpecialized = true,                                                                                      \
-            isComplex = (((FLAGS) & CXXKIT_PRIMITIVE_TYPE) == 0) && !std::is_trivial<TYPE>::value,                       \
-            isStatic = (((FLAGS) & (CXXKIT_MOVABLE_TYPE | CXXKIT_PRIMITIVE_TYPE)) == 0),                                   \
-            isRelocatable = !isStatic || ((FLAGS) & CXXKIT_RELOCATABLE_TYPE) || cxxkit::traits::is_relocatable_v<TYPE>,    \
+            isComplex = (((FLAGS) & CXXKIT_PRIMITIVE_TYPE) == 0) && !std::is_trivial<TYPE>::value,                     \
+            isStatic = (((FLAGS) & (CXXKIT_MOVABLE_TYPE | CXXKIT_PRIMITIVE_TYPE)) == 0),                               \
+            isRelocatable = !isStatic || ((FLAGS) & CXXKIT_RELOCATABLE_TYPE) ||                                        \
+                            cxxkit::traits::is_relocatable_v<TYPE>,                                                    \
             isPointer = false,                                                                                         \
             isIntegral = std::is_integral<TYPE>::value,                                                                \
         };                                                                                                             \
-        CXXKIT_WARNING_POP                                                                                               \
+        CXXKIT_WARNING_POP                                                                                             \
         static inline const char *name()                                                                               \
         {                                                                                                              \
             return #TYPE;                                                                                              \
         }                                                                                                              \
     }
 
-#define CXXKIT_DECLARE_TYPEINFO(TYPE, FLAGS)                                                                             \
+#define CXXKIT_DECLARE_TYPEINFO(TYPE, FLAGS)                                                                           \
     template <>                                                                                                        \
     CXXKIT_DECLARE_TYPEINFO_BODY(TYPE, FLAGS)
 
@@ -190,4 +191,3 @@ CXXKIT_DECLARE_TYPEINFO(unsigned long, CXXKIT_PRIMITIVE_TYPE);
 //CXXKIT_DECLARE_TYPEINFO(uint64_t, CXXKIT_PRIMITIVE_TYPE);
 CXXKIT_DECLARE_TYPEINFO(float, CXXKIT_PRIMITIVE_TYPE);
 CXXKIT_DECLARE_TYPEINFO(double, CXXKIT_PRIMITIVE_TYPE);
-

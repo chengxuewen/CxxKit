@@ -81,8 +81,7 @@ private:
     static constexpr bool kOneSided = true;
 };
 
-inline CXXKIT_CXX14_CONSTEXPR Frequency operator/(int64_t nominator,
-                                                const TimeDelta &interval)
+inline CXXKIT_CXX14_CONSTEXPR Frequency operator/(int64_t nominator, const TimeDelta &interval)
 {
     constexpr int64_t kKiloPerMicro = 1000 * 1000000;
     CXXKIT_DCHECK_LE(nominator, std::numeric_limits<int64_t>::max() / kKiloPerMicro);
@@ -91,8 +90,7 @@ inline CXXKIT_CXX14_CONSTEXPR Frequency operator/(int64_t nominator,
     return Frequency::MilliHertz(nominator * kKiloPerMicro / interval.us());
 }
 
-inline CXXKIT_CXX14_CONSTEXPR TimeDelta operator/(int64_t nominator,
-                                                const Frequency &frequency)
+inline CXXKIT_CXX14_CONSTEXPR TimeDelta operator/(int64_t nominator, const Frequency &frequency)
 {
     constexpr int64_t kMegaPerMilli = 1000000 * 1000;
     CXXKIT_DCHECK_LE(nominator, std::numeric_limits<int64_t>::max() / kMegaPerMilli);

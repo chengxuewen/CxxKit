@@ -35,9 +35,15 @@ CXXKIT_BEGIN_NAMESPACE
 namespace
 {
 
-int CallWith33(FunctionView<int(int)> fv) { return fv ? fv(33) : -1; }
+int CallWith33(FunctionView<int(int)> fv)
+{
+    return fv ? fv(33) : -1;
+}
 
-int Add33(int x) { return x + 33; }
+int Add33(int x)
+{
+    return x + 33;
+}
 
 } // namespace
 

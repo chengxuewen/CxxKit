@@ -33,10 +33,10 @@
 
 #define CXXKIT_DECLARE_ERROR_DOMAIN(Export, Name) Export const cxxkit::Error::Domain &Name();
 
-#define CXXKIT_DEFINE_ERROR_DOMAIN(Type, Name, Description)                                                              \
-    const cxxkit::Error::Domain &Name()                                                                                  \
+#define CXXKIT_DEFINE_ERROR_DOMAIN(Type, Name, Description)                                                            \
+    const cxxkit::Error::Domain &Name()                                                                                \
     {                                                                                                                  \
-        static const Type domain(cxxkit::Error::Domain::Registry::registerDomain(#Type, #Name, Description));            \
+        static const Type domain(cxxkit::Error::Domain::Registry::registerDomain(#Type, #Name, Description));          \
         return domain;                                                                                                 \
     }
 

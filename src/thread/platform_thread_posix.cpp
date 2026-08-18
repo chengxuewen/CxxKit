@@ -62,9 +62,9 @@
 #        endif
 #    endif
 
-#    if defined(CXXKIT_OS_DARWIN) || !defined(CXXKIT_OS_ANDROID) && !defined(CXXKIT_OS_OPENBSD) &&                           \
-                                       defined(_POSIX_THREAD_PRIORITY_SCHEDULING) &&                                   \
-                                       (_POSIX_THREAD_PRIORITY_SCHEDULING - 0 >= 0)
+#    if defined(CXXKIT_OS_DARWIN) || !defined(CXXKIT_OS_ANDROID) && !defined(CXXKIT_OS_OPENBSD) &&                     \
+                                         defined(_POSIX_THREAD_PRIORITY_SCHEDULING) &&                                 \
+                                         (_POSIX_THREAD_PRIORITY_SCHEDULING - 0 >= 0)
 #        define CXXKIT_HAS_THREAD_PRIORITY_SCHEDULING 1
 #    else
 #        define CXXKIT_HAS_THREAD_PRIORITY_SCHEDULING 0
@@ -669,8 +669,8 @@ void PlatformThread::setTerminationEnabled(bool enabled)
 {
     auto thread = PlatformThread::currentThread();
     CXXKIT_ASSERT_X(thread != nullptr,
-                  "PlatformThread::setTerminationEnabled()",
-                  "Current thread was not started with PlatformThread.");
+                    "PlatformThread::setTerminationEnabled()",
+                    "Current thread was not started with PlatformThread.");
     CXXKIT_UNUSED(thread)
 
 #    if defined(CXXKIT_OS_ANDROID)

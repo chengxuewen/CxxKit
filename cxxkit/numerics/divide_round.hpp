@@ -43,11 +43,13 @@ namespace detail
 template <typename T1, typename T2>
 struct DivideRoundResult
 {
-    template <typename T> struct Int
+    template <typename T>
+    struct Int
     {
         using Type = typename std::conditional<(sizeof(T) < sizeof(int)), int, T>::type;
     };
-    template <typename T> struct TypeInfo
+    template <typename T>
+    struct TypeInfo
     {
         static constexpr bool isUnsigned = std::is_unsigned<T>::value;
         static constexpr size_t size = sizeof(T);
@@ -58,33 +60,32 @@ struct DivideRoundResult
     using TI1 = TypeInfo<TI1Type>;
     using TI2 = TypeInfo<TI2Type>;
 
-    using IntType = typename std::conditional<(TI1::size > TI2::size), TI1Type,
-                                              typename std::conditional<(TI1::size < TI2::size), TI2Type,
-                                                                        typename std::conditional<(TI1::isUnsigned),
-                                                                                                  TI1Type,
-                                                                                                  TI2Type>::type>::type>::type;
+    using IntType = typename std::conditional<
+        (TI1::size > TI2::size),
+        TI1Type,
+        typename std::conditional<(TI1::size < TI2::size),
+                                  TI2Type,
+                                  typename std::conditional<(TI1::isUnsigned), TI1Type, TI2Type>::type>::type>::type;
 
     template <typename R1, typename R2>
     struct IsSameConditional
     {
-        using Type = typename std::conditional<(std::is_same<T1, R1>::value || std::is_same<T2, R1>::value), R1,
-                                               R2>::type;
+        using Type =
+            typename std::conditional<(std::is_same<T1, R1>::value || std::is_same<T2, R1>::value), R1, R2>::type;
     };
     template <typename R1, typename R2>
     using IsSameConditionalType = typename IsSameConditional<R1, R2>::Type;
 
-    using Type = IsSameConditionalType<long double,
-                                       IsSameConditionalType<double,
-                                                             IsSameConditionalType<float, IntType>>>;
+    using Type =
+        IsSameConditionalType<long double, IsSameConditionalType<double, IsSameConditionalType<float, IntType>>>;
 };
 template <typename T1, typename T2>
 using DivideRoundResultType = typename DivideRoundResult<T1, T2>::Type;
-}
+} // namespace detail
 
 template <typename Dividend, typename Divisor>
 // inline detail::DivideRoundResultType<Dividend, Divisor> CXXKIT_CXX14_CONSTEXPR
-inline auto CXXKIT_CXX14_CONSTEXPR
-DivideRoundUp(Dividend dividend, Divisor divisor) -> decltype(dividend / divisor)
+inline auto CXXKIT_CXX14_CONSTEXPR DivideRoundUp(Dividend dividend, Divisor divisor) -> decltype(dividend / divisor)
 {
     static_assert(std::is_integral<Dividend>(), "");
     static_assert(std::is_integral<Divisor>(), "");
@@ -98,8 +99,8 @@ DivideRoundUp(Dividend dividend, Divisor divisor) -> decltype(dividend / divisor
 
 template <typename Dividend, typename Divisor>
 // inline detail::DivideRoundResultType<Dividend, Divisor> CXXKIT_CXX14_CONSTEXPR
-inline auto CXXKIT_CXX14_CONSTEXPR
-DivideRoundToNearest(Dividend dividend, Divisor divisor) -> decltype(dividend / divisor)
+inline auto CXXKIT_CXX14_CONSTEXPR DivideRoundToNearest(Dividend dividend, Divisor divisor)
+    -> decltype(dividend / divisor)
 {
     static_assert(std::is_integral<Dividend>(), "");
     static_assert(std::is_integral<Divisor>(), "");

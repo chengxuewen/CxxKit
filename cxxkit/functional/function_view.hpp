@@ -60,9 +60,11 @@ CXXKIT_BEGIN_NAMESPACE
  * to pass it by value than by const reference.
  */
 
-template <typename T> class FunctionView; // Undefined.
+template <typename T>
+class FunctionView; // Undefined.
 
-template <typename RetT, typename... ArgT> class FunctionView<RetT(ArgT...)> final
+template <typename RetT, typename... ArgT>
+class FunctionView<RetT(ArgT...)> final
 {
 public:
     /**
@@ -140,11 +142,13 @@ private:
         void (*funPtr)();
     };
 
-    template <typename F> static RetT CallVoidPtr(VoidUnion vu, ArgT... args)
+    template <typename F>
+    static RetT CallVoidPtr(VoidUnion vu, ArgT... args)
     {
         return (*static_cast<F *>(vu.voidPtr))(std::forward<ArgT>(args)...);
     }
-    template <typename F> static RetT CallFunPtr(VoidUnion vu, ArgT... args)
+    template <typename F>
+    static RetT CallFunPtr(VoidUnion vu, ArgT... args)
     {
         return (reinterpret_cast<typename std::add_pointer<F>::type>(vu.funPtr))(std::forward<ArgT>(args)...);
     }

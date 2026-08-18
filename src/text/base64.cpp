@@ -29,9 +29,9 @@
 CXXKIT_BEGIN_NAMESPACE
 
 static const char kPad = '=';
-static const unsigned char pd = 0xFD;  // Padding
-static const unsigned char sp = 0xFE;  // Whitespace
-static const unsigned char il = 0xFF;  // Illegal base64 character
+static const unsigned char pd = 0xFD; // Padding
+static const unsigned char sp = 0xFE; // Whitespace
+static const unsigned char il = 0xFF; // Illegal base64 character
 
 const char Base64::Base64Table[] =
     // 0000000000111111111122222222223333333333444444444455555555556666
@@ -44,38 +44,38 @@ const char Base64::Base64Table[] =
 
 const unsigned char Base64::DecodeTable[] = {
     // 0  1  2  3  4  5  6  7  8  9
-    il, il, il, il, il, il, il, il, il, sp,  //   0 -   9
-    sp, sp, sp, sp, il, il, il, il, il, il,  //  10 -  19
-    il, il, il, il, il, il, il, il, il, il,  //  20 -  29
-    il, il, sp, il, il, il, il, il, il, il,  //  30 -  39
-    il, il, il, 62, il, il, il, 63, 52, 53,  //  40 -  49
-    54, 55, 56, 57, 58, 59, 60, 61, il, il,  //  50 -  59
-    il, pd, il, il, il, 0, 1, 2, 3, 4,   //  60 -  69
-    5, 6, 7, 8, 9, 10, 11, 12, 13, 14,  //  70 -  79
-    15, 16, 17, 18, 19, 20, 21, 22, 23, 24,  //  80 -  89
-    25, il, il, il, il, il, il, 26, 27, 28,  //  90 -  99
-    29, 30, 31, 32, 33, 34, 35, 36, 37, 38,  // 100 - 109
-    39, 40, 41, 42, 43, 44, 45, 46, 47, 48,  // 110 - 119
-    49, 50, 51, il, il, il, il, il, il, il,  // 120 - 129
-    il, il, il, il, il, il, il, il, il, il,  // 130 - 139
-    il, il, il, il, il, il, il, il, il, il,  // 140 - 149
-    il, il, il, il, il, il, il, il, il, il,  // 150 - 159
-    il, il, il, il, il, il, il, il, il, il,  // 160 - 169
-    il, il, il, il, il, il, il, il, il, il,  // 170 - 179
-    il, il, il, il, il, il, il, il, il, il,  // 180 - 189
-    il, il, il, il, il, il, il, il, il, il,  // 190 - 199
-    il, il, il, il, il, il, il, il, il, il,  // 200 - 209
-    il, il, il, il, il, il, il, il, il, il,  // 210 - 219
-    il, il, il, il, il, il, il, il, il, il,  // 220 - 229
-    il, il, il, il, il, il, il, il, il, il,  // 230 - 239
-    il, il, il, il, il, il, il, il, il, il,  // 240 - 249
-    il, il, il, il, il, il                   // 250 - 255
+    il, il, il, il, il, il, il, il, il, sp, //   0 -   9
+    sp, sp, sp, sp, il, il, il, il, il, il, //  10 -  19
+    il, il, il, il, il, il, il, il, il, il, //  20 -  29
+    il, il, sp, il, il, il, il, il, il, il, //  30 -  39
+    il, il, il, 62, il, il, il, 63, 52, 53, //  40 -  49
+    54, 55, 56, 57, 58, 59, 60, 61, il, il, //  50 -  59
+    il, pd, il, il, il, 0,  1,  2,  3,  4,  //  60 -  69
+    5,  6,  7,  8,  9,  10, 11, 12, 13, 14, //  70 -  79
+    15, 16, 17, 18, 19, 20, 21, 22, 23, 24, //  80 -  89
+    25, il, il, il, il, il, il, 26, 27, 28, //  90 -  99
+    29, 30, 31, 32, 33, 34, 35, 36, 37, 38, // 100 - 109
+    39, 40, 41, 42, 43, 44, 45, 46, 47, 48, // 110 - 119
+    49, 50, 51, il, il, il, il, il, il, il, // 120 - 129
+    il, il, il, il, il, il, il, il, il, il, // 130 - 139
+    il, il, il, il, il, il, il, il, il, il, // 140 - 149
+    il, il, il, il, il, il, il, il, il, il, // 150 - 159
+    il, il, il, il, il, il, il, il, il, il, // 160 - 169
+    il, il, il, il, il, il, il, il, il, il, // 170 - 179
+    il, il, il, il, il, il, il, il, il, il, // 180 - 189
+    il, il, il, il, il, il, il, il, il, il, // 190 - 199
+    il, il, il, il, il, il, il, il, il, il, // 200 - 209
+    il, il, il, il, il, il, il, il, il, il, // 210 - 219
+    il, il, il, il, il, il, il, il, il, il, // 220 - 229
+    il, il, il, il, il, il, il, il, il, il, // 230 - 239
+    il, il, il, il, il, il, il, il, il, il, // 240 - 249
+    il, il, il, il, il, il                  // 250 - 255
 };
 
 bool Base64::IsBase64Char(char ch)
 {
-    return (('A' <= ch) && (ch <= 'Z')) || (('a' <= ch) && (ch <= 'z')) ||
-           (('0' <= ch) && (ch <= '9')) || (ch == '+') || (ch == '/');
+    return (('A' <= ch) && (ch <= 'Z')) || (('a' <= ch) && (ch <= 'z')) || (('0' <= ch) && (ch <= '9')) ||
+           (ch == '+') || (ch == '/');
 }
 
 bool Base64::GetNextBase64Char(char ch, char *next_ch)
@@ -106,9 +106,7 @@ bool Base64::IsBase64Encoded(StringView str)
     return true;
 }
 
-void Base64::EncodeFromArray(const void *data,
-                             size_t len,
-                             std::string *result)
+void Base64::EncodeFromArray(const void *data, size_t len, std::string *result)
 {
     CXXKIT_DCHECK(result);
     result->clear();
@@ -245,14 +243,9 @@ size_t Base64::GetNextQuantum(DecodeFlags parse_flags,
     return byte_len;
 }
 
-bool Base64::DecodeFromArray(const char *data,
-                             size_t len,
-                             DecodeFlags flags,
-                             std::string *result,
-                             size_t *data_used)
+bool Base64::DecodeFromArray(const char *data, size_t len, DecodeFlags flags, std::string *result, size_t *data_used)
 {
-    return DecodeFromArrayTemplate<std::string>(data, len, flags, result,
-                                                data_used);
+    return DecodeFromArrayTemplate<std::string>(data, len, flags, result, data_used);
 }
 
 bool Base64::DecodeFromArray(const char *data,
@@ -261,8 +254,7 @@ bool Base64::DecodeFromArray(const char *data,
                              std::vector<char> *result,
                              size_t *data_used)
 {
-    return DecodeFromArrayTemplate<std::vector<char >>(data, len, flags, result,
-                                                       data_used);
+    return DecodeFromArrayTemplate<std::vector<char>>(data, len, flags, result, data_used);
 }
 
 bool Base64::DecodeFromArray(const char *data,
@@ -271,16 +263,11 @@ bool Base64::DecodeFromArray(const char *data,
                              std::vector<uint8_t> *result,
                              size_t *data_used)
 {
-    return DecodeFromArrayTemplate<std::vector<uint8_t >>(data, len, flags, result,
-                                                          data_used);
+    return DecodeFromArrayTemplate<std::vector<uint8_t>>(data, len, flags, result, data_used);
 }
 
 template <typename T>
-bool Base64::DecodeFromArrayTemplate(const char *data,
-                                     size_t len,
-                                     DecodeFlags flags,
-                                     T *result,
-                                     size_t *data_used)
+bool Base64::DecodeFromArrayTemplate(const char *data, size_t len, DecodeFlags flags, T *result, size_t *data_used)
 {
     CXXKIT_DCHECK(result);
     CXXKIT_DCHECK_LE(flags, (DO_PARSE_MASK | DO_PAD_MASK | DO_TERM_MASK));
@@ -300,8 +287,7 @@ bool Base64::DecodeFromArrayTemplate(const char *data,
     unsigned char c, qbuf[4];
     while (dpos < len)
     {
-        size_t qlen = GetNextQuantum(parse_flags, (DO_PAD_NO == pad_flags), data,
-                                     len, &dpos, qbuf, &padded);
+        size_t qlen = GetNextQuantum(parse_flags, (DO_PAD_NO == pad_flags), data, len, &dpos, qbuf, &padded);
         c = (qbuf[0] << 2) | ((qbuf[1] >> 4) & 0x3);
         if (qlen >= 2)
         {
@@ -322,18 +308,18 @@ bool Base64::DecodeFromArrayTemplate(const char *data,
         {
             if ((DO_TERM_ANY != term_flags) && (0 != c))
             {
-                success = false;  // unused bits
+                success = false; // unused bits
             }
             if ((DO_PAD_YES == pad_flags) && !padded)
             {
-                success = false;  // expected padding
+                success = false; // expected padding
             }
             break;
         }
     }
     if ((DO_TERM_BUFFER == term_flags) && (dpos != len))
     {
-        success = false;  // unused chars
+        success = false; // unused chars
     }
     if (data_used)
     {

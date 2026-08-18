@@ -142,7 +142,7 @@ inline CXXKIT_CXX14_CONSTEXPR Frequency operator/(const DataRate rate, const Dat
 inline CXXKIT_CXX14_CONSTEXPR DataRate operator*(const DataSize size, const Frequency frequency)
 {
     CXXKIT_DCHECK(frequency.IsZero() ||
-                size.bytes() <= std::numeric_limits<int64_t>::max() / 8 / frequency.millihertz<int64_t>());
+                  size.bytes() <= std::numeric_limits<int64_t>::max() / 8 / frequency.millihertz<int64_t>());
     int64_t millibits_per_second = size.bytes() * 8 * frequency.millihertz<int64_t>();
     return DataRate::BitsPerSec((millibits_per_second + 500) / 1000);
 }

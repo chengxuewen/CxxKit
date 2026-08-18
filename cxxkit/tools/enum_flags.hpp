@@ -241,7 +241,10 @@ public:
      *
      * @return A EnumFlags object containing the result of the bitwise `OR` operation on this object and \p f.
      */
-    CXXKIT_CONSTEXPR inline EnumFlags operator|(EnumFlags f) const CXXKIT_NOEXCEPT { return EnumFlags(mValue | f.mValue); }
+    CXXKIT_CONSTEXPR inline EnumFlags operator|(EnumFlags f) const CXXKIT_NOEXCEPT
+    {
+        return EnumFlags(mValue | f.mValue);
+    }
 
     /**
      * @brief Performs a bitwise `XOR` operation on this object and \p f
@@ -260,7 +263,10 @@ public:
      *
      * @return A EnumFlags object containing the result of the bitwise `XOR` operation on this object and \p f.
      */
-    CXXKIT_CONSTEXPR inline EnumFlags operator^(EnumFlags f) const CXXKIT_NOEXCEPT { return EnumFlags(mValue ^ f.mValue); }
+    CXXKIT_CONSTEXPR inline EnumFlags operator^(EnumFlags f) const CXXKIT_NOEXCEPT
+    {
+        return EnumFlags(mValue ^ f.mValue);
+    }
 
     /**
      * @brief Performs a bitwise `AND` operation on this object and \p f
@@ -287,7 +293,10 @@ public:
      *
      * @return A EnumFlags object containing the result of the bitwise `AND` operation on this object and \p mask.
      */
-    CXXKIT_CONSTEXPR inline EnumFlags operator&(uint32_t mask) const CXXKIT_NOEXCEPT { return EnumFlags(mValue & mask); }
+    CXXKIT_CONSTEXPR inline EnumFlags operator&(uint32_t mask) const CXXKIT_NOEXCEPT
+    {
+        return EnumFlags(mValue & mask);
+    }
 
     /**
      * @brief Performs a bitwise negation of the current object
@@ -321,9 +330,9 @@ public:
     }
 
 private:
-    CXXKIT_CONSTEXPR static inline Value initializer_list_helper(typename std::initializer_list<Enum>::const_iterator it,
-                                                               typename std::initializer_list<Enum>::const_iterator end)
-        CXXKIT_NOEXCEPT
+    CXXKIT_CONSTEXPR static inline Value initializer_list_helper(
+        typename std::initializer_list<Enum>::const_iterator it,
+        typename std::initializer_list<Enum>::const_iterator end) CXXKIT_NOEXCEPT
     {
         return (it == end ? Value(0) : (Value(*it) | initializer_list_helper(it + 1, end)));
     }
@@ -335,19 +344,20 @@ CXXKIT_END_NAMESPACE
 
 #define CXXKIT_DECLARE_ENUM_FLAGS(Flags, Enum) using Flags = cxxkit::EnumFlags<Enum>;
 
-#define CXXKIT_DECLARE_ENUM_FLAGS_OPERATORS(Flags)                                                                       \
-    CXXKIT_CONSTEXPR inline cxxkit::EnumFlags<Flags::type> operator|(Flags::type lhs, Flags::type rhs) CXXKIT_NOEXCEPT       \
+#define CXXKIT_DECLARE_ENUM_FLAGS_OPERATORS(Flags)                                                                     \
+    CXXKIT_CONSTEXPR inline cxxkit::EnumFlags<Flags::type> operator|(Flags::type lhs, Flags::type rhs) CXXKIT_NOEXCEPT \
     {                                                                                                                  \
-        return (cxxkit::EnumFlags<Flags::type>(lhs) | rhs);                                                              \
+        return (cxxkit::EnumFlags<Flags::type>(lhs) | rhs);                                                            \
     }                                                                                                                  \
-    CXXKIT_CONSTEXPR inline cxxkit::EnumFlags<Flags::type> operator|(Flags::type lhs, cxxkit::EnumFlags<Flags::type> rhs)    \
-        CXXKIT_NOEXCEPT                                                                                                  \
+    CXXKIT_CONSTEXPR inline cxxkit::EnumFlags<Flags::type> operator|(Flags::type lhs,                                  \
+                                                                     cxxkit::EnumFlags<Flags::type> rhs)               \
+        CXXKIT_NOEXCEPT                                                                                                \
     {                                                                                                                  \
         return (rhs | lhs);                                                                                            \
     }                                                                                                                  \
-    CXXKIT_CONSTEXPR inline cxxkit::detail::InvalidEnumFlag operator|(Flags::type lhs, int rhs)                            \
+    CXXKIT_CONSTEXPR inline cxxkit::detail::InvalidEnumFlag operator|(Flags::type lhs, int rhs)                        \
     {                                                                                                                  \
-        return cxxkit::detail::InvalidEnumFlag(int(lhs) | rhs);                                                          \
+        return cxxkit::detail::InvalidEnumFlag(int(lhs) | rhs);                                                        \
     }
 
 template <typename T>

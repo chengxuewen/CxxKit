@@ -46,30 +46,30 @@
 #define CXXKIT_NAMESPACE               cxxkit
 #define CXXKIT_PREPEND_NAMESPACE(name) ::CXXKIT_NAMESPACE::name
 #define CXXKIT_USE_NAMESPACE           using namespace ::CXXKIT_NAMESPACE;
-#define CXXKIT_BEGIN_NAMESPACE                                                                                           \
-    CXXKIT_WARNING_PUSH CXXKIT_WARNING_DISABLE_MSVC(4251) namespace CXXKIT_NAMESPACE                                         \
+#define CXXKIT_BEGIN_NAMESPACE                                                                                         \
+    CXXKIT_WARNING_PUSH CXXKIT_WARNING_DISABLE_MSVC(4251) namespace CXXKIT_NAMESPACE                                   \
     {
-#define CXXKIT_END_NAMESPACE                                                                                             \
+#define CXXKIT_END_NAMESPACE                                                                                           \
     }                                                                                                                  \
     CXXKIT_WARNING_POP
 #define CXXKIT_BEGIN_INCLUDE_NAMESPACE }
-#define CXXKIT_END_INCLUDE_NAMESPACE                                                                                     \
-    namespace CXXKIT_NAMESPACE                                                                                           \
+#define CXXKIT_END_INCLUDE_NAMESPACE                                                                                   \
+    namespace CXXKIT_NAMESPACE                                                                                         \
     {
-#define CXXKIT_FORWARD_DECLARE_CLASS(name)                                                                               \
-    CXXKIT_BEGIN_NAMESPACE class name;                                                                                   \
-    CXXKIT_END_NAMESPACE                                                                                                 \
+#define CXXKIT_FORWARD_DECLARE_CLASS(name)                                                                             \
+    CXXKIT_BEGIN_NAMESPACE class name;                                                                                 \
+    CXXKIT_END_NAMESPACE                                                                                               \
     using CXXKIT_PREPEND_NAMESPACE(name);
 
-#define CXXKIT_FORWARD_DECLARE_STRUCT(name)                                                                              \
-    CXXKIT_BEGIN_NAMESPACE struct name;                                                                                  \
-    CXXKIT_END_NAMESPACE                                                                                                 \
+#define CXXKIT_FORWARD_DECLARE_STRUCT(name)                                                                            \
+    CXXKIT_BEGIN_NAMESPACE struct name;                                                                                \
+    CXXKIT_END_NAMESPACE                                                                                               \
     using CXXKIT_PREPEND_NAMESPACE(name);
 
 #define CXXKIT_MANGLE_NAMESPACE0(x)    x
 #define CXXKIT_MANGLE_NAMESPACE1(a, b) a##_##b
 #define CXXKIT_MANGLE_NAMESPACE2(a, b) CXXKIT_MANGLE_NAMESPACE1(a, b)
-#define CXXKIT_MANGLE_NAMESPACE(name)                                                                                    \
+#define CXXKIT_MANGLE_NAMESPACE(name)                                                                                  \
     CXXKIT_MANGLE_NAMESPACE2(CXXKIT_MANGLE_NAMESPACE0(name), CXXKIT_MANGLE_NAMESPACE0(CXXKIT_NAMESPACE))
 
 namespace CXXKIT_NAMESPACE
@@ -136,7 +136,7 @@ namespace CXXKIT_NAMESPACE
 #    define CXXKIT_EQ_DEFAULT_FUNC = default;
 #else
 #    define CXXKIT_EQ_DEFAULT
-#    define CXXKIT_EQ_DEFAULT_FUNC                                                                                       \
+#    define CXXKIT_EQ_DEFAULT_FUNC                                                                                     \
         {                                                                                                              \
         }
 #endif
@@ -146,7 +146,7 @@ namespace CXXKIT_NAMESPACE
 #    define CXXKIT_EQ_DELETE_FUNC = delete;
 #else
 #    define CXXKIT_EQ_DELETE
-#    define CXXKIT_EQ_DELETE_FUNC                                                                                        \
+#    define CXXKIT_EQ_DELETE_FUNC                                                                                      \
         {                                                                                                              \
         }
 #endif
@@ -167,20 +167,20 @@ namespace CXXKIT_NAMESPACE
 /***********************************************************************************************************************
   * disable copy move macro declare
 ***********************************************************************************************************************/
-#define CXXKIT_DECLARE_DISABLE_COPY(Class)                                                                               \
-    Class(const Class &) CXXKIT_EQ_DELETE;                                                                               \
+#define CXXKIT_DECLARE_DISABLE_COPY(Class)                                                                             \
+    Class(const Class &) CXXKIT_EQ_DELETE;                                                                             \
     Class &operator=(const Class &) CXXKIT_EQ_DELETE;
 
 #if CXXKIT_CC_FEATURE_RVALUE_REFS
-#    define CXXKIT_DECLARE_DISABLE_MOVE(Class)                                                                           \
-        Class(Class &&) CXXKIT_EQ_DELETE;                                                                                \
+#    define CXXKIT_DECLARE_DISABLE_MOVE(Class)                                                                         \
+        Class(Class &&) CXXKIT_EQ_DELETE;                                                                              \
         Class &operator=(Class &&) CXXKIT_EQ_DELETE;
 #else
 #    define CXXKIT_DECLARE_DISABLE_MOVE(Class)
 #endif
 
-#define CXXKIT_DISABLE_COPY_MOVE(Class)                                                                                  \
-    CXXKIT_DECLARE_DISABLE_COPY(Class)                                                                                   \
+#define CXXKIT_DISABLE_COPY_MOVE(Class)                                                                                \
+    CXXKIT_DECLARE_DISABLE_COPY(Class)                                                                                 \
     CXXKIT_DECLARE_DISABLE_MOVE(Class)
 
 
@@ -188,9 +188,9 @@ namespace CXXKIT_NAMESPACE
   * static variable macro
 ***********************************************************************************************************************/
 #if CXXKIT_BUILD_CXX_STANDARD_11
-#    define CXXKIT_STATIC_CONSTANT_NUMBER(name, number)                                                                  \
-        CXXKIT_WARNING_PUSH                                                                                              \
-        CXXKIT_WARNING_DISABLE_CLANG("-Wdeprecated-anon-enum-enum-conversion")                                           \
+#    define CXXKIT_STATIC_CONSTANT_NUMBER(name, number)                                                                \
+        CXXKIT_WARNING_PUSH                                                                                            \
+        CXXKIT_WARNING_DISABLE_CLANG("-Wdeprecated-anon-enum-enum-conversion")                                         \
         enum : decltype(number)                                                                                        \
         {                                                                                                              \
             name = static_cast<decltype(number)>(number)                                                               \
@@ -224,38 +224,38 @@ static inline typename Wrapper::Pointer getPointerHelper(const Wrapper &p)
 CXXKIT_END_NAMESPACE
 
 // The body must be a statement:
-#define CXXKIT_CAST_IGNORE_ALIGN(body)                                                                                   \
-    CXXKIT_WARNING_PUSH                                                                                                  \
-    CXXKIT_WARNING_DISABLE_GCC("-Wcast-align")                                                                           \
+#define CXXKIT_CAST_IGNORE_ALIGN(body)                                                                                 \
+    CXXKIT_WARNING_PUSH                                                                                                \
+    CXXKIT_WARNING_DISABLE_GCC("-Wcast-align")                                                                         \
     body CXXKIT_WARNING_POP
 
 #define CXXKIT_DEFINE_DPTR(Class) std::unique_ptr<Class##Private> mDPtr;
 
-#define CXXKIT_DECLARE_PRIVATE(Class)                                                                                    \
+#define CXXKIT_DECLARE_PRIVATE(Class)                                                                                  \
     inline Class##Private *dFunc()                                                                                     \
     {                                                                                                                  \
-        CXXKIT_CAST_IGNORE_ALIGN(return reinterpret_cast<Class##Private *>(cxxkit::getPointerHelper(mDPtr));)              \
+        CXXKIT_CAST_IGNORE_ALIGN(return reinterpret_cast<Class##Private *>(cxxkit::getPointerHelper(mDPtr));)          \
     }                                                                                                                  \
     inline const Class##Private *dFunc() const                                                                         \
     {                                                                                                                  \
-        CXXKIT_CAST_IGNORE_ALIGN(return reinterpret_cast<const Class##Private *>(cxxkit::getPointerHelper(mDPtr));)        \
+        CXXKIT_CAST_IGNORE_ALIGN(return reinterpret_cast<const Class##Private *>(cxxkit::getPointerHelper(mDPtr));)    \
     }                                                                                                                  \
     friend class Class##Private;
 
-#define CXXKIT_DECLARE_PRIVATE_D(DPtr, Class)                                                                            \
+#define CXXKIT_DECLARE_PRIVATE_D(DPtr, Class)                                                                          \
     inline Class##Private *dFunc()                                                                                     \
     {                                                                                                                  \
-        CXXKIT_CAST_IGNORE_ALIGN(return reinterpret_cast<Class##Private *>(cxxkit::getPointerHelper(DPtr));)               \
+        CXXKIT_CAST_IGNORE_ALIGN(return reinterpret_cast<Class##Private *>(cxxkit::getPointerHelper(DPtr));)           \
     }                                                                                                                  \
     inline const Class##Private *dFunc() const                                                                         \
     {                                                                                                                  \
-        CXXKIT_CAST_IGNORE_ALIGN(return reinterpret_cast<const Class##Private *>(cxxkit::getPointerHelper(DPtr));)         \
+        CXXKIT_CAST_IGNORE_ALIGN(return reinterpret_cast<const Class##Private *>(cxxkit::getPointerHelper(DPtr));)     \
     }                                                                                                                  \
     friend class Class##Private;
 
 #define CXXKIT_DEFINE_PPTR(Class) Class *const mPPtr;
 
-#define CXXKIT_DECLARE_PUBLIC(Class)                                                                                     \
+#define CXXKIT_DECLARE_PUBLIC(Class)                                                                                   \
     inline Class *pFunc()                                                                                              \
     {                                                                                                                  \
         return static_cast<Class *>(mPPtr);                                                                            \
@@ -266,7 +266,7 @@ CXXKIT_END_NAMESPACE
     }                                                                                                                  \
     friend class Class;
 
-#define CXXKIT_DECLARE_PUBLIC_P(PPtr, Class)                                                                             \
+#define CXXKIT_DECLARE_PUBLIC_P(PPtr, Class)                                                                           \
     inline Class *pFunc()                                                                                              \
     {                                                                                                                  \
         return static_cast<Class *>(PPtr);                                                                             \
@@ -328,11 +328,11 @@ CXXKIT_END_NAMESPACE
 /***********************************************************************************************************************
  * number cc macro
 ***********************************************************************************************************************/
-#define CXXKIT_FOURCC(c1, c2, c3, c4)                                                                                    \
+#define CXXKIT_FOURCC(c1, c2, c3, c4)                                                                                  \
     ((static_cast<uint32_t>(c1)) | (static_cast<uint32_t>(c2) << 8) | (static_cast<uint32_t>(c3) << 16) | /* NOLINT */ \
      (static_cast<uint32_t>(c4) << 24))                                                                   /* NOLINT */
 
-#define CXXKIT_EIGHTCC(c1, c2, c3, c4, c5, c6, c7, c8)                                                                   \
+#define CXXKIT_EIGHTCC(c1, c2, c3, c4, c5, c6, c7, c8)                                                                 \
     ((static_cast<uint64_t>(c1)) | (static_cast<uint64_t>(c2) << 8) | (static_cast<uint64_t>(c3) << 16) | /* NOLINT */ \
      (static_cast<uint64_t>(c4) << 24) | (static_cast<uint64_t>(c5) << 32) | (static_cast<uint64_t>(c6) << 40) |       \
      (static_cast<uint64_t>(c7) << 48) | (static_cast<uint64_t>(c8) << 56)) /* NOLINT */
@@ -417,7 +417,10 @@ CXXKIT_END_NAMESPACE
 #define CXXKIT_STRINGIFY(macro_or_string) CXXKIT_STRINGIFY_ARG(macro_or_string)
 #define CXXKIT_STRINGIFY_ARG(contents)    #contents
 
-#define CXXKIT_ZERO_INIT {0}
+#define CXXKIT_ZERO_INIT                                                                                               \
+    {                                                                                                                  \
+        0                                                                                                              \
+    }
 
 // Note: this internal template function declaration is used by ABSL_ARRAYSIZE.
 // The function doesn't need a definition, as we only use its type.
@@ -524,9 +527,9 @@ auto cxxkitArraySizeHelper(const T (&array)[N]) -> char (&)[N];
  * As a workaround, we can pass the result to an identity macro to force MSVC to look for replacements again.
  * (This is why CXXKIT_EXPORT_TEMPLATE_STYLE_3 exists.)
  */
-#define CXXKIT_EXPORT_TEMPLATE_DECLARE(export)                                                                           \
+#define CXXKIT_EXPORT_TEMPLATE_DECLARE(export)                                                                         \
     CXXKIT_EXPORT_TEMPLATE_INVOKE(DECLARE, CXXKIT_EXPORT_TEMPLATE_STYLE(export, ), export) // NOLINT
-#define CXXKIT_EXPORT_TEMPLATE_DEFINE(export)                                                                            \
+#define CXXKIT_EXPORT_TEMPLATE_DEFINE(export)                                                                          \
     CXXKIT_EXPORT_TEMPLATE_INVOKE(DEFINE, CXXKIT_EXPORT_TEMPLATE_STYLE(export, ), export) // NOLINT
 
 /**
@@ -563,7 +566,7 @@ auto cxxkitArraySizeHelper(const T (&array)[N]) -> char (&)[N];
 //     CXXKIT_EXPORT_TEMPLATE_STYLE_MATCH_DECLSPEC_dllimport
 //     DEFAULT
 #define CXXKIT_EXPORT_TEMPLATE_STYLE(export, _) CXXKIT_EXPORT_TEMPLATE_STYLE_2(export, )
-#define CXXKIT_EXPORT_TEMPLATE_STYLE_2(export, _)                                                                        \
+#define CXXKIT_EXPORT_TEMPLATE_STYLE_2(export, _)                                                                      \
     CXXKIT_EXPORT_TEMPLATE_STYLE_3(CXXKIT_EXPORT_TEMPLATE_STYLE_MATCH_foj3FJo5StF0OvIzl7oMxA##export)
 #define CXXKIT_EXPORT_TEMPLATE_STYLE_3(style) style
 
@@ -576,7 +579,7 @@ auto cxxkitArraySizeHelper(const T (&array)[N]) -> char (&)[N];
 // 128-bit string, encoded in Base64) in the macro name.
 #define CXXKIT_EXPORT_TEMPLATE_STYLE_MATCH_foj3FJo5StF0OvIzl7oMxA                   DEFAULT
 #define CXXKIT_EXPORT_TEMPLATE_STYLE_MATCH_foj3FJo5StF0OvIzl7oMxA__attribute__(...) DEFAULT
-#define CXXKIT_EXPORT_TEMPLATE_STYLE_MATCH_foj3FJo5StF0OvIzl7oMxA__declspec(arg)                                         \
+#define CXXKIT_EXPORT_TEMPLATE_STYLE_MATCH_foj3FJo5StF0OvIzl7oMxA__declspec(arg)                                       \
     CXXKIT_EXPORT_TEMPLATE_STYLE_MATCH_DECLSPEC_##arg
 
 // Internal helper macros for CXXKIT_EXPORT_TEMPLATE_STYLE.
@@ -605,8 +608,8 @@ auto cxxkitArraySizeHelper(const T (&array)[N]) -> char (&)[N];
 //     static_assert(true, "__declspec(dllimport)");
 //
 // When they're not working correctly, a syntax error should occur instead.
-#define CXXKIT_EXPORT_TEMPLATE_TEST(want, export)                                                                        \
-    static_assert(CXXKIT_EXPORT_TEMPLATE_INVOKE(TEST_##want, CXXKIT_EXPORT_TEMPLATE_STYLE(export, ), export),              \
+#define CXXKIT_EXPORT_TEMPLATE_TEST(want, export)                                                                      \
+    static_assert(CXXKIT_EXPORT_TEMPLATE_INVOKE(TEST_##want, CXXKIT_EXPORT_TEMPLATE_STYLE(export, ), export),          \
                   #export) // NOLINT
 #define CXXKIT_EXPORT_TEMPLATE_TEST_DEFAULT_DEFAULT(...)     true
 #define CXXKIT_EXPORT_TEMPLATE_TEST_MSVC_HACK_MSVC_HACK(...) true
@@ -720,22 +723,30 @@ CXXKIT_EXPORT_TEMPLATE_TEST(DEFAULT, __declspec(dllimport));
  * CONSTRUCTORS DESTRUCTOR macro
 ***********************************************************************************************************************/
 #if defined(__cplusplus)
-#    define CXXKIT__CONSTRUCTOR_FUNCTION_WITH_ARGS(_func)                                                                \
+#    define CXXKIT__CONSTRUCTOR_FUNCTION_WITH_ARGS(_func)                                                              \
         namespace                                                                                                      \
         {                                                                                                              \
         static const struct _func##_ctor_class_                                                                        \
         {                                                                                                              \
-            inline _func##_ctor_class_() { _func(); }                                                                  \
+            inline _func##_ctor_class_()                                                                               \
+            {                                                                                                          \
+                _func();                                                                                               \
+            }                                                                                                          \
         } _func##_ctor_instance_;                                                                                      \
         }
 #    define CXXKIT_CONSTRUCTOR_FUNCTION(_func) CXXKIT__CONSTRUCTOR_FUNCTION_WITH_ARGS(_func)
-#    define CXXKIT__DESTRUCTOR_FUNCTION_WITH_ARGS(_func)                                                                 \
+#    define CXXKIT__DESTRUCTOR_FUNCTION_WITH_ARGS(_func)                                                               \
         namespace                                                                                                      \
         {                                                                                                              \
         static const struct _func##_dtor_class_                                                                        \
         {                                                                                                              \
-            inline _func##_dtor_class_() { }                                                                           \
-            inline ~_func##_dtor_class_() { _func(); }                                                                 \
+            inline _func##_dtor_class_()                                                                               \
+            {                                                                                                          \
+            }                                                                                                          \
+            inline ~_func##_dtor_class_()                                                                              \
+            {                                                                                                          \
+                _func();                                                                                               \
+            }                                                                                                          \
         } _func##_dtor_instance_;                                                                                      \
         }
 #    define CXXKIT_DESTRUCTOR_FUNCTION(_func) CXXKIT__DESTRUCTOR_FUNCTION_WITH_ARGS(_func)
@@ -757,7 +768,7 @@ CXXKIT_EXPORT_TEMPLATE_TEST(DEFAULT, __declspec(dllimport));
 #        else
 #            define CXXKIT__MSVC_SYMBOL_PREFIX ""
 #        endif
-#        define CXXKIT__MSVC_CTOR(_func, _sym_prefix)                                                                    \
+#        define CXXKIT__MSVC_CTOR(_func, _sym_prefix)                                                                  \
             static void _func(void);                                                                                   \
             int _func##_wrapper(void);                                                                                 \
             int _func##_wrapper(void)                                                                                  \
@@ -765,11 +776,11 @@ CXXKIT_EXPORT_TEMPLATE_TEST(DEFAULT, __declspec(dllimport));
                 _func();                                                                                               \
                 return 0;                                                                                              \
             }                                                                                                          \
-            CXXKIT_PRAGMA(comment(linker, "/include:" _sym_prefix #_func "_wrapper"))                                    \
-            CXXKIT_PRAGMA(section(".CRT$XCU", read))                                                                     \
+            CXXKIT_PRAGMA(comment(linker, "/include:" _sym_prefix #_func "_wrapper"))                                  \
+            CXXKIT_PRAGMA(section(".CRT$XCU", read))                                                                   \
             __declspec(allocate(".CRT$XCU")) int (*_func##_wrapper_ptr)(void) = _func##_wrapper;
 #        define CXXKIT_CONSTRUCTOR_FUNCTION(_func) CXXKIT__MSVC_CTOR(_func, CXXKIT__MSVC_SYMBOL_PREFIX)
-#        define CXXKIT__MSVC_DTOR(_func, _sym_prefix)                                                                    \
+#        define CXXKIT__MSVC_DTOR(_func, _sym_prefix)                                                                  \
             static void _func(void);                                                                                   \
             int _func##_constructor(void);                                                                             \
             int _func##_constructor(void)                                                                              \
@@ -777,15 +788,15 @@ CXXKIT_EXPORT_TEMPLATE_TEST(DEFAULT, __declspec(dllimport));
                 atexit(_func);                                                                                         \
                 return 0;                                                                                              \
             }                                                                                                          \
-            CXXKIT_PRAGMA(comment(linker, "/include:" _sym_prefix #_func "_constructor"))                                \
-            CXXKIT_PRAGMA(section(".CRT$XCU", read))                                                                     \
+            CXXKIT_PRAGMA(comment(linker, "/include:" _sym_prefix #_func "_constructor"))                              \
+            CXXKIT_PRAGMA(section(".CRT$XCU", read))                                                                   \
             __declspec(allocate(".CRT$XCU")) int (*_func##_constructor_ptr)(void) = _func##_constructor;
 #        define CXXKIT_DESTRUCTOR_FUNCTION(_func) CXXKIT__MSVC_DTOR(_func, CXXKIT__MSVC_SYMBOL_PREFIX)
 #    elif defined(_MSC_VER)
 //  Pre Visual studio 2008 must use #pragma section
 #        define CXXKIT__CONSTRUCTOR_FUNCTION_PRAGMA_ARGS(_func) section(".CRT$XCU", read)
-#        define CXXKIT_CONSTRUCTOR_FUNCTION(_func)                                                                       \
-            CXXKIT_PRAGMA(CXXKIT__CONSTRUCTOR_FUNCTION_PRAGMA_ARGS(_func))                                                 \
+#        define CXXKIT_CONSTRUCTOR_FUNCTION(_func)                                                                     \
+            CXXKIT_PRAGMA(CXXKIT__CONSTRUCTOR_FUNCTION_PRAGMA_ARGS(_func))                                             \
             static void _func(void);                                                                                   \
             static int _func##_wrapper(void)                                                                           \
             {                                                                                                          \
@@ -794,8 +805,8 @@ CXXKIT_EXPORT_TEMPLATE_TEST(DEFAULT, __declspec(dllimport));
             }                                                                                                          \
             __declspec(allocate(".CRT$XCU")) static int (*p)(void) = _func##_wrapper;
 #        define CXXKIT__DESTRUCTOR_FUNCTION_PRAGMA_ARGS(_func) section(".CRT$XCU", read)
-#        define CXXKIT_DESTRUCTOR_FUNCTION(_func)                                                                        \
-            CXXKIT_PRAGMA(CXXKIT__DESTRUCTOR_FUNCTION_PRAGMA_ARGS(_func))                                                  \
+#        define CXXKIT_DESTRUCTOR_FUNCTION(_func)                                                                      \
+            CXXKIT_PRAGMA(CXXKIT__DESTRUCTOR_FUNCTION_PRAGMA_ARGS(_func))                                              \
             static void _func(void);                                                                                   \
             static int _func##_constructor(void)                                                                       \
             {                                                                                                          \
@@ -808,12 +819,12 @@ CXXKIT_EXPORT_TEMPLATE_TEST(DEFAULT, __declspec(dllimport));
 //  http://opensource.apple.com/source/OpenSSL098/OpenSSL098-35/src/fips/fips_premain.c
 #        define CXXKIT_DEFINE_CTOR_DTOR_NEEDS_PRAGMA
 #        define CXXKIT__CONSTRUCTOR_FUNCTION_PRAGMA_ARGS(_func) init(_func)
-#        define CXXKIT_CONSTRUCTOR_FUNCTION(_func)                                                                       \
-            CXXKIT_PRAGMA(CXXKIT__CONSTRUCTOR_FUNCTION_PRAGMA_ARGS(_func))                                                 \
+#        define CXXKIT_CONSTRUCTOR_FUNCTION(_func)                                                                     \
+            CXXKIT_PRAGMA(CXXKIT__CONSTRUCTOR_FUNCTION_PRAGMA_ARGS(_func))                                             \
             static void _func(void);
 #        define CXXKIT__DESTRUCTOR_FUNCTION_PRAGMA_ARGS(_func) fini(_func)
-#        define CXXKIT_DESTRUCTOR_FUNCTION(_func)                                                                        \
-            CXXKIT_PRAGMA(CXXKIT__DESTRUCTOR_FUNCTION_PRAGMA_ARGS(_func))                                                  \
+#        define CXXKIT_DESTRUCTOR_FUNCTION(_func)                                                                      \
+            CXXKIT_PRAGMA(CXXKIT__DESTRUCTOR_FUNCTION_PRAGMA_ARGS(_func))                                              \
             static void _func(void);
 #    else
 #        error "unimplemented constructor/destructor macro"
@@ -837,7 +848,7 @@ CXXKIT_EXPORT_TEMPLATE_TEST(DEFAULT, __declspec(dllimport));
  * As a result, annotating every branch in a codebase is likely counterproductive; however, annotating specific
  * branches that are both hot and consistently mispredicted is likely to yield performance improvements.
 ***********************************************************************************************************************/
-#if (CXXKIT_CC_HAS_BUILTIN(__builtin_expect) || (defined(__GNUC__) && !defined(__clang__))) ||                           \
+#if (CXXKIT_CC_HAS_BUILTIN(__builtin_expect) || (defined(__GNUC__) && !defined(__clang__))) ||                         \
     (defined(CXXKIT_CC_GNU) && (CXXKIT_CC_GNU >= 200) && defined(__OPTIMIZE__))
 #    define CXXKIT_LIKELY(expr)   __builtin_expect(!!(expr), true)
 #    define CXXKIT_UNLIKELY(expr) __builtin_expect(!!(expr), false)
@@ -934,18 +945,18 @@ CXXKIT_EXPORT_TEMPLATE_TEST(DEFAULT, __declspec(dllimport));
  */
 #if CXXKIT_CC_HAS_ATTRIBUTE(__format__)
 #    if !defined(__clang__) && CXXKIT_CC_GNU_CHECK_VERSION(4, 4)
-#        define CXXKIT_ATTRIBUTE_FORMAT_PRINTF(format_idx, arg_idx)                                                      \
+#        define CXXKIT_ATTRIBUTE_FORMAT_PRINTF(format_idx, arg_idx)                                                    \
             __attribute__((__format__(gnu_printf, (format_idx), (arg_idx))))
 #    else
-#        define CXXKIT_ATTRIBUTE_FORMAT_PRINTF(format_idx, arg_idx)                                                      \
+#        define CXXKIT_ATTRIBUTE_FORMAT_PRINTF(format_idx, arg_idx)                                                    \
             __attribute__((__format__(__printf__, (format_idx), (arg_idx))))
 #    endif
 #elif (defined(CXXKIT_CC_GNU) || defined(CXXKIT_CC_CLANG)) && !defined(__INSURE__)
 #    if defined(CXXKIT_CC_MINGW) && !defined(CXXKIT_CC_CLANG)
-#        define CXXKIT_ATTRIBUTE_FORMAT_PRINTF(format_idx, arg_idx)                                                      \
+#        define CXXKIT_ATTRIBUTE_FORMAT_PRINTF(format_idx, arg_idx)                                                    \
             __attribute__((format(gnu_printf, (format_idx), (arg_idx))))
 #    else
-#        define CXXKIT_ATTRIBUTE_FORMAT_PRINTF(format_idx, arg_idx)                                                      \
+#        define CXXKIT_ATTRIBUTE_FORMAT_PRINTF(format_idx, arg_idx)                                                    \
             __attribute__((format(printf, (format_idx), (arg_idx))))
 #    endif
 #else

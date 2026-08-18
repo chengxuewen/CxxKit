@@ -32,10 +32,12 @@
 ***********************************************************************************************************************/
 CXXKIT_CORE_API void cxxkit_assert_x(const char *where, const char *what, const char *file, int line) CXXKIT_NOTHROW;
 CXXKIT_CORE_API void cxxkit_assert(const char *assertion, const char *file, int line) CXXKIT_NOTHROW;
-static inline void cxxkit_noop(void) { }
+static inline void cxxkit_noop(void)
+{
+}
 #if !defined(CXXKIT_ASSERT)
 #    if defined(CXXKIT_NO_DEBUG) && !defined(CXXKIT_FORCE_ASSERTS)
-#        define CXXKIT_ASSERT(cond)                                                                                      \
+#        define CXXKIT_ASSERT(cond)                                                                                    \
             do                                                                                                         \
             {                                                                                                          \
             } while ((false) && (cond))
@@ -45,12 +47,12 @@ static inline void cxxkit_noop(void) { }
 #endif
 #if !defined(CXXKIT_ASSERT_X)
 #    if defined(CXXKIT_NO_DEBUG) && !defined(CXXKIT_FORCE_ASSERTS)
-#        define CXXKIT_ASSERT_X(cond, where, what)                                                                       \
+#        define CXXKIT_ASSERT_X(cond, where, what)                                                                     \
             do                                                                                                         \
             {                                                                                                          \
             } while ((false) && (cond))
 #    else
-#        define CXXKIT_ASSERT_X(cond, where, what)                                                                       \
+#        define CXXKIT_ASSERT_X(cond, where, what)                                                                     \
             ((!(cond)) ? cxxkit_assert_x(where, what, __FILE__, __LINE__) : cxxkit_noop())
 #    endif
 #endif
@@ -63,14 +65,16 @@ static inline void cxxkit_noop(void) { }
  * The implementation should abort the program as quickly as possible and ideally it should not be possible
  * to ignore the abort request.
  */
-#if (CXXKIT_CC_HAS_BUILTIN(__builtin_trap) && CXXKIT_CC_HAS_BUILTIN(__builtin_unreachable)) || (defined(__GNUC__) && !defined(__clang__))
-#   define CXXKIT_INTERNAL_HARDENING_ABORT() \
-        do { \
-            __builtin_trap(); \
-            __builtin_unreachable(); \
+#if (CXXKIT_CC_HAS_BUILTIN(__builtin_trap) && CXXKIT_CC_HAS_BUILTIN(__builtin_unreachable)) ||                         \
+    (defined(__GNUC__) && !defined(__clang__))
+#    define CXXKIT_INTERNAL_HARDENING_ABORT()                                                                          \
+        do                                                                                                             \
+        {                                                                                                              \
+            __builtin_trap();                                                                                          \
+            __builtin_unreachable();                                                                                   \
         } while (false)
 #else
-#   define CXXKIT_INTERNAL_HARDENING_ABORT() abort()
+#    define CXXKIT_INTERNAL_HARDENING_ABORT() abort()
 #endif
 
 /**
@@ -81,7 +85,7 @@ static inline void cxxkit_noop(void) { }
  * identical to `ABSL_ASSERT()`.
  */
 #if CXXKIT_FEATURE_ENABLE_HARDENING_ASSERT && defined(NDEBUG)
-#    define CXXKIT_HARDENING_ASSERT(expr)                                                                                \
+#    define CXXKIT_HARDENING_ASSERT(expr)                                                                              \
         (CXXKIT_LIKELY((expr)) ? static_cast<void>(0) : [] { CXXKIT_INTERNAL_HARDENING_ABORT(); }())
 #    define CXXKIT_UNREACHABLE() CXXKIT_INTERNAL_HARDENING_ABORT()
 #else

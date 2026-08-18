@@ -527,7 +527,7 @@ TEST(PlatformThreadTest, Waiting)
 TEST(PlatformThreadTest, Create)
 {
     {
-        const auto &function = []() { };
+        const auto &function = []() {};
         auto thread = PlatformThread::create(function);
         EXPECT_TRUE(thread);
         EXPECT_FALSE(thread->isRunning());
@@ -771,7 +771,7 @@ TEST(PlatformThreadTest, Create)
             ThrowWhenCopying &operator=(const ThrowWhenCopying &) = default;
         };
 
-        const auto &function = [](const ThrowWhenCopying &) { };
+        const auto &function = [](const ThrowWhenCopying &) {};
         PlatformThread::UniquePtr thread;
         ThrowWhenCopying t;
         EXPECT_THROW(thread = PlatformThread::create(function, t), ThreadException);

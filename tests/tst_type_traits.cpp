@@ -36,7 +36,8 @@ CXXKIT_BEGIN_NAMESPACE
 
 namespace
 {
-template <typename... Args> std::string StrCat(Args &&...args)
+template <typename... Args>
+std::string StrCat(Args &&...args)
 {
     std::string result;
     for (const auto &elem : {std::forward<Args>(args)...})
@@ -46,11 +47,19 @@ template <typename... Args> std::string StrCat(Args &&...args)
     return result;
 }
 
-int Sink(std::unique_ptr<int> p) { return *p; }
+int Sink(std::unique_ptr<int> p)
+{
+    return *p;
+}
 
-std::unique_ptr<int> Factory(int n) { return utils::make_unique<int>(n); }
+std::unique_ptr<int> Factory(int n)
+{
+    return utils::make_unique<int>(n);
+}
 
-void NoOp() { }
+void NoOp()
+{
+}
 
 struct Functor
 {
@@ -76,12 +85,21 @@ struct EphemeralFunctor
 
 struct OverloadedFunctor
 {
-    template <typename... Args> std::string operator()(const Args &...args) & { return StrCat("&", args...); }
-    template <typename... Args> std::string operator()(const Args &...args) const &
+    template <typename... Args>
+    std::string operator()(const Args &...args) &
+    {
+        return StrCat("&", args...);
+    }
+    template <typename... Args>
+    std::string operator()(const Args &...args) const &
     {
         return StrCat("const&", args...);
     }
-    template <typename... Args> std::string operator()(const Args &...args) && { return StrCat("&&", args...); }
+    template <typename... Args>
+    std::string operator()(const Args &...args) &&
+    {
+        return StrCat("&&", args...);
+    }
 };
 
 struct FlipFlop
@@ -93,19 +111,27 @@ struct FlipFlop
 };
 
 // CallMaybeWithArg(f) resolves either to invoke(f) or invoke(f, 42), depending on which one is valid.
-template <typename F> decltype(traits::invoke(std::declval<const F &>())) CallMaybeWithArg(const F &f)
+template <typename F>
+decltype(traits::invoke(std::declval<const F &>())) CallMaybeWithArg(const F &f)
 {
     return traits::invoke(f);
 }
 
-template <typename F> decltype(traits::invoke(std::declval<const F &>(), 42)) CallMaybeWithArg(const F &f)
+template <typename F>
+decltype(traits::invoke(std::declval<const F &>(), 42)) CallMaybeWithArg(const F &f)
 {
     return traits::invoke(f, 42);
 }
 
-int Function(int a, int b) { return a - b; }
+int Function(int a, int b)
+{
+    return a - b;
+}
 
-int FreeFunction(int, double) { return 0; }
+int FreeFunction(int, double)
+{
+    return 0;
+}
 
 void VoidFunction(int &a, int &b)
 {
@@ -114,7 +140,10 @@ void VoidFunction(int &a, int &b)
     a -= b;
 }
 
-int ZeroArgFunction() { return -1937; }
+int ZeroArgFunction()
+{
+    return -1937;
+}
 
 struct Class
 {
@@ -141,13 +170,25 @@ TEST(InvokeTest, Function)
     EXPECT_EQ(1, traits::invoke(&Function, 3, 2));
 }
 
-TEST(InvokeTest, NonCopyableArgument) { EXPECT_EQ(42, traits::invoke(Sink, utils::make_unique<int>(42))); }
+TEST(InvokeTest, NonCopyableArgument)
+{
+    EXPECT_EQ(42, traits::invoke(Sink, utils::make_unique<int>(42)));
+}
 
-TEST(InvokeTest, NonCopyableResult) { EXPECT_EQ(*traits::invoke(Factory, 42).get(), 42); }
+TEST(InvokeTest, NonCopyableResult)
+{
+    EXPECT_EQ(*traits::invoke(Factory, 42).get(), 42);
+}
 
-TEST(InvokeTest, VoidResult) { traits::invoke(NoOp); }
+TEST(InvokeTest, VoidResult)
+{
+    traits::invoke(NoOp);
+}
 
-TEST(InvokeTest, ConstFunctor) { EXPECT_EQ(1, traits::invoke(ConstFunctor(), 3, 2)); }
+TEST(InvokeTest, ConstFunctor)
+{
+    EXPECT_EQ(1, traits::invoke(ConstFunctor(), 3, 2));
+}
 
 TEST(InvokeTest, MutableFunctor)
 {
@@ -202,7 +243,7 @@ TEST(InvokeTest, MemberFunction)
     EXPECT_EQ(1, traits::invoke(&Class::RefMethod, p.get(), 3, 2));
     EXPECT_EQ(1, traits::invoke(&Class::RefMethod, *p, 3, 2));
     EXPECT_EQ(1, traits::invoke(&Class::RefRefMethod, std::move(*p), 3,
-                                     2)); // NOLINT
+                                2)); // NOLINT
     EXPECT_EQ(1, traits::invoke(&Class::NoExceptMethod, p, 3, 2));
     EXPECT_EQ(1, traits::invoke(&Class::NoExceptMethod, p.get(), 3, 2));
     EXPECT_EQ(1, traits::invoke(&Class::NoExceptMethod, *p, 3, 2));
@@ -287,22 +328,19 @@ TEST(IsInvocableTest, FreeFunctionArgumentTypeMismatch)
 
 TEST(IsInvocableTest, FreeFunctionArgumentCountMismatch)
 {
-    static_assert(!traits::is_invocable<decltype(FreeFunction), int>::value,
-                  "Should be false for too few arguments");
+    static_assert(!traits::is_invocable<decltype(FreeFunction), int>::value, "Should be false for too few arguments");
     static_assert(!traits::is_invocable<decltype(FreeFunction), int, double, char>::value,
                   "Should be false for too many arguments");
 }
 
 TEST(IsInvocableTest, FreeFunctionZeroArgs)
 {
-    static_assert(traits::is_invocable<decltype(ZeroArgFunction)>::value,
-                  "Should be true for zero-arg free function");
+    static_assert(traits::is_invocable<decltype(ZeroArgFunction)>::value, "Should be true for zero-arg free function");
 }
 
 TEST(IsInvocableTest, FunctorExactMatch)
 {
-    static_assert(traits::is_invocable<Functor, int, double>::value,
-                  "Should be true for exact match on a functor");
+    static_assert(traits::is_invocable<Functor, int, double>::value, "Should be true for exact match on a functor");
 }
 
 TEST(IsInvocableTest, ConstFunctorExactMatch)
@@ -404,8 +442,7 @@ TEST(IsInvocableTest, NonCallableTypes)
 {
     static_assert(!traits::is_invocable<int>::value, "Should be false for int");
     static_assert(!traits::is_invocable<double, int>::value, "Should be false for double with argument");
-    static_assert(!traits::is_invocable<std::string, char>::value,
-                  "Should be false for std::string with argument");
+    static_assert(!traits::is_invocable<std::string, char>::value, "Should be false for std::string with argument");
 }
 
 TEST(IsInvocableTest, PointerToNonCallable)
@@ -415,7 +452,7 @@ TEST(IsInvocableTest, PointerToNonCallable)
 
 TEST(IsInvocableTest, LvalueReferenceArguments)
 {
-    auto takes_lvalue_ref = [](int &) { };
+    auto takes_lvalue_ref = [](int &) {};
     int x = 0;
     static_assert(traits::is_invocable<decltype(takes_lvalue_ref), int &>::value,
                   "Should be true for lvalue reference argument");
@@ -427,7 +464,7 @@ TEST(IsInvocableTest, LvalueReferenceArguments)
 
 TEST(IsInvocableTest, ConstLvalueReferenceArguments)
 {
-    auto takes_const_ref = [](const int &) { };
+    auto takes_const_ref = [](const int &) {};
     static_assert(traits::is_invocable<decltype(takes_const_ref), const int &>::value,
                   "Should be true for const lvalue ref to const param");
     static_assert(traits::is_invocable<decltype(takes_const_ref), int &>::value,
@@ -438,7 +475,7 @@ TEST(IsInvocableTest, ConstLvalueReferenceArguments)
 
 TEST(IsInvocableTest, RvalueReferenceArguments)
 {
-    auto takes_rvalue_ref = [](int &&) { };
+    auto takes_rvalue_ref = [](int &&) {};
     static_assert(traits::is_invocable<decltype(takes_rvalue_ref), int>::value,
                   "Should be true for rvalue to rvalue ref param");
     static_assert(!traits::is_invocable<decltype(takes_rvalue_ref), int &>::value,
@@ -447,9 +484,8 @@ TEST(IsInvocableTest, RvalueReferenceArguments)
 
 TEST(IsInvocableTest, VariadicFunction)
 {
-    auto variadic_func = [](auto &&...) { };
-    static_assert(traits::is_invocable<decltype(variadic_func)>::value,
-                  "Should be true for variadic with zero args");
+    auto variadic_func = [](auto &&...) {};
+    static_assert(traits::is_invocable<decltype(variadic_func)>::value, "Should be true for variadic with zero args");
     static_assert(traits::is_invocable<decltype(variadic_func), int>::value,
                   "Should be true for variadic with one arg");
     static_assert(traits::is_invocable<decltype(variadic_func), int, double, std::string>::value,
@@ -458,7 +494,7 @@ TEST(IsInvocableTest, VariadicFunction)
 
 TEST(IsInvocableTest, MoveOnlyArguments)
 {
-    auto takes_unique_ptr = [](std::unique_ptr<int>) { };
+    auto takes_unique_ptr = [](std::unique_ptr<int>) {};
     static_assert(traits::is_invocable<decltype(takes_unique_ptr), std::unique_ptr<int>>::value,
                   "Should be true for move-only type argument");
     static_assert(!traits::is_invocable<decltype(takes_unique_ptr), std::unique_ptr<int> &>::value,

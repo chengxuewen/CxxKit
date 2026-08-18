@@ -38,37 +38,37 @@ class NtpTime
 public:
     static constexpr uint64_t kFractionsPerSecond = 0x100000000;
 
-    NtpTime() : value_(0) {}
-    explicit NtpTime(uint64_t value) : value_(value) {}
-    NtpTime(uint32_t seconds, uint32_t fractions) : value_(seconds * kFractionsPerSecond + fractions) {}
+    NtpTime()
+        : value_(0)
+    {
+    }
+    explicit NtpTime(uint64_t value)
+        : value_(value)
+    {
+    }
+    NtpTime(uint32_t seconds, uint32_t fractions)
+        : value_(seconds * kFractionsPerSecond + fractions)
+    {
+    }
 
     NtpTime(const NtpTime &) = default;
     NtpTime &operator=(const NtpTime &) = default;
     explicit operator uint64_t() const { return value_; }
 
-    void Set(uint32_t seconds, uint32_t fractions)
-    {
-        value_ = seconds * kFractionsPerSecond + fractions;
-    }
+    void Set(uint32_t seconds, uint32_t fractions) { value_ = seconds * kFractionsPerSecond + fractions; }
     void Reset() { value_ = 0; }
 
     int64_t ToMs() const
     {
-        static constexpr double kNtpFracPerMs = 4.294967296E6;  // 2^32 / 1000.
+        static constexpr double kNtpFracPerMs = 4.294967296E6; // 2^32 / 1000.
         const double frac_ms = static_cast<double>(fractions()) / kNtpFracPerMs;
         return 1000 * static_cast<int64_t>(seconds()) + static_cast<int64_t>(frac_ms + 0.5);
     }
     // NTP standard (RFC1305, section 3.1) explicitly state value 0 is invalid.
     bool Valid() const { return value_ != 0; }
 
-    uint32_t seconds() const
-    {
-        return utils::dchecked_cast<uint32_t>(value_ / kFractionsPerSecond);
-    }
-    uint32_t fractions() const
-    {
-        return utils::dchecked_cast<uint32_t>(value_ % kFractionsPerSecond);
-    }
+    uint32_t seconds() const { return utils::dchecked_cast<uint32_t>(value_ / kFractionsPerSecond); }
+    uint32_t fractions() const { return utils::dchecked_cast<uint32_t>(value_ % kFractionsPerSecond); }
 
 private:
     uint64_t value_;

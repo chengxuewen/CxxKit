@@ -148,7 +148,8 @@ struct None
 #    define CXXKIT_INT64_MODIFIER "l"
 #    define CXXKIT_INT64_FORMAT   "li"
 #    define CXXKIT_UINT64_FORMAT  "lu"
-#elif (CXXKIT_SIZEOF_LONG_LONG == 8) && (CXXKIT_SIZEOF_LONG_LONG != CXXKIT_SIZEOF_LONG || CXXKIT_INT64_IS_LONG_LONG_TYPE)
+#elif (CXXKIT_SIZEOF_LONG_LONG == 8) &&                                                                                \
+    (CXXKIT_SIZEOF_LONG_LONG != CXXKIT_SIZEOF_LONG || CXXKIT_INT64_IS_LONG_LONG_TYPE)
 #    define CXXKIT_INT64_MODIFIER "ll"
 #    define CXXKIT_INT64_FORMAT   "lli"
 #    define CXXKIT_UINT64_FORMAT  "llu"

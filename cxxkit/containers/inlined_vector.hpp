@@ -46,7 +46,8 @@ using EnableIfAtLeastForwardIterator = typename std::enable_if<IsAtLeastForwardI
 template <typename Iterator>
 using DisableIfAtLeastForwardIterator = typename std::enable_if<!IsAtLeastForwardIterator<Iterator>::value, int>::type;
 } // namespace detail
-template <typename T, size_t N, typename A = std::allocator<T>> class InlinedVector : public std::vector<T, A>
+template <typename T, size_t N, typename A = std::allocator<T>>
+class InlinedVector : public std::vector<T, A>
 {
 public:
     using Self = InlinedVector<T, N>;
@@ -247,9 +248,9 @@ public:
         if (i >= this->size())
         {
             CXXKIT_THROW_STD_OUT_OF_RANGE("`InlinedVector::at(i:%" CXXKIT_SIZE_FORMAT ", size:%" CXXKIT_SIZE_FORMAT
-                                        ")` failed bounds check",
-                                        i,
-                                        this->size());
+                                          ")` failed bounds check",
+                                          i,
+                                          this->size());
         }
         return this->data()[i];
     }
@@ -258,9 +259,9 @@ public:
         if (i >= this->size())
         {
             CXXKIT_THROW_STD_OUT_OF_RANGE("`InlinedVector::at(i:%" CXXKIT_SIZE_FORMAT ", size:%" CXXKIT_SIZE_FORMAT
-                                        ")` failed bounds check",
-                                        i,
-                                        this->size());
+                                          ")` failed bounds check",
+                                          i,
+                                          this->size());
         }
         CXXKIT_CHECK(i < this->size());
         return this->data()[i];

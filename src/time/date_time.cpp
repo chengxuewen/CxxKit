@@ -82,7 +82,8 @@ int64_t DateTime::systemTimeFromSteadyNSecs(int64_t nsecs)
 int64_t DateTime::steadyTimeSecs()
 {
     const auto now = std::chrono::steady_clock::now();
-    return std::chrono::duration_cast<std::chrono::seconds>(now.time_since_epoch()).count();;
+    return std::chrono::duration_cast<std::chrono::seconds>(now.time_since_epoch()).count();
+    ;
 }
 
 int64_t DateTime::steadyTimeMSecs()
@@ -122,9 +123,16 @@ DateTime::LocalTime DateTime::localTimeFromSystemTimeSecs(int64_t secs)
     std::time_t time = std::chrono::system_clock::to_time_t(timePoint);
     std::tm *localTime = std::localtime(&time);
     const int mil = int(milliseconds.count() % 1000);
-    return {mil, localTime->tm_sec, localTime->tm_min, localTime->tm_hour, localTime->tm_mday, localTime->tm_mon,
+    return {mil,
+            localTime->tm_sec,
+            localTime->tm_min,
+            localTime->tm_hour,
+            localTime->tm_mday,
+            localTime->tm_mon,
             localTime->tm_year + 1900,
-            localTime->tm_wday, localTime->tm_yday, localTime->tm_isdst};
+            localTime->tm_wday,
+            localTime->tm_yday,
+            localTime->tm_isdst};
 }
 
 DateTime::LocalTime DateTime::localTimeFromSystemTimeMSecs(int64_t msecs)
@@ -135,9 +143,16 @@ DateTime::LocalTime DateTime::localTimeFromSystemTimeMSecs(int64_t msecs)
     std::time_t time = std::chrono::system_clock::to_time_t(timePoint);
     std::tm *localTime = std::localtime(&time);
     const int mil = int(milliseconds.count() % 1000);
-    return {mil, localTime->tm_sec, localTime->tm_min, localTime->tm_hour, localTime->tm_mday, localTime->tm_mon,
+    return {mil,
+            localTime->tm_sec,
+            localTime->tm_min,
+            localTime->tm_hour,
+            localTime->tm_mday,
+            localTime->tm_mon,
             localTime->tm_year + 1900,
-            localTime->tm_wday, localTime->tm_yday, localTime->tm_isdst};
+            localTime->tm_wday,
+            localTime->tm_yday,
+            localTime->tm_isdst};
 }
 
 std::string DateTime::localTimeStringFromSystemTimeSecs(int64_t secs)
@@ -171,7 +186,7 @@ int64_t DateTime::TmToSeconds(const tm &tm)
     static short int cumul_mdays[12] = {0, 31, 59, 90, 120, 151, 181, 212, 243, 273, 304, 334};
     int year = tm.tm_year + 1900;
     int month = tm.tm_mon;
-    int day = tm.tm_mday - 1;  // Make 0-based like the rest.
+    int day = tm.tm_mday - 1; // Make 0-based like the rest.
     int hour = tm.tm_hour;
     int min = tm.tm_min;
     int sec = tm.tm_sec;
@@ -211,7 +226,7 @@ int64_t DateTime::TmToSeconds(const tm &tm)
     // We will have added one day too much above if expiration is during a leap
     // year, and expiration is in January or February.
     if (expiry_in_leap_year && month <= 2 - 1)
-    {  // `month` is zero based.
+    { // `month` is zero based.
         day -= 1;
     }
 

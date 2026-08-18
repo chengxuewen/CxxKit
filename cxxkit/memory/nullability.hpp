@@ -35,25 +35,39 @@ namespace detail
 // explicitly tagged as supporting nullability annotations. The tag is the type
 // declaration `nullability_compatible`.
 template <typename, typename = void>
-struct IsNullabilityCompatible : std::false_type {};
+struct IsNullabilityCompatible : std::false_type
+{
+};
 
 template <typename T>
-struct IsNullabilityCompatible<T, VoidType<typename T::nullability_compatible>> : std::true_type {};
+struct IsNullabilityCompatible<T, VoidType<typename T::nullability_compatible>> : std::true_type
+{
+};
 
 template <typename T>
-struct IsSupportedType : std::conditional<IsNullabilityCompatible<T>::value, std::true_type, std::false_type> {};
+struct IsSupportedType : std::conditional<IsNullabilityCompatible<T>::value, std::true_type, std::false_type>
+{
+};
 
 template <typename T>
-struct IsSupportedType<T *> : std::true_type {};
+struct IsSupportedType<T *> : std::true_type
+{
+};
 
 template <typename T, typename U>
-struct IsSupportedType<T U::*> : std::true_type {};
+struct IsSupportedType<T U::*> : std::true_type
+{
+};
 
 template <typename T, typename... Deleter>
-struct IsSupportedType<std::unique_ptr<T, Deleter...>> : std::true_type {};
+struct IsSupportedType<std::unique_ptr<T, Deleter...>> : std::true_type
+{
+};
 
 template <typename T>
-struct IsSupportedType<std::shared_ptr<T>> : std::true_type {};
+struct IsSupportedType<std::shared_ptr<T>> : std::true_type
+{
+};
 
 template <typename T>
 struct EnableNullable

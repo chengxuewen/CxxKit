@@ -2,10 +2,11 @@
 
 CXXKIT_BEGIN_NAMESPACE
 
-RaceChecker::Scope::Scope(const RaceChecker* raceChecker)
+RaceChecker::Scope::Scope(const RaceChecker *raceChecker)
 #if CXXKIT_DCHECK_IS_ON
-    : mRaceChecker(raceChecker), mRacecheckOk(raceChecker->acquire())
-    #endif
+    : mRaceChecker(raceChecker)
+    , mRacecheckOk(raceChecker->acquire())
+#endif
 {
 }
 

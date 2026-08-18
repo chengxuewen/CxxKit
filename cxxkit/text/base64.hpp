@@ -40,19 +40,19 @@ class CXXKIT_CORE_API Base64
 public:
     enum DecodeOption
     {
-        DO_PARSE_STRICT = 1,  // Parse only base64 characters
-        DO_PARSE_WHITE = 2,   // Parse only base64 and whitespace characters
-        DO_PARSE_ANY = 3,     // Parse all characters
+        DO_PARSE_STRICT = 1, // Parse only base64 characters
+        DO_PARSE_WHITE = 2,  // Parse only base64 and whitespace characters
+        DO_PARSE_ANY = 3,    // Parse all characters
         DO_PARSE_MASK = 3,
 
-        DO_PAD_YES = 4,  // Padding is required
-        DO_PAD_ANY = 8,  // Padding is optional
-        DO_PAD_NO = 12,  // Padding is disallowed
+        DO_PAD_YES = 4, // Padding is required
+        DO_PAD_ANY = 8, // Padding is optional
+        DO_PAD_NO = 12, // Padding is disallowed
         DO_PAD_MASK = 12,
 
-        DO_TERM_BUFFER = 16,  // Must termiante at end of buffer
-        DO_TERM_CHAR = 32,    // May terminate at any character boundary
-        DO_TERM_ANY = 48,     // May terminate at a sub-character bit offset
+        DO_TERM_BUFFER = 16, // Must termiante at end of buffer
+        DO_TERM_CHAR = 32,   // May terminate at any character boundary
+        DO_TERM_ANY = 48,    // May terminate at a sub-character bit offset
         DO_TERM_MASK = 48,
 
         // Strictest interpretation
@@ -76,9 +76,7 @@ public:
     // encoded characters.
     static bool IsBase64Encoded(StringView str);
 
-    static void EncodeFromArray(const void *data,
-                                size_t len,
-                                std::string *result);
+    static void EncodeFromArray(const void *data, size_t len, std::string *result);
     static bool DecodeFromArray(const char *data,
                                 size_t len,
                                 DecodeFlags flags,
@@ -108,17 +106,11 @@ public:
         DecodeFromArray(data.data(), data.size(), flags, &result, nullptr);
         return result;
     }
-    static inline bool Decode(StringView data,
-                              DecodeFlags flags,
-                              std::string *result,
-                              size_t *data_used)
+    static inline bool Decode(StringView data, DecodeFlags flags, std::string *result, size_t *data_used)
     {
         return DecodeFromArray(data.data(), data.size(), flags, result, data_used);
     }
-    static inline bool Decode(StringView data,
-                              DecodeFlags flags,
-                              std::vector<char> *result,
-                              size_t *data_used)
+    static inline bool Decode(StringView data, DecodeFlags flags, std::vector<char> *result, size_t *data_used)
     {
         return DecodeFromArray(data.data(), data.size(), flags, result, data_used);
     }
@@ -135,11 +127,7 @@ private:
                                  unsigned char qbuf[4],
                                  bool *padded);
     template <typename T>
-    static bool DecodeFromArrayTemplate(const char *data,
-                                        size_t len,
-                                        DecodeFlags flags,
-                                        T *result,
-                                        size_t *data_used);
+    static bool DecodeFromArrayTemplate(const char *data, size_t len, DecodeFlags flags, T *result, size_t *data_used);
 };
 CXXKIT_END_NAMESPACE
 

@@ -460,10 +460,10 @@ CXXKIT_CORE_API char *ascii_strupr(const char *str, ssize_t len);
  * @return Return true if @a str was a number, otherwise false.
  */
 CXXKIT_CORE_API bool ascii_string_to_signed(const char *str,
-                                          unsigned int base,
-                                          int64_t min,
-                                          int64_t max,
-                                          int64_t *out_num);
+                                            unsigned int base,
+                                            int64_t min,
+                                            int64_t max,
+                                            int64_t *out_num);
 
 /**
  * @brief A convenience function for converting a string to an unsigned number.
@@ -492,10 +492,10 @@ CXXKIT_CORE_API bool ascii_string_to_signed(const char *str,
  * @return: Return true if @a str was a number, otherwise false.
  */
 CXXKIT_CORE_API bool ascii_string_to_unsigned(const char *str,
-                                            unsigned int base,
-                                            uint64_t min,
-                                            uint64_t max,
-                                            uint64_t *out_num);
+                                              unsigned int base,
+                                              uint64_t min,
+                                              uint64_t max,
+                                              uint64_t *out_num);
 
 /**
  * @brief

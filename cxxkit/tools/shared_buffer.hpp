@@ -58,14 +58,12 @@ public:
 
     // Construct a buffer and copy the specified number of bytes into it. The
     // source array may be (const) uint8_t*, int8_t*, or char*.
-    template <typename T,
-        typename std::enable_if<
-            detail::BufferCompat<uint8_t, T>::value>::type * = nullptr>
+    template <typename T, typename std::enable_if<detail::BufferCompat<uint8_t, T>::value>::type * = nullptr>
     SharedBuffer(const T *data, size_t size)
-        : SharedBuffer(data, size, size) {}
-    template <typename T,
-        typename std::enable_if<
-            detail::BufferCompat<uint8_t, T>::value>::type * = nullptr>
+        : SharedBuffer(data, size, size)
+    {
+    }
+    template <typename T, typename std::enable_if<detail::BufferCompat<uint8_t, T>::value>::type * = nullptr>
     SharedBuffer(const T *data, size_t size, size_t capacity)
         : SharedBuffer(size, capacity)
     {
@@ -78,41 +76,37 @@ public:
     }
 
     // Construct a buffer from the contents of an array.
-    template <typename T,
-        size_t N,
-        typename std::enable_if<
-            detail::BufferCompat<uint8_t, T>::value>::type * = nullptr>
-    SharedBuffer(const T (&array)[N])  // NOLINT: runtime/explicit
-        : SharedBuffer(array, N) {}
+    template <typename T, size_t N, typename std::enable_if<detail::BufferCompat<uint8_t, T>::value>::type * = nullptr>
+    SharedBuffer(const T (&array)[N]) // NOLINT: runtime/explicit
+        : SharedBuffer(array, N)
+    {
+    }
 
     // Construct a buffer from a vector like type.
     template <typename VecT,
               typename ElemT = typename std::remove_pointer<decltype(std::declval<VecT>().data())>::type,
-        typename std::enable_if<
-            !std::is_same<VecT, SharedBuffer>::value &&
-            HasDataAndSize<VecT, ElemT>::value &&
-            detail::BufferCompat<uint8_t, ElemT>::value>::type * = nullptr>
+              typename std::enable_if<!std::is_same<VecT, SharedBuffer>::value && HasDataAndSize<VecT, ElemT>::value &&
+                                      detail::BufferCompat<uint8_t, ElemT>::value>::type * = nullptr>
     explicit SharedBuffer(const VecT &v)
-        : SharedBuffer(v.data(), v.size()) {}
+        : SharedBuffer(v.data(), v.size())
+    {
+    }
 
     // Construct a buffer from a vector like type and a capacity argument
     template <typename VecT,
-              typename ElemT = typename std::remove_pointer<
-                  decltype(std::declval<VecT>().data())>::type,
-        typename std::enable_if<
-            !std::is_same<VecT, SharedBuffer>::value &&
-            HasDataAndSize<VecT, ElemT>::value &&
-            detail::BufferCompat<uint8_t, ElemT>::value>::type * = nullptr>
+              typename ElemT = typename std::remove_pointer<decltype(std::declval<VecT>().data())>::type,
+              typename std::enable_if<!std::is_same<VecT, SharedBuffer>::value && HasDataAndSize<VecT, ElemT>::value &&
+                                      detail::BufferCompat<uint8_t, ElemT>::value>::type * = nullptr>
     explicit SharedBuffer(const VecT &v, size_t capacity)
-        : SharedBuffer(v.data(), v.size(), capacity) {}
+        : SharedBuffer(v.data(), v.size(), capacity)
+    {
+    }
 
     ~SharedBuffer();
 
     // Get a pointer to the data. Just .data() will give you a (const) uint8_t*,
     // but you may also use .data<int8_t>() and .data<char>().
-    template <typename T = uint8_t,
-        typename std::enable_if<
-            detail::BufferCompat<uint8_t, T>::value>::type * = nullptr>
+    template <typename T = uint8_t, typename std::enable_if<detail::BufferCompat<uint8_t, T>::value>::type * = nullptr>
     const T *data() const
     {
         return cdata<T>();
@@ -120,9 +114,7 @@ public:
 
     // Get writable pointer to the data. This will create a copy of the underlying
     // data if it is shared with other buffers.
-    template <typename T = uint8_t,
-        typename std::enable_if<
-            detail::BufferCompat<uint8_t, T>::value>::type * = nullptr>
+    template <typename T = uint8_t, typename std::enable_if<detail::BufferCompat<uint8_t, T>::value>::type * = nullptr>
     T *MutableData()
     {
         CXXKIT_DCHECK(IsConsistent());
@@ -136,9 +128,7 @@ public:
 
     // Get const pointer to the data. This will not create a copy of the
     // underlying data if it is shared with other buffers.
-    template <typename T = uint8_t,
-        typename std::enable_if<
-            detail::BufferCompat<uint8_t, T>::value>::type * = nullptr>
+    template <typename T = uint8_t, typename std::enable_if<detail::BufferCompat<uint8_t, T>::value>::type * = nullptr>
     const T *cdata() const
     {
         CXXKIT_DCHECK(IsConsistent());
@@ -193,10 +183,7 @@ public:
 
     bool operator==(const SharedBuffer &buf) const;
 
-    bool operator!=(const SharedBuffer &buf) const
-    {
-        return !(*this == buf);
-    }
+    bool operator!=(const SharedBuffer &buf) const { return !(*this == buf); }
 
     uint8_t operator[](size_t index) const
     {
@@ -206,9 +193,7 @@ public:
 
     // Replace the contents of the buffer. Accepts the same types as the
     // constructors.
-    template <typename T,
-        typename std::enable_if<
-            detail::BufferCompat<uint8_t, T>::value>::type * = nullptr>
+    template <typename T, typename std::enable_if<detail::BufferCompat<uint8_t, T>::value>::type * = nullptr>
     void SetData(const T *data, size_t size)
     {
         CXXKIT_DCHECK(IsConsistent());
@@ -230,10 +215,7 @@ public:
         CXXKIT_DCHECK(IsConsistent());
     }
 
-    template <typename T,
-        size_t N,
-        typename std::enable_if<
-            detail::BufferCompat<uint8_t, T>::value>::type * = nullptr>
+    template <typename T, size_t N, typename std::enable_if<detail::BufferCompat<uint8_t, T>::value>::type * = nullptr>
     void SetData(const T (&array)[N])
     {
         SetData(array, N);
@@ -252,9 +234,7 @@ public:
     }
 
     // Append data to the buffer. Accepts the same types as the constructors.
-    template <typename T,
-        typename std::enable_if<
-            detail::BufferCompat<uint8_t, T>::value>::type * = nullptr>
+    template <typename T, typename std::enable_if<detail::BufferCompat<uint8_t, T>::value>::type * = nullptr>
     void AppendData(const T *data, size_t size)
     {
         CXXKIT_DCHECK(IsConsistent());
@@ -269,29 +249,23 @@ public:
 
         UnshareAndEnsureCapacity(std::max(capacity(), size_ + size));
 
-        buffer_->SetSize(offset_ +
-                         size_);  // Remove data to the right of the slice.
+        buffer_->SetSize(offset_ + size_); // Remove data to the right of the slice.
         buffer_->AppendData(data, size);
         size_ += size;
 
         CXXKIT_DCHECK(IsConsistent());
     }
 
-    template <typename T,
-        size_t N,
-        typename std::enable_if<
-            detail::BufferCompat<uint8_t, T>::value>::type * = nullptr>
+    template <typename T, size_t N, typename std::enable_if<detail::BufferCompat<uint8_t, T>::value>::type * = nullptr>
     void AppendData(const T (&array)[N])
     {
         AppendData(array, N);
     }
 
     template <typename VecT,
-              typename ElemT = typename std::remove_pointer<
-                  decltype(std::declval<VecT>().data())>::type,
-        typename std::enable_if<
-            HasDataAndSize<VecT, ElemT>::value &&
-            detail::BufferCompat<uint8_t, ElemT>::value>::type * = nullptr>
+              typename ElemT = typename std::remove_pointer<decltype(std::declval<VecT>().data())>::type,
+              typename std::enable_if<HasDataAndSize<VecT, ElemT>::value &&
+                                      detail::BufferCompat<uint8_t, ElemT>::value>::type * = nullptr>
     void AppendData(const VecT &v)
     {
         AppendData(v.data(), v.size());
@@ -341,8 +315,7 @@ private:
     {
         if (buffer_)
         {
-            return buffer_->capacity() > 0 && offset_ <= buffer_->size() &&
-                   offset_ + size_ <= buffer_->size();
+            return buffer_->capacity() > 0 && offset_ <= buffer_->size() && offset_ + size_ <= buffer_->size();
         }
         else
         {
@@ -353,9 +326,9 @@ private:
     // buffer_ is either null, or points to an rtc::Buffer with capacity > 0.
     SharedRefPtr<RefCountedBuffer> buffer_;
     // This buffer may represent a slice of a original data.
-    size_t offset_;  // Offset of a current slice in the original data in buffer_.
+    size_t offset_; // Offset of a current slice in the original data in buffer_.
     // Should be 0 if the buffer_ is empty.
-    size_t size_;    // Size of a current slice in the original data in buffer_.
+    size_t size_; // Size of a current slice in the original data in buffer_.
     // Should be 0 if the buffer_ is empty.
 };
 CXXKIT_END_NAMESPACE

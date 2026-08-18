@@ -35,11 +35,14 @@ using VariantMonostate = mpark::monostate;
 
 using BadVariantAccess = mpark::bad_variant_access;
 
-template <typename... Ts> using Variant = mpark::variant<Ts...>;
+template <typename... Ts>
+using Variant = mpark::variant<Ts...>;
 
-template <typename T> using VariantSize = mpark::variant_size<T>;
+template <typename T>
+using VariantSize = mpark::variant_size<T>;
 
-template <std::size_t I, typename T> using VariantAlternative = mpark::variant_alternative<I, T>;
+template <std::size_t I, typename T>
+using VariantAlternative = mpark::variant_alternative<I, T>;
 
 namespace utils
 {

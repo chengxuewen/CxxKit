@@ -33,9 +33,11 @@
 
 CXXKIT_BEGIN_NAMESPACE
 
-template <typename T, bool UseManualLifetime, typename = void> struct Singleton;
+template <typename T, bool UseManualLifetime, typename = void>
+struct Singleton;
 
-template <typename T> class Singleton<T, false, traits::enable_if_t<true>>
+template <typename T>
+class Singleton<T, false, traits::enable_if_t<true>>
 {
 public:
     static constexpr bool UseManualLifetime = false;
@@ -51,9 +53,11 @@ protected:
     virtual ~Singleton() = default;
     CXXKIT_DISABLE_COPY_MOVE(Singleton)
 };
-template <typename T> using AutoSingleton = Singleton<T, false>;
+template <typename T>
+using AutoSingleton = Singleton<T, false>;
 
-template <typename T> class Singleton<T, true, traits::enable_if_t<true>>
+template <typename T>
+class Singleton<T, true, traits::enable_if_t<true>>
 {
 public:
     static constexpr bool UseManualLifetime = true;
@@ -90,11 +94,15 @@ private:
     static std::unique_ptr<T> mScoped;
     CXXKIT_DISABLE_COPY_MOVE(Singleton)
 };
-template <typename T> using ManualSingleton = Singleton<T, true>;
+template <typename T>
+using ManualSingleton = Singleton<T, true>;
 
-template <typename T> std::once_flag Singleton<T, true>::mOnceFlag;
-template <typename T> std::atomic<T *> Singleton<T, true>::mInstance = nullptr;
-template <typename T> std::unique_ptr<T> Singleton<T, true>::mScoped = nullptr;
+template <typename T>
+std::once_flag Singleton<T, true>::mOnceFlag;
+template <typename T>
+std::atomic<T *> Singleton<T, true>::mInstance = nullptr;
+template <typename T>
+std::unique_ptr<T> Singleton<T, true>::mScoped = nullptr;
 
 CXXKIT_END_NAMESPACE
 

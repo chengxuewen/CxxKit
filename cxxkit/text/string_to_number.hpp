@@ -109,15 +109,29 @@ static Optional<unsigned_type> ParseUnsigned(StringView str, int base)
     return utils::nullopt;
 }
 
-template <typename T> T StrToT(const char *str, char **str_end);
+template <typename T>
+T StrToT(const char *str, char **str_end);
 
-template <> inline float StrToT(const char *str, char **str_end) { return std::strtof(str, str_end); }
+template <>
+inline float StrToT(const char *str, char **str_end)
+{
+    return std::strtof(str, str_end);
+}
 
-template <> inline double StrToT(const char *str, char **str_end) { return std::strtod(str, str_end); }
+template <>
+inline double StrToT(const char *str, char **str_end)
+{
+    return std::strtod(str, str_end);
+}
 
-template <> inline long double StrToT(const char *str, char **str_end) { return std::strtold(str, str_end); }
+template <>
+inline long double StrToT(const char *str, char **str_end)
+{
+    return std::strtold(str, str_end);
+}
 
-template <typename T> Optional<T> ParseFloatingPoint(StringView str)
+template <typename T>
+Optional<T> ParseFloatingPoint(StringView str)
 {
     if (str.empty())
     {
@@ -144,8 +158,9 @@ template Optional<long double> ParseFloatingPoint(StringView str);
 } // namespace detail
 
 template <typename T>
-typename std::enable_if<std::is_integral<T>::value && std::is_signed<T>::value, Optional<T>>::type
-stringToNumber(StringView str, int base = 10)
+typename std::enable_if<std::is_integral<T>::value && std::is_signed<T>::value, Optional<T>>::type stringToNumber(
+    StringView str,
+    int base = 10)
 {
     using detail::signed_type;
     static_assert(std::numeric_limits<T>::max() <= std::numeric_limits<signed_type>::max() &&
@@ -160,8 +175,9 @@ stringToNumber(StringView str, int base = 10)
 }
 
 template <typename T>
-typename std::enable_if<std::is_integral<T>::value && std::is_unsigned<T>::value, Optional<T>>::type
-stringToNumber(StringView str, int base = 10)
+typename std::enable_if<std::is_integral<T>::value && std::is_unsigned<T>::value, Optional<T>>::type stringToNumber(
+    StringView str,
+    int base = 10)
 {
     using detail::unsigned_type;
     static_assert(std::numeric_limits<T>::max() <= std::numeric_limits<unsigned_type>::max(),

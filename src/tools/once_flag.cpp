@@ -31,6 +31,9 @@ namespace detail
 thread_local OnceFlag localOnceFlag;
 } // namespace detail
 
-OnceFlag *OnceFlag::localOnceFlag() { return &detail::localOnceFlag; }
+OnceFlag *OnceFlag::localOnceFlag()
+{
+    return &detail::localOnceFlag;
+}
 
 CXXKIT_END_NAMESPACE

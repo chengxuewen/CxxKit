@@ -46,6 +46,8 @@ void light()
 }
 } // namespace
 
-TEST(ConcurrentRunTest, RunLightFunction) { }
+TEST(ConcurrentRunTest, RunLightFunction)
+{
+}
 
 CXXKIT_END_NAMESPACE

@@ -67,8 +67,10 @@ TEST(ExceptionTest, StdInvalidArgument)
 
     EXPECT_THROW_OR_DEATH(CXXKIT_THROW_STD_INVALID_ARGUMENT(""), std::invalid_argument);
     EXPECT_THROW_OR_DEATH(CXXKIT_THROW_STD_INVALID_ARGUMENT("std::invalid_argument:d", 1), std::invalid_argument);
-    EXPECT_THROW_OR_DEATH(CXXKIT_THROW_STD_INVALID_ARGUMENT(StringView("std::invalid_argument")), std::invalid_argument);
-    EXPECT_THROW_OR_DEATH(CXXKIT_THROW_STD_INVALID_ARGUMENT(std::string("std::invalid_argument")), std::invalid_argument);
+    EXPECT_THROW_OR_DEATH(CXXKIT_THROW_STD_INVALID_ARGUMENT(StringView("std::invalid_argument")),
+                          std::invalid_argument);
+    EXPECT_THROW_OR_DEATH(CXXKIT_THROW_STD_INVALID_ARGUMENT(std::string("std::invalid_argument")),
+                          std::invalid_argument);
 }
 
 TEST(ExceptionTest, StdDomainError)
@@ -154,7 +156,8 @@ TEST(ExceptionTest, StdUnderflowError)
     EXPECT_THROW_OR_DEATH(CXXKIT_THROW(std::underflow_error, ""), std::underflow_error);
     EXPECT_THROW_OR_DEATH(CXXKIT_THROW(std::underflow_error, "std::underflow_error:d", 1), std::underflow_error);
     EXPECT_THROW_OR_DEATH(CXXKIT_THROW(std::underflow_error, StringView("std::underflow_error")), std::underflow_error);
-    EXPECT_THROW_OR_DEATH(CXXKIT_THROW(std::underflow_error, std::string("std::underflow_error")), std::underflow_error);
+    EXPECT_THROW_OR_DEATH(CXXKIT_THROW(std::underflow_error, std::string("std::underflow_error")),
+                          std::underflow_error);
 
     EXPECT_THROW_OR_DEATH(CXXKIT_THROW_STD_UNDERFLOW_ERROR(""), std::underflow_error);
     EXPECT_THROW_OR_DEATH(CXXKIT_THROW_STD_UNDERFLOW_ERROR("std::underflow_error:d", 1), std::underflow_error);

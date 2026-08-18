@@ -42,7 +42,10 @@ public:
     using MessageHandler = Logger::MessageHandler;
     struct MessageHandlerWraper
     {
-        explicit MessageHandlerWraper(const MessageHandler &h) : handler(h) {}
+        explicit MessageHandlerWraper(const MessageHandler &h)
+            : handler(h)
+        {
+        }
         const MessageHandler handler;
     };
 
@@ -53,7 +56,7 @@ public:
 
     bool mNoSource;
     const int mIdNumber;
-    const char * const mName;
+    const char *const mName;
     std::shared_ptr<spdlog::logger> mLogger;
     std::atomic_bool mLevelEnabled[LogLevelNum];
     std::atomic_bool mMessageHandleUniqueOwnership;

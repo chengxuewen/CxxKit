@@ -52,9 +52,15 @@ class FunctorClass
     using Callback = std::function<void()>;
 
 public:
-    explicit FunctorClass(Callback callback) : callback_(std::move(callback)) {}
+    explicit FunctorClass(Callback callback)
+        : callback_(std::move(callback))
+    {
+    }
 
-    FunctorClass(FunctorClass &&other) : callback_(utils::exchange(other.callback_, Callback())) {}
+    FunctorClass(FunctorClass &&other)
+        : callback_(utils::exchange(other.callback_, Callback()))
+    {
+    }
 
     FunctorClass(const FunctorClass &) = delete;
 
@@ -95,11 +101,16 @@ struct StdFunctionFactory
 
 using CleanupTestParams = ::testing::Types<IdentityFactory, FunctorClassFactory, StdFunctionFactory>;
 template <typename>
-struct CleanupTest : public ::testing::Test {};
+struct CleanupTest : public ::testing::Test
+{
+};
 TYPED_TEST_SUITE(CleanupTest, CleanupTestParams);
 
 bool fn_ptr_called = false;
-void FnPtrFunction() { fn_ptr_called = true; }
+void FnPtrFunction()
+{
+    fn_ptr_called = true;
+}
 
 TYPED_TEST(CleanupTest, FactoryProducesCorrectType)
 {
@@ -165,7 +176,7 @@ TYPED_TEST(CleanupTest, FactoryAndCTADProduceSameType)
         static_assert(IsSame<decltype(factory_cleanup), decltype(deduction_cleanup)>(), "");
     }
 }
-#endif  // CXXKIT_CC_FEATURE_CLASS_TEMPLATE_ARGUMENT_DEDUCTION
+#endif // CXXKIT_CC_FEATURE_CLASS_TEMPLATE_ARGUMENT_DEDUCTION
 
 TYPED_TEST(CleanupTest, BasicUsage)
 {
@@ -173,10 +184,10 @@ TYPED_TEST(CleanupTest, BasicUsage)
 
     {
         auto scopeGuard = utils::makeScopeGuard(TypeParam::AsCallback([&called] { called = true; }));
-        EXPECT_FALSE(called);  // Constructor shouldn't invoke the callback
+        EXPECT_FALSE(called); // Constructor shouldn't invoke the callback
     }
 
-    EXPECT_TRUE(called);  // Destructor should invoke the callback
+    EXPECT_TRUE(called); // Destructor should invoke the callback
 }
 
 TYPED_TEST(CleanupTest, BasicUsageWithFunctionPointer)
@@ -185,10 +196,10 @@ TYPED_TEST(CleanupTest, BasicUsageWithFunctionPointer)
 
     {
         auto scopeGuard = utils::makeScopeGuard(TypeParam::AsCallback(&FnPtrFunction));
-        EXPECT_FALSE(fn_ptr_called);  // Constructor shouldn't invoke the callback
+        EXPECT_FALSE(fn_ptr_called); // Constructor shouldn't invoke the callback
     }
 
-    EXPECT_TRUE(fn_ptr_called);  // Destructor should invoke the callback
+    EXPECT_TRUE(fn_ptr_called); // Destructor should invoke the callback
 }
 
 TYPED_TEST(CleanupTest, Cancel)
@@ -197,13 +208,13 @@ TYPED_TEST(CleanupTest, Cancel)
 
     {
         auto scopeGuard = utils::makeScopeGuard(TypeParam::AsCallback([&called] { called = true; }));
-        EXPECT_FALSE(called);  // Constructor shouldn't invoke the callback
+        EXPECT_FALSE(called); // Constructor shouldn't invoke the callback
 
         std::move(scopeGuard).cancel();
-        EXPECT_FALSE(called);  // Cancel shouldn't invoke the callback
+        EXPECT_FALSE(called); // Cancel shouldn't invoke the callback
     }
 
-    EXPECT_FALSE(called);  // Destructor shouldn't invoke the callback
+    EXPECT_FALSE(called); // Destructor shouldn't invoke the callback
 }
 
 TYPED_TEST(CleanupTest, Invoke)
@@ -212,15 +223,15 @@ TYPED_TEST(CleanupTest, Invoke)
 
     {
         auto scopeGuard = utils::makeScopeGuard(TypeParam::AsCallback([&called] { called = true; }));
-        EXPECT_FALSE(called);  // Constructor shouldn't invoke the callback
+        EXPECT_FALSE(called); // Constructor shouldn't invoke the callback
 
         std::move(scopeGuard).invoke();
-        EXPECT_TRUE(called);  // Invoke should invoke the callback
+        EXPECT_TRUE(called); // Invoke should invoke the callback
 
-        called = false;  // Reset tracker before destructor runs
+        called = false; // Reset tracker before destructor runs
     }
 
-    EXPECT_FALSE(called);  // Destructor shouldn't invoke the callback
+    EXPECT_FALSE(called); // Destructor shouldn't invoke the callback
 }
 
 TYPED_TEST(CleanupTest, Move)
@@ -229,26 +240,26 @@ TYPED_TEST(CleanupTest, Move)
 
     {
         auto moved_from_cleanup = utils::makeScopeGuard(TypeParam::AsCallback([&called] { called = true; }));
-        EXPECT_FALSE(called);  // Constructor shouldn't invoke the callback
+        EXPECT_FALSE(called); // Constructor shouldn't invoke the callback
 
         {
             auto moved_to_cleanup = std::move(moved_from_cleanup);
-            EXPECT_FALSE(called);  // Move shouldn't invoke the callback
+            EXPECT_FALSE(called); // Move shouldn't invoke the callback
         }
 
-        EXPECT_TRUE(called);  // Destructor should invoke the callback
+        EXPECT_TRUE(called); // Destructor should invoke the callback
 
-        called = false;  // Reset tracker before destructor runs
+        called = false; // Reset tracker before destructor runs
     }
 
-    EXPECT_FALSE(called);  // Destructor shouldn't invoke the callback
+    EXPECT_FALSE(called); // Destructor shouldn't invoke the callback
 }
 
 int DestructionCount = 0;
 
 struct DestructionCounter
 {
-    void operator()() {}
+    void operator()() { }
 
     ~DestructionCounter() { ++DestructionCount; }
 };
@@ -260,7 +271,7 @@ TYPED_TEST(CleanupTest, DestructorDestroys)
         DestructionCount = 0;
     }
 
-    EXPECT_EQ(DestructionCount, 1);  // Engaged scopeGuard destroys
+    EXPECT_EQ(DestructionCount, 1); // Engaged scopeGuard destroys
 }
 
 TYPED_TEST(CleanupTest, CancelDestroys)
@@ -270,10 +281,10 @@ TYPED_TEST(CleanupTest, CancelDestroys)
         DestructionCount = 0;
 
         std::move(scopeGuard).cancel();
-        EXPECT_EQ(DestructionCount, 1);  // Cancel destroys
+        EXPECT_EQ(DestructionCount, 1); // Cancel destroys
     }
 
-    EXPECT_EQ(DestructionCount, 1);  // Canceled scopeGuard does not double destroy
+    EXPECT_EQ(DestructionCount, 1); // Canceled scopeGuard does not double destroy
 }
 
 TYPED_TEST(CleanupTest, InvokeDestroys)
@@ -283,9 +294,9 @@ TYPED_TEST(CleanupTest, InvokeDestroys)
         DestructionCount = 0;
 
         std::move(scopeGuard).invoke();
-        EXPECT_EQ(DestructionCount, 1);  // Invoke destroys
+        EXPECT_EQ(DestructionCount, 1); // Invoke destroys
     }
 
-    EXPECT_EQ(DestructionCount, 1);  // Invoked scopeGuard does not double destroy
+    EXPECT_EQ(DestructionCount, 1); // Invoked scopeGuard does not double destroy
 }
-}  // namespace
+} // namespace

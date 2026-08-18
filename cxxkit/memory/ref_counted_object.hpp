@@ -35,19 +35,22 @@ template <class T>
 class RefCountedObject : public T
 {
 public:
-    RefCountedObject() {}
+    RefCountedObject() { }
 
     RefCountedObject(const RefCountedObject &) = delete;
     RefCountedObject &operator=(const RefCountedObject &) = delete;
 
     template <class P0>
-    explicit RefCountedObject(P0 &&p0) : T(std::forward<P0>(p0)) {}
+    explicit RefCountedObject(P0 &&p0)
+        : T(std::forward<P0>(p0))
+    {
+    }
 
     template <class P0, class P1, class... Args>
-    RefCountedObject(P0 &&p0, P1 &&p1, Args &&... args)
-        : T(std::forward<P0>(p0),
-            std::forward<P1>(p1),
-            std::forward<Args>(args)...) {}
+    RefCountedObject(P0 &&p0, P1 &&p1, Args &&...args)
+        : T(std::forward<P0>(p0), std::forward<P1>(p1), std::forward<Args>(args)...)
+    {
+    }
 
     void addRef() const override { mRefCount.incRef(); }
 
@@ -70,7 +73,7 @@ public:
     virtual bool HasOneRef() const { return mRefCount.HasOneRef(); }
 
 protected:
-    ~RefCountedObject() override {}
+    ~RefCountedObject() override { }
 
     mutable detail::RefCounter mRefCount{0};
 };
@@ -83,7 +86,10 @@ public:
     // Above using declaration propagates a default move constructor
     // FinalRefCountedObject(FinalRefCountedObject&& other), but we also need
     // move construction from T.
-    explicit FinalRefCountedObject(T &&other) : T(std::move(other)) {}
+    explicit FinalRefCountedObject(T &&other)
+        : T(std::move(other))
+    {
+    }
     FinalRefCountedObject(const FinalRefCountedObject &) = delete;
     FinalRefCountedObject &operator=(const FinalRefCountedObject &) = delete;
 
@@ -115,10 +121,9 @@ template <typename T>
 class HasaddRefAndRelease
 {
 private:
-    template <
-        typename C,
-        decltype(std::declval<C>().addRef()) * = nullptr,
-        decltype(std::declval<C>().Release()) * = nullptr>
+    template <typename C,
+              decltype(std::declval<C>().addRef()) * = nullptr,
+              decltype(std::declval<C>().Release()) * = nullptr>
     static int Test(int);
     template <typename>
     static char Test(...);
@@ -126,7 +131,7 @@ private:
 public:
     static constexpr bool value = std::is_same<decltype(Test<T>(0)), int>::value;
 };
-}  // namespace detail
+} // namespace detail
 
 // General utilities for constructing a reference counted class and the
 // appropriate reference count implementation for that class.
@@ -171,42 +176,35 @@ public:
 // both RefCountInterface and RefCounted object, which is a a discouraged
 // pattern, and would result in double inheritance of RefCountedObject if this
 // template was applied.
-template <
-    typename T,
-    typename... Args,
-    typename std::enable_if<std::is_convertible<T *, RefCountInterface *>::value &&
-                            std::is_abstract<T>::value,
-                            T>::type * = nullptr>
-Nonnull<SharedRefPtr<T>> makeRefCounted(Args &&... args)
+template <typename T,
+          typename... Args,
+          typename std::enable_if<std::is_convertible<T *, RefCountInterface *>::value && std::is_abstract<T>::value,
+                                  T>::type * = nullptr>
+Nonnull<SharedRefPtr<T>> makeRefCounted(Args &&...args)
 {
     return SharedRefPtr<T>(new RefCountedObject<T>(std::forward<Args>(args)...));
 }
 
 // `makeRefCounted` for complete classes that are not convertible to
 // RefCountInterface and already carry a ref count.
-template <
-    typename T,
-    typename... Args,
-    typename std::enable_if<
-        !std::is_convertible<T *, RefCountInterface *>::value &&
-        detail::HasaddRefAndRelease<T>::value,
-        T>::type * = nullptr>
-Nonnull<SharedRefPtr<T>> makeRefCounted(Args &&... args)
+template <typename T,
+          typename... Args,
+          typename std::enable_if<!std::is_convertible<T *, RefCountInterface *>::value &&
+                                      detail::HasaddRefAndRelease<T>::value,
+                                  T>::type * = nullptr>
+Nonnull<SharedRefPtr<T>> makeRefCounted(Args &&...args)
 {
     return SharedRefPtr<T>(new T(std::forward<Args>(args)...));
 }
 
 // `makeRefCounted` for complete classes that are not convertible to
 // RefCountInterface and have no ref count of their own.
-template <
-    typename T,
-    typename... Args,
-    typename std::enable_if<
-        !std::is_convertible<T *, RefCountInterface *>::value &&
-        !detail::HasaddRefAndRelease<T>::value,
-        T>::type * = nullptr>
-Nonnull<SharedRefPtr<FinalRefCountedObject<T>>> makeRefCounted(
-    Args &&... args)
+template <typename T,
+          typename... Args,
+          typename std::enable_if<!std::is_convertible<T *, RefCountInterface *>::value &&
+                                      !detail::HasaddRefAndRelease<T>::value,
+                                  T>::type * = nullptr>
+Nonnull<SharedRefPtr<FinalRefCountedObject<T>>> makeRefCounted(Args &&...args)
 {
     return SharedRefPtr<FinalRefCountedObject<T>>(new FinalRefCountedObject<T>(std::forward<Args>(args)...));
 }

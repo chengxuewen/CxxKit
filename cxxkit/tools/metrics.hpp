@@ -186,27 +186,29 @@ std::map<int, int> Samples(StringView name);
 #    define CXXKIT_HISTOGRAM_COUNTS_100000(name, sample) CXXKIT_HISTOGRAM_COUNTS(name, sample, 1, 100000, 50)
 #    define CXXKIT_HISTOGRAM_COUNTS_1M(name, sample)     CXXKIT_HISTOGRAM_COUNTS(name, sample, 1, 1000000, 50)
 #    define CXXKIT_HISTOGRAM_COUNTS_1G(name, sample)     CXXKIT_HISTOGRAM_COUNTS(name, sample, 1, 1000000000, 50)
-#    define CXXKIT_HISTOGRAM_COUNTS(name, sample, min, max, bucket_count)                                                \
-        CXXKIT_HISTOGRAM_COMMON_BLOCK(name,                                                                              \
-                                    sample,                                                                            \
-                                    cxxkit::metrics::HistogramFactoryGetCounts(name, min, max, bucket_count))
+#    define CXXKIT_HISTOGRAM_COUNTS(name, sample, min, max, bucket_count)                                              \
+        CXXKIT_HISTOGRAM_COMMON_BLOCK(name,                                                                            \
+                                      sample,                                                                          \
+                                      cxxkit::metrics::HistogramFactoryGetCounts(name, min, max, bucket_count))
 
-#    define CXXKIT_HISTOGRAM_COUNTS_LINEAR(name, sample, min, max, bucket_count)                                         \
-        CXXKIT_HISTOGRAM_COMMON_BLOCK(name,                                                                              \
-                                    sample,                                                                            \
-                                    cxxkit::metrics::HistogramFactoryGetCountsLinear(name, min, max, bucket_count))
+#    define CXXKIT_HISTOGRAM_COUNTS_LINEAR(name, sample, min, max, bucket_count)                                       \
+        CXXKIT_HISTOGRAM_COMMON_BLOCK(name,                                                                            \
+                                      sample,                                                                          \
+                                      cxxkit::metrics::HistogramFactoryGetCountsLinear(name, min, max, bucket_count))
 
 // Slow metrics: pointer to metric is acquired at each call and is not cached.
-#    define CXXKIT_HISTOGRAM_COUNTS_SPARSE_100(name, sample)    CXXKIT_HISTOGRAM_COUNTS_SPARSE(name, sample, 1, 100, 50)
-#    define CXXKIT_HISTOGRAM_COUNTS_SPARSE_200(name, sample)    CXXKIT_HISTOGRAM_COUNTS_SPARSE(name, sample, 1, 200, 50)
-#    define CXXKIT_HISTOGRAM_COUNTS_SPARSE_500(name, sample)    CXXKIT_HISTOGRAM_COUNTS_SPARSE(name, sample, 1, 500, 50)
-#    define CXXKIT_HISTOGRAM_COUNTS_SPARSE_1000(name, sample)   CXXKIT_HISTOGRAM_COUNTS_SPARSE(name, sample, 1, 1000, 50)
-#    define CXXKIT_HISTOGRAM_COUNTS_SPARSE_10000(name, sample)  CXXKIT_HISTOGRAM_COUNTS_SPARSE(name, sample, 1, 10000, 50)
-#    define CXXKIT_HISTOGRAM_COUNTS_SPARSE_100000(name, sample) CXXKIT_HISTOGRAM_COUNTS_SPARSE(name, sample, 1, 100000, 50)
-#    define CXXKIT_HISTOGRAM_COUNTS_SPARSE(name, sample, min, max, bucket_count)                                         \
-        CXXKIT_HISTOGRAM_COMMON_BLOCK_SLOW(name,                                                                         \
-                                         sample,                                                                       \
-                                         cxxkit::metrics::HistogramFactoryGetCounts(name, min, max, bucket_count))
+#    define CXXKIT_HISTOGRAM_COUNTS_SPARSE_100(name, sample)  CXXKIT_HISTOGRAM_COUNTS_SPARSE(name, sample, 1, 100, 50)
+#    define CXXKIT_HISTOGRAM_COUNTS_SPARSE_200(name, sample)  CXXKIT_HISTOGRAM_COUNTS_SPARSE(name, sample, 1, 200, 50)
+#    define CXXKIT_HISTOGRAM_COUNTS_SPARSE_500(name, sample)  CXXKIT_HISTOGRAM_COUNTS_SPARSE(name, sample, 1, 500, 50)
+#    define CXXKIT_HISTOGRAM_COUNTS_SPARSE_1000(name, sample) CXXKIT_HISTOGRAM_COUNTS_SPARSE(name, sample, 1, 1000, 50)
+#    define CXXKIT_HISTOGRAM_COUNTS_SPARSE_10000(name, sample)                                                         \
+        CXXKIT_HISTOGRAM_COUNTS_SPARSE(name, sample, 1, 10000, 50)
+#    define CXXKIT_HISTOGRAM_COUNTS_SPARSE_100000(name, sample)                                                        \
+        CXXKIT_HISTOGRAM_COUNTS_SPARSE(name, sample, 1, 100000, 50)
+#    define CXXKIT_HISTOGRAM_COUNTS_SPARSE(name, sample, min, max, bucket_count)                                       \
+        CXXKIT_HISTOGRAM_COMMON_BLOCK_SLOW(name,                                                                       \
+                                           sample,                                                                     \
+                                           cxxkit::metrics::HistogramFactoryGetCounts(name, min, max, bucket_count))
 
 // Histogram for percentage (evenly spaced buckets).
 #    define CXXKIT_HISTOGRAM_PERCENTAGE_SPARSE(name, sample) CXXKIT_HISTOGRAM_ENUMERATION_SPARSE(name, sample, 101)
@@ -219,10 +221,10 @@ std::map<int, int> Samples(StringView name);
 //
 // TODO(qingsi): Refactor the default implementation given by RtcHistogram,
 // which is already sparse, and remove the boundary argument from the macro.
-#    define CXXKIT_HISTOGRAM_ENUMERATION_SPARSE(name, sample, boundary)                                                  \
-        CXXKIT_HISTOGRAM_COMMON_BLOCK_SLOW(name,                                                                         \
-                                         sample,                                                                       \
-                                         cxxkit::metrics::SparseHistogramFactoryGetEnumeration(name, boundary))
+#    define CXXKIT_HISTOGRAM_ENUMERATION_SPARSE(name, sample, boundary)                                                \
+        CXXKIT_HISTOGRAM_COMMON_BLOCK_SLOW(name,                                                                       \
+                                           sample,                                                                     \
+                                           cxxkit::metrics::SparseHistogramFactoryGetEnumeration(name, boundary))
 
 // Histogram for percentage (evenly spaced buckets).
 #    define CXXKIT_HISTOGRAM_PERCENTAGE(name, sample) CXXKIT_HISTOGRAM_ENUMERATION(name, sample, 101)
@@ -232,36 +234,38 @@ std::map<int, int> Samples(StringView name);
 
 // Histogram for enumerators (evenly spaced buckets).
 // `boundary` should be above the max enumerator sample.
-#    define CXXKIT_HISTOGRAM_ENUMERATION(name, sample, boundary)                                                         \
-        CXXKIT_HISTOGRAM_COMMON_BLOCK_SLOW(name, sample, cxxkit::metrics::HistogramFactoryGetEnumeration(name, boundary))
+#    define CXXKIT_HISTOGRAM_ENUMERATION(name, sample, boundary)                                                       \
+        CXXKIT_HISTOGRAM_COMMON_BLOCK_SLOW(name,                                                                       \
+                                           sample,                                                                     \
+                                           cxxkit::metrics::HistogramFactoryGetEnumeration(name, boundary))
 
 // The name of the histogram should not vary.
-#    define CXXKIT_HISTOGRAM_COMMON_BLOCK(constant_name, sample, factory_get_invocation)                                 \
+#    define CXXKIT_HISTOGRAM_COMMON_BLOCK(constant_name, sample, factory_get_invocation)                               \
         do                                                                                                             \
         {                                                                                                              \
-            static std::atomic<cxxkit::metrics::Histogram *> atomic_histogram_pointer(nullptr);                          \
-            cxxkit::metrics::Histogram *histogram_pointer = atomic_histogram_pointer.load(std::memory_order_acquire);    \
+            static std::atomic<cxxkit::metrics::Histogram *> atomic_histogram_pointer(nullptr);                        \
+            cxxkit::metrics::Histogram *histogram_pointer = atomic_histogram_pointer.load(std::memory_order_acquire);  \
             if (!histogram_pointer)                                                                                    \
             {                                                                                                          \
                 histogram_pointer = factory_get_invocation;                                                            \
-                cxxkit::metrics::Histogram *null_histogram = nullptr;                                                    \
+                cxxkit::metrics::Histogram *null_histogram = nullptr;                                                  \
                 atomic_histogram_pointer.compare_exchange_strong(null_histogram, histogram_pointer);                   \
             }                                                                                                          \
             if (histogram_pointer)                                                                                     \
             {                                                                                                          \
-                cxxkit::metrics::HistogramAdd(histogram_pointer, sample);                                                \
+                cxxkit::metrics::HistogramAdd(histogram_pointer, sample);                                              \
             }                                                                                                          \
         } while (0)
 
 // The histogram is constructed/found for each call.
 // May be used for histograms with infrequent updates.`
-#    define CXXKIT_HISTOGRAM_COMMON_BLOCK_SLOW(name, sample, factory_get_invocation)                                     \
+#    define CXXKIT_HISTOGRAM_COMMON_BLOCK_SLOW(name, sample, factory_get_invocation)                                   \
         do                                                                                                             \
         {                                                                                                              \
-            cxxkit::metrics::Histogram *histogram_pointer = factory_get_invocation;                                      \
+            cxxkit::metrics::Histogram *histogram_pointer = factory_get_invocation;                                    \
             if (histogram_pointer)                                                                                     \
             {                                                                                                          \
-                cxxkit::metrics::HistogramAdd(histogram_pointer, sample);                                                \
+                cxxkit::metrics::HistogramAdd(histogram_pointer, sample);                                              \
             }                                                                                                          \
         } while (0)
 
@@ -270,31 +274,31 @@ std::map<int, int> Samples(StringView name);
 // in different modes such as real-time vs screenshare). Fast, because pointer
 // is cached. `index` should be different for different names. Allowed `index`
 // values are 0, 1, and 2.
-#    define CXXKIT_HISTOGRAMS_COUNTS_100(index, name, sample)                                                            \
+#    define CXXKIT_HISTOGRAMS_COUNTS_100(index, name, sample)                                                          \
         CXXKIT_HISTOGRAMS_COMMON(index, name, sample, CXXKIT_HISTOGRAM_COUNTS(name, sample, 1, 100, 50))
 
-#    define CXXKIT_HISTOGRAMS_COUNTS_200(index, name, sample)                                                            \
+#    define CXXKIT_HISTOGRAMS_COUNTS_200(index, name, sample)                                                          \
         CXXKIT_HISTOGRAMS_COMMON(index, name, sample, CXXKIT_HISTOGRAM_COUNTS(name, sample, 1, 200, 50))
 
-#    define CXXKIT_HISTOGRAMS_COUNTS_500(index, name, sample)                                                            \
+#    define CXXKIT_HISTOGRAMS_COUNTS_500(index, name, sample)                                                          \
         CXXKIT_HISTOGRAMS_COMMON(index, name, sample, CXXKIT_HISTOGRAM_COUNTS(name, sample, 1, 500, 50))
 
-#    define CXXKIT_HISTOGRAMS_COUNTS_1000(index, name, sample)                                                           \
+#    define CXXKIT_HISTOGRAMS_COUNTS_1000(index, name, sample)                                                         \
         CXXKIT_HISTOGRAMS_COMMON(index, name, sample, CXXKIT_HISTOGRAM_COUNTS(name, sample, 1, 1000, 50))
 
-#    define CXXKIT_HISTOGRAMS_COUNTS_10000(index, name, sample)                                                          \
+#    define CXXKIT_HISTOGRAMS_COUNTS_10000(index, name, sample)                                                        \
         CXXKIT_HISTOGRAMS_COMMON(index, name, sample, CXXKIT_HISTOGRAM_COUNTS(name, sample, 1, 10000, 50))
 
-#    define CXXKIT_HISTOGRAMS_COUNTS_100000(index, name, sample)                                                         \
+#    define CXXKIT_HISTOGRAMS_COUNTS_100000(index, name, sample)                                                       \
         CXXKIT_HISTOGRAMS_COMMON(index, name, sample, CXXKIT_HISTOGRAM_COUNTS(name, sample, 1, 100000, 50))
 
-#    define CXXKIT_HISTOGRAMS_ENUMERATION(index, name, sample, boundary)                                                 \
+#    define CXXKIT_HISTOGRAMS_ENUMERATION(index, name, sample, boundary)                                               \
         CXXKIT_HISTOGRAMS_COMMON(index, name, sample, CXXKIT_HISTOGRAM_ENUMERATION(name, sample, boundary))
 
-#    define CXXKIT_HISTOGRAMS_PERCENTAGE(index, name, sample)                                                            \
+#    define CXXKIT_HISTOGRAMS_PERCENTAGE(index, name, sample)                                                          \
         CXXKIT_HISTOGRAMS_COMMON(index, name, sample, CXXKIT_HISTOGRAM_PERCENTAGE(name, sample))
 
-#    define CXXKIT_HISTOGRAMS_COMMON(index, name, sample, macro_invocation)                                              \
+#    define CXXKIT_HISTOGRAMS_COMMON(index, name, sample, macro_invocation)                                            \
         do                                                                                                             \
         {                                                                                                              \
             switch (index)                                                                                             \
@@ -302,7 +306,7 @@ std::map<int, int> Samples(StringView name);
                 case 0: macro_invocation; break;                                                                       \
                 case 1: macro_invocation; break;                                                                       \
                 case 2: macro_invocation; break;                                                                       \
-                default: CXXKIT_DCHECK_NOTREACHED();                                                                     \
+                default: CXXKIT_DCHECK_NOTREACHED();                                                                   \
             }                                                                                                          \
         } while (0)
 
@@ -317,9 +321,9 @@ std::map<int, int> Samples(StringView name);
 #    define CXXKIT_HISTOGRAM_COUNTS_100000(name, sample) cxxkit::metrics::detail::NoOp(name, sample)
 #    define CXXKIT_HISTOGRAM_COUNTS_1M(name, sample)     cxxkit::metrics::detail::NoOp(name, sample)
 #    define CXXKIT_HISTOGRAM_COUNTS_1G(name, sample)     cxxkit::metrics::detail::NoOp(name, sample)
-#    define CXXKIT_HISTOGRAM_COUNTS(name, sample, min, max, bucket_count)                                                \
+#    define CXXKIT_HISTOGRAM_COUNTS(name, sample, min, max, bucket_count)                                              \
         cxxkit::metrics::detail::NoOp(name, sample, min, max, bucket_count)
-#    define CXXKIT_HISTOGRAM_COUNTS_LINEAR(name, sample, min, max, bucket_count)                                         \
+#    define CXXKIT_HISTOGRAM_COUNTS_LINEAR(name, sample, min, max, bucket_count)                                       \
         cxxkit::metrics::detail::NoOp(name, sample, min, max, bucket_count)
 #    define CXXKIT_HISTOGRAM_COUNTS_SPARSE_100(name, sample)    cxxkit::metrics::detail::NoOp(name, sample)
 #    define CXXKIT_HISTOGRAM_COUNTS_SPARSE_200(name, sample)    cxxkit::metrics::detail::NoOp(name, sample)
@@ -327,18 +331,18 @@ std::map<int, int> Samples(StringView name);
 #    define CXXKIT_HISTOGRAM_COUNTS_SPARSE_1000(name, sample)   cxxkit::metrics::detail::NoOp(name, sample)
 #    define CXXKIT_HISTOGRAM_COUNTS_SPARSE_10000(name, sample)  cxxkit::metrics::detail::NoOp(name, sample)
 #    define CXXKIT_HISTOGRAM_COUNTS_SPARSE_100000(name, sample) cxxkit::metrics::detail::NoOp(name, sample)
-#    define CXXKIT_HISTOGRAM_COUNTS_SPARSE(name, sample, min, max, bucket_count)                                         \
+#    define CXXKIT_HISTOGRAM_COUNTS_SPARSE(name, sample, min, max, bucket_count)                                       \
         cxxkit::metrics::detail::NoOp(name, sample, min, max, bucket_count)
 #    define CXXKIT_HISTOGRAM_PERCENTAGE_SPARSE(name, sample) cxxkit::metrics::detail::NoOp(name, sample)
 #    define CXXKIT_HISTOGRAM_BOOLEAN_SPARSE(name, sample)    cxxkit::metrics::detail::NoOp(name, sample)
-#    define CXXKIT_HISTOGRAM_ENUMERATION_SPARSE(name, sample, boundary)                                                  \
+#    define CXXKIT_HISTOGRAM_ENUMERATION_SPARSE(name, sample, boundary)                                                \
         cxxkit::metrics::detail::NoOp(name, sample, boundary)
 #    define CXXKIT_HISTOGRAM_PERCENTAGE(name, sample)            cxxkit::metrics::detail::NoOp(name, sample)
 #    define CXXKIT_HISTOGRAM_BOOLEAN(name, sample)               cxxkit::metrics::detail::NoOp(name, sample)
 #    define CXXKIT_HISTOGRAM_ENUMERATION(name, sample, boundary) cxxkit::metrics::detail::NoOp(name, sample, boundary)
-#    define CXXKIT_HISTOGRAM_COMMON_BLOCK(constant_name, sample, factory_get_invocation)                                 \
+#    define CXXKIT_HISTOGRAM_COMMON_BLOCK(constant_name, sample, factory_get_invocation)                               \
         cxxkit::metrics::detail::NoOp(constant_name, sample, factory_get_invocation)
-#    define CXXKIT_HISTOGRAM_COMMON_BLOCK_SLOW(name, sample, factory_get_invocation)                                     \
+#    define CXXKIT_HISTOGRAM_COMMON_BLOCK_SLOW(name, sample, factory_get_invocation)                                   \
         cxxkit::metrics::detail::NoOp(name, sample, factory_get_invocation)
 #    define CXXKIT_HISTOGRAMS_COUNTS_100(index, name, sample)    cxxkit::metrics::detail::NoOp(index, name, sample)
 #    define CXXKIT_HISTOGRAMS_COUNTS_200(index, name, sample)    cxxkit::metrics::detail::NoOp(index, name, sample)
@@ -346,10 +350,10 @@ std::map<int, int> Samples(StringView name);
 #    define CXXKIT_HISTOGRAMS_COUNTS_1000(index, name, sample)   cxxkit::metrics::detail::NoOp(index, name, sample)
 #    define CXXKIT_HISTOGRAMS_COUNTS_10000(index, name, sample)  cxxkit::metrics::detail::NoOp(index, name, sample)
 #    define CXXKIT_HISTOGRAMS_COUNTS_100000(index, name, sample) cxxkit::metrics::detail::NoOp(index, name, sample)
-#    define CXXKIT_HISTOGRAMS_ENUMERATION(index, name, sample, boundary)                                                 \
+#    define CXXKIT_HISTOGRAMS_ENUMERATION(index, name, sample, boundary)                                               \
         cxxkit::metrics::detail::NoOp(index, name, sample, boundary)
 #    define CXXKIT_HISTOGRAMS_PERCENTAGE(index, name, sample) cxxkit::metrics::detail::NoOp(index, name, sample)
-#    define CXXKIT_HISTOGRAMS_COMMON(index, name, sample, macro_invocation)                                              \
+#    define CXXKIT_HISTOGRAMS_COMMON(index, name, sample, macro_invocation)                                            \
         cxxkit::metrics::detail::NoOp(index, name, sample, macro_invocation)
 #endif // CXXKIT_METRICS_ENABLED
 

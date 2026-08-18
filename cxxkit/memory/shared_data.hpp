@@ -35,7 +35,8 @@ namespace detail
 struct SharedDataRefCounter;
 } // namespace detail
 
-template <typename T, bool Explicitly = false, typename = void> struct SharedDataPointer;
+template <typename T, bool Explicitly = false, typename = void>
+struct SharedDataPointer;
 
 class SharedData
 {
@@ -76,7 +77,8 @@ struct SharedDataRefCounter final
  * @brief Implicitly SharedDataPointer
  * @tparam T
  */
-template <typename T> class SharedDataPointer<T, false, traits::enable_if_t<true>>
+template <typename T>
+class SharedDataPointer<T, false, traits::enable_if_t<true>>
 {
 public:
     using DataType = T;
@@ -211,15 +213,18 @@ private:
 
     T *mData{nullptr};
 };
-template <typename T> using ImplicitlySharedDataPointer = SharedDataPointer<T, false>;
+template <typename T>
+using ImplicitlySharedDataPointer = SharedDataPointer<T, false>;
 
-template <typename T> inline bool operator==(std::nullptr_t p1, const ImplicitlySharedDataPointer<T> &p2)
+template <typename T>
+inline bool operator==(std::nullptr_t p1, const ImplicitlySharedDataPointer<T> &p2)
 {
     CXXKIT_UNUSED(p1);
     return !p2;
 }
 
-template <typename T> inline bool operator==(const ImplicitlySharedDataPointer<T> &p1, std::nullptr_t p2)
+template <typename T>
+inline bool operator==(const ImplicitlySharedDataPointer<T> &p1, std::nullptr_t p2)
 {
     CXXKIT_UNUSED(p2);
     return !p1;
@@ -229,7 +234,8 @@ template <typename T> inline bool operator==(const ImplicitlySharedDataPointer<T
  * @brief Explicitly SharedDataPointer
  * @tparam T
  */
-template <typename T> class SharedDataPointer<T, true, traits::enable_if_t<true>>
+template <typename T>
+class SharedDataPointer<T, true, traits::enable_if_t<true>>
 {
 public:
     using DataType = T;
@@ -376,15 +382,18 @@ private:
 
     T *mData{nullptr};
 };
-template <typename T> using ExplicitlySharedDataPointer = SharedDataPointer<T, true>;
+template <typename T>
+using ExplicitlySharedDataPointer = SharedDataPointer<T, true>;
 
-template <typename T> inline bool operator==(std::nullptr_t p1, const ExplicitlySharedDataPointer<T> &p2)
+template <typename T>
+inline bool operator==(std::nullptr_t p1, const ExplicitlySharedDataPointer<T> &p2)
 {
     CXXKIT_UNUSED(p1);
     return !p2;
 }
 
-template <typename T> inline bool operator==(const ExplicitlySharedDataPointer<T> &p1, std::nullptr_t p2)
+template <typename T>
+inline bool operator==(const ExplicitlySharedDataPointer<T> &p1, std::nullptr_t p2)
 {
     CXXKIT_UNUSED(p2);
     return !p1;

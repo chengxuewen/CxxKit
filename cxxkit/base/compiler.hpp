@@ -48,7 +48,7 @@
 /*GNU*/
 #if defined(__GNUC__)
 #    define CXXKIT_CC_GNU (100 * __GNUC__ + __GNUC_MINOR__)
-#    define CXXKIT_CC_GNU_CHECK_VERSION(major, minor)                                                                    \
+#    define CXXKIT_CC_GNU_CHECK_VERSION(major, minor)                                                                  \
         ((__GNUC__ > (major)) || ((__GNUC__ == (major)) && (__GNUC_MINOR__ >= (minor))))
 #else
 #    define CXXKIT_CC_GNU_CHECK_VERSION(major, minor) 0
@@ -839,9 +839,9 @@
 #endif
 
 #ifndef CXXKIT_IGNORE_DEPRECATIONS
-#    define CXXKIT_IGNORE_DEPRECATIONS(statement)                                                                        \
-        CXXKIT_WARNING_PUSH                                                                                              \
-        CXXKIT_WARNING_DISABLE_DEPRECATED                                                                                \
+#    define CXXKIT_IGNORE_DEPRECATIONS(statement)                                                                      \
+        CXXKIT_WARNING_PUSH                                                                                            \
+        CXXKIT_WARNING_DISABLE_DEPRECATED                                                                              \
         statement CXXKIT_WARNING_POP
 #endif
 

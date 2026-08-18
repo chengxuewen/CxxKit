@@ -36,18 +36,22 @@ CXXKIT_BEGIN_NAMESPACE
 namespace safe_cmp_impl
 {
 
-template <size_t N> struct LargerIntImpl : std::false_type
+template <size_t N>
+struct LargerIntImpl : std::false_type
 {
 };
-template <> struct LargerIntImpl<sizeof(int8_t)> : std::true_type
+template <>
+struct LargerIntImpl<sizeof(int8_t)> : std::true_type
 {
     using type = int16_t;
 };
-template <> struct LargerIntImpl<sizeof(int16_t)> : std::true_type
+template <>
+struct LargerIntImpl<sizeof(int16_t)> : std::true_type
 {
     using type = int32_t;
 };
-template <> struct LargerIntImpl<sizeof(int32_t)> : std::true_type
+template <>
+struct LargerIntImpl<sizeof(int32_t)> : std::true_type
 {
     using type = int64_t;
 };
@@ -61,7 +65,8 @@ struct LargerInt : LargerIntImpl<sizeof(T1) < sizeof(T2) || sizeof(T1) < sizeof(
 {
 };
 
-template <typename T> constexpr typename std::make_unsigned<T>::type makeUnsigned(T a)
+template <typename T>
+constexpr typename std::make_unsigned<T>::type makeUnsigned(T a)
 {
     return static_cast<typename std::make_unsigned<T>::type>(a);
 }
@@ -70,7 +75,7 @@ template <typename T> constexpr typename std::make_unsigned<T>::type makeUnsigne
 template <typename Op,
           typename T1,
           typename T2,
-    typename std::enable_if<std::is_signed<T1>::value == std::is_signed<T2>::value>::type * = nullptr>
+          typename std::enable_if<std::is_signed<T1>::value == std::is_signed<T2>::value>::type * = nullptr>
 constexpr bool cmp(T1 a, T2 b)
 {
     return Op::Op(a, b);
@@ -81,8 +86,8 @@ constexpr bool cmp(T1 a, T2 b)
 template <typename Op,
           typename T1,
           typename T2,
-    typename std::enable_if<std::is_signed<T1>::value && std::is_unsigned<T2>::value &&
-                            LargerInt<T2, T1>::value>::type * = nullptr>
+          typename std::enable_if<std::is_signed<T1>::value && std::is_unsigned<T2>::value &&
+                                  LargerInt<T2, T1>::value>::type * = nullptr>
 constexpr bool cmp(T1 a, T2 b)
 {
     return Op::Op(a, static_cast<typename LargerInt<T2, T1>::type>(b));
@@ -93,8 +98,8 @@ constexpr bool cmp(T1 a, T2 b)
 template <typename Op,
           typename T1,
           typename T2,
-    typename std::enable_if<std::is_unsigned<T1>::value && std::is_signed<T2>::value &&
-                            LargerInt<T1, T2>::value>::type * = nullptr>
+          typename std::enable_if<std::is_unsigned<T1>::value && std::is_signed<T2>::value &&
+                                  LargerInt<T1, T2>::value>::type * = nullptr>
 constexpr bool cmp(T1 a, T2 b)
 {
     return Op::Op(static_cast<typename LargerInt<T1, T2>::type>(a), b);
@@ -105,8 +110,8 @@ constexpr bool cmp(T1 a, T2 b)
 template <typename Op,
           typename T1,
           typename T2,
-    typename std::enable_if<std::is_signed<T1>::value && std::is_unsigned<T2>::value &&
-                            !LargerInt<T2, T1>::value>::type * = nullptr>
+          typename std::enable_if<std::is_signed<T1>::value && std::is_unsigned<T2>::value &&
+                                  !LargerInt<T2, T1>::value>::type * = nullptr>
 constexpr bool cmp(T1 a, T2 b)
 {
     return a < 0 ? Op::Op(-1, 0) : Op::Op(safe_cmp_impl::makeUnsigned(a), b);
@@ -117,17 +122,21 @@ constexpr bool cmp(T1 a, T2 b)
 template <typename Op,
           typename T1,
           typename T2,
-    typename std::enable_if<std::is_unsigned<T1>::value && std::is_signed<T2>::value &&
-                            !LargerInt<T1, T2>::value>::type * = nullptr>
+          typename std::enable_if<std::is_unsigned<T1>::value && std::is_signed<T2>::value &&
+                                  !LargerInt<T1, T2>::value>::type * = nullptr>
 constexpr bool cmp(T1 a, T2 b)
 {
     return b < 0 ? Op::Op(0, -1) : Op::Op(a, safe_cmp_impl::makeUnsigned(b));
 }
 
-#define CXXKIT_SAFECMP_MAKE_OP(name, op)                                                                                 \
+#define CXXKIT_SAFECMP_MAKE_OP(name, op)                                                                               \
     struct name                                                                                                        \
     {                                                                                                                  \
-        template <typename T1, typename T2> static constexpr bool Op(T1 a, T2 b) { return a op b; }                    \
+        template <typename T1, typename T2>                                                                            \
+        static constexpr bool Op(T1 a, T2 b)                                                                           \
+        {                                                                                                              \
+            return a op b;                                                                                             \
+        }                                                                                                              \
     };
 
 CXXKIT_SAFECMP_MAKE_OP(EqOp, ==)
@@ -145,7 +154,7 @@ CXXKIT_SAFECMP_MAKE_OP(GeOp, >=)
 #undef CXXKIT_SAFECMP_MAKE_OP
 } // namespace safe_cmp_impl
 
-#define CXXKIT_SAFECMP_MAKE_FUN(name)                                                                                    \
+#define CXXKIT_SAFECMP_MAKE_FUN(name)                                                                                  \
     template <typename T1, typename T2>                                                                                \
     constexpr typename std::enable_if<IsIntLike<T1>::value && IsIntLike<T2>::value, bool>::type Safe##name(T1 a, T2 b) \
     {                                                                                                                  \
@@ -153,8 +162,9 @@ CXXKIT_SAFECMP_MAKE_OP(GeOp, >=)
         return safe_cmp_impl::cmp<safe_cmp_impl::name##Op>(+a, +b);                                                    \
     }                                                                                                                  \
     template <typename T1, typename T2>                                                                                \
-    constexpr typename std::enable_if<!IsIntLike<T1>::value || !IsIntLike<T2>::value, bool>::type Safe##name(          \
-        const T1 &a, const T2 &b)                                                                                      \
+    constexpr                                                                                                          \
+        typename std::enable_if<!IsIntLike<T1>::value || !IsIntLike<T2>::value, bool>::type Safe##name(const T1 &a,    \
+                                                                                                       const T2 &b)    \
     {                                                                                                                  \
         return safe_cmp_impl::name##Op::Op(a, b);                                                                      \
     }

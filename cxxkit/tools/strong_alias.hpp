@@ -35,7 +35,8 @@ CXXKIT_BEGIN_NAMESPACE
 // library can't depend on that file. The ostream operator has been removed
 // per WebRTC library conventions, and the underlying type is exposed.
 
-template <typename TagType, typename TheUnderlyingType> class StrongAlias
+template <typename TagType, typename TheUnderlyingType>
+class StrongAlias
 {
 public:
     using UnderlyingType = TheUnderlyingType;

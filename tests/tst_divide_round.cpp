@@ -20,9 +20,9 @@
 using namespace cxxkit;
 
 #ifdef CXXKIT_OS_WIN
-#   undef min
-#   undef max
-#   undef small
+#    undef min
+#    undef max
+#    undef small
 #endif
 
 namespace
@@ -46,8 +46,7 @@ TEST(DivideRoundUpTest, WorksForMaxDividend)
 {
     EXPECT_EQ(DivideRoundUp(uint8_t{255}, 2), 128);
     EXPECT_EQ(DivideRoundUp(std::numeric_limits<int>::max(), 2),
-              std::numeric_limits<int>::max() / 2 +
-              (std::numeric_limits<int>::max() % 2));
+              std::numeric_limits<int>::max() / 2 + (std::numeric_limits<int>::max() % 2));
 }
 
 TEST(DivideRoundToNearestTest, CanBeUsedAsConstexpr)
@@ -97,12 +96,8 @@ TEST(DivideRoundToNearestTest, DivideByEvenNumberTieRoundsUp)
 
 TEST(DivideRoundToNearestTest, LargeDivisor)
 {
-    EXPECT_EQ(DivideRoundToNearest(std::numeric_limits<int>::max() - 1,
-                                   std::numeric_limits<int>::max()),
-              1);
-    EXPECT_EQ(DivideRoundToNearest(std::numeric_limits<int>::min(),
-                                   std::numeric_limits<int>::max()),
-              -1);
+    EXPECT_EQ(DivideRoundToNearest(std::numeric_limits<int>::max() - 1, std::numeric_limits<int>::max()), 1);
+    EXPECT_EQ(DivideRoundToNearest(std::numeric_limits<int>::min(), std::numeric_limits<int>::max()), -1);
 }
 
 TEST(DivideRoundToNearestTest, DivideSmallTypeByLargeType)
@@ -112,17 +107,12 @@ TEST(DivideRoundToNearestTest, DivideSmallTypeByLargeType)
     EXPECT_EQ(DivideRoundToNearest(small, large), 0);
 }
 
-using IntegerTypes = ::testing::Types<int8_t,
-                                      int16_t,
-                                      int32_t,
-                                      int64_t,
-                                      uint8_t,
-                                      uint16_t,
-                                      uint32_t,
-                                      uint64_t>;
+using IntegerTypes = ::testing::Types<int8_t, int16_t, int32_t, int64_t, uint8_t, uint16_t, uint32_t, uint64_t>;
 
 template <typename T>
-class DivideRoundTypedTest : public ::testing::Test {};
+class DivideRoundTypedTest : public ::testing::Test
+{
+};
 
 TYPED_TEST_SUITE(DivideRoundTypedTest, IntegerTypes);
 
@@ -130,32 +120,32 @@ TYPED_TEST(DivideRoundTypedTest, RoundToNearestPreservesType)
 {
     {
         CXXKIT_CXX14_CONSTEXPR auto value = std::is_same<decltype(DivideRoundToNearest(TypeParam{100}, int8_t{3})),
-                                                       decltype(TypeParam{100} / int8_t{3})>::value;
+                                                         decltype(TypeParam{100} / int8_t{3})>::value;
         CXXKIT_CXX14_CONSTEXPR_ASSERT_X(value, "");
     }
     {
         CXXKIT_CXX14_CONSTEXPR auto value = std::is_same<decltype(DivideRoundToNearest(TypeParam{100}, int16_t{3})),
-                                                       decltype(TypeParam{100} / int16_t{3})>::value;
+                                                         decltype(TypeParam{100} / int16_t{3})>::value;
         CXXKIT_CXX14_CONSTEXPR_ASSERT_X(value, "");
     }
     {
         CXXKIT_CXX14_CONSTEXPR auto value = std::is_same<decltype(DivideRoundToNearest(TypeParam{100}, int32_t{3})),
-                                                       decltype(TypeParam{100} / int32_t{3})>::value;
+                                                         decltype(TypeParam{100} / int32_t{3})>::value;
         CXXKIT_CXX14_CONSTEXPR_ASSERT_X(value, "");
     }
     {
         CXXKIT_CXX14_CONSTEXPR auto value = std::is_same<decltype(DivideRoundToNearest(TypeParam{100}, int64_t{3})),
-                                                       decltype(TypeParam{100} / int64_t{3})>::value;
+                                                         decltype(TypeParam{100} / int64_t{3})>::value;
         CXXKIT_CXX14_CONSTEXPR_ASSERT_X(value, "");
     }
     {
         CXXKIT_CXX14_CONSTEXPR auto value = std::is_same<decltype(DivideRoundToNearest(TypeParam{100}, uint8_t{3})),
-                                                       decltype(TypeParam{100} / uint8_t{3})>::value;
+                                                         decltype(TypeParam{100} / uint8_t{3})>::value;
         CXXKIT_CXX14_CONSTEXPR_ASSERT_X(value, "");
     }
     {
         CXXKIT_CXX14_CONSTEXPR auto value = std::is_same<decltype(DivideRoundToNearest(TypeParam{100}, uint16_t{3})),
-                                                       decltype(TypeParam{100} / uint16_t{3})>::value;
+                                                         decltype(TypeParam{100} / uint16_t{3})>::value;
         CXXKIT_CXX14_CONSTEXPR_ASSERT_X(value, "");
     }
     {
@@ -177,12 +167,12 @@ TYPED_TEST(DivideRoundTypedTest, RoundToNearestPreservesType)
         // const auto val2LessThanInt = sizeof(decltype(val2)) < sizeof(int);
         // const auto val3LessThanInt = sizeof(decltype(val3)) < sizeof(int);
         CXXKIT_CXX14_CONSTEXPR auto value = std::is_same<decltype(DivideRoundToNearest(TypeParam{100}, uint32_t{3})),
-                                                       decltype(TypeParam{100} / uint32_t{3})>::value;
+                                                         decltype(TypeParam{100} / uint32_t{3})>::value;
         CXXKIT_CXX14_CONSTEXPR_ASSERT_X(value, "");
     }
     {
         CXXKIT_CXX14_CONSTEXPR auto value = std::is_same<decltype(DivideRoundToNearest(TypeParam{100}, uint64_t{3})),
-                                                       decltype(TypeParam{100} / uint64_t{3})>::value;
+                                                         decltype(TypeParam{100} / uint64_t{3})>::value;
         CXXKIT_CXX14_CONSTEXPR_ASSERT_X(value, "");
     }
 }
@@ -191,43 +181,43 @@ TYPED_TEST(DivideRoundTypedTest, RoundUpPreservesType)
 {
     {
         CXXKIT_CXX14_CONSTEXPR auto value = std::is_same<decltype(DivideRoundUp(TypeParam{100}, int8_t{3})),
-                                                       decltype(TypeParam{100} / int8_t{3})>::value;
+                                                         decltype(TypeParam{100} / int8_t{3})>::value;
         CXXKIT_CXX14_CONSTEXPR_ASSERT_X(value, "");
     }
     {
         CXXKIT_CXX14_CONSTEXPR auto value = std::is_same<decltype(DivideRoundUp(TypeParam{100}, int16_t{3})),
-                                                       decltype(TypeParam{100} / int16_t{3})>::value;
+                                                         decltype(TypeParam{100} / int16_t{3})>::value;
         CXXKIT_CXX14_CONSTEXPR_ASSERT_X(value, "");
     }
     {
         CXXKIT_CXX14_CONSTEXPR auto value = std::is_same<decltype(DivideRoundUp(TypeParam{100}, int32_t{3})),
-                                                       decltype(TypeParam{100} / int32_t{3})>::value;
+                                                         decltype(TypeParam{100} / int32_t{3})>::value;
         CXXKIT_CXX14_CONSTEXPR_ASSERT_X(value, "");
     }
     {
         CXXKIT_CXX14_CONSTEXPR auto value = std::is_same<decltype(DivideRoundUp(TypeParam{100}, int64_t{3})),
-                                                       decltype(TypeParam{100} / int64_t{3})>::value;
+                                                         decltype(TypeParam{100} / int64_t{3})>::value;
         CXXKIT_CXX14_CONSTEXPR_ASSERT_X(value, "");
     }
     {
         CXXKIT_CXX14_CONSTEXPR auto value = std::is_same<decltype(DivideRoundUp(TypeParam{100}, uint8_t{3})),
-                                                       decltype(TypeParam{100} / uint8_t{3})>::value;
+                                                         decltype(TypeParam{100} / uint8_t{3})>::value;
         CXXKIT_CXX14_CONSTEXPR_ASSERT_X(value, "");
     }
     {
         CXXKIT_CXX14_CONSTEXPR auto value = std::is_same<decltype(DivideRoundUp(TypeParam{100}, uint16_t{3})),
-                                                       decltype(TypeParam{100} / uint16_t{3})>::value;
+                                                         decltype(TypeParam{100} / uint16_t{3})>::value;
         CXXKIT_CXX14_CONSTEXPR_ASSERT_X(value, "");
     }
     {
         CXXKIT_CXX14_CONSTEXPR auto value = std::is_same<decltype(DivideRoundUp(TypeParam{100}, uint32_t{3})),
-                                                       decltype(TypeParam{100} / uint32_t{3})>::value;
+                                                         decltype(TypeParam{100} / uint32_t{3})>::value;
         CXXKIT_CXX14_CONSTEXPR_ASSERT_X(value, "");
     }
     {
         CXXKIT_CXX14_CONSTEXPR auto value = std::is_same<decltype(DivideRoundUp(TypeParam{100}, uint64_t{3})),
-                                                       decltype(TypeParam{100} / uint64_t{3})>::value;
+                                                         decltype(TypeParam{100} / uint64_t{3})>::value;
         CXXKIT_CXX14_CONSTEXPR_ASSERT_X(value, "");
     }
 }
-}  // namespace
+} // namespace

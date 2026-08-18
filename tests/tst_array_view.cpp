@@ -29,9 +29,16 @@ namespace
 using ::testing::ElementsAre;
 using ::testing::IsEmpty;
 
-template <typename T> size_t Call(ArrayView<T> av) { return av.size(); }
+template <typename T>
+size_t Call(ArrayView<T> av)
+{
+    return av.size();
+}
 
-template <typename T, size_t N> void CallFixed(ArrayView<T, N> /* av */) { }
+template <typename T, size_t N>
+void CallFixed(ArrayView<T, N> /* av */)
+{
+}
 } // namespace
 
 TEST(ArrayViewDeathTest, TestConstructFromPtrAndArray)

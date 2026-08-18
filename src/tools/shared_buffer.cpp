@@ -26,33 +26,47 @@
 
 CXXKIT_BEGIN_NAMESPACE
 
-SharedBuffer::SharedBuffer() : offset_(0), size_(0)
+SharedBuffer::SharedBuffer()
+    : offset_(0)
+    , size_(0)
 {
     CXXKIT_DCHECK(IsConsistent());
 }
 
 SharedBuffer::SharedBuffer(const SharedBuffer &buf)
-    : buffer_(buf.buffer_), offset_(buf.offset_), size_(buf.size_) {}
+    : buffer_(buf.buffer_)
+    , offset_(buf.offset_)
+    , size_(buf.size_)
+{
+}
 
 SharedBuffer::SharedBuffer(SharedBuffer &&buf) noexcept
-    : buffer_(std::move(buf.buffer_)), offset_(buf.offset_), size_(buf.size_)
+    : buffer_(std::move(buf.buffer_))
+    , offset_(buf.offset_)
+    , size_(buf.size_)
 {
     buf.offset_ = 0;
     buf.size_ = 0;
     CXXKIT_DCHECK(IsConsistent());
 }
 
-SharedBuffer::SharedBuffer(StringView s) : SharedBuffer(s.data(), s.length()) {}
+SharedBuffer::SharedBuffer(StringView s)
+    : SharedBuffer(s.data(), s.length())
+{
+}
 
 SharedBuffer::SharedBuffer(size_t size)
-    : buffer_(size > 0 ? new RefCountedBuffer(size) : nullptr), offset_(0), size_(size)
+    : buffer_(size > 0 ? new RefCountedBuffer(size) : nullptr)
+    , offset_(0)
+    , size_(size)
 {
     CXXKIT_DCHECK(IsConsistent());
 }
 
 SharedBuffer::SharedBuffer(size_t size, size_t capacity)
-    : buffer_(size > 0 || capacity > 0 ? new RefCountedBuffer(size, capacity)
-                                       : nullptr), offset_(0), size_(size)
+    : buffer_(size > 0 || capacity > 0 ? new RefCountedBuffer(size, capacity) : nullptr)
+    , offset_(0)
+    , size_(size)
 {
     CXXKIT_DCHECK(IsConsistent());
 }

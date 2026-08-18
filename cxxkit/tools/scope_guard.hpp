@@ -36,7 +36,8 @@ CXXKIT_BEGIN_NAMESPACE
 namespace detail
 {
 
-template <typename Callback> class ScopeGuardStorage
+template <typename Callback>
+class ScopeGuardStorage
 {
 public:
     ScopeGuardStorage() = delete;
@@ -76,7 +77,8 @@ private:
 };
 } // namespace detail
 
-template <typename F> class [[nodiscard]] ScopeGuard
+template <typename F>
+class [[nodiscard]] ScopeGuard
 {
     static_assert(ReturnsVoid<F>::value, "Callbacks that return values are not supported.");
 
@@ -114,13 +116,19 @@ private:
 };
 
 #if CXXKIT_CC_FEATURE_CLASS_TEMPLATE_ARGUMENT_DEDUCTION
-template <typename F> ScopeGuard(F (&)()) -> ScopeGuard<F (*)()>;
+template <typename F>
+ScopeGuard(F (&)()) -> ScopeGuard<F (*)()>;
 #endif
 
 namespace utils
 {
-template <typename F> [[nodiscard]] ScopeGuard<F> makeScopeGuard(F f) { return {std::move(f)}; }
-template <typename FC, typename F> [[nodiscard]] ScopeGuard<F> makeScopeGuard(const FC &fc, F f)
+template <typename F>
+[[nodiscard]] ScopeGuard<F> makeScopeGuard(F f)
+{
+    return {std::move(f)};
+}
+template <typename FC, typename F>
+[[nodiscard]] ScopeGuard<F> makeScopeGuard(const FC &fc, F f)
 {
     fc();
     return {std::move(f)};
