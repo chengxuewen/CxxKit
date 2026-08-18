@@ -25,6 +25,8 @@ set(CXXKIT_TEST_LINK_LIBRARIES
     cxxkit::memory
     cxxkit::units
     cxxkit::time
+    cxxkit::kernel
+    cxxkit::thread
     cxxkit::text
     cxxkit::tools
     CXXKitWrapGTest::WrapGTest)

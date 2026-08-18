@@ -22,7 +22,7 @@
 **
 ***********************************************************************************************************************/
 
-#include "cxxkit/tools/logging_p.hpp"
+#include "cxxkit/tools/detail/logging_p.hpp"
 #include "cxxkit/memory/memory.hpp"
 #include "cxxkit/tools/assert.hpp"
 

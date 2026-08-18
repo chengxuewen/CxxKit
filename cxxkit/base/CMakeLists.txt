@@ -33,6 +33,7 @@ cxxkit_find_package(ReaderWriterQueue PROVIDED_TARGETS CXXKitWrapReaderWriterQue
 cxxkit_find_package(Function2 PROVIDED_TARGETS CXXKitWrapFunction2::WrapFunction2)
 cxxkit_find_package(Filesystem PROVIDED_TARGETS CXXKitWrapFilesystem::WrapFilesystem)
 cxxkit_find_package(Spdlog PROVIDED_TARGETS CXXKitWrapSpdlog::WrapSpdlog)
+cxxkit_find_package(Variant PROVIDED_TARGETS CXXKitWrapVariant::WrapVariant)
 cxxkit_install_public_wrap_headers(cxxkit_base
     WRAPS
     CXXKitWrapFmt::WrapFmt|fmt
@@ -43,7 +44,8 @@ cxxkit_install_public_wrap_headers(cxxkit_base
     CXXKitWrapReaderWriterQueue::WrapReaderWriterQueue|readerwriterqueue
     CXXKitWrapFunction2::WrapFunction2|function2
     CXXKitWrapFilesystem::WrapFilesystem|ghc
-    CXXKitWrapSpdlog::WrapSpdlog|spdlog)
+    CXXKitWrapSpdlog::WrapSpdlog|spdlog
+    CXXKitWrapVariant::WrapVariant|mpark)
 
 # cxxkit/3rdparty/ 统一 include 根（三方头命名空间拷贝）
 target_include_directories(cxxkit_base INTERFACE
@@ -60,7 +62,8 @@ target_link_libraries(cxxkit_base INTERFACE
     CXXKitWrapReaderWriterQueue::WrapReaderWriterQueue
     CXXKitWrapFunction2::WrapFunction2
     CXXKitWrapFilesystem::WrapFilesystem
-    CXXKitWrapSpdlog::WrapSpdlog)
+    CXXKitWrapSpdlog::WrapSpdlog
+    CXXKitWrapVariant::WrapVariant)
 
 target_compile_features(cxxkit_base INTERFACE cxx_std_11)
 
