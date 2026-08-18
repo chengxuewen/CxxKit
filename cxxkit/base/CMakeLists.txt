@@ -70,6 +70,7 @@ target_link_libraries(cxxkit_base INTERFACE
 
 target_compile_features(cxxkit_base INTERFACE cxx_std_11)
 
+cxxkit_generate_pkg_config(cxxkit_base base)
 cxxkit_configure_library_end(CxxKitBase)
 
 if(CXXKIT_BUILD_INSTALL)

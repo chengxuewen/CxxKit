@@ -37,6 +37,7 @@ set_target_properties(cxxkit_text PROPERTIES
     CXX_STANDARD_REQUIRED ON
     CXX_EXTENSIONS OFF)
 
+cxxkit_generate_pkg_config(cxxkit_text text)
 cxxkit_configure_library_end(CxxKitText)
 
 if(CXXKIT_BUILD_INSTALL)

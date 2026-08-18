@@ -9,6 +9,7 @@ target_include_directories(cxxkit_patterns INTERFACE
     $<INSTALL_INTERFACE:include>)
 target_link_libraries(cxxkit_patterns INTERFACE cxxkit::base)
 target_compile_features(cxxkit_patterns INTERFACE cxx_std_11)
+cxxkit_generate_pkg_config(cxxkit_patterns patterns)
 cxxkit_configure_library_end(CxxKitPatterns)
 
 if(CXXKIT_BUILD_INSTALL)

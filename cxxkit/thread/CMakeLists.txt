@@ -49,6 +49,7 @@ set_target_properties(cxxkit_thread PROPERTIES
     CXX_STANDARD_REQUIRED ON
     CXX_EXTENSIONS OFF)
 
+cxxkit_generate_pkg_config(cxxkit_thread thread)
 cxxkit_configure_library_end(CxxKitThread)
 
 if(CXXKIT_BUILD_INSTALL)

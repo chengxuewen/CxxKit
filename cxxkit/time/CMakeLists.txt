@@ -19,6 +19,7 @@ set_target_properties(cxxkit_time PROPERTIES
     CXX_STANDARD_REQUIRED ON
     CXX_EXTENSIONS OFF)
 
+cxxkit_generate_pkg_config(cxxkit_time time)
 cxxkit_configure_library_end(CxxKitTime)
 
 if(CXXKIT_BUILD_INSTALL)

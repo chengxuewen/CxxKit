@@ -9,6 +9,7 @@ target_include_directories(cxxkit_functional INTERFACE
     $<INSTALL_INTERFACE:include>)
 target_link_libraries(cxxkit_functional INTERFACE cxxkit::base)
 target_compile_features(cxxkit_functional INTERFACE cxx_std_11)
+cxxkit_generate_pkg_config(cxxkit_functional functional)
 cxxkit_configure_library_end(CxxKitFunctional)
 
 if(CXXKIT_BUILD_INSTALL)

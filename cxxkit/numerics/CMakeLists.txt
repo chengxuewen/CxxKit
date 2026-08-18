@@ -9,6 +9,7 @@ target_include_directories(cxxkit_numerics INTERFACE
     $<INSTALL_INTERFACE:include>)
 target_link_libraries(cxxkit_numerics INTERFACE cxxkit::base)
 target_compile_features(cxxkit_numerics INTERFACE cxx_std_11)
+cxxkit_generate_pkg_config(cxxkit_numerics numerics)
 cxxkit_configure_library_end(CxxKitNumerics)
 
 if(CXXKIT_BUILD_INSTALL)

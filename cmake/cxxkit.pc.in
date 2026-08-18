@@ -1,0 +1,11 @@
+prefix=@PC_PREFIX@
+exec_prefix=@PC_EXEC_PREFIX@
+libdir=@PC_LIBDIR@
+includedir=@PC_INCLUDEDIR@
+
+Name: cxxkit-@pc_name@
+Description: @arg_DESCRIPTION@
+Version: @PROJECT_VERSION@
+Libs: @_pc_libs@
+Cflags: -I@PC_INCLUDEDIR@
+Requires: @_requires_str@

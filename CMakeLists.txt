@@ -95,6 +95,7 @@ include(CxxKitConfigureHelpers)
 include(CxxKitLibraryHelpers)
 include(CxxKitInstallHelpers)
 include(CxxKitTestHelpers)
+include(CxxKitPkgConfigHelpers)
 
 #-----------------------------------------------------------------------------------------------------------------------
 # Build options

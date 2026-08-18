@@ -22,6 +22,7 @@ set_target_properties(cxxkit_units PROPERTIES
     CXX_STANDARD_REQUIRED ON
     CXX_EXTENSIONS OFF)
 
+cxxkit_generate_pkg_config(cxxkit_units units)
 cxxkit_configure_library_end(CxxKitUnits)
 
 if(CXXKIT_BUILD_INSTALL)
