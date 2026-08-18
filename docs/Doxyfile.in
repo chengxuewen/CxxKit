@@ -1,0 +1,21 @@
+# cxxkit doxygen configuration (configured by CMake)
+PROJECT_NAME           = "@CXXKIT_PROJECT_NAME@"
+PROJECT_BRIEF          = "An open cross-platform cpp development toolkit"
+PROJECT_VERSION        = "@PROJECT_VERSION@"
+OUTPUT_DIRECTORY       = "@CXXKIT_DOC_OUTPUT_DIR@"
+OUTPUT_LANGUAGE        = English
+INPUT                  = @CXXKIT_DOXYGEN_INPUT@
+RECURSIVE              = YES
+FILE_PATTERNS          = *.hpp *.h
+EXCLUDE_PATTERNS       = *_p.hpp *_pch.hpp */detail/*
+EXTRACT_ALL            = YES
+EXTRACT_PRIVATE        = YES
+EXTRACT_STATIC         = YES
+HIDE_SCOPE_NAMES       = YES
+REFERENCED_BY_RELATION = YES
+SOURCE_BROWSER         = YES
+GENERATE_HTML          = YES
+GENERATE_LATEX         = NO
+HAVE_DOT               = NO
+SEARCHENGINE           = YES
+WARN_IF_UNDOCUMENTED   = NO

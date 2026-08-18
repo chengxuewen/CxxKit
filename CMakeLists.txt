@@ -163,6 +163,37 @@ cxxkit_add_subdirectory(examples CXXKIT_BUILD_EXAMPLES)
 
 
 #-----------------------------------------------------------------------------------------------------------------------
+# Doxygen documentation (CXXKIT_BUILD_DOCS)
+#-----------------------------------------------------------------------------------------------------------------------
+if(CXXKIT_BUILD_DOCS)
+    find_program(DOXYGEN_EXECUTABLE doxygen)
+    if(DOXYGEN_EXECUTABLE)
+        set(CXXKIT_PROJECT_NAME "${PROJECT_NAME}")
+        set(CXXKIT_DOC_OUTPUT_DIR "${CMAKE_CURRENT_BINARY_DIR}/doc")
+        set(_doc_input "${PROJECT_SOURCE_DIR}/README.md")
+        file(GLOB _doc_subs "${PROJECT_SOURCE_DIR}/cxxkit/*")
+        foreach(_sub IN LISTS _doc_subs)
+            if(IS_DIRECTORY "${_sub}")
+                string(APPEND _doc_input " ${_sub}")
+            endif()
+        endforeach()
+        set(CXXKIT_DOXYGEN_INPUT "${_doc_input}")
+        configure_file(
+            "${PROJECT_SOURCE_DIR}/docs/Doxyfile.in"
+            "${CMAKE_CURRENT_BINARY_DIR}/Doxyfile"
+            @ONLY)
+        add_custom_target(Docs
+            COMMAND ${DOXYGEN_EXECUTABLE} "${CMAKE_CURRENT_BINARY_DIR}/Doxyfile"
+            WORKING_DIRECTORY "${CMAKE_CURRENT_BINARY_DIR}"
+            COMMENT "Generating API documentation with doxygen")
+        message(STATUS "Doxygen documentation enabled (target: Docs)")
+    else()
+        message(WARNING "CXXKIT_BUILD_DOCS=ON but doxygen not found; skipping")
+    endif()
+endif()
+
+
+#-----------------------------------------------------------------------------------------------------------------------
 # Custom build targets (octk-style): BuildAll rebuilds, BuildInstall builds + installs
 #-----------------------------------------------------------------------------------------------------------------------
 add_custom_target(BuildAll
