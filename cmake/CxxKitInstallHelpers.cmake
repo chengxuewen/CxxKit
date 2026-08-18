@@ -66,5 +66,25 @@ function(cxxkit_install_public_wrap_headers target)
                     DESTINATION lib)
             endif()
         endif()
+        # vcpkg-style: install the 3rdparty's own CMake config + pkgconfig files so
+        # consumers can find_dependency(<lib>) with full transitive chains
+        # (e.g. spdlogConfig -> find_dependency(fmt), cprConfig -> find_dependency(CURL)).
+        if(EXISTS "${wrap_install_dir}/lib/cmake")
+            file(GLOB _wrap_cmake_dirs "${wrap_install_dir}/lib/cmake/*")
+            foreach(_cmake_dir IN LISTS _wrap_cmake_dirs)
+                get_filename_component(_cmake_name "${_cmake_dir}" NAME)
+                install(DIRECTORY "${_cmake_dir}/"
+                    DESTINATION "lib/cmake/${_cmake_name}")
+            endforeach()
+        endif()
+        if(EXISTS "${wrap_install_dir}/lib/pkgconfig")
+            install(DIRECTORY "${wrap_install_dir}/lib/pkgconfig/"
+                DESTINATION "lib/pkgconfig")
+        endif()
+        # Executables shipped by a 3rdparty (e.g. curl CLI referenced by CURLConfig)
+        if(EXISTS "${wrap_install_dir}/bin")
+            install(DIRECTORY "${wrap_install_dir}/bin/"
+                DESTINATION "bin")
+        endif()
     endforeach()
 endfunction()

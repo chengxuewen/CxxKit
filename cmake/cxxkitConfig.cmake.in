@@ -2,13 +2,30 @@
 
 include(CMakeFindDependencyMacro)
 
-# Vendored 3rdparty stub targets referenced by cxxkit exported targets.
-# Headers are installed under include/cxxkit/3rdparty/<lib>/, and static
-# libraries are installed to lib/. Stubs link the installed static libs so
-# consumers resolve vendored symbols (M3: static libs ship with the package).
+#-----------------------------------------------------------------------------------------------------------------------
+# Vendored 3rdparty dependencies (vcpkg-style: find each library's own installed
+# Config.cmake, which carries full transitive dependency chains, e.g.
+#   spdlogConfig -> find_dependency(fmt)
+#   cprConfig    -> find_dependency(CURL)  (OpenSSL/ZLIB gated OFF at build)
+# Headers are namespaced under include/cxxkit/3rdparty/<lib>/; static libs are in lib/.
+#-----------------------------------------------------------------------------------------------------------------------
+foreach(_dep IN ITEMS
+        fmt
+        spdlog
+        cpr
+        CURL
+        MbedTLS)
+    find_dependency(${_dep} CONFIG
+        PATHS "${PACKAGE_PREFIX_DIR}/lib/cmake"
+        NO_DEFAULT_PATH)
+endforeach()
+
+# Header-only / lite 3rdparty without installed Configs: keep INTERFACE stub targets
+# so exported link interfaces resolve. These contribute headers only (namespaced
+# include path comes from cxxkit targets).
 set(_cxxkit_3rdparty_libdir "${PACKAGE_PREFIX_DIR}/lib")
 foreach(_stub_spec IN ITEMS
-        "CXXKitWrapFmt::WrapFmt;libfmt.a"
+        "CXXKitWrapFmt::WrapFmt;"
         "CXXKitWrapStringViewLite::WrapStringViewLite;"
         "CXXKitWrapOptional::WrapOptional;"
         "CXXKitWrapExpected::WrapExpected;"
@@ -16,37 +33,17 @@ foreach(_stub_spec IN ITEMS
         "CXXKitWrapReaderWriterQueue::WrapReaderWriterQueue;"
         "CXXKitWrapFunction2::WrapFunction2;"
         "CXXKitWrapFilesystem::WrapFilesystem;"
-        "CXXKitWrapSpdlog::WrapSpdlog;libspdlogd.a libfmt.a"
+        "CXXKitWrapSpdlog::WrapSpdlog;"
         "CXXKitWrapVariant::WrapVariant;"
-        "CXXKitWrapBenchmark::WrapBenchmark;libbenchmark.a"
-        "CXXKitWrapLibcpr::WrapLibcpr;libcpr.a libcurl-d.a libmbedtls.a libmbedx509.a libmbedcrypto.a"
-        "CXXKitWrapLibcurl::WrapLibcurl;libcurl-d.a"
-        "CXXKitWrapMbedTLS::WrapMbedTLS;libmbedtls.a libmbedx509.a libmbedcrypto.a"
-)
+        "CXXKitWrapBenchmark::WrapBenchmark;"
+        "CXXKitWrapLibcpr::WrapLibcpr;"
+        "CXXKitWrapLibcurl::WrapLibcurl;"
+        "CXXKitWrapMbedTLS::WrapMbedTLS;")
     string(REPLACE ";" "|" _stub_parts "${_stub_spec}")
     string(REPLACE "|" ";" _stub_list "${_stub_parts}")
     list(GET _stub_list 0 _stub_target)
-    list(GET _stub_list 1 _stub_lib)
     if(NOT TARGET "${_stub_target}")
         add_library("${_stub_target}" INTERFACE IMPORTED)
-        if(_stub_lib)
-            set(_stub_libs "")
-            string(REPLACE " " ";" _stub_lib_list "${_stub_lib}")
-            foreach(_lib IN LISTS _stub_lib_list)
-                if(EXISTS "${_cxxkit_3rdparty_libdir}/${_lib}")
-                    list(APPEND _stub_libs "${_cxxkit_3rdparty_libdir}/${_lib}")
-                endif()
-            endforeach()
-            if(_stub_libs)
-                set_target_properties("${_stub_target}" PROPERTIES
-                    INTERFACE_LINK_LIBRARIES "${_stub_libs}")
-            endif()
-            # Platform frameworks required by curl (macOS)
-            if((_stub_target STREQUAL "CXXKitWrapLibcurl::WrapLibcurl" OR _stub_target STREQUAL "CXXKitWrapLibcpr::WrapLibcpr") AND APPLE)
-                set_target_properties("${_stub_target}" PROPERTIES
-                    INTERFACE_LINK_LIBRARIES "${_stub_libs};-framework CoreFoundation;-framework SystemConfiguration;-framework Security")
-            endif()
-        endif()
     endif()
 endforeach()
 
