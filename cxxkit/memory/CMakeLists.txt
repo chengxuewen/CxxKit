@@ -16,7 +16,8 @@ cxxkit_configure_library_begin(CxxKitMemory)
 
 add_library(cxxkit_memory
     ${PROJECT_SOURCE_DIR}/src/memory/aligned_malloc.cpp
-    ${PROJECT_SOURCE_DIR}/src/memory/shared_memory.cpp)
+    ${PROJECT_SOURCE_DIR}/src/memory/shared_memory.cpp
+    ${PROJECT_SOURCE_DIR}/src/memory/zero_memory.cpp)
 add_library(cxxkit::memory ALIAS cxxkit_memory)
 
 target_include_directories(cxxkit_memory PUBLIC

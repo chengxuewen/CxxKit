@@ -18,7 +18,11 @@ cxxkit_configure_library_begin(CxxKitText)
 add_library(cxxkit_text
     ${PROJECT_SOURCE_DIR}/src/text/string_utils.cpp
     ${PROJECT_SOURCE_DIR}/src/text/ascii.cpp
-    ${PROJECT_SOURCE_DIR}/src/text/string.cpp)
+    ${PROJECT_SOURCE_DIR}/src/text/string.cpp
+    ${PROJECT_SOURCE_DIR}/src/text/base64.cpp
+    ${PROJECT_SOURCE_DIR}/src/text/bit_buffer.cpp
+    ${PROJECT_SOURCE_DIR}/src/text/string_builder.cpp
+    ${PROJECT_SOURCE_DIR}/src/text/string_encode.cpp)
 add_library(cxxkit::text ALIAS cxxkit_text)
 
 target_include_directories(cxxkit_text PUBLIC
