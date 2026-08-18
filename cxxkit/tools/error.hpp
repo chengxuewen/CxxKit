@@ -24,8 +24,8 @@
 
 #pragma once
 
-#include "cxxkit/text/string_view.hpp"
-#include "cxxkit/memory/shared_data.hpp"
+#include <cxxkit/text/string_view.hpp>
+#include <cxxkit/memory/shared_data.hpp>
 
 #include <map>
 #include <limits>

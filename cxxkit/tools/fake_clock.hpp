@@ -25,10 +25,10 @@
 #ifndef _CXXKIT_FAKE_CLOCK_HPP
 #define _CXXKIT_FAKE_CLOCK_HPP
 
-#include "cxxkit/units/time_delta.hpp"
-#include "cxxkit/time/date_time.hpp"
-#include "cxxkit/units/timestamp.hpp"
-#include "cxxkit/thread/mutex.hpp"
+#include <cxxkit/units/time_delta.hpp>
+#include <cxxkit/time/date_time.hpp>
+#include <cxxkit/units/timestamp.hpp>
+#include <cxxkit/thread/mutex.hpp>
 
 CXXKIT_BEGIN_NAMESPACE
 

@@ -25,7 +25,7 @@
 #ifndef _CXXKIT_UNIQUE_FUNCTION_HPP
 #define _CXXKIT_UNIQUE_FUNCTION_HPP
 
-#include "cxxkit/tools/checks.hpp"
+#include <cxxkit/tools/checks.hpp>
 
 #include <cxxkit/3rdparty/function2/function2.hpp>
 

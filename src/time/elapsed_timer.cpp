@@ -22,8 +22,8 @@
 **
 ***********************************************************************************************************************/
 
-#include "cxxkit/time/elapsed_timer.hpp"
-#include "cxxkit/base/core_config.hpp"
+#include <cxxkit/time/elapsed_timer.hpp>
+#include <cxxkit/base/core_config.hpp>
 
 #include <chrono>
 

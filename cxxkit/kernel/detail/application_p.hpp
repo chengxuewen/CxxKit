@@ -24,7 +24,7 @@
 
 #pragma once
 
-#include "cxxkit/kernel/application.hpp"
+#include <cxxkit/kernel/application.hpp>
 
 #if CXXKIT_FEATURE_ENABLE_KERNEL
 

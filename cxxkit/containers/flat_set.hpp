@@ -5,7 +5,7 @@
 #ifndef _CXXKIT_FLAT_SET_HPP
 #define _CXXKIT_FLAT_SET_HPP
 
-#include "cxxkit/base/global.hpp"
+#include <cxxkit/base/global.hpp>
 
 #include <set>
 

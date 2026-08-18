@@ -23,9 +23,9 @@
 **
 ***********************************************************************************************************************/
 
-#include "cxxkit/functional/unique_function.hpp"
-#include "cxxkit/functional/function_view.hpp"
-#include "cxxkit/memory/memory.hpp"
+#include <cxxkit/functional/unique_function.hpp>
+#include <cxxkit/functional/function_view.hpp>
+#include <cxxkit/memory/memory.hpp>
 
 #include <memory>
 #include <utility>

@@ -26,9 +26,9 @@
 #ifndef _CXXKIT_DIVIDE_ROUND_HPP
 #define _CXXKIT_DIVIDE_ROUND_HPP
 
-#include "cxxkit/base/global.hpp"
-#include "cxxkit/tools/checks.hpp"
-#include "cxxkit/base/macros.hpp"
+#include <cxxkit/base/global.hpp>
+#include <cxxkit/tools/checks.hpp>
+#include <cxxkit/base/macros.hpp>
 
 CXXKIT_BEGIN_NAMESPACE
 

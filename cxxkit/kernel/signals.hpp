@@ -24,10 +24,10 @@
 
 #pragma once
 
-#include "cxxkit/tools/checks.hpp"
-#include "cxxkit/memory/memory.hpp"
-#include "cxxkit/tools/type_list.hpp"
-#include "cxxkit/tools/type_traits.hpp"
+#include <cxxkit/tools/checks.hpp>
+#include <cxxkit/memory/memory.hpp>
+#include <cxxkit/tools/type_list.hpp>
+#include <cxxkit/tools/type_traits.hpp>
 
 #include <mutex>
 #include <memory>

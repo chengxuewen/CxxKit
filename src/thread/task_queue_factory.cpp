@@ -23,9 +23,9 @@
 **
 ***********************************************************************************************************************/
 
-#include "cxxkit/thread/task_queue_factory.hpp"
-#include "cxxkit/thread/task_queue_thread.hpp"
-#include "cxxkit/memory/memory.hpp"
+#include <cxxkit/thread/task_queue_factory.hpp>
+#include <cxxkit/thread/task_queue_thread.hpp>
+#include <cxxkit/memory/memory.hpp>
 
 CXXKIT_BEGIN_NAMESPACE
 

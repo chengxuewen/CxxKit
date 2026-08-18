@@ -25,9 +25,9 @@
 #ifndef _CXXKIT_REF_COUNTED_OBJECT_HPP
 #define _CXXKIT_REF_COUNTED_OBJECT_HPP
 
-#include "cxxkit/memory/shared_ref_ptr.hpp"
-#include "cxxkit/memory/nullability.hpp"
-#include "cxxkit/memory/ref_count.hpp"
+#include <cxxkit/memory/shared_ref_ptr.hpp>
+#include <cxxkit/memory/nullability.hpp>
+#include <cxxkit/memory/ref_count.hpp>
 
 CXXKIT_BEGIN_NAMESPACE
 

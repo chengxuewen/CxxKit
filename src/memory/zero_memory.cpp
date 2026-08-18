@@ -22,9 +22,9 @@
 **
 ***********************************************************************************************************************/
 
-#include "cxxkit/memory/zero_memory.hpp"
-#include "cxxkit/base/system.hpp"
-#include "cxxkit/tools/checks.hpp"
+#include <cxxkit/memory/zero_memory.hpp>
+#include <cxxkit/base/system.hpp>
+#include <cxxkit/tools/checks.hpp>
 
 #if defined(CXXKIT_OS_WIN)
 #   include <windows.h>

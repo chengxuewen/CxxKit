@@ -22,11 +22,11 @@
 **
 ***********************************************************************************************************************/
 
-#include "cxxkit/thread/task_queue_thread.hpp"
-#include "cxxkit/time/date_time.hpp"
-#include "cxxkit/units/timestamp.hpp"
-#include "cxxkit/thread/semaphore.hpp"
-#include "cxxkit/thread/mutex.hpp"
+#include <cxxkit/thread/task_queue_thread.hpp>
+#include <cxxkit/time/date_time.hpp>
+#include <cxxkit/units/timestamp.hpp>
+#include <cxxkit/thread/semaphore.hpp>
+#include <cxxkit/thread/mutex.hpp>
 
 #include <set>
 #include <map>

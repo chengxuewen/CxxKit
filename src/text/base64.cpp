@@ -23,8 +23,8 @@
 **
 ***********************************************************************************************************************/
 
-#include "cxxkit/text/base64.hpp"
-#include "cxxkit/tools/checks.hpp"
+#include <cxxkit/text/base64.hpp>
+#include <cxxkit/tools/checks.hpp>
 
 CXXKIT_BEGIN_NAMESPACE
 

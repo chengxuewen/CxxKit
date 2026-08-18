@@ -24,7 +24,7 @@
 
 #pragma once
 
-#include "cxxkit/kernel/event.hpp"
+#include <cxxkit/kernel/event.hpp>
 
 #include <list>
 

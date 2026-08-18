@@ -22,7 +22,7 @@
 **
 ***********************************************************************************************************************/
 
-#include "cxxkit/kernel/event.hpp"
+#include <cxxkit/kernel/event.hpp>
 
 #if CXXKIT_FEATURE_ENABLE_KERNEL
 

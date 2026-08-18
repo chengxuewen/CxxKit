@@ -22,8 +22,8 @@
 **
 ***********************************************************************************************************************/
 
-#include "cxxkit/tools/metrics.hpp"
-#include "cxxkit/thread/mutex.hpp"
+#include <cxxkit/tools/metrics.hpp>
+#include <cxxkit/thread/mutex.hpp>
 
 #include <algorithm>
 

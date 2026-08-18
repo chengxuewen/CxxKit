@@ -22,11 +22,11 @@
 **
 ***********************************************************************************************************************/
 
-#include "cxxkit/thread/detail/platform_thread_p.hpp"
-#include "cxxkit/tools/exception.hpp"
-#include "cxxkit/tools/logging.hpp"
-#include "cxxkit/tools/result.hpp"
-#include "cxxkit/tools/checks.hpp"
+#include <cxxkit/thread/detail/platform_thread_p.hpp>
+#include <cxxkit/tools/exception.hpp>
+#include <cxxkit/tools/logging.hpp>
+#include <cxxkit/tools/result.hpp>
+#include <cxxkit/tools/checks.hpp>
 
 #include <thread>
 

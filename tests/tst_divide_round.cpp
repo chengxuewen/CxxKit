@@ -8,7 +8,7 @@
  *  be found in the AUTHORS file in the root of the source tree.
  */
 
-#include "cxxkit/numerics/divide_round.hpp"
+#include <cxxkit/numerics/divide_round.hpp>
 
 #include <gmock/gmock.h>
 #include <gtest/gtest.h>

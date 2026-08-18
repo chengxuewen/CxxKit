@@ -22,8 +22,8 @@
 **
 ***********************************************************************************************************************/
 
-#include "cxxkit/units/data_size.hpp"
-#include "cxxkit/containers/array_view.hpp"
+#include <cxxkit/units/data_size.hpp>
+#include <cxxkit/containers/array_view.hpp>
 
 #include <string>
 

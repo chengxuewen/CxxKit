@@ -22,8 +22,8 @@
 **
 ***********************************************************************************************************************/
 
-#include "cxxkit/text/bit_buffer.hpp"
-#include "cxxkit/numerics/bits.hpp"
+#include <cxxkit/text/bit_buffer.hpp>
+#include <cxxkit/numerics/bits.hpp>
 
 #include <stdint.h>
 

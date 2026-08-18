@@ -25,8 +25,8 @@
 #ifndef _CXXKIT_FREQUENCY_HPP
 #define _CXXKIT_FREQUENCY_HPP
 
-#include "cxxkit/units/time_delta.hpp"
-#include "cxxkit/tools/checks.hpp"
+#include <cxxkit/units/time_delta.hpp>
+#include <cxxkit/tools/checks.hpp>
 
 #include <type_traits>
 #include <cstdint>

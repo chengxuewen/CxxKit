@@ -22,8 +22,8 @@
 **
 ***********************************************************************************************************************/
 
-#include "cxxkit/tools/error.hpp"
-#include "cxxkit/thread/spinlock.hpp"
+#include <cxxkit/tools/error.hpp>
+#include <cxxkit/thread/spinlock.hpp>
 
 CXXKIT_BEGIN_NAMESPACE
 

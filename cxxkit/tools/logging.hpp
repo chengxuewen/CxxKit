@@ -24,8 +24,8 @@
 
 #pragma once
 
-#include "cxxkit/text/format.hpp"
-#include "cxxkit/text/string_utils.hpp"
+#include <cxxkit/text/format.hpp>
+#include <cxxkit/text/string_utils.hpp>
 
 #include <functional>
 #include <ostream>

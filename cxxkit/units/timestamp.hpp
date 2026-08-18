@@ -25,9 +25,9 @@
 #ifndef _CXXKIT_TIMESTAMP_HPP
 #define _CXXKIT_TIMESTAMP_HPP
 
-#include "cxxkit/units/time_delta.hpp"
-#include "cxxkit/units/unit_base.hpp"
-#include "cxxkit/tools/checks.hpp"
+#include <cxxkit/units/time_delta.hpp>
+#include <cxxkit/units/unit_base.hpp>
+#include <cxxkit/tools/checks.hpp>
 
 CXXKIT_BEGIN_NAMESPACE
 

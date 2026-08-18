@@ -24,8 +24,8 @@
 
 #pragma once
 
-#include "cxxkit/thread/thread_pool.hpp"
-#include "cxxkit/tools/type_traits.hpp"
+#include <cxxkit/thread/thread_pool.hpp>
+#include <cxxkit/tools/type_traits.hpp>
 
 CXXKIT_BEGIN_NAMESPACE
 

@@ -23,8 +23,8 @@
 **
 ***********************************************************************************************************************/
 
-#include "cxxkit/memory/aligned_malloc.hpp"
-#include "cxxkit/tools/assert.hpp"
+#include <cxxkit/memory/aligned_malloc.hpp>
+#include <cxxkit/tools/assert.hpp>
 
 #include <stdlib.h>  // for free, malloc
 #include <string.h>  // for memcpy

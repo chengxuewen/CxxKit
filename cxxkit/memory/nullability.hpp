@@ -25,7 +25,7 @@
 #ifndef _CXXKIT_NULLABILITY_HPP
 #define _CXXKIT_NULLABILITY_HPP
 
-#include "cxxkit/tools/type_traits.hpp"
+#include <cxxkit/tools/type_traits.hpp>
 
 CXXKIT_BEGIN_NAMESPACE
 

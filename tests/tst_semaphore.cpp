@@ -23,9 +23,9 @@
 **
 ***********************************************************************************************************************/
 
-#include "cxxkit/time/elapsed_timer.hpp"
-#include "cxxkit/thread/semaphore.hpp"
-#include "cxxkit/tools/logging.hpp"
+#include <cxxkit/time/elapsed_timer.hpp>
+#include <cxxkit/thread/semaphore.hpp>
+#include <cxxkit/tools/logging.hpp>
 
 #include <gmock/gmock.h>
 #include <gtest/gtest.h>

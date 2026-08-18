@@ -24,7 +24,7 @@
 
 #pragma once
 
-#include "cxxkit/tools/error.hpp"
+#include <cxxkit/tools/error.hpp>
 
 #include <ostream>
 

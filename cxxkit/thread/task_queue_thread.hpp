@@ -24,8 +24,8 @@
 
 #pragma once
 
-#include "cxxkit/thread/task_queue.hpp"
-#include "cxxkit/tools/logging.hpp"
+#include <cxxkit/thread/task_queue.hpp>
+#include <cxxkit/tools/logging.hpp>
 
 CXXKIT_BEGIN_NAMESPACE
 

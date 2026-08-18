@@ -22,8 +22,8 @@
 **
 ***********************************************************************************************************************/
 
-#include "cxxkit/tools/assert.hpp"
-#include "cxxkit/tools/logging.hpp"
+#include <cxxkit/tools/assert.hpp>
+#include <cxxkit/tools/logging.hpp>
 
 void cxxkit_assert_x(const char *where, const char *what, const char *file, int line) CXXKIT_NOTHROW
 {

@@ -25,7 +25,7 @@
 #ifndef _CXXKIT_FILESYSTEM_HPP
 #define _CXXKIT_FILESYSTEM_HPP
 
-#include "cxxkit/base/global.hpp"
+#include <cxxkit/base/global.hpp>
 
 #if defined(__cplusplus) && __cplusplus >= 201703L && defined(__has_include)
 #   if __has_include(<filesystem>)

@@ -24,7 +24,7 @@
 
 #pragma once
 
-#include "cxxkit/tools/type_traits.hpp"
+#include <cxxkit/tools/type_traits.hpp>
 
 CXXKIT_BEGIN_NAMESPACE
 namespace utils

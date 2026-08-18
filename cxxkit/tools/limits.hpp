@@ -25,7 +25,7 @@
 #ifndef _CXXKIT_LIMITS_HPP
 #define _CXXKIT_LIMITS_HPP
 
-#include "cxxkit/base/global.hpp"
+#include <cxxkit/base/global.hpp>
 
 #include <limits>
 #include <algorithm>

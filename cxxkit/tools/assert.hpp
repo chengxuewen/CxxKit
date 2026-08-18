@@ -25,7 +25,7 @@
 #ifndef _CXXKIT_ASSERT_HPP
 #define _CXXKIT_ASSERT_HPP
 
-#include "cxxkit/base/global.hpp"
+#include <cxxkit/base/global.hpp>
 
 /***********************************************************************************************************************
    cxxkit assert macro

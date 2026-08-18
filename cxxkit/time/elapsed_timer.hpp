@@ -25,7 +25,7 @@
 #ifndef _CXXKIT_ELAPSED_TIMER_HPP
 #define _CXXKIT_ELAPSED_TIMER_HPP
 
-#include "cxxkit/base/global.hpp"
+#include <cxxkit/base/global.hpp>
 
 CXXKIT_BEGIN_NAMESPACE
 

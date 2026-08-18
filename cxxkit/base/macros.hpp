@@ -25,8 +25,8 @@
 #ifndef _CXXKIT_MACROS_HPP
 #define _CXXKIT_MACROS_HPP
 
-#include "cxxkit/base/system.hpp"
-#include "cxxkit/base/compiler.hpp"
+#include <cxxkit/base/system.hpp>
+#include <cxxkit/base/compiler.hpp>
 
 #include <cstddef>
 #include <cstring>

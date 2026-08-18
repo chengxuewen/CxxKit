@@ -26,7 +26,7 @@
 #ifndef _CXXKIT_BASE64_HPP
 #define _CXXKIT_BASE64_HPP
 
-#include "cxxkit/text/string_view.hpp"
+#include <cxxkit/text/string_view.hpp>
 
 #include <cstddef>
 #include <cstdint>

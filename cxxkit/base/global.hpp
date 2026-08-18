@@ -25,11 +25,11 @@
 #ifndef _CXXKIT_GLOBAL_HPP
 #define _CXXKIT_GLOBAL_HPP
 
-#include "cxxkit/base/core_config.hpp"
-#include "cxxkit/base/compiler.hpp"
-#include "cxxkit/base/system.hpp"
-#include "cxxkit/base/macros.hpp"
-#include "cxxkit/base/types.hpp"
+#include <cxxkit/base/core_config.hpp>
+#include <cxxkit/base/compiler.hpp>
+#include <cxxkit/base/system.hpp>
+#include <cxxkit/base/macros.hpp>
+#include <cxxkit/base/types.hpp>
 
 #include <stdarg.h>
 

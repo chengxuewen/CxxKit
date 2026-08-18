@@ -24,8 +24,8 @@
 
 #pragma once
 
-#include "cxxkit/memory/shared_pointer.hpp"
-#include "cxxkit/memory/unique_pointer.hpp"
+#include <cxxkit/memory/shared_pointer.hpp>
+#include <cxxkit/memory/unique_pointer.hpp>
 
 #include <memory>
 

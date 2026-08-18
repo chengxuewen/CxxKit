@@ -22,13 +22,13 @@
 **
 ***********************************************************************************************************************/
 
-#include "cxxkit/thread/repeating_task.hpp"
-#include "cxxkit/thread/task_queue.hpp"
-#include "cxxkit/units/time_delta.hpp"
-#include "cxxkit/units/timestamp.hpp"
-#include "cxxkit/tools/optional.hpp"
-#include "cxxkit/memory/memory.hpp"
-#include "cxxkit/tools/clock.hpp"
+#include <cxxkit/thread/repeating_task.hpp>
+#include <cxxkit/thread/task_queue.hpp>
+#include <cxxkit/units/time_delta.hpp>
+#include <cxxkit/units/timestamp.hpp>
+#include <cxxkit/tools/optional.hpp>
+#include <cxxkit/memory/memory.hpp>
+#include <cxxkit/tools/clock.hpp>
 
 #include <gmock/gmock.h>
 #include <gtest/gtest.h>

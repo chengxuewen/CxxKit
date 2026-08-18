@@ -12,8 +12,8 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-#include "cxxkit/tools/scope_guard.hpp"
-#include "cxxkit/tools/utility.hpp"
+#include <cxxkit/tools/scope_guard.hpp>
+#include <cxxkit/tools/utility.hpp>
 
 #include <gmock/gmock.h>
 #include <gtest/gtest.h>

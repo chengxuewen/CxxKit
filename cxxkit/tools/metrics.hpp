@@ -25,9 +25,9 @@
 
 #pragma once
 
-#include "cxxkit/text/string_utils.hpp"
-#include "cxxkit/text/string_view.hpp"
-#include "cxxkit/tools/checks.hpp"
+#include <cxxkit/text/string_utils.hpp>
+#include <cxxkit/text/string_view.hpp>
+#include <cxxkit/tools/checks.hpp>
 
 #include <cstddef>
 #include <atomic>

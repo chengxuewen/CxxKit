@@ -26,7 +26,7 @@
 #ifndef _CXXKIT_SINGLETON_HPP
 #define _CXXKIT_SINGLETON_HPP
 
-#include "cxxkit/tools/type_traits.hpp"
+#include <cxxkit/tools/type_traits.hpp>
 
 #include <atomic>
 #include <mutex>

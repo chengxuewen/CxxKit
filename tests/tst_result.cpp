@@ -22,8 +22,8 @@
 **
 ***********************************************************************************************************************/
 
-#include "cxxkit/tools/result.hpp"
-#include "cxxkit/tools/error.hpp"
+#include <cxxkit/tools/result.hpp>
+#include <cxxkit/tools/error.hpp>
 
 #include <gmock/gmock.h>
 #include <gtest/gtest.h>

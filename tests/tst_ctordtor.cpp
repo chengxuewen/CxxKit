@@ -23,7 +23,7 @@
 **
 ***********************************************************************************************************************/
 
-#include "cxxkit/base/macros.hpp"
+#include <cxxkit/base/macros.hpp>
 
 #include <gmock/gmock.h>
 #include <gtest/gtest.h>

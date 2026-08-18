@@ -24,8 +24,8 @@
 
 #pragma once
 
-#include "cxxkit/thread/platform_thread.hpp"
-#include "cxxkit/tools/checks.hpp"
+#include <cxxkit/thread/platform_thread.hpp>
+#include <cxxkit/tools/checks.hpp>
 
 #include <mutex>
 #include <shared_mutex>

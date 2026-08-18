@@ -24,9 +24,9 @@
 
 #pragma once
 
-#include "cxxkit/thread/reference_counter.hpp"
-#include "cxxkit/thread/platform_thread.hpp"
-#include "cxxkit/tools/logging.hpp"
+#include <cxxkit/thread/reference_counter.hpp>
+#include <cxxkit/thread/platform_thread.hpp>
+#include <cxxkit/tools/logging.hpp>
 
 CXXKIT_BEGIN_NAMESPACE
 

@@ -22,7 +22,7 @@
 **
 ***********************************************************************************************************************/
 
-#include "cxxkit/tools/enum_flags.hpp"
+#include <cxxkit/tools/enum_flags.hpp>
 
 #include <gmock/gmock.h>
 #include <gtest/gtest.h>

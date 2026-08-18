@@ -22,10 +22,10 @@
 **
 ***********************************************************************************************************************/
 
-#include "cxxkit/time/elapsed_timer.hpp"
-#include "cxxkit/thread/thread_pool.hpp"
-#include "cxxkit/thread/semaphore.hpp"
-#include "cxxkit/tools/logging.hpp"
+#include <cxxkit/time/elapsed_timer.hpp>
+#include <cxxkit/thread/thread_pool.hpp>
+#include <cxxkit/thread/semaphore.hpp>
+#include <cxxkit/tools/logging.hpp>
 
 #include <list>
 #include <atomic>

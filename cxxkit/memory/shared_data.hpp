@@ -25,8 +25,8 @@
 #ifndef _CXXKIT_SHARED_DATA_HPP
 #define _CXXKIT_SHARED_DATA_HPP
 
-#include "cxxkit/tools/type_traits.hpp"
-#include "cxxkit/thread/reference_counter.hpp"
+#include <cxxkit/tools/type_traits.hpp>
+#include <cxxkit/thread/reference_counter.hpp>
 
 CXXKIT_BEGIN_NAMESPACE
 

@@ -22,7 +22,7 @@
 **
 ***********************************************************************************************************************/
 
-#include "cxxkit/thread/concurrent.hpp"
+#include <cxxkit/thread/concurrent.hpp>
 
 CXXKIT_BEGIN_NAMESPACE
 

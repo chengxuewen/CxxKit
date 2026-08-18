@@ -14,8 +14,8 @@
  * limitations under the License.
  */
 
-#include "cxxkit/tools/utility.hpp"
-#include "cxxkit/memory/memory.hpp"
+#include <cxxkit/tools/utility.hpp>
+#include <cxxkit/memory/memory.hpp>
 
 #include <gmock/gmock.h>
 #include <gtest/gtest.h>

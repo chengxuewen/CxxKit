@@ -24,10 +24,10 @@
 
 #pragma once
 
-#include "cxxkit/numerics/safe_conversions.hpp"
-#include "cxxkit/text/string_view.hpp"
-#include "cxxkit/containers/array_view.hpp"
-#include "cxxkit/units/data_size.hpp"
+#include <cxxkit/numerics/safe_conversions.hpp>
+#include <cxxkit/text/string_view.hpp>
+#include <cxxkit/containers/array_view.hpp>
+#include <cxxkit/units/data_size.hpp>
 
 CXXKIT_BEGIN_NAMESPACE
 

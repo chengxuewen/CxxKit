@@ -25,7 +25,7 @@
 
 #pragma once
 
-#include "cxxkit/tools/type_traits.hpp"
+#include <cxxkit/tools/type_traits.hpp>
 
 #include <cmath>
 #include <cstdlib>

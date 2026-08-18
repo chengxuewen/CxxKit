@@ -24,11 +24,11 @@
 
 #pragma once
 
-#include "cxxkit/memory/zero_memory.hpp"
-#include "cxxkit/tools/type_traits.hpp"
-#include "cxxkit/text/string_view.hpp"
-#include "cxxkit/containers/array_view.hpp"
-#include "cxxkit/tools/checks.hpp"
+#include <cxxkit/memory/zero_memory.hpp>
+#include <cxxkit/tools/type_traits.hpp>
+#include <cxxkit/text/string_view.hpp>
+#include <cxxkit/containers/array_view.hpp>
+#include <cxxkit/tools/checks.hpp>
 
 #include <type_traits>
 #include <algorithm>

@@ -22,10 +22,10 @@
 **
 ***********************************************************************************************************************/
 
-#include "cxxkit/thread/detail/thread_pool_p.hpp"
-#include "cxxkit/tools/exception.hpp"
-#include "cxxkit/tools/logging.hpp"
-#include "cxxkit/tools/assert.hpp"
+#include <cxxkit/thread/detail/thread_pool_p.hpp>
+#include <cxxkit/tools/exception.hpp>
+#include <cxxkit/tools/logging.hpp>
+#include <cxxkit/tools/assert.hpp>
 
 #include <thread>
 

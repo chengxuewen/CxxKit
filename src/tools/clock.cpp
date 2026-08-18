@@ -22,8 +22,8 @@
 **
 ***********************************************************************************************************************/
 
-#include "cxxkit/tools/clock.hpp"
-#include "cxxkit/time/date_time.hpp"
+#include <cxxkit/tools/clock.hpp>
+#include <cxxkit/time/date_time.hpp>
 
 CXXKIT_BEGIN_NAMESPACE
 

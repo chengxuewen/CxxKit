@@ -1,5 +1,5 @@
 
-#include "cxxkit/thread/mutex.hpp"
+#include <cxxkit/thread/mutex.hpp>
 
 #include <gmock/gmock.h>
 #include <gtest/gtest.h>

@@ -22,8 +22,8 @@
 **
 ***********************************************************************************************************************/
 
-#include "cxxkit/kernel/detail/event_loop_p.hpp"
-#include "cxxkit/tools/logging.hpp"
+#include <cxxkit/kernel/detail/event_loop_p.hpp>
+#include <cxxkit/tools/logging.hpp>
 
 #if CXXKIT_FEATURE_ENABLE_KERNEL
 

@@ -24,7 +24,7 @@
 
 #pragma once
 
-#include "cxxkit/tools/checks.hpp"
+#include <cxxkit/tools/checks.hpp>
 
 #include <string>
 

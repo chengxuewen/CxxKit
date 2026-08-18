@@ -24,8 +24,8 @@
 
 #pragma once
 
-#include "cxxkit/base/global.hpp"
-#include "cxxkit/base/core_config.hpp"
+#include <cxxkit/base/global.hpp>
+#include <cxxkit/base/core_config.hpp>
 
 #if CXXKIT_FEATURE_ENABLE_KERNEL
 

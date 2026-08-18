@@ -27,7 +27,7 @@
 #ifndef _CXXKIT_ALIGNED_MALLOC_HPP
 #define _CXXKIT_ALIGNED_MALLOC_HPP
 
-#include "cxxkit/base/global.hpp"
+#include <cxxkit/base/global.hpp>
 
 // The functions declared here
 // 1) Allocates block of aligned memory.

@@ -23,7 +23,7 @@
 **
 ***********************************************************************************************************************/
 
-#include "cxxkit/tools/exception.hpp"
+#include <cxxkit/tools/exception.hpp>
 
 #include <gmock/gmock.h>
 #include <gtest/gtest.h>

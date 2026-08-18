@@ -23,8 +23,8 @@
 **
 ***********************************************************************************************************************/
 
-#include "cxxkit/tools/type_traits.hpp"
-#include "cxxkit/memory/memory.hpp"
+#include <cxxkit/tools/type_traits.hpp>
+#include <cxxkit/memory/memory.hpp>
 
 #include <thread>
 #include <memory>

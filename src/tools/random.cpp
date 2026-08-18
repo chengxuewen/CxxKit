@@ -22,11 +22,11 @@
 **
 ***********************************************************************************************************************/
 
-#include "cxxkit/numerics/safe_conversions.hpp"
-#include "cxxkit/tools/logging.hpp"
-#include "cxxkit/tools/random.hpp"
-#include "cxxkit/tools/checks.hpp"
-#include "cxxkit/thread/mutex.hpp"
+#include <cxxkit/numerics/safe_conversions.hpp>
+#include <cxxkit/tools/logging.hpp>
+#include <cxxkit/tools/random.hpp>
+#include <cxxkit/tools/checks.hpp>
+#include <cxxkit/thread/mutex.hpp>
 
 #include <cstdint>
 #include <utility>

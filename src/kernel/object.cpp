@@ -22,7 +22,7 @@
 **
 ***********************************************************************************************************************/
 
-#include "cxxkit/kernel/detail/object_p.hpp"
+#include <cxxkit/kernel/detail/object_p.hpp>
 
 #if CXXKIT_FEATURE_ENABLE_KERNEL
 

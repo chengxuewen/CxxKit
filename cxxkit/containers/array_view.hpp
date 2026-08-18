@@ -24,11 +24,11 @@
 
 #pragma once
 
-#include "cxxkit/base/global.hpp"
-#include "cxxkit/tools/checks.hpp"
-#include "cxxkit/tools/limits.hpp"
-#include "cxxkit/tools/iterator.hpp"
-#include "cxxkit/tools/type_traits.hpp"
+#include <cxxkit/base/global.hpp>
+#include <cxxkit/tools/checks.hpp>
+#include <cxxkit/tools/limits.hpp>
+#include <cxxkit/tools/iterator.hpp>
+#include <cxxkit/tools/type_traits.hpp>
 
 #include <array>
 #include <algorithm>

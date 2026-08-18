@@ -25,8 +25,8 @@
 #ifndef _CXXKIT_THREAD_POOL_HPP
 #define _CXXKIT_THREAD_POOL_HPP
 
-#include "cxxkit/patterns/singleton.hpp"
-#include "cxxkit/thread/task.hpp"
+#include <cxxkit/patterns/singleton.hpp>
+#include <cxxkit/thread/task.hpp>
 
 #include <functional>
 #include <thread>

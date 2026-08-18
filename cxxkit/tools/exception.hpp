@@ -25,10 +25,10 @@
 #ifndef _CXXKIT_EXCEPTION_HPP
 #define _CXXKIT_EXCEPTION_HPP
 
-#include "cxxkit/base/global.hpp"
-#include "cxxkit/tools/logging.hpp"
-#include "cxxkit/tools/expected.hpp"
-#include "cxxkit/text/string_view.hpp"
+#include <cxxkit/base/global.hpp>
+#include <cxxkit/tools/logging.hpp>
+#include <cxxkit/tools/expected.hpp>
+#include <cxxkit/text/string_view.hpp>
 
 #include <string>
 #include <exception>

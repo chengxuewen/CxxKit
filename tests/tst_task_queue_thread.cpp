@@ -22,13 +22,13 @@
 **
 ***********************************************************************************************************************/
 
-#include "cxxkit/thread/task_queue_thread.hpp"
-#include "cxxkit/thread/repeating_task.hpp"
-#include "cxxkit/time/elapsed_timer.hpp"
-#include "cxxkit/thread/semaphore.hpp"
-#include "cxxkit/tools/logging.hpp"
-#include "cxxkit/memory/memory.hpp"
-#include "cxxkit/tools/utility.hpp"
+#include <cxxkit/thread/task_queue_thread.hpp>
+#include <cxxkit/thread/repeating_task.hpp>
+#include <cxxkit/time/elapsed_timer.hpp>
+#include <cxxkit/thread/semaphore.hpp>
+#include <cxxkit/tools/logging.hpp>
+#include <cxxkit/memory/memory.hpp>
+#include <cxxkit/tools/utility.hpp>
 
 #include <gmock/gmock.h>
 #include <gtest/gtest.h>

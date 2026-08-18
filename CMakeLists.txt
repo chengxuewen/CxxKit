@@ -144,6 +144,7 @@ add_subdirectory(cxxkit/text)
 add_subdirectory(cxxkit/tools)
 
 # Phase 2: add_subdirectory(src/network) when migrated
+cxxkit_add_subdirectory(cxxkit/network CXXKIT_ENABLE_LIB_NETWORK)
 cxxkit_add_subdirectory(tests CXXKIT_BUILD_TESTS)
 cxxkit_add_subdirectory(examples CXXKIT_BUILD_EXAMPLES)
 

@@ -24,9 +24,9 @@
 
 #pragma once
 
-#include "cxxkit/tools/assert.hpp"
-#include "cxxkit/tools/logging.hpp"
-#include "cxxkit/numerics/safe_compare.hpp"
+#include <cxxkit/tools/assert.hpp>
+#include <cxxkit/tools/logging.hpp>
+#include <cxxkit/numerics/safe_compare.hpp>
 
 /**
  * If you for some reson need to know if DCHECKs are on, test the value of CXXKIT_DCHECK_IS_ON.

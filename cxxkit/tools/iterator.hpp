@@ -25,7 +25,7 @@
 #ifndef _CXXKIT_ITERATOR_HPP
 #define _CXXKIT_ITERATOR_HPP
 
-#include "cxxkit/base/global.hpp"
+#include <cxxkit/base/global.hpp>
 
 #include <iterator>
 #include <type_traits>

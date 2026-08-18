@@ -25,8 +25,8 @@
 #ifndef _CXXKIT_COMPILER_HPP
 #define _CXXKIT_COMPILER_HPP
 
-#include "cxxkit/base/preprocessor.hpp"
-#include "cxxkit/base/system.hpp"
+#include <cxxkit/base/preprocessor.hpp>
+#include <cxxkit/base/system.hpp>
 
 /***********************************************************************************************************************
     cxxkit compiler type version macro define

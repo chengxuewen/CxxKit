@@ -24,7 +24,7 @@
 
 #pragma once
 
-#include "cxxkit/tools/type_info.hpp"
+#include <cxxkit/tools/type_info.hpp>
 
 /**
  * @addtogroup core

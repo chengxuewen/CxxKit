@@ -24,9 +24,9 @@
 
 #pragma once
 
-#include "cxxkit/kernel/event_loop.hpp"
-#include "cxxkit/kernel/detail/object_p.hpp"
-#include "cxxkit/thread/reference_counter.hpp"
+#include <cxxkit/kernel/event_loop.hpp>
+#include <cxxkit/kernel/detail/object_p.hpp>
+#include <cxxkit/thread/reference_counter.hpp>
 
 #if CXXKIT_FEATURE_ENABLE_KERNEL
 

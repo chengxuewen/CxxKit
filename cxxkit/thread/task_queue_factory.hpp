@@ -25,8 +25,8 @@
 
 #pragma once
 
-#include "cxxkit/thread/task_queue.hpp"
-#include "cxxkit/text/string_view.hpp"
+#include <cxxkit/thread/task_queue.hpp>
+#include <cxxkit/text/string_view.hpp>
 
 #include <memory>
 

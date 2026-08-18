@@ -24,9 +24,9 @@
 
 #pragma once
 
-#include "cxxkit/tools/status.hpp"
-#include "cxxkit/thread/mutex.hpp"
-#include "cxxkit/base/core_config.hpp"
+#include <cxxkit/tools/status.hpp>
+#include <cxxkit/thread/mutex.hpp>
+#include <cxxkit/base/core_config.hpp>
 
 #include <thread>
 #include <future>     // for std::async

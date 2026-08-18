@@ -29,9 +29,9 @@
 #include <limits>
 #include <type_traits>
 
-#include "cxxkit/tools/checks.hpp"
-#include "cxxkit/numerics/safe_compare.hpp"
-#include "cxxkit/tools/type_traits.hpp"
+#include <cxxkit/tools/checks.hpp>
+#include <cxxkit/numerics/safe_compare.hpp>
+#include <cxxkit/tools/type_traits.hpp>
 
 // Minimum and maximum
 // ===================

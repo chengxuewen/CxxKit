@@ -24,9 +24,9 @@
 
 #pragma once
 
-#include "cxxkit/thread/task_queue.hpp"
-#include "cxxkit/units/time_delta.hpp"
-#include "cxxkit/tools/clock.hpp"
+#include <cxxkit/thread/task_queue.hpp>
+#include <cxxkit/units/time_delta.hpp>
+#include <cxxkit/tools/clock.hpp>
 
 #include <memory>
 

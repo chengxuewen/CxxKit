@@ -25,11 +25,11 @@
 #ifndef _CXXKIT_SHARED_BUFFER_HPP
 #define _CXXKIT_SHARED_BUFFER_HPP
 
-#include "cxxkit/memory/ref_counted_object.hpp"
-#include "cxxkit/memory/shared_ref_ptr.hpp"
-#include "cxxkit/text/string_view.hpp"
-#include "cxxkit/tools/type_traits.hpp"
-#include "cxxkit/tools/buffer.hpp"
+#include <cxxkit/memory/ref_counted_object.hpp>
+#include <cxxkit/memory/shared_ref_ptr.hpp>
+#include <cxxkit/text/string_view.hpp>
+#include <cxxkit/tools/type_traits.hpp>
+#include <cxxkit/tools/buffer.hpp>
 
 #include <algorithm>
 #include <cstring>

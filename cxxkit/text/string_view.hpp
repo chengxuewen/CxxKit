@@ -25,8 +25,8 @@
 #ifndef _CXXKIT_STRING_VIEW_HPP
 #define _CXXKIT_STRING_VIEW_HPP
 
-#include "cxxkit/base/global.hpp"
-#include "cxxkit/base/core_config.hpp"
+#include <cxxkit/base/global.hpp>
+#include <cxxkit/base/core_config.hpp>
 
 #if CXXKIT_BUILD_CXX_STANDARD_17
 #    define nssv_CONFIG_SELECT_STRING_VIEW 0

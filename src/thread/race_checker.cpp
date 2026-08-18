@@ -1,4 +1,4 @@
-#include "cxxkit/thread/race_checker.hpp"
+#include <cxxkit/thread/race_checker.hpp>
 
 CXXKIT_BEGIN_NAMESPACE
 

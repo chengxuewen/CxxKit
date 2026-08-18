@@ -25,7 +25,7 @@
 #ifndef _CXXKIT_STRONG_ALIAS_HPP
 #define _CXXKIT_STRONG_ALIAS_HPP
 
-#include "cxxkit/base/global.hpp"
+#include <cxxkit/base/global.hpp>
 
 CXXKIT_BEGIN_NAMESPACE
 

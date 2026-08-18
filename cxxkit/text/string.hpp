@@ -24,7 +24,7 @@
 
 #pragma once
 
-#include "cxxkit/text/string_view.hpp"
+#include <cxxkit/text/string_view.hpp>
 
 #include <cstring>
 

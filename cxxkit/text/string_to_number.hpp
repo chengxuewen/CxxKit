@@ -25,8 +25,8 @@
 #ifndef _CXXKIT_STRING_TO_NUMBER_HPP
 #define _CXXKIT_STRING_TO_NUMBER_HPP
 
-#include "cxxkit/tools/optional.hpp"
-#include "cxxkit/text/string_view.hpp"
+#include <cxxkit/tools/optional.hpp>
+#include <cxxkit/text/string_view.hpp>
 
 #include <limits>
 

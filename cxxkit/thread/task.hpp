@@ -24,7 +24,7 @@
 
 #pragma once
 
-#include "cxxkit/functional/unique_function.hpp"
+#include <cxxkit/functional/unique_function.hpp>
 
 CXXKIT_BEGIN_NAMESPACE
 

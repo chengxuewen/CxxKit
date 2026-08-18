@@ -24,7 +24,7 @@
 
 #pragma once
 
-#include "cxxkit/tools/logging.hpp"
+#include <cxxkit/tools/logging.hpp>
 
 #include <cxxkit/3rdparty/spdlog/spdlog.h>
 #include <cxxkit/3rdparty/spdlog/sinks/daily_file_sink.h>

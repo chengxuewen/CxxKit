@@ -25,7 +25,7 @@
 #ifndef _CXXKIT_ONCE_FLAG_HPP
 #define _CXXKIT_ONCE_FLAG_HPP
 
-#include "cxxkit/base/global.hpp"
+#include <cxxkit/base/global.hpp>
 
 #include <atomic>
 #include <thread>

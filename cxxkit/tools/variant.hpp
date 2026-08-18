@@ -25,7 +25,7 @@
 #ifndef _CXXKIT_VARIANT_HPP
 #define _CXXKIT_VARIANT_HPP
 
-#include "cxxkit/base/global.hpp"
+#include <cxxkit/base/global.hpp>
 
 #include <cxxkit/3rdparty/mpark/variant.hpp>
 

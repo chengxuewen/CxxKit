@@ -22,7 +22,7 @@
 **
 ***********************************************************************************************************************/
 
-#include "cxxkit/memory/shared_memory.hpp"
+#include <cxxkit/memory/shared_memory.hpp>
 
 CXXKIT_BEGIN_NAMESPACE
 

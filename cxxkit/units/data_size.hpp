@@ -25,7 +25,7 @@
 #ifndef _CXXKIT_DATA_SIZE_HPP
 #define _CXXKIT_DATA_SIZE_HPP
 
-#include "cxxkit/units/unit_base.hpp"
+#include <cxxkit/units/unit_base.hpp>
 
 #include <type_traits>
 #include <cstdint>

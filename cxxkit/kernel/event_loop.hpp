@@ -24,9 +24,9 @@
 
 #pragma once
 
-#include "cxxkit/kernel/object.hpp"
-#include "cxxkit/tools/enum_flags.hpp"
-#include "cxxkit/base/core_config.hpp"
+#include <cxxkit/kernel/object.hpp>
+#include <cxxkit/tools/enum_flags.hpp>
+#include <cxxkit/base/core_config.hpp>
 
 #if CXXKIT_FEATURE_ENABLE_KERNEL
 

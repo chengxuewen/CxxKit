@@ -25,7 +25,7 @@
 #ifndef _CXXKIT_DESKTOP_CAPTURE_SHARED_MEMORY_HPP
 #define _CXXKIT_DESKTOP_CAPTURE_SHARED_MEMORY_HPP
 
-#include "cxxkit/base/global.hpp"
+#include <cxxkit/base/global.hpp>
 
 #include <memory>
 

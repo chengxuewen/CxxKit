@@ -8,9 +8,9 @@
  *  be found in the AUTHORS file in the root of the source tree.
  */
 
-#include "cxxkit/text/string_builder.hpp"
-#include "cxxkit/numerics/safe_minmax.hpp"
-#include "cxxkit/tools/checks.hpp"
+#include <cxxkit/text/string_builder.hpp>
+#include <cxxkit/numerics/safe_minmax.hpp>
+#include <cxxkit/tools/checks.hpp>
 
 #include <stdarg.h>
 

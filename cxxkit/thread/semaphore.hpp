@@ -24,8 +24,8 @@
 
 #pragma once
 
-#include "cxxkit/tools/assert.hpp"
-#include "cxxkit/tools/utility.hpp"
+#include <cxxkit/tools/assert.hpp>
+#include <cxxkit/tools/utility.hpp>
 
 #include <thread>
 #include <condition_variable>

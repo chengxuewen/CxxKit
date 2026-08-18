@@ -26,7 +26,7 @@
 #ifndef _CXXKIT_SAFE_COMPARE_HPP
 #define _CXXKIT_SAFE_COMPARE_HPP
 
-#include "cxxkit/tools/type_traits.hpp"
+#include <cxxkit/tools/type_traits.hpp>
 
 #include <stddef.h>
 #include <stdint.h>

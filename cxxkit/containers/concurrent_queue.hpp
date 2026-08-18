@@ -24,7 +24,7 @@
 
 #pragma once
 
-#include "cxxkit/base/global.hpp"
+#include <cxxkit/base/global.hpp>
 
 #include <cxxkit/3rdparty/concurrentqueue/moodycamel/concurrentqueue.h>
 

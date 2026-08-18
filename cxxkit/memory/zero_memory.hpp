@@ -25,7 +25,7 @@
 #ifndef _CXXKIT_ZERO_MEMORY_HPP
 #define _CXXKIT_ZERO_MEMORY_HPP
 
-#include "cxxkit/containers/array_view.hpp"
+#include <cxxkit/containers/array_view.hpp>
 
 #include <type_traits>
 #include <stddef.h>

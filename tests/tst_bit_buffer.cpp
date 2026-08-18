@@ -23,9 +23,9 @@
 **
 ***********************************************************************************************************************/
 
-#include "cxxkit/text/bit_buffer.hpp"
-#include "cxxkit/tools/optional.hpp"
-#include "cxxkit/numerics/bits.hpp"
+#include <cxxkit/text/bit_buffer.hpp>
+#include <cxxkit/tools/optional.hpp>
+#include <cxxkit/numerics/bits.hpp>
 
 #include <gmock/gmock.h>
 #include <gtest/gtest.h>

@@ -22,10 +22,10 @@
 **
 ***********************************************************************************************************************/
 
-#include "cxxkit/text/ascii.hpp"
-#include "cxxkit/tools/assert.hpp"
-#include "cxxkit/tools/limits.hpp"
-#include "cxxkit/text/string.hpp"
+#include <cxxkit/text/ascii.hpp>
+#include <cxxkit/tools/assert.hpp>
+#include <cxxkit/tools/limits.hpp>
+#include <cxxkit/text/string.hpp>
 
 #include <locale.h>
 #include <errno.h>

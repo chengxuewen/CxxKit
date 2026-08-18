@@ -22,9 +22,9 @@
 **
 ***********************************************************************************************************************/
 
-#include "cxxkit/tools/detail/logging_p.hpp"
-#include "cxxkit/memory/memory.hpp"
-#include "cxxkit/tools/assert.hpp"
+#include <cxxkit/tools/detail/logging_p.hpp>
+#include <cxxkit/memory/memory.hpp>
+#include <cxxkit/tools/assert.hpp>
 
 #include <unordered_map>
 #ifndef CXXKIT_OS_WIN32

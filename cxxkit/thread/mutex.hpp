@@ -24,8 +24,8 @@
 
 #pragma once
 
-#include "cxxkit/base/global.hpp"
-#include "cxxkit/tools/assert.hpp"
+#include <cxxkit/base/global.hpp>
+#include <cxxkit/tools/assert.hpp>
 
 #include <mutex>
 #include <shared_mutex>

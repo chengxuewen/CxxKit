@@ -22,14 +22,14 @@
 **
 ***********************************************************************************************************************/
 
-#include "cxxkit/thread/task_queue_thread.hpp"
-#include "cxxkit/thread/context_checker.hpp"
-#include "cxxkit/thread/platform_thread.hpp"
-#include "cxxkit/functional/function_view.hpp"
-#include "cxxkit/time/date_time.hpp"
-#include "cxxkit/thread/semaphore.hpp"
-#include "cxxkit/tools/checks.hpp"
-#include "cxxkit/memory/memory.hpp"
+#include <cxxkit/thread/task_queue_thread.hpp>
+#include <cxxkit/thread/context_checker.hpp>
+#include <cxxkit/thread/platform_thread.hpp>
+#include <cxxkit/functional/function_view.hpp>
+#include <cxxkit/time/date_time.hpp>
+#include <cxxkit/thread/semaphore.hpp>
+#include <cxxkit/tools/checks.hpp>
+#include <cxxkit/memory/memory.hpp>
 
 #include <gmock/gmock.h>
 #include <gtest/gtest.h>

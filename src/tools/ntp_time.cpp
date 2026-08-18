@@ -22,7 +22,7 @@
 **
 ***********************************************************************************************************************/
 
-#include "cxxkit/tools/ntp_time.hpp"
+#include <cxxkit/tools/ntp_time.hpp>
 
 CXXKIT_BEGIN_NAMESPACE
 

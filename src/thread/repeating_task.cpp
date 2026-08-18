@@ -22,9 +22,9 @@
 **
 ***********************************************************************************************************************/
 
-#include "cxxkit/thread/repeating_task.hpp"
-#include "cxxkit/functional/invocable.hpp"
-#include "cxxkit/tools/logging.hpp"
+#include <cxxkit/thread/repeating_task.hpp>
+#include <cxxkit/functional/invocable.hpp>
+#include <cxxkit/tools/logging.hpp>
 
 CXXKIT_BEGIN_NAMESPACE
 

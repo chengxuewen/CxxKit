@@ -25,10 +25,10 @@
 #ifndef _CXXKIT_INLINED_VECTOR_HPP
 #define _CXXKIT_INLINED_VECTOR_HPP
 
-#include "cxxkit/base/global.hpp"
-#include "cxxkit/tools/checks.hpp"
-#include "cxxkit/tools/exception.hpp"
-#include "cxxkit/tools/type_traits.hpp"
+#include <cxxkit/base/global.hpp>
+#include <cxxkit/tools/checks.hpp>
+#include <cxxkit/tools/exception.hpp>
+#include <cxxkit/tools/type_traits.hpp>
 
 #include <vector>
 #include <cassert>

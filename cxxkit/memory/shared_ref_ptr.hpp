@@ -25,7 +25,7 @@
 #ifndef _CXXKIT_SHARED_REF_PTR_HPP
 #define _CXXKIT_SHARED_REF_PTR_HPP
 
-#include "cxxkit/memory/nullability.hpp"
+#include <cxxkit/memory/nullability.hpp>
 
 CXXKIT_BEGIN_NAMESPACE
 

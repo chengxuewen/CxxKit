@@ -25,7 +25,7 @@
 #ifndef _CXXKIT_NTP_TIME_HPP
 #define _CXXKIT_NTP_TIME_HPP
 
-#include "cxxkit/numerics/safe_conversions.hpp"
+#include <cxxkit/numerics/safe_conversions.hpp>
 
 #include <cstdint>
 #include <limits>

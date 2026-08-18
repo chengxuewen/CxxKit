@@ -25,7 +25,7 @@
 #ifndef _CXXKIT_INVOCABLE_HPP
 #define _CXXKIT_INVOCABLE_HPP
 
-#include "cxxkit/functional/unique_function.hpp"
+#include <cxxkit/functional/unique_function.hpp>
 
 CXXKIT_BEGIN_NAMESPACE
 

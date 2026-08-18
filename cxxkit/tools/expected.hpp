@@ -25,7 +25,7 @@
 #ifndef _CXXKIT_EXPECTED_HPP
 #define _CXXKIT_EXPECTED_HPP
 
-#include "cxxkit/base/global.hpp"
+#include <cxxkit/base/global.hpp>
 
 #include <cxxkit/3rdparty/tl/expected.hpp>
 

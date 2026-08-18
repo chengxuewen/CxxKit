@@ -22,7 +22,7 @@
 **
 ***********************************************************************************************************************/
 
-#include "cxxkit/kernel/signals.hpp"
+#include <cxxkit/kernel/signals.hpp>
 
 CXXKIT_BEGIN_NAMESPACE
 

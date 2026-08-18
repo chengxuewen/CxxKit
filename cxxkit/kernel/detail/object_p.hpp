@@ -24,7 +24,7 @@
 
 #pragma once
 
-#include "cxxkit/kernel/object.hpp"
+#include <cxxkit/kernel/object.hpp>
 
 #include <list>
 

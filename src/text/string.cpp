@@ -22,7 +22,7 @@
 **
 ***********************************************************************************************************************/
 
-#include "cxxkit/text/string.hpp"
+#include <cxxkit/text/string.hpp>
 
 #include <limits>
 #include <cstdlib>

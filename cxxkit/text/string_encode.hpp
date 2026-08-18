@@ -24,11 +24,11 @@
 
 #pragma once
 
-#include "cxxkit/text/string_to_number.hpp"
-#include "cxxkit/text/string_view.hpp"
-#include "cxxkit/containers/array_view.hpp"
-#include "cxxkit/tools/iterator.hpp"
-#include "cxxkit/tools/optional.hpp"
+#include <cxxkit/text/string_to_number.hpp>
+#include <cxxkit/text/string_view.hpp>
+#include <cxxkit/containers/array_view.hpp>
+#include <cxxkit/tools/iterator.hpp>
+#include <cxxkit/tools/optional.hpp>
 
 CXXKIT_BEGIN_NAMESPACE
 

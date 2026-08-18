@@ -22,10 +22,10 @@
 **
 ***********************************************************************************************************************/
 
-#include "cxxkit/thread/detail/platform_thread_p.hpp"
-#include "cxxkit/tools/exception.hpp"
-#include "cxxkit/tools/logging.hpp"
-#include "cxxkit/tools/assert.hpp"
+#include <cxxkit/thread/detail/platform_thread_p.hpp>
+#include <cxxkit/tools/exception.hpp>
+#include <cxxkit/tools/logging.hpp>
+#include <cxxkit/tools/assert.hpp>
 
 #if defined(CXXKIT_OS_WIN)
 

@@ -25,9 +25,9 @@
 #ifndef _CXXKIT_THREAD_POOL_P_HPP
 #define _CXXKIT_THREAD_POOL_P_HPP
 
-#include "cxxkit/thread/thread_pool.hpp"
-#include "cxxkit/tools/logging.hpp"
-#include "cxxkit/tools/assert.hpp"
+#include <cxxkit/thread/thread_pool.hpp>
+#include <cxxkit/tools/logging.hpp>
+#include <cxxkit/tools/assert.hpp>
 
 #include <set>
 #include <map>

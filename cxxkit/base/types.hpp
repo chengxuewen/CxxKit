@@ -25,9 +25,9 @@
 #ifndef _CXXKIT_TYPES_HPP
 #define _CXXKIT_TYPES_HPP
 
-#include "cxxkit/base/macros.hpp"
-#include "cxxkit/base/system.hpp"
-#include "cxxkit/base/core_config.hpp"
+#include <cxxkit/base/macros.hpp>
+#include <cxxkit/base/system.hpp>
+#include <cxxkit/base/core_config.hpp>
 
 #if defined(CXXKIT_OS_WIN)
 #    include <windows.h>

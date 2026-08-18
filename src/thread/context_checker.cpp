@@ -22,9 +22,9 @@
 **
 ***********************************************************************************************************************/
 
-#include "cxxkit/thread/context_checker.hpp"
-#include "cxxkit/thread/platform_thread.hpp"
-#include "cxxkit/thread/task_queue.hpp"
+#include <cxxkit/thread/context_checker.hpp>
+#include <cxxkit/thread/platform_thread.hpp>
+#include <cxxkit/thread/task_queue.hpp>
 
 #include <mutex>
 

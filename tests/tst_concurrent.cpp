@@ -22,9 +22,9 @@
 **
 ***********************************************************************************************************************/
 
-#include "cxxkit/time/elapsed_timer.hpp"
-#include "cxxkit/thread/concurrent.hpp"
-#include "cxxkit/tools/logging.hpp"
+#include <cxxkit/time/elapsed_timer.hpp>
+#include <cxxkit/thread/concurrent.hpp>
+#include <cxxkit/tools/logging.hpp>
 
 #include <list>
 #include <atomic>

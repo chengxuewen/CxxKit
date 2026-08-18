@@ -23,8 +23,8 @@
 **
 ***********************************************************************************************************************/
 
-#include "cxxkit/tools/sanitizer.hpp"
-#include "cxxkit/tools/logging.hpp"
+#include <cxxkit/tools/sanitizer.hpp>
+#include <cxxkit/tools/logging.hpp>
 
 #include <gmock/gmock.h>
 #include <gtest/gtest.h>

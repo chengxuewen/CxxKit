@@ -22,15 +22,15 @@
 **
 ***********************************************************************************************************************/
 
-#include "cxxkit/thread/semaphore.hpp"
+#include <cxxkit/thread/semaphore.hpp>
 
 
-#include "cxxkit/thread/context_checker.hpp"
-#include "cxxkit/tools/scope_guard.hpp"
-#include "cxxkit/thread/task_queue.hpp"
-#include "cxxkit/units/timestamp.hpp"
-#include "cxxkit/thread/semaphore.hpp"
-#include "cxxkit/tools/utility.hpp"
+#include <cxxkit/thread/context_checker.hpp>
+#include <cxxkit/tools/scope_guard.hpp>
+#include <cxxkit/thread/task_queue.hpp>
+#include <cxxkit/units/timestamp.hpp>
+#include <cxxkit/thread/semaphore.hpp>
+#include <cxxkit/tools/utility.hpp>
 
 #include <atomic>
 

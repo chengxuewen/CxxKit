@@ -25,7 +25,7 @@
 #ifndef _CXXKIT_SOURCE_LOCATION_HPP
 #define _CXXKIT_SOURCE_LOCATION_HPP
 
-#include "cxxkit/base/global.hpp"
+#include <cxxkit/base/global.hpp>
 
 #include <string>
 

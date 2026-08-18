@@ -22,7 +22,7 @@
 **
 ***********************************************************************************************************************/
 
-#include "cxxkit/memory/shared_pointer.hpp"
+#include <cxxkit/memory/shared_pointer.hpp>
 
 #include <gmock/gmock.h>
 #include <gtest/gtest.h>

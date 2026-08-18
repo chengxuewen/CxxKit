@@ -22,11 +22,11 @@
 **
 ***********************************************************************************************************************/
 
-#include "cxxkit/text/string_utils.hpp"
-#include "cxxkit/tools/assert.hpp"
-#include "cxxkit/base/macros.hpp"
-#include "cxxkit/tools/checks.hpp"
-#include "cxxkit/text/ascii.hpp"
+#include <cxxkit/text/string_utils.hpp>
+#include <cxxkit/tools/assert.hpp>
+#include <cxxkit/base/macros.hpp>
+#include <cxxkit/tools/checks.hpp>
+#include <cxxkit/text/ascii.hpp>
 
 #include <algorithm>
 #include <cstdint>

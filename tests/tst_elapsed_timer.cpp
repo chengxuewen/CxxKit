@@ -23,7 +23,7 @@
 **
 ***********************************************************************************************************************/
 
-#include "cxxkit/time/elapsed_timer.hpp"
+#include <cxxkit/time/elapsed_timer.hpp>
 
 #include <gmock/gmock.h>
 #include <gtest/gtest.h>

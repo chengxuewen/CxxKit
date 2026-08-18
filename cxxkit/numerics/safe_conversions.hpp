@@ -26,8 +26,8 @@
 #ifndef _CXXKIT_SAFE_CONVERSIONS_HPP
 #define _CXXKIT_SAFE_CONVERSIONS_HPP
 
-#include "cxxkit/tools/checks.hpp"
-#include "cxxkit/tools/limits.hpp"
+#include <cxxkit/tools/checks.hpp>
+#include <cxxkit/tools/limits.hpp>
 
 CXXKIT_BEGIN_NAMESPACE
 

@@ -22,7 +22,7 @@
 **
 ***********************************************************************************************************************/
 
-#include "cxxkit/text/string_encode.hpp"
+#include <cxxkit/text/string_encode.hpp>
 
 CXXKIT_BEGIN_NAMESPACE
 

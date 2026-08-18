@@ -24,9 +24,9 @@
 
 #pragma once
 
-#include "cxxkit/kernel/object.hpp"
-#include "cxxkit/thread/platform_thread.hpp"
-#include "cxxkit/thread/task_queue_thread.hpp"
+#include <cxxkit/kernel/object.hpp>
+#include <cxxkit/thread/platform_thread.hpp>
+#include <cxxkit/thread/task_queue_thread.hpp>
 
 CXXKIT_BEGIN_NAMESPACE
 

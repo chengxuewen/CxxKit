@@ -25,9 +25,9 @@
 #ifndef _CXXKIT_SCOPE_GUARD_HPP
 #define _CXXKIT_SCOPE_GUARD_HPP
 
-#include "cxxkit/base/global.hpp"
-#include "cxxkit/tools/assert.hpp"
-#include "cxxkit/tools/type_traits.hpp"
+#include <cxxkit/base/global.hpp>
+#include <cxxkit/tools/assert.hpp>
+#include <cxxkit/tools/type_traits.hpp>
 
 #include <atomic>
 

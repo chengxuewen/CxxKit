@@ -25,9 +25,9 @@
 #ifndef _CXXKIT_DATA_RATE_HPP
 #define _CXXKIT_DATA_RATE_HPP
 
-#include "cxxkit/units/time_delta.hpp"
-#include "cxxkit/units/data_size.hpp"
-#include "cxxkit/units/frequency.hpp"
+#include <cxxkit/units/time_delta.hpp>
+#include <cxxkit/units/data_size.hpp>
+#include <cxxkit/units/frequency.hpp>
 
 #include <cstdint>
 #include <limits>

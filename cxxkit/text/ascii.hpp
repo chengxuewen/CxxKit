@@ -24,8 +24,8 @@
 
 #pragma once
 
-#include "cxxkit/base/types.hpp"
-#include "cxxkit/text/string_view.hpp"
+#include <cxxkit/base/types.hpp>
+#include <cxxkit/text/string_view.hpp>
 
 CXXKIT_BEGIN_NAMESPACE
 

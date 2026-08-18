@@ -25,8 +25,8 @@
 #ifndef _CXXKIT_CLOCK_HPP
 #define _CXXKIT_CLOCK_HPP
 
-#include "cxxkit/units/timestamp.hpp"
-#include "cxxkit/tools/ntp_time.hpp"
+#include <cxxkit/units/timestamp.hpp>
+#include <cxxkit/tools/ntp_time.hpp>
 
 #include <cstdint>
 #include <atomic>

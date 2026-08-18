@@ -25,7 +25,7 @@
 #ifndef _CXXKIT_FUNCTION_VIEW_HPP
 #define _CXXKIT_FUNCTION_VIEW_HPP
 
-#include "cxxkit/tools/checks.hpp"
+#include <cxxkit/tools/checks.hpp>
 
 #include <cstddef>
 #include <utility>

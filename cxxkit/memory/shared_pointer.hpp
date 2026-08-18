@@ -24,7 +24,7 @@
 
 #pragma once
 
-#include "cxxkit/memory/shared_data.hpp"
+#include <cxxkit/memory/shared_data.hpp>
 
 #include <memory>
 

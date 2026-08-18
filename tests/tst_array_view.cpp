@@ -8,8 +8,8 @@
  *  be found in the AUTHORS file in the root of the source tree.
  */
 
-#include "cxxkit/containers/array_view.hpp"
-#include "cxxkit/tools/buffer.hpp"
+#include <cxxkit/containers/array_view.hpp>
+#include <cxxkit/tools/buffer.hpp>
 
 #include <gmock/gmock.h>
 #include <gtest/gtest.h>
