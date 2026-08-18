@@ -142,3 +142,26 @@ add_subdirectory(cxxkit/tools)
 # Phase 2: add_subdirectory(src/network) when migrated
 cxxkit_add_subdirectory(tests CXXKIT_BUILD_TESTS)
 cxxkit_add_subdirectory(examples CXXKIT_BUILD_EXAMPLES)
+
+#-----------------------------------------------------------------------------------------------------------------------
+# Install: export targets + config file
+#-----------------------------------------------------------------------------------------------------------------------
+if(CXXKIT_BUILD_INSTALL)
+    install(EXPORT cxxkitTargets
+        FILE cxxkitTargets.cmake
+        NAMESPACE cxxkit::
+        DESTINATION lib/cmake/cxxkit)
+    include(CMakePackageConfigHelpers)
+    configure_package_config_file(
+        "${CXXKIT_CMAKE_DIR}/cxxkitConfig.cmake.in"
+        "${CMAKE_CURRENT_BINARY_DIR}/cxxkitConfig.cmake"
+        INSTALL_DESTINATION lib/cmake/cxxkit)
+    write_basic_package_version_file(
+        "${CMAKE_CURRENT_BINARY_DIR}/cxxkitConfigVersion.cmake"
+        VERSION ${PROJECT_VERSION}
+        COMPATIBILITY AnyNewerVersion)
+    install(FILES
+        "${CMAKE_CURRENT_BINARY_DIR}/cxxkitConfig.cmake"
+        "${CMAKE_CURRENT_BINARY_DIR}/cxxkitConfigVersion.cmake"
+        DESTINATION lib/cmake/cxxkit)
+endif()

@@ -28,6 +28,7 @@ target_include_directories(cxxkit_text PUBLIC
 target_link_libraries(cxxkit_text PUBLIC cxxkit::base)
 target_compile_features(cxxkit_text PUBLIC cxx_std_11)
 set_target_properties(cxxkit_text PROPERTIES
+    EXPORT_NAME text
     CXX_STANDARD ${CXXKIT_FEATURE_CXX_STANDARD}
     CXX_STANDARD_REQUIRED ON
     CXX_EXTENSIONS OFF)

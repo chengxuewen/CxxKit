@@ -57,5 +57,14 @@ function(cxxkit_install_public_wrap_headers target)
         target_include_directories(${target} INTERFACE
             "$<BUILD_INTERFACE:${PROJECT_BINARY_DIR}/include>"
             "$<INSTALL_INTERFACE:include>")
+        # Install static libraries alongside headers so installed consumers can link
+        # against the vendored 3rdparty libs (M3: static libs ship with the package).
+        if(EXISTS "${wrap_install_dir}/lib")
+            file(GLOB _wrap_libs "${wrap_install_dir}/lib/*.a" "${wrap_install_dir}/lib/*.lib")
+            if(_wrap_libs)
+                install(FILES ${_wrap_libs}
+                    DESTINATION lib)
+            endif()
+        endif()
     endforeach()
 endfunction()

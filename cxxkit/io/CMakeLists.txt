@@ -9,6 +9,7 @@ target_include_directories(cxxkit_io PUBLIC
 target_link_libraries(cxxkit_io PUBLIC cxxkit::base)
 target_compile_features(cxxkit_io PUBLIC cxx_std_11)
 set_target_properties(cxxkit_io PROPERTIES
+    EXPORT_NAME io
     CXX_STANDARD ${CXXKIT_FEATURE_CXX_STANDARD}
     CXX_STANDARD_REQUIRED ON
     CXX_EXTENSIONS OFF)

@@ -33,7 +33,7 @@
 #else
 #    define nssv_CONFIG_SELECT_STRING_VIEW 1
 #endif
-#include <nonstd/string_view.hpp>
+#include <cxxkit/3rdparty/nonstd/string_view.hpp>
 
 CXXKIT_BEGIN_NAMESPACE
 

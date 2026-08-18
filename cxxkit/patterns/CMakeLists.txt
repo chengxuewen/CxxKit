@@ -3,6 +3,7 @@ cmake_minimum_required(VERSION ${CXXKIT_MIN_NEW_POLICY_CMAKE_VERSION}...${CXXKIT
 cxxkit_configure_library_begin(CxxKitPatterns)
 add_library(cxxkit_patterns INTERFACE)
 add_library(cxxkit::patterns ALIAS cxxkit_patterns)
+set_property(TARGET cxxkit_patterns PROPERTY EXPORT_NAME patterns)
 target_include_directories(cxxkit_patterns INTERFACE
     $<BUILD_INTERFACE:${PROJECT_SOURCE_DIR}>
     $<INSTALL_INTERFACE:include>)

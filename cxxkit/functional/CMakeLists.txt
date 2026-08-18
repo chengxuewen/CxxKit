@@ -3,6 +3,7 @@ cmake_minimum_required(VERSION ${CXXKIT_MIN_NEW_POLICY_CMAKE_VERSION}...${CXXKIT
 cxxkit_configure_library_begin(CxxKitFunctional)
 add_library(cxxkit_functional INTERFACE)
 add_library(cxxkit::functional ALIAS cxxkit_functional)
+set_property(TARGET cxxkit_functional PROPERTY EXPORT_NAME functional)
 target_include_directories(cxxkit_functional INTERFACE
     $<BUILD_INTERFACE:${PROJECT_SOURCE_DIR}>
     $<INSTALL_INTERFACE:include>)

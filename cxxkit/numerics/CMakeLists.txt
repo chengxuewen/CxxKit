@@ -3,6 +3,7 @@ cmake_minimum_required(VERSION ${CXXKIT_MIN_NEW_POLICY_CMAKE_VERSION}...${CXXKIT
 cxxkit_configure_library_begin(CxxKitNumerics)
 add_library(cxxkit_numerics INTERFACE)
 add_library(cxxkit::numerics ALIAS cxxkit_numerics)
+set_property(TARGET cxxkit_numerics PROPERTY EXPORT_NAME numerics)
 target_include_directories(cxxkit_numerics INTERFACE
     $<BUILD_INTERFACE:${PROJECT_SOURCE_DIR}>
     $<INSTALL_INTERFACE:include>)

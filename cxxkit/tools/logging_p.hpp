@@ -26,10 +26,10 @@
 
 #include "cxxkit/tools/logging.hpp"
 
-#include <spdlog/spdlog.h>
-#include <spdlog/sinks/daily_file_sink.h>
-#include <spdlog/sinks/stdout_color_sinks.h>
-#include <spdlog/sinks/rotating_file_sink.h>
+#include <cxxkit/3rdparty/spdlog/spdlog.h>
+#include <cxxkit/3rdparty/spdlog/sinks/daily_file_sink.h>
+#include <cxxkit/3rdparty/spdlog/sinks/stdout_color_sinks.h>
+#include <cxxkit/3rdparty/spdlog/sinks/rotating_file_sink.h>
 
 #include <atomic>
 

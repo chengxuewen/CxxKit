@@ -3,6 +3,7 @@ cmake_minimum_required(VERSION ${CXXKIT_MIN_NEW_POLICY_CMAKE_VERSION}...${CXXKIT
 cxxkit_configure_library_begin(CxxKitContainers)
 add_library(cxxkit_containers INTERFACE)
 add_library(cxxkit::containers ALIAS cxxkit_containers)
+set_property(TARGET cxxkit_containers PROPERTY EXPORT_NAME containers)
 target_include_directories(cxxkit_containers INTERFACE
     $<BUILD_INTERFACE:${PROJECT_SOURCE_DIR}>
     $<INSTALL_INTERFACE:include>)

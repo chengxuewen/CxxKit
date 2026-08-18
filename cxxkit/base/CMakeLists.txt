@@ -20,6 +20,7 @@ cxxkit_generate_core_config()
 
 add_library(cxxkit_base INTERFACE)
 add_library(cxxkit::base ALIAS cxxkit_base)
+set_property(TARGET cxxkit_base PROPERTY EXPORT_NAME base)
 
 # Vendored 3rdparty wraps (headers namespaced as cxxkit/3rdparty/<lib>/)
 # This is the octk mechanism to avoid conflicts with system-installed libraries.
