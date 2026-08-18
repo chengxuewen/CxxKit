@@ -17,7 +17,7 @@
 | 迁移模块 | core（56K 行）+ network（2.4K 行） |
 | 不迁移 | media（WebRTC）、imgui（GUI）、tools/rcc |
 | 代码 | ~58K 行源码 + 65 个 gtest 测试 + 3 个示例 |
-| 仓库关系 | cxxkit 独立新仓库，OpenCTK 保留 media/imgui 继续演进 |
+| 仓库关系 | cxxkit 独立新仓库；media/imgui 留 OpenCTK，**过渡期冻结构建，续建路径待定**（审核 B1：media 13 文件用 octk::、112 文件引用 core 头，core 迁出后无法编译；决策延后） |
 
 ## 3. 目录结构
 
@@ -173,6 +173,23 @@ base → {containers, functional, numerics}   # 纯头，零依赖
 | 风险 | 对策 |
 |---|---|
 | 跨子库 `../source/` 引用打乱依赖图 | 依赖图上各子库先行确认边界，违例 include 编译期报错 |
-| C++11 下部分现有代码需降级改写 | lite 系列已 vendored；`CXXKIT_BUILD_CXX_STANDARD_*` 宏体系保留 |
+| C++11 下部分现有代码需降级改写 | 降级面很小（OpenCTK 默认即 C++11，全 core 仅 2 文件用 std C++17 类型、2 文件用结构化绑定）；作为验证项而非风险 |
 | 三方库静态化体积 | 与 OpenCTK 一致，可接受 |
 | 65 个测试迁移工作量大 | 按子库分批迁移，每批跑绿再进下一批 |
+| media/imgui 续建路径未定（B1） | 过渡期 OpenCTK 冻结构建，后续单独决策 |
+
+## 9. 审核记录（2026-08-18 momus）
+
+**BLOCKER**：B1 media/imgui 续建路径——已延后（见 §2）。
+
+**HIGH**（实施计划须覆盖）：
+- H1 子库映射：`io`（file_wrapper）、`patterns`（singleton）补入目录树；kernel 实为 object 体系（application/event/object + 5 cpp），需依赖扫描定归属
+- H2 验收门禁：改名清零（`grep -rn octk` 无命中）、`-std=c++11` 全量编译通过、测试用例数对等（758 TEST + 44 TEST_F）
+
+**MEDIUM**（实施计划须覆盖）：
+- M1 测试 target 单独覆盖 C++14（gtest 1.12.1 要求），库 target 保持 11
+- M2 boost.asio/beast 后端依赖 vcpkg（3rdparty 无 boost 包），网络拉取与 vendored 健壮性理由不一致——默认 vendored cpr，boost 后端标记可选
+- M3 "符号打入子库"与"stub target"二选一：静态库随包分发（stub 引用已安装 .a）
+- M4 内部头计数 124 非 128；PCH 降为按需移植（查无使用痕迹）
+
+**LOW**：L1 benchmark 依赖待确认（tst_mutex_benchmark.cpp）；L2 MSVC 验证步骤；L3 `CXXKIT_BUILD_TESTS 按构建`表述修正 + status.md 记忆同步；L4 已并入风险表。
