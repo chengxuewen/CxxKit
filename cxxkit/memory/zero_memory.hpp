@@ -22,50 +22,27 @@
 **
 ***********************************************************************************************************************/
 
-#pragma once
+#ifndef _CXXKIT_ZERO_MEMORY_HPP
+#define _CXXKIT_ZERO_MEMORY_HPP
 
-#include "cxxkit/base/global.hpp"
+#include "cxxkit/containers/array_view.hpp"
 
-#include <cxxkit/3rdparty/fmt/os.h>
-#include <cxxkit/3rdparty/fmt/base.h>
-#include <cxxkit/3rdparty/fmt/color.h>
-#include <cxxkit/3rdparty/fmt/format.h>
-#include <cxxkit/3rdparty/fmt/printf.h>
-#include <cxxkit/3rdparty/fmt/ranges.h>
-#include <cxxkit/3rdparty/fmt/chrono.h>
-
-namespace fmt
-{
-template <typename Enum>
-struct enum_as_int
-{
-    Enum value;
-    explicit enum_as_int(Enum v)
-        : value(v)
-    {
-    }
-};
-template <typename Enum>
-enum_as_int<Enum> as_int(Enum e)
-{
-    return enum_as_int<Enum>{e};
-}
-template <typename Enum>
-struct formatter<enum_as_int<Enum>> : formatter<int>
-{
-    template <typename FormatContext>
-    typename FormatContext::iterator format(const enum_as_int<Enum> &wrapper, FormatContext &ctx) const
-    {
-        return formatter<int>::format(static_cast<int>(wrapper.value), ctx);
-    }
-};
-} // namespace fmt
+#include <type_traits>
+#include <stddef.h>
 
 CXXKIT_BEGIN_NAMESPACE
 
-namespace utils
+// Fill memory with zeros in a way that the compiler doesn't optimize it away
+// even if the pointer is not used afterwards.
+CXXKIT_CORE_API void ExplicitZeroMemory(void *ptr, size_t len);
+
+template <typename T, typename std::enable_if<!std::is_const<T>::value &&
+                                              std::is_trivial<T>::value>::type * = nullptr>
+void ExplicitZeroMemory(ArrayView <T> a)
 {
-namespace fmt = ::fmt;
-} // namespace utils
+    ExplicitZeroMemory(a.data(), a.size());
+}
 
 CXXKIT_END_NAMESPACE
+
+#endif // _CXXKIT_ZERO_MEMORY_HPP

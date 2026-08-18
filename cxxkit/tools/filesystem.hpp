@@ -22,50 +22,31 @@
 **
 ***********************************************************************************************************************/
 
-#pragma once
+#ifndef _CXXKIT_FILESYSTEM_HPP
+#define _CXXKIT_FILESYSTEM_HPP
 
 #include "cxxkit/base/global.hpp"
 
-#include <cxxkit/3rdparty/fmt/os.h>
-#include <cxxkit/3rdparty/fmt/base.h>
-#include <cxxkit/3rdparty/fmt/color.h>
-#include <cxxkit/3rdparty/fmt/format.h>
-#include <cxxkit/3rdparty/fmt/printf.h>
-#include <cxxkit/3rdparty/fmt/ranges.h>
-#include <cxxkit/3rdparty/fmt/chrono.h>
+#if defined(__cplusplus) && __cplusplus >= 201703L && defined(__has_include)
+#   if __has_include(<filesystem>)
+#       define CXXKIT_USE_STD_FS
+#   endif
+#endif
 
-namespace fmt
-{
-template <typename Enum>
-struct enum_as_int
-{
-    Enum value;
-    explicit enum_as_int(Enum v)
-        : value(v)
-    {
-    }
-};
-template <typename Enum>
-enum_as_int<Enum> as_int(Enum e)
-{
-    return enum_as_int<Enum>{e};
-}
-template <typename Enum>
-struct formatter<enum_as_int<Enum>> : formatter<int>
-{
-    template <typename FormatContext>
-    typename FormatContext::iterator format(const enum_as_int<Enum> &wrapper, FormatContext &ctx) const
-    {
-        return formatter<int>::format(static_cast<int>(wrapper.value), ctx);
-    }
-};
-} // namespace fmt
+#ifdef CXXKIT_USE_STD_FS
+#   include <filesystem>
+#else
+#   include <cxxkit/3rdparty/ghc/filesystem.hpp>
+#endif
 
 CXXKIT_BEGIN_NAMESPACE
 
-namespace utils
-{
-namespace fmt = ::fmt;
-} // namespace utils
+#ifdef CXXKIT_USE_STD_FS
+namespace filesystem = std::filesystem;
+#else
+namespace filesystem = ghc::filesystem;
+#endif
 
 CXXKIT_END_NAMESPACE
+
+#endif // _CXXKIT_FILESYSTEM_HPP

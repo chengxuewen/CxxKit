@@ -25,47 +25,38 @@
 #pragma once
 
 #include "cxxkit/base/global.hpp"
+#include "cxxkit/tools/assert.hpp"
 
-#include <cxxkit/3rdparty/fmt/os.h>
-#include <cxxkit/3rdparty/fmt/base.h>
-#include <cxxkit/3rdparty/fmt/color.h>
-#include <cxxkit/3rdparty/fmt/format.h>
-#include <cxxkit/3rdparty/fmt/printf.h>
-#include <cxxkit/3rdparty/fmt/ranges.h>
-#include <cxxkit/3rdparty/fmt/chrono.h>
-
-namespace fmt
-{
-template <typename Enum>
-struct enum_as_int
-{
-    Enum value;
-    explicit enum_as_int(Enum v)
-        : value(v)
-    {
-    }
-};
-template <typename Enum>
-enum_as_int<Enum> as_int(Enum e)
-{
-    return enum_as_int<Enum>{e};
-}
-template <typename Enum>
-struct formatter<enum_as_int<Enum>> : formatter<int>
-{
-    template <typename FormatContext>
-    typename FormatContext::iterator format(const enum_as_int<Enum> &wrapper, FormatContext &ctx) const
-    {
-        return formatter<int>::format(static_cast<int>(wrapper.value), ctx);
-    }
-};
-} // namespace fmt
+#include <mutex>
+#include <shared_mutex>
+#include <condition_variable>
 
 CXXKIT_BEGIN_NAMESPACE
 
-namespace utils
+class Mutex : public std::mutex
 {
-namespace fmt = ::fmt;
-} // namespace utils
+public:
+    using Base = std::mutex;
+    using Lock = std::lock_guard<Base>;
+    using UniqueLock = std::unique_lock<Base>;
+    using Condition = std::condition_variable;
+
+    using Base::Base;
+    Mutex() = default;
+    ~Mutex() = default;
+};
+
+class RecursiveMutex : public std::recursive_mutex
+{
+public:
+    using Base = std::recursive_mutex;
+    using Lock = std::lock_guard<Base>;
+    using UniqueLock = std::unique_lock<Base>;
+    using Condition = std::condition_variable_any;
+
+    using Base::Base;
+    RecursiveMutex() = default;
+    ~RecursiveMutex() = default;
+};
 
 CXXKIT_END_NAMESPACE

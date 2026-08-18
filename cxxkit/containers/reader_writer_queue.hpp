@@ -26,7 +26,7 @@
 
 #include "cxxkit/base/global.hpp"
 
-#include <readerwriterqueue/readerwriterqueue.h>
+#include <cxxkit/3rdparty/readerwriterqueue/readerwriterqueue.h>
 #include <readerwritercircularbuffer.h>
 
 CXXKIT_BEGIN_NAMESPACE;

@@ -1,15 +1,12 @@
 cmake_minimum_required(VERSION ${CXXKIT_MIN_NEW_POLICY_CMAKE_VERSION}...${CXXKIT_MAX_NEW_POLICY_CMAKE_VERSION})
 
 cxxkit_configure_library_begin(CxxKitIo)
-cxxkit_find_package(StringViewLite PROVIDED_TARGETS CXXKitWrapStringViewLite::WrapStringViewLite)
-cxxkit_find_package(Optional PROVIDED_TARGETS CXXKitWrapOptional::WrapOptional)
-cxxkit_find_package(Fmt PROVIDED_TARGETS CXXKitWrapFmt::WrapFmt)
 add_library(cxxkit_io ${PROJECT_SOURCE_DIR}/src/io/file_wrapper.cpp)
 add_library(cxxkit::io ALIAS cxxkit_io)
 target_include_directories(cxxkit_io PUBLIC
     $<BUILD_INTERFACE:${PROJECT_SOURCE_DIR}>
     $<INSTALL_INTERFACE:include>)
-target_link_libraries(cxxkit_io PUBLIC cxxkit::base CXXKitWrapStringViewLite::WrapStringViewLite CXXKitWrapOptional::WrapOptional CXXKitWrapFmt::WrapFmt)
+target_link_libraries(cxxkit_io PUBLIC cxxkit::base)
 target_compile_features(cxxkit_io PUBLIC cxx_std_11)
 set_target_properties(cxxkit_io PROPERTIES
     CXX_STANDARD ${CXXKIT_FEATURE_CXX_STANDARD}

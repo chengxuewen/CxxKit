@@ -61,6 +61,18 @@ else()
 endif()
 
 #-----------------------------------------------------------------------------------------------------------------------
+# Build type default
+#-----------------------------------------------------------------------------------------------------------------------
+if(NOT CMAKE_BUILD_TYPE AND NOT CMAKE_CONFIGURATION_TYPES)
+    if(CXXKIT_FEATURE_DEV_BUILD)
+        set(CMAKE_BUILD_TYPE "Debug" CACHE STRING "Choose the type of build." FORCE)
+    else()
+        set(CMAKE_BUILD_TYPE "Release" CACHE STRING "Choose the type of build." FORCE)
+    endif()
+    message(STATUS "Setting build type to '${CMAKE_BUILD_TYPE}' as none was specified.")
+endif()
+
+#-----------------------------------------------------------------------------------------------------------------------
 # Processor count & build type helpers (used by FindWrap modules)
 #-----------------------------------------------------------------------------------------------------------------------
 include(ProcessorCount)
@@ -109,6 +121,13 @@ cxxkit_option(CXXKIT_ENABLE_LIB_NETWORK "Enable this to build enable network lib
     OR_CONDITION CXXKIT_BUILD_ALL)
 
 #-----------------------------------------------------------------------------------------------------------------------
+# Testing
+#-----------------------------------------------------------------------------------------------------------------------
+if(CXXKIT_BUILD_TESTS)
+    enable_testing()
+endif()
+
+#-----------------------------------------------------------------------------------------------------------------------
 # Sublibraries (Phase 1: base + header-only)
 #-----------------------------------------------------------------------------------------------------------------------
 add_subdirectory(cxxkit/base)
@@ -117,6 +136,8 @@ add_subdirectory(cxxkit/functional)
 add_subdirectory(cxxkit/numerics)
 add_subdirectory(cxxkit/io)
 add_subdirectory(cxxkit/patterns)
+add_subdirectory(cxxkit/text)
+add_subdirectory(cxxkit/tools)
 
 # Phase 2: add_subdirectory(src/network) when migrated
 cxxkit_add_subdirectory(tests CXXKIT_BUILD_TESTS)

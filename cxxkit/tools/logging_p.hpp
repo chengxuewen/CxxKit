@@ -24,48 +24,45 @@
 
 #pragma once
 
-#include "cxxkit/base/global.hpp"
+#include "cxxkit/tools/logging.hpp"
 
-#include <cxxkit/3rdparty/fmt/os.h>
-#include <cxxkit/3rdparty/fmt/base.h>
-#include <cxxkit/3rdparty/fmt/color.h>
-#include <cxxkit/3rdparty/fmt/format.h>
-#include <cxxkit/3rdparty/fmt/printf.h>
-#include <cxxkit/3rdparty/fmt/ranges.h>
-#include <cxxkit/3rdparty/fmt/chrono.h>
+#include <spdlog/spdlog.h>
+#include <spdlog/sinks/daily_file_sink.h>
+#include <spdlog/sinks/stdout_color_sinks.h>
+#include <spdlog/sinks/rotating_file_sink.h>
 
-namespace fmt
-{
-template <typename Enum>
-struct enum_as_int
-{
-    Enum value;
-    explicit enum_as_int(Enum v)
-        : value(v)
-    {
-    }
-};
-template <typename Enum>
-enum_as_int<Enum> as_int(Enum e)
-{
-    return enum_as_int<Enum>{e};
-}
-template <typename Enum>
-struct formatter<enum_as_int<Enum>> : formatter<int>
-{
-    template <typename FormatContext>
-    typename FormatContext::iterator format(const enum_as_int<Enum> &wrapper, FormatContext &ctx) const
-    {
-        return formatter<int>::format(static_cast<int>(wrapper.value), ctx);
-    }
-};
-} // namespace fmt
+#include <atomic>
 
 CXXKIT_BEGIN_NAMESPACE
 
-namespace utils
+class CXXKIT_CORE_API LoggerPrivate
 {
-namespace fmt = ::fmt;
-} // namespace utils
+public:
+    using Context = Logger::Context;
+    using MessageHandler = Logger::MessageHandler;
+    struct MessageHandlerWraper
+    {
+        explicit MessageHandlerWraper(const MessageHandler &h) : handler(h) {}
+        const MessageHandler handler;
+    };
+
+    LoggerPrivate(Logger *p, const char *name);
+    virtual ~LoggerPrivate();
+
+    bool messageHandlerOutput(const Context &context, const char *message);
+
+    bool mNoSource;
+    const int mIdNumber;
+    const char * const mName;
+    std::shared_ptr<spdlog::logger> mLogger;
+    std::atomic_bool mLevelEnabled[LogLevelNum];
+    std::atomic_bool mMessageHandleUniqueOwnership;
+    std::atomic<MessageHandlerWraper *> mMessageHandlerWraper{nullptr};
+
+protected:
+    CXXKIT_DEFINE_PPTR(Logger)
+    CXXKIT_DECLARE_PUBLIC(Logger)
+    CXXKIT_DISABLE_COPY_MOVE(LoggerPrivate)
+};
 
 CXXKIT_END_NAMESPACE

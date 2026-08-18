@@ -24,48 +24,37 @@
 
 #pragma once
 
-#include "cxxkit/base/global.hpp"
+#include "cxxkit/memory/shared_pointer.hpp"
+#include "cxxkit/memory/unique_pointer.hpp"
 
-#include <cxxkit/3rdparty/fmt/os.h>
-#include <cxxkit/3rdparty/fmt/base.h>
-#include <cxxkit/3rdparty/fmt/color.h>
-#include <cxxkit/3rdparty/fmt/format.h>
-#include <cxxkit/3rdparty/fmt/printf.h>
-#include <cxxkit/3rdparty/fmt/ranges.h>
-#include <cxxkit/3rdparty/fmt/chrono.h>
-
-namespace fmt
-{
-template <typename Enum>
-struct enum_as_int
-{
-    Enum value;
-    explicit enum_as_int(Enum v)
-        : value(v)
-    {
-    }
-};
-template <typename Enum>
-enum_as_int<Enum> as_int(Enum e)
-{
-    return enum_as_int<Enum>{e};
-}
-template <typename Enum>
-struct formatter<enum_as_int<Enum>> : formatter<int>
-{
-    template <typename FormatContext>
-    typename FormatContext::iterator format(const enum_as_int<Enum> &wrapper, FormatContext &ctx) const
-    {
-        return formatter<int>::format(static_cast<int>(wrapper.value), ctx);
-    }
-};
-} // namespace fmt
+#include <memory>
 
 CXXKIT_BEGIN_NAMESPACE
 
 namespace utils
 {
-namespace fmt = ::fmt;
+
+template <typename T>
+std::shared_ptr<T> toSharedPtr(const std::weak_ptr<T> &ptr)
+{
+    return ptr.lock();
+}
+template <typename T>
+std::shared_ptr<T> toSharedPtr(const std::shared_ptr<T> &ptr)
+{
+    return ptr;
+}
+template <typename T>
+std::weak_ptr<T> toWeakPtr(const std::shared_ptr<T> &ptr)
+{
+    return ptr;
+}
+template <typename T>
+std::weak_ptr<T> toWeakPtr(const std::weak_ptr<T> &ptr)
+{
+    return ptr;
+}
+
 } // namespace utils
 
 CXXKIT_END_NAMESPACE

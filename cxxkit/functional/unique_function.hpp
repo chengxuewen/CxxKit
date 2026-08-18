@@ -27,7 +27,7 @@
 
 #include "cxxkit/tools/checks.hpp"
 
-#include <function2/function2.hpp>
+#include <cxxkit/3rdparty/function2/function2.hpp>
 
 CXXKIT_BEGIN_NAMESPACE
 

@@ -26,7 +26,7 @@
 
 #include "cxxkit/base/global.hpp"
 
-#include <moodycamel/concurrentqueue.h>
+#include <cxxkit/3rdparty/concurrentqueue/moodycamel/concurrentqueue.h>
 
 CXXKIT_BEGIN_NAMESPACE;
 

@@ -26,46 +26,34 @@
 
 #include "cxxkit/base/global.hpp"
 
-#include <cxxkit/3rdparty/fmt/os.h>
-#include <cxxkit/3rdparty/fmt/base.h>
-#include <cxxkit/3rdparty/fmt/color.h>
-#include <cxxkit/3rdparty/fmt/format.h>
-#include <cxxkit/3rdparty/fmt/printf.h>
-#include <cxxkit/3rdparty/fmt/ranges.h>
-#include <cxxkit/3rdparty/fmt/chrono.h>
-
-namespace fmt
-{
-template <typename Enum>
-struct enum_as_int
-{
-    Enum value;
-    explicit enum_as_int(Enum v)
-        : value(v)
-    {
-    }
-};
-template <typename Enum>
-enum_as_int<Enum> as_int(Enum e)
-{
-    return enum_as_int<Enum>{e};
-}
-template <typename Enum>
-struct formatter<enum_as_int<Enum>> : formatter<int>
-{
-    template <typename FormatContext>
-    typename FormatContext::iterator format(const enum_as_int<Enum> &wrapper, FormatContext &ctx) const
-    {
-        return formatter<int>::format(static_cast<int>(wrapper.value), ctx);
-    }
-};
-} // namespace fmt
+#include <atomic>
 
 CXXKIT_BEGIN_NAMESPACE
 
-namespace utils
+class ReferenceCounter
 {
-namespace fmt = ::fmt;
-} // namespace utils
+public:
+    using Value = std::atomic<int>;
+
+    ReferenceCounter(int value) noexcept { mValue = value; }
+    ReferenceCounter() noexcept = default;
+    ~ReferenceCounter() = default;
+
+    bool ref() noexcept { return this->ref(mValue); }
+    bool deref() noexcept { return this->deref(mValue); }
+
+    int load() const noexcept { return this->load(mValue); }
+    int loadAcquire() const noexcept { return this->loadAcquire(mValue); }
+
+    static bool ref(Value &value) noexcept { return ++value != 0; }
+    static bool deref(Value &value) noexcept { return --value != 0; }
+
+    static int load(Value &value) noexcept { return value.load(); }
+    static int loadAcquire(Value &value) noexcept { return value.load(std::memory_order_acquire); }
+
+private:
+    mutable Value mValue{0};
+    CXXKIT_DISABLE_COPY_MOVE(ReferenceCounter)
+};
 
 CXXKIT_END_NAMESPACE

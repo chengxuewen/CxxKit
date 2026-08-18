@@ -22,50 +22,17 @@
 **
 ***********************************************************************************************************************/
 
-#pragma once
+#include "cxxkit/tools/assert.hpp"
+#include "cxxkit/tools/logging.hpp"
 
-#include "cxxkit/base/global.hpp"
-
-#include <cxxkit/3rdparty/fmt/os.h>
-#include <cxxkit/3rdparty/fmt/base.h>
-#include <cxxkit/3rdparty/fmt/color.h>
-#include <cxxkit/3rdparty/fmt/format.h>
-#include <cxxkit/3rdparty/fmt/printf.h>
-#include <cxxkit/3rdparty/fmt/ranges.h>
-#include <cxxkit/3rdparty/fmt/chrono.h>
-
-namespace fmt
+void octk_assert_x(const char *where, const char *what, const char *file, int line) CXXKIT_NOTHROW
 {
-template <typename Enum>
-struct enum_as_int
-{
-    Enum value;
-    explicit enum_as_int(Enum v)
-        : value(v)
-    {
-    }
-};
-template <typename Enum>
-enum_as_int<Enum> as_int(Enum e)
-{
-    return enum_as_int<Enum>{e};
+    auto loggerWraper = cxxkit::Logger::Streamer(CXXKIT_LOGGER(), cxxkit::LogLevel::Fatal, file, where, line);
+    loggerWraper.logging("%s : %s", where, what);
 }
-template <typename Enum>
-struct formatter<enum_as_int<Enum>> : formatter<int>
+
+void octk_assert(const char *assertion, const char *file, int line) CXXKIT_NOTHROW
 {
-    template <typename FormatContext>
-    typename FormatContext::iterator format(const enum_as_int<Enum> &wrapper, FormatContext &ctx) const
-    {
-        return formatter<int>::format(static_cast<int>(wrapper.value), ctx);
-    }
-};
-} // namespace fmt
-
-CXXKIT_BEGIN_NAMESPACE
-
-namespace utils
-{
-namespace fmt = ::fmt;
-} // namespace utils
-
-CXXKIT_END_NAMESPACE
+    auto loggerWraper = cxxkit::Logger::Streamer(CXXKIT_LOGGER(), cxxkit::LogLevel::Fatal, file, CXXKIT_STRFUNC, line);
+    loggerWraper.logging("%s", assertion);
+}

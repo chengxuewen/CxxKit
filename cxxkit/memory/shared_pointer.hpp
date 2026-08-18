@@ -2,7 +2,7 @@
 **
 ** Library: cxxkit
 **
-** Copyright (C) 2025~Present ChengXueWen.
+** Copyright (C) 2026~Present ChengXueWen.
 **
 ** License: MIT License
 **
@@ -24,48 +24,21 @@
 
 #pragma once
 
-#include "cxxkit/base/global.hpp"
+#include "cxxkit/memory/shared_data.hpp"
 
-#include <cxxkit/3rdparty/fmt/os.h>
-#include <cxxkit/3rdparty/fmt/base.h>
-#include <cxxkit/3rdparty/fmt/color.h>
-#include <cxxkit/3rdparty/fmt/format.h>
-#include <cxxkit/3rdparty/fmt/printf.h>
-#include <cxxkit/3rdparty/fmt/ranges.h>
-#include <cxxkit/3rdparty/fmt/chrono.h>
-
-namespace fmt
-{
-template <typename Enum>
-struct enum_as_int
-{
-    Enum value;
-    explicit enum_as_int(Enum v)
-        : value(v)
-    {
-    }
-};
-template <typename Enum>
-enum_as_int<Enum> as_int(Enum e)
-{
-    return enum_as_int<Enum>{e};
-}
-template <typename Enum>
-struct formatter<enum_as_int<Enum>> : formatter<int>
-{
-    template <typename FormatContext>
-    typename FormatContext::iterator format(const enum_as_int<Enum> &wrapper, FormatContext &ctx) const
-    {
-        return formatter<int>::format(static_cast<int>(wrapper.value), ctx);
-    }
-};
-} // namespace fmt
+#include <memory>
 
 CXXKIT_BEGIN_NAMESPACE
 
+template <typename T>
+using SharedPointer = std::shared_ptr<T>;
+
 namespace utils
 {
-namespace fmt = ::fmt;
+using std::make_shared;
+using std::dynamic_pointer_cast;
 } // namespace utils
 
 CXXKIT_END_NAMESPACE
+
+#define CXXKIT_DEFINE_SHARED_PTR(ClassName) using SharedPtr = cxxkit::SharedPointer<ClassName>;

@@ -11,18 +11,18 @@
 #
 ########################################################################################################################
 
-# Parse arguments: flags before ';' are booleans, rest are list args.
-function(cxxkit_parse_all_arguments prefix flags options multi_options single_options)
-    cmake_parse_arguments(PARSE_ARGV 0 arg "${options}" "${single_options}" "${multi_options}")
-    set(${prefix}_UNPARSED_ARGUMENTS "${arg_UNPARSED_ARGUMENTS}" PARENT_SCOPE)
+function(cxxkit_parse_all_arguments prefix type options one_value_args multi_value_args)
+    # Mirrors octk macro: (result type options oneValueArgs multiValueArgs)
+    cmake_parse_arguments(${prefix} "${options}" "${one_value_args}" "${multi_value_args}" ${ARGN})
+    set(${prefix}_UNPARSED_ARGUMENTS "${${prefix}_UNPARSED_ARGUMENTS}" PARENT_SCOPE)
     foreach(option ${options})
-        set(${prefix}_${option} "${arg_${option}}" PARENT_SCOPE)
+        set(${prefix}_${option} "${${prefix}_${option}}" PARENT_SCOPE)
     endforeach()
-    foreach(multi_option ${multi_options})
-        set(${prefix}_${multi_option} "${arg_${multi_option}}" PARENT_SCOPE)
+    foreach(multi_option ${multi_value_args})
+        set(${prefix}_${multi_option} "${${prefix}_${multi_option}}" PARENT_SCOPE)
     endforeach()
-    foreach(single_option ${single_options})
-        set(${prefix}_${single_option} "${arg_${single_option}}" PARENT_SCOPE)
+    foreach(single_option ${one_value_args})
+        set(${prefix}_${single_option} "${${prefix}_${single_option}}" PARENT_SCOPE)
     endforeach()
 endfunction()
 

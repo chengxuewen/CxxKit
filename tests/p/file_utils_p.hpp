@@ -1,6 +1,6 @@
 /***********************************************************************************************************************
 **
-** Library: cxxkit
+** Library: OpenCTK
 **
 ** Copyright (C) 2025~Present ChengXueWen.
 **
@@ -24,48 +24,35 @@
 
 #pragma once
 
-#include "cxxkit/base/global.hpp"
+#include <cxxkit/text/string_view.hpp>
+#include <cxxkit/tools/filesystem.hpp>
+#include <cxxkit/tools/random.hpp>
 
-#include <cxxkit/3rdparty/fmt/os.h>
-#include <cxxkit/3rdparty/fmt/base.h>
-#include <cxxkit/3rdparty/fmt/color.h>
-#include <cxxkit/3rdparty/fmt/format.h>
-#include <cxxkit/3rdparty/fmt/printf.h>
-#include <cxxkit/3rdparty/fmt/ranges.h>
-#include <cxxkit/3rdparty/fmt/chrono.h>
-
-namespace fmt
-{
-template <typename Enum>
-struct enum_as_int
-{
-    Enum value;
-    explicit enum_as_int(Enum v)
-        : value(v)
-    {
-    }
-};
-template <typename Enum>
-enum_as_int<Enum> as_int(Enum e)
-{
-    return enum_as_int<Enum>{e};
-}
-template <typename Enum>
-struct formatter<enum_as_int<Enum>> : formatter<int>
-{
-    template <typename FormatContext>
-    typename FormatContext::iterator format(const enum_as_int<Enum> &wrapper, FormatContext &ctx) const
-    {
-        return formatter<int>::format(static_cast<int>(wrapper.value), ctx);
-    }
-};
-} // namespace fmt
+#include <string>
 
 CXXKIT_BEGIN_NAMESPACE
 
-namespace utils
+namespace test
 {
-namespace fmt = ::fmt;
-} // namespace utils
+
+static std::string TempFilename(const std::string &path, const std::string &name)
+{
+    return path + "/" +  name + "XXXXXX";
+}
+
+static std::string OutputPath()
+{
+    return filesystem::current_path();
+}
+
+static std::string OutputPathWithRandomDirectory()
+{
+    std::string path = filesystem::current_path();
+    std::string rand_dir = path + utils::CreateRandomUuid();
+    CXXKIT_CHECK(filesystem::create_directory(rand_dir)) << "Failed to create dir: " << rand_dir;
+    return rand_dir + CXXKIT_PATH_SLASH;
+}
+
+} // namespace test
 
 CXXKIT_END_NAMESPACE
