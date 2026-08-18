@@ -338,6 +338,9 @@ public:
 };
 
 class ResponsePrivate;
+/**
+ * @brief HTTP response: status, headers, body, cookies and elapsed time.
+ */
 class CXXKIT_NETWORK_API Response
 {
 public:
@@ -361,6 +364,9 @@ protected:
 using AsyncResponse = std::future<Response::SharedPtr>;
 
 class AuthenticationPrivate;
+/**
+ * @brief HTTP authentication settings (basic/digest/ntlm) applied per request.
+ */
 class CXXKIT_NETWORK_API Authentication
 {
 public:
@@ -387,6 +393,10 @@ protected:
 
 
 class SessionPrivate;
+/**
+ * @brief HTTP session: holds connection state (URL, headers, auth, timeout)
+ *        and executes requests (sync/async) via the cpr backend.
+ */
 class CXXKIT_NETWORK_API Session
 {
 public:
