@@ -163,6 +163,18 @@ cxxkit_add_subdirectory(examples CXXKIT_BUILD_EXAMPLES)
 
 
 #-----------------------------------------------------------------------------------------------------------------------
+# Custom build targets (octk-style): BuildAll rebuilds, BuildInstall builds + installs
+#-----------------------------------------------------------------------------------------------------------------------
+add_custom_target(BuildAll
+    COMMAND ${CMAKE_COMMAND} --build ./ --parallel ${CXXKIT_NUMBER_OF_ASYNC_JOBS} --config ${CMAKE_BUILD_TYPE}
+    WORKING_DIRECTORY "${CMAKE_CURRENT_BINARY_DIR}")
+add_custom_target(BuildInstall
+    COMMAND ${CMAKE_COMMAND} --build ./ --parallel ${CXXKIT_NUMBER_OF_ASYNC_JOBS} --config ${CMAKE_BUILD_TYPE}
+    COMMAND ${CMAKE_COMMAND} --install ./
+    WORKING_DIRECTORY "${CMAKE_CURRENT_BINARY_DIR}")
+
+
+#-----------------------------------------------------------------------------------------------------------------------
 # Install: export targets + config file
 #-----------------------------------------------------------------------------------------------------------------------
 if(CXXKIT_BUILD_INSTALL)
