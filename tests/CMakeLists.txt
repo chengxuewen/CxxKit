@@ -22,6 +22,9 @@ set(CXXKIT_TEST_LINK_LIBRARIES
     cxxkit::functional
     cxxkit::numerics
     cxxkit::patterns
+    cxxkit::memory
+    cxxkit::units
+    cxxkit::time
     cxxkit::text
     cxxkit::tools
     CXXKitWrapGTest::WrapGTest)

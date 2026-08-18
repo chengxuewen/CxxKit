@@ -18,7 +18,16 @@ cxxkit_configure_library_begin(CxxKitTools)
 add_library(cxxkit_tools
     ${PROJECT_SOURCE_DIR}/src/tools/logging.cpp
     ${PROJECT_SOURCE_DIR}/src/tools/random.cpp
-    ${PROJECT_SOURCE_DIR}/src/tools/assert.cpp)
+    ${PROJECT_SOURCE_DIR}/src/tools/assert.cpp
+    ${PROJECT_SOURCE_DIR}/src/tools/clock.cpp
+    ${PROJECT_SOURCE_DIR}/src/tools/status.cpp
+    ${PROJECT_SOURCE_DIR}/src/tools/error.cpp
+    ${PROJECT_SOURCE_DIR}/src/tools/once_flag.cpp
+    ${PROJECT_SOURCE_DIR}/src/tools/id_registry.cpp
+    ${PROJECT_SOURCE_DIR}/src/tools/shared_buffer.cpp
+    ${PROJECT_SOURCE_DIR}/src/tools/metrics.cpp
+    ${PROJECT_SOURCE_DIR}/src/tools/ntp_time.cpp
+    ${PROJECT_SOURCE_DIR}/src/tools/fake_clock.cpp)
 add_library(cxxkit::tools ALIAS cxxkit_tools)
 
 target_include_directories(cxxkit_tools PUBLIC
