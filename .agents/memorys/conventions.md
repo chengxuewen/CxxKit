@@ -25,6 +25,21 @@ RAII 资源管理，`constexpr`/`auto` 可用，避免裸 `new/delete`。
 
 ```bash
 cmake --build build          # 构建
+cmake --build build --target install   # 安装（默认装到 build/install/）
 ctest --test-dir build --output-on-failure   # 测试
 clang-format --dry-run --Werror <files>      # 格式
 ```
+
+## C6：禁止 `rm -rf build`（保护 3rdparty 缓存）
+
+**`build/3rdparty/` 是 vendored 三方库的 stamp 缓存**，全清会导致三方库重新解压+构建（5+ 分钟）。
+需要干净配置时：
+
+```bash
+# 只清 CMake 生成物，保留 3rdparty：
+rm -rf build/CMakeCache.txt build/CMakeFiles build/Testing build/*.ninja build/cmake_install.cmake
+cmake -S . -B build    # 重新配置（3rdparty 走 stamp，秒级）
+```
+
+仅当三方库自身需要重建时才删对应目录：`rm -rf build/3rdparty/<lib>-<buildtype>`
+（或按需删单个 wrap 目录）。

@@ -42,15 +42,22 @@ message(STATUS "C++ standard: ${CXXKIT_FEATURE_CXX_STANDARD}")
 
 #-----------------------------------------------------------------------------------------------------------------------
 # Install prefix handling (octk-style WILL_INSTALL logic)
+# Default: install into <build>/install for build-install testing;
+# explicit -DCMAKE_INSTALL_PREFIX or -DINPUT_CXXKIT_FEATURE_INSTALL_PREFIX overrides.
 #-----------------------------------------------------------------------------------------------------------------------
 if(NOT DEFINED INPUT_CXXKIT_FEATURE_INSTALL_PREFIX)
-    if(CXXKIT_FEATURE_DEV_BUILD OR NOT CMAKE_INSTALL_PREFIX)
-        set(CXXKIT_INSTALL_PREFIX "${CMAKE_CURRENT_BINARY_DIR}")
-    else()
+    if(CMAKE_INSTALL_PREFIX AND NOT CMAKE_INSTALL_PREFIX STREQUAL "/usr/local" AND NOT CMAKE_INSTALL_PREFIX STREQUAL "/usr")
+        # User explicitly passed -DCMAKE_INSTALL_PREFIX
         set(CXXKIT_INSTALL_PREFIX "${CMAKE_INSTALL_PREFIX}")
+    else()
+        # Default: build tree install dir (octk dev-build style, for install testing).
+        # Write back to CMAKE_INSTALL_PREFIX so the install target uses it too.
+        set(CXXKIT_INSTALL_PREFIX "${CMAKE_CURRENT_BINARY_DIR}/install")
+        set(CMAKE_INSTALL_PREFIX "${CXXKIT_INSTALL_PREFIX}" CACHE PATH "Install prefix" FORCE)
     endif()
 else()
     set(CXXKIT_INSTALL_PREFIX ${INPUT_CXXKIT_FEATURE_INSTALL_PREFIX})
+    set(CMAKE_INSTALL_PREFIX "${CXXKIT_INSTALL_PREFIX}" CACHE PATH "Install prefix" FORCE)
 endif()
 message(STATUS "Project install prefix set as '${CXXKIT_INSTALL_PREFIX}'.")
 

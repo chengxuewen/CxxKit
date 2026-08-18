@@ -58,9 +58,11 @@ cxxkit 是 OpenCTK（an open cpp toolkit）的成功重构版本 —— 精简�
 
 ## 安装体系
 
-- `find_package(cxxkit COMPONENTS base text tools ...)` 消费验证通过
-- 安装开关：dev build 默认不装；`-DCMAKE_INSTALL_PREFIX=xxx` 触发（`CXXKIT_BUILD_INSTALL`）
+- `find_package(cxxkit COMPONENTS base text tools network ...)` 消费验证通过
+- **默认装到 `build/install/`**（octk 式构建安装测试）：`cmake --build build --target install`
+- 显式 `-DCMAKE_INSTALL_PREFIX=xxx` 或 `-DINPUT_CXXKIT_FEATURE_INSTALL_PREFIX=xxx` 装到指定位置
 - `cxxkitConfig.cmake` + `cxxkitTargets.cmake`（EXPORT_NAME 去前缀，导出为 `cxxkit::<name>`）
+- pkg-config：13 个 `.pc` 文件装到 `lib/pkgconfig/`（`pkg-config --cflags --libs cxxkit-text`）
 
 ## 待办
 
