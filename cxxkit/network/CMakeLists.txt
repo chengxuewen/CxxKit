@@ -37,7 +37,7 @@ cxxkit_install_public_wrap_headers(cxxkit_network
     CXXKitWrapLibcpr::WrapLibcpr|cpr
     CXXKitWrapLibcurl::WrapLibcurl|curl
     CXXKitWrapMbedTLS::WrapMbedTLS|mbedtls
-    CXXKitWrapZLIB::WrapZLIB|zlib)
+)
 
 cxxkit_generate_pkg_config(cxxkit_network network)
 cxxkit_configure_library_end(CxxKitNetwork)

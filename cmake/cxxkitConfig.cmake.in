@@ -22,7 +22,7 @@ foreach(_stub_spec IN ITEMS
         "CXXKitWrapLibcpr::WrapLibcpr;libcpr.a libcurl-d.a libmbedtls.a libmbedx509.a libmbedcrypto.a"
         "CXXKitWrapLibcurl::WrapLibcurl;libcurl-d.a"
         "CXXKitWrapMbedTLS::WrapMbedTLS;libmbedtls.a libmbedx509.a libmbedcrypto.a"
-        "CXXKitWrapZLIB::WrapZLIB;")
+)
     string(REPLACE ";" "|" _stub_parts "${_stub_spec}")
     string(REPLACE "|" ";" _stub_list "${_stub_parts}")
     list(GET _stub_list 0 _stub_target)
