@@ -61,6 +61,14 @@ else()
 endif()
 
 #-----------------------------------------------------------------------------------------------------------------------
+# Processor count & build type helpers (used by FindWrap modules)
+#-----------------------------------------------------------------------------------------------------------------------
+include(ProcessorCount)
+ProcessorCount(CXXKIT_PROCESSOR_COUNT)
+set(CXXKIT_NUMBER_OF_ASYNC_JOBS ${CXXKIT_PROCESSOR_COUNT})
+string(TOLOWER "${CMAKE_BUILD_TYPE}" CXXKIT_LOWER_BUILD_TYPE)
+
+#-----------------------------------------------------------------------------------------------------------------------
 # CMake module path & helpers
 #-----------------------------------------------------------------------------------------------------------------------
 set(CXXKIT_CMAKE_DIR "${PROJECT_SOURCE_DIR}/cmake")
