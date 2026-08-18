@@ -95,7 +95,7 @@ std::string ContextChecker::expectationToString(const ContextChecker *checker)
         return "Checker currently not attached.";
     }
 
-    // The format of the string is meant to compliment the one we have inside of FatalLog() (octk_checks.cpp).
+    // The format of the string is meant to compliment the one we have inside of FatalLog() (cxxkit_checks.cpp).
     // Example:
     //
     // # Expected: TaskQueue: 0x0 SysQ: 0x7fff69541330 Thread: 0x11dcf6dc0

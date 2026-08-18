@@ -3,6 +3,7 @@
 ** Library: cxxkit
 **
 ** Copyright (C) 2025~Present ChengXueWen.
+** Copyright 2016 The WebRTC Project Authors.
 **
 ** License: MIT License
 **
@@ -22,17 +23,39 @@
 **
 ***********************************************************************************************************************/
 
-#include "cxxkit/tools/assert.hpp"
-#include "cxxkit/tools/logging.hpp"
+#include "cxxkit/base/macros.hpp"
 
-void cxxkit_assert_x(const char *where, const char *what, const char *file, int line) CXXKIT_NOTHROW
+#include <gmock/gmock.h>
+#include <gtest/gtest.h>
+
+CXXKIT_BEGIN_NAMESPACE
+
+namespace
 {
-    auto loggerWraper = cxxkit::Logger::Streamer(CXXKIT_LOGGER(), cxxkit::LogLevel::Fatal, file, where, line);
-    loggerWraper.logging("%s : %s", where, what);
+static int test_flag = 0;
+
+static void ctor_func(void)
+{
+    fprintf(stdout, "tst_decl_ctor\n");
+    test_flag = -1;
+}
+CXXKIT_CONSTRUCTOR_FUNCTION(ctor_func)
+
+static void dtor_func(void)
+{
+    fprintf(stdout, "tst_decl_dtor\n");
+    if (1 != test_flag)
+    {
+        abort();
+    }
+}
+CXXKIT_DESTRUCTOR_FUNCTION(dtor_func)
+} // namespace
+
+TEST(CtorDtorTest, ToStringWithCause)
+{
+    EXPECT_EQ(test_flag, -1);
+    test_flag = 1;
 }
 
-void cxxkit_assert(const char *assertion, const char *file, int line) CXXKIT_NOTHROW
-{
-    auto loggerWraper = cxxkit::Logger::Streamer(CXXKIT_LOGGER(), cxxkit::LogLevel::Fatal, file, CXXKIT_STRFUNC, line);
-    loggerWraper.logging("%s", assertion);
-}
+CXXKIT_END_NAMESPACE

@@ -34,6 +34,7 @@ cxxkit_find_package(Function2 PROVIDED_TARGETS CXXKitWrapFunction2::WrapFunction
 cxxkit_find_package(Filesystem PROVIDED_TARGETS CXXKitWrapFilesystem::WrapFilesystem)
 cxxkit_find_package(Spdlog PROVIDED_TARGETS CXXKitWrapSpdlog::WrapSpdlog)
 cxxkit_find_package(Variant PROVIDED_TARGETS CXXKitWrapVariant::WrapVariant)
+cxxkit_find_package(Benchmark PROVIDED_TARGETS CXXKitWrapBenchmark::WrapBenchmark)
 cxxkit_install_public_wrap_headers(cxxkit_base
     WRAPS
     CXXKitWrapFmt::WrapFmt|fmt
@@ -45,7 +46,8 @@ cxxkit_install_public_wrap_headers(cxxkit_base
     CXXKitWrapFunction2::WrapFunction2|function2
     CXXKitWrapFilesystem::WrapFilesystem|ghc
     CXXKitWrapSpdlog::WrapSpdlog|spdlog
-    CXXKitWrapVariant::WrapVariant|mpark)
+    CXXKitWrapVariant::WrapVariant|mpark
+    CXXKitWrapBenchmark::WrapBenchmark|benchmark)
 
 # cxxkit/3rdparty/ 统一 include 根（三方头命名空间拷贝）
 target_include_directories(cxxkit_base INTERFACE
@@ -63,7 +65,8 @@ target_link_libraries(cxxkit_base INTERFACE
     CXXKitWrapFunction2::WrapFunction2
     CXXKitWrapFilesystem::WrapFilesystem
     CXXKitWrapSpdlog::WrapSpdlog
-    CXXKitWrapVariant::WrapVariant)
+    CXXKitWrapVariant::WrapVariant
+    CXXKitWrapBenchmark::WrapBenchmark)
 
 target_compile_features(cxxkit_base INTERFACE cxx_std_11)
 

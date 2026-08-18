@@ -31,7 +31,7 @@
    cxxkit assert macro
 ***********************************************************************************************************************/
 CXXKIT_CORE_API void cxxkit_assert_x(const char *where, const char *what, const char *file, int line) CXXKIT_NOTHROW;
-CXXKIT_CORE_API void octk_assert(const char *assertion, const char *file, int line) CXXKIT_NOTHROW;
+CXXKIT_CORE_API void cxxkit_assert(const char *assertion, const char *file, int line) CXXKIT_NOTHROW;
 static inline void cxxkit_noop(void) { }
 #if !defined(CXXKIT_ASSERT)
 #    if defined(CXXKIT_NO_DEBUG) && !defined(CXXKIT_FORCE_ASSERTS)
@@ -40,7 +40,7 @@ static inline void cxxkit_noop(void) { }
             {                                                                                                          \
             } while ((false) && (cond))
 #    else
-#        define CXXKIT_ASSERT(cond) ((!(cond)) ? octk_assert(#cond, __FILE__, __LINE__) : cxxkit_noop())
+#        define CXXKIT_ASSERT(cond) ((!(cond)) ? cxxkit_assert(#cond, __FILE__, __LINE__) : cxxkit_noop())
 #    endif
 #endif
 #if !defined(CXXKIT_ASSERT_X)

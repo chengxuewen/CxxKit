@@ -86,5 +86,5 @@ endif()
 # wrap lib
 add_library(CXXKitWrapBenchmark::WrapBenchmark INTERFACE IMPORTED)
 find_package(benchmark HINTS ${CXXKitWrapBenchmark_INSTALL_DIR} NO_DEFAULT_PATH REQUIRED)
-target_link_libraries(CXXKitWrapBenchmark::WrapBenchmark INTERFACE benchmark::benchmark benchmark::benchmark_main)
+target_link_libraries(CXXKitWrapBenchmark::WrapBenchmark INTERFACE benchmark::benchmark)
 set(CXXKitWrapBenchmark_FOUND ON)

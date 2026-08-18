@@ -2,7 +2,7 @@
 **
 ** Library: cxxkit
 **
-** Copyright (C) 2025~Present ChengXueWen.
+** Copyright (C) 2026~Present ChengXueWen.
 **
 ** License: MIT License
 **
@@ -22,17 +22,15 @@
 **
 ***********************************************************************************************************************/
 
-#include "cxxkit/tools/assert.hpp"
-#include "cxxkit/tools/logging.hpp"
+#include "cxxkit/memory/shared_pointer.hpp"
 
-void cxxkit_assert_x(const char *where, const char *what, const char *file, int line) CXXKIT_NOTHROW
+#include <gmock/gmock.h>
+#include <gtest/gtest.h>
+
+CXXKIT_BEGIN_NAMESPACE
+
+namespace
 {
-    auto loggerWraper = cxxkit::Logger::Streamer(CXXKIT_LOGGER(), cxxkit::LogLevel::Fatal, file, where, line);
-    loggerWraper.logging("%s : %s", where, what);
 }
 
-void cxxkit_assert(const char *assertion, const char *file, int line) CXXKIT_NOTHROW
-{
-    auto loggerWraper = cxxkit::Logger::Streamer(CXXKIT_LOGGER(), cxxkit::LogLevel::Fatal, file, CXXKIT_STRFUNC, line);
-    loggerWraper.logging("%s", assertion);
-}
+CXXKIT_END_NAMESPACE

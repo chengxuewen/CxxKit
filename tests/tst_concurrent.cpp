@@ -22,17 +22,30 @@
 **
 ***********************************************************************************************************************/
 
-#include "cxxkit/tools/assert.hpp"
+#include "cxxkit/time/elapsed_timer.hpp"
+#include "cxxkit/thread/concurrent.hpp"
 #include "cxxkit/tools/logging.hpp"
 
-void cxxkit_assert_x(const char *where, const char *what, const char *file, int line) CXXKIT_NOTHROW
-{
-    auto loggerWraper = cxxkit::Logger::Streamer(CXXKIT_LOGGER(), cxxkit::LogLevel::Fatal, file, where, line);
-    loggerWraper.logging("%s : %s", where, what);
-}
+#include <list>
+#include <atomic>
+#include <thread>
+#include <memory>
+#include <random>
+#include <utility>
 
-void cxxkit_assert(const char *assertion, const char *file, int line) CXXKIT_NOTHROW
+#include <gtest/gtest.h>
+
+CXXKIT_BEGIN_NAMESPACE
+
+namespace
 {
-    auto loggerWraper = cxxkit::Logger::Streamer(CXXKIT_LOGGER(), cxxkit::LogLevel::Fatal, file, CXXKIT_STRFUNC, line);
-    loggerWraper.logging("%s", assertion);
+void light()
+{
+    CXXKIT_DEBUG("in function");
+    CXXKIT_DEBUG("done function");
 }
+} // namespace
+
+TEST(ConcurrentRunTest, RunLightFunction) { }
+
+CXXKIT_END_NAMESPACE
