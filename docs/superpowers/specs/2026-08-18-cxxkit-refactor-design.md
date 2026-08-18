@@ -134,6 +134,23 @@ base → {containers, functional, numerics}   # 纯头，零依赖
   - `cxxkitConfig.cmake`（`find_dependency` 处理 3rdparty）；
   - 支持 `find_package(cxxkit COMPONENTS text network)` 按组件消费。
 - 不做：OpenCTK 的 Qt-style ModuleDependencies 递归解析、ModuleDescription.json、Doxygen/FFmpeg/Python/Vcpkg 安装辅助。
+### 5.6 cmake helpers 移植清单（分析自 OpenCTK cmake/ 体系）
+
+**移植（高价值）**：
+
+| Helper | 来源 | 说明 |
+|---|---|---|
+| `cxxkit_option()` | OptionHelpers (129 行) | 带 DEPENDS/EMIT_IF/INPUT_ 注入的选项系统；配套顶层 option 集（BUILD_ALL/SHARED_LIBS/USE_PCH/COMPILER_WARNING/WARNINGS_ARE_ERRORS/BENCHMARKS/DOCS/LIBS/APPS/TESTS/EXAMPLES/INSTALL）与 `CXXKIT_ENABLE_LIB_*` 子库开关 |
+| `cxxkit_add_subdirectory()` | SubdirectoryHelpers (39 行) | 条件表达式 + 目录存在性检查 |
+| 编译标志体系 | FlagHandlingHelpers + CompilerHelpers (~320 行) | `set_compiler_warnings`（GNU/Clang -Wall -Werror、MSVC /W4 /WX）、UTF-8 源码、异常标志、MSVC /Zc:__cplusplus、bigobj、version script、--no-undefined、`replace_compiler_option`（/MD↔/MT） |
+| PCH 支持 | PrecompiledHeadersHelpers (81 行) | BUILD_WITH_PCH 条件 + target_precompile_headers + SKIP_PRECOMPILE_HEADERS（core/network 在用，必须带） |
+| `cxxkit_add_test()` | TestHelpers (583 行，精简) | 统一测试 target + ctest 注册 + WORKING_DIRECTORY/ENVIRONMENT/TIMEOUT |
+| RPATH 处理 | RpathHelpers (205 行) | 安装后动态库查找（@rpath/$ORIGIN） |
+| vcpkg 后端 | InstallVcpkg（按需） | network 的 `CXXKIT_NETWORK_HTTP_USE_LIBCPR_VCPKG` 分支需要 |
+| pkg-config 生成 | PkgConfigHelpers + PkgConfigLibrary.pc.in (182 行) | 生成 cxxkit.pc，非 CMake 项目可消费 |
+
+**不移植**：AndroidHelpers（平台特定，按需再加）、ModuleHelpers/GlobalStateHelpers（Qt-style 模块解析，设计不做）、PublicWalkLibs/PublicTargetHelpers（静态链接复杂度，abseil 式依赖图不需要）、SyncIncludeHelpers（转发壳已消除）、ScopeFinalizer/SeparateDebugInfo（过度工程）、InstallFFmpegTools/InstallDoxygen/InstallPython（media 相关/工具链）、FrameworkHelpers（Apple framework，按需再加）
+
 
 ## 6. 测试
 
