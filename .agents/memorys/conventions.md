@@ -14,9 +14,12 @@
 
 不手写风格，提交前 `clang-format -i <file>`。仓库根 `.clang-format` 为唯一权威。
 
-## C4：现代 C++
+## C4：C++11 起步，按子库可升级
 
-优先 C++17/20 特性，RAII 资源管理，`constexpr`/`auto`/结构化绑定，避免裸 `new/delete`。
+库代码最低 C++11（用户明确要求，2026-08-18 变更，原为 C++17 起步）。
+RAII 资源管理，`constexpr`/`auto` 可用，避免裸 `new/delete`。
+注意：**测试 target 用 C++14**（gtest 1.12.1 要求），库 target 保持 11。
+检查：`grep -rnE "auto\s+\w+\s*=|if constexpr" cxxkit/ --include="*.hpp"` 应为空（C++14 语法禁用）
 
 ## C5：检查命令
 
