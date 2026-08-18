@@ -17,11 +17,12 @@ cxxkit 是 OpenCTK（an open cpp toolkit）的成功重构版本 —— 精简�
 
 ## 当前阶段（2026-08-18）
 
-- [x] **Phase 1 完成**（合并至 main，commit `014e0ed`）：仓库骨架 + 8 子库 + 测试 + 安装
-- [ ] Phase 2：剩余编译子库（thread/time/units/kernel）+ network + 剩余 ~58 测试
+- [x] **Phase 1 完成**（commit `014e0ed`）：仓库骨架 + 8 子库 + 测试 + 安装
+- [x] **Phase 2 完成**（commit `dae9c45`）：13 子库 + 33 测试（353 用例）+ network 消费验证
 - [ ] 接入 CI（clang-format / clang-tidy / cmake build / ctest）
+- [ ] OpenCTK 残留问题归档：network_config.hpp 死引用、tst_platform_thread POSIX 链接、36 个注释测试（含 inlined_vector absl 依赖）
 
-## 已落地子库（8 个 target）
+## 已落地子库（13 个 target）
 
 | 子库 | 类型 | 内容 |
 |---|---|---|
@@ -29,24 +30,31 @@ cxxkit 是 OpenCTK（an open cpp toolkit）的成功重构版本 —— 精简�
 | `cxxkit::containers` | header-only | vector/array_view/inlined_vector/flat_set/concurrent_queue/vector_map |
 | `cxxkit::functional` | header-only | function_view/invocable/unique_function |
 | `cxxkit::numerics` | header-only | bits/divide_round/numeric/safe_compare/safe_conversions/safe_minmax |
-| `cxxkit::io` | 编译 | file_wrapper |
+| ~~`cxxkit::io`~~ | ~~编译~~ | ~~file_wrapper（WebRTC 版权，已删，改用 tools/filesystem）~~ |
 | `cxxkit::patterns` | header-only | singleton |
 | `cxxkit::text` | 编译 | string/ascii/string_utils/format/string_view |
-| `cxxkit::tools` | 编译 | logging/random/assert/checks/buffer/enum_flags/filesystem/optional/expected/...（Phase 1 只编 3 个 cpp） |
+| `cxxkit::tools` | 编译 | logging/random/assert/clock/status/error/once_flag/id_registry/shared_buffer/metrics/ntp_time/fake_clock + 头（checks/buffer/enum_flags/filesystem/optional/expected/variant/...） |
+| `cxxkit::memory` | 编译 | aligned_malloc/shared_memory/zero_memory + 智能指针（shared/unique/ref_count） |
+| `cxxkit::units` | 编译 | data_size/data_rate/frequency/time_delta/timestamp/unit_base |
+| `cxxkit::time` | 编译 | date_time/elapsed_timer |
+| `cxxkit::kernel` | 编译 | object/event/event_loop/signals/application（5 cpp） |
+| `cxxkit::thread` | 编译 | thread_pool/task_queue/event_loop_thread/future/semaphore/...（14 cpp） |
+| `cxxkit::network` | 编译 | http（cpr 后端，vendored cpr/curl/mbedtls） |
 
 ## 测试状态
 
-- 6 个 gtest 套件通过（69 用例，与 OpenCTK 基线对等）：tst_array_view/checks/divide_round/enum_flags/function_view/file_wrapper
-- **延后**：tst_inlined_vector（依赖 absl test_instance_tracker，OpenCTK 本身也未 vendored，原项目同样无法构建）
-- 待迁移：~58 个测试（Phase 2）
+- **33 个 gtest 套件全部通过（353 用例，与 OpenCTK 启用基线对等）**
+- OpenCTK 65 个测试文件中仅 30 个实际启用（36 个注释掉：inlined_vector/crypto_random/file_utils/task_queue 等引用不存在的头）
+- **不迁移**：tst_inlined_vector（absl test_instance_tracker 未 vendored）、tst_file_wrapper（io 子库已删）
 
 ## 三方库体系
 
-- 17 个 vendored 压缩包 + 17 个 FindWrap 模块（`cmake/wrap/`），stamp 防重复构建
+- 21 个 vendored 压缩包 + 21 个 FindWrap 模块（`cmake/wrap/`），stamp 防重复构建
 - **三方头命名空间**：`#include <cxxkit/3rdparty/<lib>/...>`（自定义路径，避免与系统库冲突——octk 方式）
 - 构建树：`build/include/cxxkit/3rdparty/`；安装树：`<prefix>/include/cxxkit/3rdparty/`
 - 静态库随包分发（`<prefix>/lib/`），安装后生成 stub target 链接（M3 方案）
-- 9 个 stub：Fmt/StringViewLite/Optional/Expected/ConcurrentQueue/ReaderWriterQueue/Function2/Filesystem/Spdlog
+- 15 个 stub：Fmt/StringViewLite/Optional/Expected/ConcurrentQueue/ReaderWriterQueue/Function2/Filesystem/Spdlog/Variant/Benchmark/Libcpr/Libcurl/MbedTLS/ZLIB
+- curl 精简后端：禁 ssh2/nghttp2/brotli/zstd/ldap；macOS 需 CoreFoundation/SystemConfiguration/Security 框架（stub 附加）
 
 ## 安装体系
 
@@ -56,7 +64,7 @@ cxxkit 是 OpenCTK（an open cpp toolkit）的成功重构版本 —— 精简�
 
 ## 待办
 
-1. Phase 2 计划编写与执行（thread/time/units/kernel + network + 剩余测试 + benchmark 确认）
-2. `.agents` 约定同步（conventions.md C4 已改为 C++11）
-3. media/imgui 续建路径（设计 B1，已延后）
-4. 接入 CI
+1. 接入 CI（clang-format / clang-tidy / cmake build / ctest）
+2. media/imgui 续建路径（设计 B1，已延后）
+3. pkg-config 生成（设计 D7 标记 Phase 2，尚未实现）
+4. 剩余 36 个 OpenCTK 注释测试是否补全（需先补依赖头）

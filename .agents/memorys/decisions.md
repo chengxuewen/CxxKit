@@ -31,3 +31,18 @@ cxxkit 采用目录 = 子库 = CMake target 三位一体，参考 boost 按需�
 ## D7: cmake helpers 移植清单
 
 移植（精简）：cxxkit_option/add_subdirectory/compiler flags/fetch/stamp/find_package/install(含 public_wrap_headers)/configure(core_config 生成)/library/test。不移植：Qt-style 模块解析（ModuleHelpers/GlobalState）、PublicWalkLibs、SyncInclude、Android/Framework/SeparateDebugInfo、FFmpeg/Doxygen/Python 安装辅助。pkg-config 生成待 Phase 2。
+
+## D8: 内部 include 统一尖括号 <cxxkit/...>（2026-08-18）
+
+用户指出迁移脚本用引号 `#include "cxxkit/..."` 与三方头 `<cxxkit/3rdparty/...>` 风格不一致。已全局统一为尖括号（192 文件）：严格依赖 include path 解析，杜绝当前目录同名文件歧义，与 octk 原风格及三方头命名空间一致。教训：库内头与三方头的 include 风格必须一致。
+
+## D9: 私有头模式（_p.hpp → <sub>/detail/）
+
+沿用 octk：私有实现头 `xxx_p.hpp` 放 `cxxkit/<sub>/detail/`，cpp 用 `<cxxkit/<sub>/detail/xxx_p.hpp>` 引用，**不安装**。OpenCTK 的 include/detail 转发壳层已消除（真实实现直接放 detail/）。
+
+## D10: 原项目残留问题（迁移时发现）
+
+- network_config.hpp 死引用（OpenCTK network 无法编译，已删）
+- tst_platform_thread POSIX 链接失败（OpenCTK 原问题）
+- 36 个注释测试引用的头不存在（crypto_random/file_utils/task_queue_for_test/sleep/task_event/task_thread）
+- curl 默认依赖 ssh2/nghttp2/brotli/zstd 未 vendored（已禁用精简）
