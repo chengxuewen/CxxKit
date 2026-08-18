@@ -46,3 +46,15 @@ cxxkit 采用目录 = 子库 = CMake target 三位一体，参考 boost 按需�
 - tst_platform_thread POSIX 链接失败（OpenCTK 原问题）
 - 36 个注释测试引用的头不存在（crypto_random/file_utils/task_queue_for_test/sleep/task_event/task_thread）
 - curl 默认依赖 ssh2/nghttp2/brotli/zstd 未 vendored（已禁用精简）
+
+## D11: vcpkg 式三方依赖处理（2026-08-18）
+
+安装每个 vendored 三方库**自有的 Config.cmake + pkgconfig + bin/**（fmt/spdlog/cpr/CURL/MbedTLS），cxxkitConfig 用 `find_dependency` 真找（递归链天然完整：spdlog→fmt、cpr→CURL），stub 仅兜底 header-only lite 系。.pc 的 Requires 含三方（fmt/spdlog/libcurl/mbedtls），cpr（无 .pc）进 Libs。已知限制：vendored .pc 绝对 prefix 不可移动（vcpkg 同）。
+
+## D12: 安装体系（octk 式，2026-08-18）
+
+默认 `CMAKE_INSTALL_PREFIX` = `<build>/install`（构建安装测试），`cmake --build build --target install` 始终可用；显式 `-DCMAKE_INSTALL_PREFIX` / `INPUT_CXXKIT_FEATURE_INSTALL_PREFIX` 覆盖。自定义 target：`BuildAll`（全量重建）、`BuildInstall`（构建+安装）、`Docs`（doxygen）。FOLDER 归类：libs→cxxkit/libs、tests→cxxkit/tests、examples→cxxkit/examples。**禁止 `rm -rf build`**（C6：3rdparty stamp 缓存）。
+
+## D13: 文档方案（2026-08-18）
+
+三层：① API 参考=doxygen（CXXKIT_BUILD_DOCS + Docs target，输出 build/doc/html，排除 detail/_p）；② 使用指南=README（子库表+快速开始+CMake/pkg-config 消费）+ examples（3 个）；③ 内部设计=docs/README.md 索引 + superpowers specs/plans + .agents memorys。doxygen 的 INPUT 需空格分隔 + 绝对路径（configure_file 分号坑）。
