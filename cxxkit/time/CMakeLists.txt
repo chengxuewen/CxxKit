@@ -22,6 +22,7 @@ set_target_properties(cxxkit_time PROPERTIES
 cxxkit_generate_pkg_config(cxxkit_time time)
 cxxkit_configure_library_end(CxxKitTime)
 
+set_property(TARGET cxxkit_time PROPERTY FOLDER "cxxkit/libs")
 if(CXXKIT_BUILD_INSTALL)
     install(TARGETS cxxkit_time EXPORT cxxkitTargets)
     install(DIRECTORY ${PROJECT_SOURCE_DIR}/cxxkit/time/

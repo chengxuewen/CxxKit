@@ -52,6 +52,7 @@ set_target_properties(cxxkit_thread PROPERTIES
 cxxkit_generate_pkg_config(cxxkit_thread thread)
 cxxkit_configure_library_end(CxxKitThread)
 
+set_property(TARGET cxxkit_thread PROPERTY FOLDER "cxxkit/libs")
 if(CXXKIT_BUILD_INSTALL)
     install(TARGETS cxxkit_thread EXPORT cxxkitTargets)
     install(DIRECTORY ${PROJECT_SOURCE_DIR}/cxxkit/thread/

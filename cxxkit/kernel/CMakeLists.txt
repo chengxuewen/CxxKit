@@ -25,6 +25,7 @@ set_target_properties(cxxkit_kernel PROPERTIES
 cxxkit_generate_pkg_config(cxxkit_kernel kernel)
 cxxkit_configure_library_end(CxxKitKernel)
 
+set_property(TARGET cxxkit_kernel PROPERTY FOLDER "cxxkit/libs")
 if(CXXKIT_BUILD_INSTALL)
     install(TARGETS cxxkit_kernel EXPORT cxxkitTargets)
     install(DIRECTORY ${PROJECT_SOURCE_DIR}/cxxkit/kernel/

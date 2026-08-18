@@ -35,6 +35,7 @@ set_target_properties(cxxkit_memory PROPERTIES
 cxxkit_generate_pkg_config(cxxkit_memory memory)
 cxxkit_configure_library_end(CxxKitMemory)
 
+set_property(TARGET cxxkit_memory PROPERTY FOLDER "cxxkit/libs")
 if(CXXKIT_BUILD_INSTALL)
     install(TARGETS cxxkit_memory EXPORT cxxkitTargets)
     install(DIRECTORY ${PROJECT_SOURCE_DIR}/cxxkit/memory/

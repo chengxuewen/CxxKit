@@ -40,4 +40,5 @@ function(cxxkit_add_test name)
     endif()
 
     add_test(NAME ${name} COMMAND ${name})
+    set_property(TARGET ${name} PROPERTY FOLDER "cxxkit/tests")
 endfunction()

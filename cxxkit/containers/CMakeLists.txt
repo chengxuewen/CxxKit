@@ -12,6 +12,7 @@ target_compile_features(cxxkit_containers INTERFACE cxx_std_11)
 cxxkit_generate_pkg_config(cxxkit_containers containers)
 cxxkit_configure_library_end(CxxKitContainers)
 
+set_property(TARGET cxxkit_containers PROPERTY FOLDER "cxxkit/libs")
 if(CXXKIT_BUILD_INSTALL)
     install(TARGETS cxxkit_containers EXPORT cxxkitTargets)
     install(DIRECTORY ${PROJECT_SOURCE_DIR}/cxxkit/containers/

@@ -45,6 +45,7 @@ set_target_properties(cxxkit_tools PROPERTIES
 cxxkit_generate_pkg_config(cxxkit_tools tools)
 cxxkit_configure_library_end(CxxKitTools)
 
+set_property(TARGET cxxkit_tools PROPERTY FOLDER "cxxkit/libs")
 if(CXXKIT_BUILD_INSTALL)
     install(TARGETS cxxkit_tools EXPORT cxxkitTargets)
     install(DIRECTORY ${PROJECT_SOURCE_DIR}/cxxkit/tools/

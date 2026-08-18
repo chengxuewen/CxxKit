@@ -42,6 +42,7 @@ cxxkit_install_public_wrap_headers(cxxkit_network
 cxxkit_generate_pkg_config(cxxkit_network network)
 cxxkit_configure_library_end(CxxKitNetwork)
 
+set_property(TARGET cxxkit_network PROPERTY FOLDER "cxxkit/libs")
 if(CXXKIT_BUILD_INSTALL)
     install(TARGETS cxxkit_network EXPORT cxxkitTargets)
     install(DIRECTORY ${PROJECT_SOURCE_DIR}/cxxkit/network/

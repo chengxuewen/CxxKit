@@ -151,10 +151,16 @@ add_subdirectory(cxxkit/time)
 add_subdirectory(cxxkit/text)
 add_subdirectory(cxxkit/tools)
 
+#-----------------------------------------------------------------------------------------------------------------------
+# IDE solution folders (VS/Xcode; no-op for make/ninja)
+#-----------------------------------------------------------------------------------------------------------------------
+set_property(GLOBAL PROPERTY USE_FOLDER ON)
+
 # Phase 2: add_subdirectory(src/network) when migrated
 cxxkit_add_subdirectory(cxxkit/network CXXKIT_ENABLE_LIB_NETWORK)
 cxxkit_add_subdirectory(tests CXXKIT_BUILD_TESTS)
 cxxkit_add_subdirectory(examples CXXKIT_BUILD_EXAMPLES)
+
 
 #-----------------------------------------------------------------------------------------------------------------------
 # Install: export targets + config file

@@ -25,6 +25,7 @@ set_target_properties(cxxkit_units PROPERTIES
 cxxkit_generate_pkg_config(cxxkit_units units)
 cxxkit_configure_library_end(CxxKitUnits)
 
+set_property(TARGET cxxkit_units PROPERTY FOLDER "cxxkit/libs")
 if(CXXKIT_BUILD_INSTALL)
     install(TARGETS cxxkit_units EXPORT cxxkitTargets)
     install(DIRECTORY ${PROJECT_SOURCE_DIR}/cxxkit/units/

@@ -12,6 +12,7 @@ target_compile_features(cxxkit_functional INTERFACE cxx_std_11)
 cxxkit_generate_pkg_config(cxxkit_functional functional)
 cxxkit_configure_library_end(CxxKitFunctional)
 
+set_property(TARGET cxxkit_functional PROPERTY FOLDER "cxxkit/libs")
 if(CXXKIT_BUILD_INSTALL)
     install(TARGETS cxxkit_functional EXPORT cxxkitTargets)
     install(DIRECTORY ${PROJECT_SOURCE_DIR}/cxxkit/functional/

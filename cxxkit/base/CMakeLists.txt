@@ -73,6 +73,7 @@ target_compile_features(cxxkit_base INTERFACE cxx_std_11)
 cxxkit_generate_pkg_config(cxxkit_base base)
 cxxkit_configure_library_end(CxxKitBase)
 
+set_property(TARGET cxxkit_base PROPERTY FOLDER "cxxkit/libs")
 if(CXXKIT_BUILD_INSTALL)
     install(TARGETS cxxkit_base EXPORT cxxkitTargets)
     install(DIRECTORY ${PROJECT_SOURCE_DIR}/cxxkit/base/

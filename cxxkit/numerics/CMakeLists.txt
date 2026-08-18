@@ -12,6 +12,7 @@ target_compile_features(cxxkit_numerics INTERFACE cxx_std_11)
 cxxkit_generate_pkg_config(cxxkit_numerics numerics)
 cxxkit_configure_library_end(CxxKitNumerics)
 
+set_property(TARGET cxxkit_numerics PROPERTY FOLDER "cxxkit/libs")
 if(CXXKIT_BUILD_INSTALL)
     install(TARGETS cxxkit_numerics EXPORT cxxkitTargets)
     install(DIRECTORY ${PROJECT_SOURCE_DIR}/cxxkit/numerics/

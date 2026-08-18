@@ -40,6 +40,7 @@ set_target_properties(cxxkit_text PROPERTIES
 cxxkit_generate_pkg_config(cxxkit_text text)
 cxxkit_configure_library_end(CxxKitText)
 
+set_property(TARGET cxxkit_text PROPERTY FOLDER "cxxkit/libs")
 if(CXXKIT_BUILD_INSTALL)
     install(TARGETS cxxkit_text EXPORT cxxkitTargets)
     install(DIRECTORY ${PROJECT_SOURCE_DIR}/cxxkit/text/

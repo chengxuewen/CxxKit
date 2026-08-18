@@ -12,6 +12,7 @@ target_compile_features(cxxkit_patterns INTERFACE cxx_std_11)
 cxxkit_generate_pkg_config(cxxkit_patterns patterns)
 cxxkit_configure_library_end(CxxKitPatterns)
 
+set_property(TARGET cxxkit_patterns PROPERTY FOLDER "cxxkit/libs")
 if(CXXKIT_BUILD_INSTALL)
     install(TARGETS cxxkit_patterns EXPORT cxxkitTargets)
     install(DIRECTORY ${PROJECT_SOURCE_DIR}/cxxkit/patterns/
