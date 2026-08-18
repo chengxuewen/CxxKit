@@ -21,7 +21,6 @@ set(CXXKIT_TEST_LINK_LIBRARIES
     cxxkit::containers
     cxxkit::functional
     cxxkit::numerics
-    cxxkit::io
     cxxkit::patterns
     cxxkit::text
     cxxkit::tools
@@ -54,7 +53,3 @@ cxxkit_add_test(cxxkit_tst_function_view
     INCLUDE_DIRECTORIES ${PROJECT_SOURCE_DIR}
     LIBRARIES ${CXXKIT_TEST_LINK_LIBRARIES} ${CMAKE_THREAD_LIBS_INIT})
 
-cxxkit_add_test(cxxkit_tst_file_wrapper
-    SOURCES tst_file_wrapper.cpp
-    INCLUDE_DIRECTORIES ${PROJECT_SOURCE_DIR}
-    LIBRARIES ${CXXKIT_TEST_LINK_LIBRARIES} ${CMAKE_THREAD_LIBS_INIT})
