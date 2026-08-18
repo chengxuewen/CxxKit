@@ -96,7 +96,7 @@ stash
 
 # Runtime state
 # --------
-.omo/run-continuation
+.omo
 
 # Don't ignore files
 # --------
