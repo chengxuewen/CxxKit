@@ -70,3 +70,7 @@ cxxkit 采用目录 = 子库 = CMake target 三位一体，参考 boost 按需�
 ## D16: profiling 子库（Tracy 后端，opt-in）（2026-08-19）
 
 新增第 14 个子库 `cxxkit::profiling`（header-only INTERFACE，仿 absl/profiling 功能命名，不绑定后端）。Tracy v0.13.1 vendored（FindWrapTracy，官方 CMake 构建 TracyClient 静态库，C++17 编译库——PIT-8；TracyConfig 随包分发走 D11 vcpkg 式）。`CXXKIT_ENABLE_LIB_TRACY=ON` 时注入 `CXXKIT_PROFILING_ENABLED`+`TRACY_ENABLE` INTERFACE 宏并链接 `Tracy::TracyClient`（LINK_ONLY——官方 include/tracy 路径由 cxxkitConfig.cmake 清空，头统一走 `<cxxkit/3rdparty/tracy/tracy/Tracy.hpp>` 命名空间，D6）。**不挂 tools**（tools 禁三方依赖），未来 breakpad 独立建 `cxxkit::crash`（folly/SerenityOS 分离模式）。
+
+## D17: crash 子库设计定案（2026-08-19）
+
+第 15 子库 `cxxkit::crash`（breakpad + backward-cpp，opt-in `CXXKIT_ENABLE_LIB_CRASH`，纯 C++11 无 Qt 无网络上传 v1）。依赖走 **QExt/OpenCTK 式 vcpkg 导出 .7z 缓存**：`cmake/InstallVcpkg.cmake` 移植（`cxxkit_vcpkg_install_package`，**默认 OpenCTK 式自动拉取**——无 .7z 时 clone vcpkg + install + export + repack；`NO_FALLBACK` 严格模式）；`scripts/export_crash_deps.sh` 产出合并归档 `crash-deps-<triplet>.7z`（manifest 锁定 breakpad 2024-02-16 与 QExt 同源 + -fPIC overlay triplet + .version sidecar + license 断言）。FindWrapCrashDeps 单解包双 target + 三重门禁（版本/relocatability/PIC 冒烟），归档缺失自动跑导出脚本。**二进制级互斥契约**：crash ON ⇒ QExt::Breakpad OFF（install() 原子守卫拒二次安装）。backward-cpp 不注册自身 SignalHandling，仅 opt-in 回调内 `load_from(崩溃线程 ucontext)` 打栈（Linux；macOS 无 ucontext 跳过）。公共头零三方类型泄漏（pimpl 隔离，回调签名自有）。测试用独立 fixture + fork/exec（禁 gtest death test）。

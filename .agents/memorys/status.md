@@ -42,11 +42,12 @@ cxxkit 是 OpenCTK（an open cpp toolkit）的成功重构版本 —— 精简�
 | `cxxkit::kernel` | 编译 | object/event/event_loop/signals/application（5 cpp） |
 | `cxxkit::thread` | 编译 | thread_pool/task_queue/event_loop_thread/future/semaphore/...（14 cpp） |
 | `cxxkit::network` | 编译 | http（cpr 后端，vendored cpr/curl/mbedtls） |
+| `cxxkit::crash` | 编译 | crash handler/minidump（breakpad）+ 栈回溯（backward-cpp），opt-in `CXXKIT_ENABLE_LIB_CRASH`，vcpkg 导出 .7z 缓存（D17） |
 | `cxxkit::profiling` | header-only | profiling.hpp — Tracy 后端包装（CXXKIT_PROFILE_SCOPE，opt-in，CXXKIT_ENABLE_LIB_TRACY） |
 
 ## 测试状态
 
-- **33 个 gtest 套件全部通过（353 用例，与 OpenCTK 启用基线对等）**
+- **33 个 gtest 套件全部通过（353 用例，与 OpenCTK 启用基线对等）**；crash 套件 `cxxkit_tst_crash`（4 用例，`CXXKIT_ENABLE_LIB_CRASH=ON` 时启用）
 - OpenCTK 65 个测试文件中仅 30 个实际启用（36 个注释掉：inlined_vector/crypto_random/file_utils/task_queue 等引用不存在的头）
 - **不迁移**：tst_inlined_vector（absl test_instance_tracker 未 vendored）、tst_file_wrapper（io 子库已删）
 - cxxkit_tst_context_checker 偶发 SEGFAULT，单独重跑即过（与 semaphore 时序测试同类，非回归）
