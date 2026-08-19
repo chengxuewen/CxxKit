@@ -60,5 +60,6 @@ Linux 大小写敏感 + abseil 式「目录=子库=target」三位一体，只�
 file(GLOB _cxxkit_headers CONFIGURE_DEPENDS ${CMAKE_CURRENT_SOURCE_DIR}/*.hpp ${CMAKE_CURRENT_SOURCE_DIR}/detail/*.hpp)
 add_library(cxxkit_xxx ${_cxxkit_headers} xxx.cpp)   # header-only 用 add_library(cxxkit_xxx INTERFACE ${_cxxkit_headers})
 ```
-安装由 `install(DIRECTORY ... FILES_MATCHING "*.hpp" PATTERN "detail" EXCLUDE)` 控制——.cpp 与 detail/ 自动不装。
+安装由 `install(DIRECTORY ... FILES_MATCHING "*.hpp")` 控制——.cpp 自动不装；detail/ 私有头随公共头安装（D9，2026-08-19 用户决策）。
+检查：`test -d src` 应不存在；`find build/install/include -type d -name detail` 应为 4（kernel/thread/tools/network）
 检查：`test -d src` 应不存在；`find build/install/include -type d -name detail` 应为空

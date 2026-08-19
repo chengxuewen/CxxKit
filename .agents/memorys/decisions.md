@@ -38,7 +38,7 @@ cxxkit 采用目录 = 子库 = CMake target 三位一体，参考 boost 按需�
 
 ## D9: 私有头模式（_p.hpp → <sub>/detail/）
 
-沿用 octk：私有实现头 `xxx_p.hpp` 放 `cxxkit/<sub>/detail/`，cpp 用 `<cxxkit/<sub>/detail/xxx_p.hpp>` 引用，**不安装**。OpenCTK 的 include/detail 转发壳层已消除（真实实现直接放 detail/）。
+沿用 octk：私有实现头 `xxx_p.hpp` 放 `cxxkit/<sub>/detail/`，cpp 用 `<cxxkit/<sub>/detail/xxx_p.hpp>` 引用。**2026-08-19 用户决策：detail/ 随公共头一起安装**（原"不安装"约定已反转）。OpenCTK 的 include/detail 转发壳层已消除（真实实现直接放 detail/）。
 
 ## D10: 原项目残留问题（迁移时发现）
 
@@ -61,7 +61,7 @@ cxxkit 采用目录 = 子库 = CMake target 三位一体，参考 boost 按需�
 
 ## D14: 源码聚合到子库目录（2026-08-19）
 
-用户指出 src/<sub>/ 与 cxxkit/<sub>/ 分离不便，与 abseil 式组织（目录=子库=target，头源同目录）不符。已 `git mv` 49 个 .cpp 从 src/<sub>/ 到 cxxkit/<sub>/，删除 src/。子库 CMakeLists 源路径改相对路径。安装靠 install(DIRECTORY ... FILES_MATCHING "*.hpp" PATTERN "detail" EXCLUDE) 过滤，.cpp 自动不装。
+用户指出 src/<sub>/ 与 cxxkit/<sub>/ 分离不便，与 abseil 式组织（目录=子库=target，头源同目录）不符。已 `git mv` 49 个 .cpp 从 src/<sub>/ 到 cxxkit/<sub>/，删除 src/。子库 CMakeLists 源路径改相对路径。安装靠 install(DIRECTORY ... FILES_MATCHING "*.hpp") 过滤——.cpp 自动不装，detail/ 头随公共头安装（D9 反转）。
 
 ## D15: 头文件进 target 源列表（2026-08-19）
 

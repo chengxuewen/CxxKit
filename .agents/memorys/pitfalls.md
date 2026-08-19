@@ -20,6 +20,8 @@
 - **症状**: `PATTERN "*/detail/*" EXCLUDE` 后 detail/*.hpp 仍被安装
 - **根因**: pattern 转 REGEX 为 `/[^/]*\/detail\/[^/]*$`，要求路径以 /detail/ 开头；但 install 相对路径是 `detail/xxx`（无前导斜杠）
 - **解法**: 顶层 detail 用 `PATTERN "detail" EXCLUDE`（连目录一起排除）
+- **⚠ 2026-08-19 已反转**: 用户决策 detail/ 随公共头安装（D9），EXCLUDE 已移除；PIT-3 保留作 pattern 匹配机制参考
+- **验证**: `find build/install/include -type d -name detail` 应为 4（kernel/thread/tools/network）
 - **验证**: `find build/install/include -type d -name detail` 应为空
 
 ## PIT-4: file(GLOB) 相对路径在 target 源列表被拒 (2026-08-19)

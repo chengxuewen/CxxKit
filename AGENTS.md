@@ -15,7 +15,7 @@ CxxKit — 跨平台 C++ 工具库（OpenCTK 重构版）。abseil 式组织：�
 cxxkit/
 ├── cxxkit/<sub>/    # 13 个子库头文件（base/containers/functional/numerics/patterns/
 │                    #   memory/units/time/kernel/thread/text/tools/network）
-│   └── <sub>/detail/  # 私有实现头 *_p.hpp（不安装，doxygen 排除）
+│   └── <sub>/detail/  # 私有实现头 *_p.hpp（随公共头安装，doxygen 排除）
 ├── cxxkit/<sub>/    # 13 个子库：头 + 源 .cpp + CMakeLists 聚合（abseil 式，无 src/ 目录）
 ├── tests/           # 33 个 gtest 套件（353 用例）
 ├── examples/        # 3 个示例（exp_core_version/logging/network_version）
@@ -62,7 +62,7 @@ cxxkit/
 - **D15**：头文件进 target 源列表（GLOB CONFIGURE_DEPENDS），IDE 大纲可见
 - **D2**：扁平 `cxxkit::` 命名空间；内部实现 `cxxkit::detail::`；宏前缀 `CXXKIT_*`
 - **D8**：内部 include 一律**尖括号** `<cxxkit/...>`（禁引号，192 文件统一）
-- **D9**：私有头 `xxx_p.hpp` 放 `<sub>/detail/`，不安装
+- **D9**：私有头 `xxx_p.hpp` 放 `<sub>/detail/`，随公共头安装（2026-08-19 用户决策）
 - **D6**：三方头用 `<cxxkit/3rdparty/<lib>/...>` 命名空间路径（构建/安装双侧一致）
 - **D11**：三方依赖 vcpkg 式：安装三方自有 Config.cmake，`find_dependency` 递归链
 - **D12**：默认装 `build/install/`；自定义 target `BuildAll`/`BuildInstall`/`Docs`
