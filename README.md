@@ -23,6 +23,7 @@ Organized abseil-style: **directory = sublibrary = CMake target**, pick only wha
 | `cxxkit::text` | compiled | string, base64, bit_buffer, ascii, string_builder, string_utils, format, string_view |
 | `cxxkit::tools` | compiled | logging, random, assert, clock, status, error, metrics, filesystem, optional, expected, variant |
 | `cxxkit::network` | compiled | http (cpr backend) |
+| `cxxkit::crash` | compiled | crash handler, minidump (breakpad), stack trace (backward-cpp) — opt-in `CXXKIT_ENABLE_LIB_CRASH` |
 
 ## Quick start
 
@@ -36,7 +37,31 @@ ctest --test-dir build              # run tests
 ```
 
 Options: `-DCXXKIT_BUILD_TESTS=OFF`, `-DCXXKIT_ENABLE_LIB_NETWORK=ON`,
-`-DCXXKIT_BUILD_DOCS=ON`, `-DCMAKE_INSTALL_PREFIX=/path/to/prefix`.
+`-DCXXKIT_ENABLE_LIB_CRASH=ON`, `-DCXXKIT_BUILD_DOCS=ON`, `-DCMAKE_INSTALL_PREFIX=/path/to/prefix`.
+
+### crash sublibrary (breakpad + backward-cpp)
+
+```cpp
+#include <cxxkit/crash/crash_handler.hpp>
+
+cxxkit::CrashHandler &handler = cxxkit::CrashHandler::instance();
+handler.setDumpPath("/tmp/dumps");
+handler.setStackTraceOnCrash(true);   // optional: print the crashed thread's stack to stderr
+handler.install();
+```
+
+**Platform support**: Linux/macOS x64 (Windows/arm64 need a `crash-deps-<triplet>.7z` export first).
+
+**Dependency cache**: the first `-DCXXKIT_ENABLE_LIB_CRASH=ON` configure auto-fetches vcpkg (if the
+`crash-deps-x64-linux.7z` cache is missing) and builds breakpad/backward-cpp/elfutils/libunwind
+(10-25 min, one time). Later builds consume the .7z cache — no vcpkg needed at build time.
+Set `INPUT_CXXKIT_3RDPARTY_PACKAGES_DIR` to share the parent project's cache directory.
+
+**Coexistence contract**: crash ON ⇒ QExt::Breakpad OFF in the same process — two breakpad handlers
+would double-write minidumps. `CrashHandler::install()` refuses a second installation.
+
+**Symbolication** (Linux): `dump_syms <binary> > <module>.sym`, then
+`minidump_stackwalk <dump>.dmp symbols/`.
 
 ### Use with CMake (installed)
 
