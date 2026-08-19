@@ -1,5 +1,5 @@
 #!/usr/bin/env bash
-# cxxkit 本地质量门禁：format + namespace + build + test
+# CxxKit 本地质量门禁：format + namespace + build + test
 set -euo pipefail
 cd "$(dirname "$0")/.."
 
