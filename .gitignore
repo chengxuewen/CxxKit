@@ -102,3 +102,6 @@ stash
 # --------
 !.vscode/settings.json
 !.omo/omo.jsonc
+# crash-deps export cache (scripts/export_crash_deps.sh) — build cache, not sources
+3rdparty/*.7z
+3rdparty/*.7z.version
