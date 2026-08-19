@@ -140,6 +140,8 @@ cxxkit_option(CXXKIT_ENABLE_LIB_NETWORK "Enable this to build enable network lib
     OR_CONDITION CXXKIT_BUILD_ALL)
 cxxkit_option(CXXKIT_ENABLE_LIB_TRACY "Enable this to build enable Tracy profiler lib" OFF
     OR_CONDITION CXXKIT_BUILD_ALL)
+cxxkit_option(CXXKIT_ENABLE_LIB_CRASH "Enable this to build enable crash lib" OFF
+    OR_CONDITION CXXKIT_BUILD_ALL)
 
 #-----------------------------------------------------------------------------------------------------------------------
 # Testing
@@ -172,6 +174,7 @@ set_property(GLOBAL PROPERTY USE_FOLDER ON)
 
 # Sublibraries (abseil-style: directory = sublibrary = CMake target)
 cxxkit_add_subdirectory(cxxkit/network CXXKIT_ENABLE_LIB_NETWORK)
+cxxkit_add_subdirectory(cxxkit/crash CXXKIT_ENABLE_LIB_CRASH)
 cxxkit_add_subdirectory(tests CXXKIT_BUILD_TESTS)
 cxxkit_add_subdirectory(examples CXXKIT_BUILD_EXAMPLES)
 
@@ -233,6 +236,9 @@ if(CXXKIT_BUILD_INSTALL)
     set(CXXKIT_VENDORED_FIND_DEPS "fmt;spdlog;cpr;CURL;MbedTLS")
     if(CXXKIT_ENABLE_LIB_TRACY)
         list(APPEND CXXKIT_VENDORED_FIND_DEPS "Tracy")
+    endif()
+    if(CXXKIT_ENABLE_LIB_CRASH)
+        list(APPEND CXXKIT_VENDORED_FIND_DEPS "unofficial-breakpad" "Backward")
     endif()
     configure_package_config_file(
         "${CXXKIT_CMAKE_DIR}/CxxKitConfig.cmake.in"
