@@ -8,8 +8,8 @@
 
 | 任务 | 位置 | 备注 |
 |------|------|------|
-| 线程池（调度/优先级/active 跟踪） | `thread_pool.hpp` + `detail/thread_pool_p.hpp` + `src/thread/thread_pool.cpp`（706 行，最大） | 内部自持 `mTaskQueue`，push/pop/cancel/clear 直连队列 |
-| 任务队列（core 抽象） | `task_queue.hpp` + `src/thread/task_queue.cpp` | 配套 `task.hpp`（任务体）、`task_queue_factory`（工厂）、`task_queue_thread`（队列背线程） |
+| 线程池（调度/优先级/active 跟踪） | `thread_pool.hpp` + `detail/thread_pool_p.hpp` + `thread_pool.cpp`（706 行，最大） | 内部自持 `mTaskQueue`，push/pop/cancel/clear 直连队列 |
+| 任务队列（core 抽象） | `task_queue.hpp` + `task_queue.cpp` | 配套 `task.hpp`（任务体）、`task_queue_factory`（工厂）、`task_queue_thread`（队列背线程） |
 | 平台线程抽象 | `platform_thread.hpp` + `detail/platform_thread_p.hpp` | 实现分文件：`platform_thread_posix.cpp`（`#if !defined(CXXKIT_OS_WIN)`）`platform_thread_win.cpp`（`#if defined(CXXKIT_OS_WIN)`），公共 `platform_thread.cpp`（344 行） |
 | 信号量/同步 | `semaphore.hpp`、`spinlock.hpp`、`mutex.hpp`、`concurrent.hpp` | mutex=std 包装（Mutex/RecursiveMutex + Lock/UniqueLock/Condition 别名） |
 | 线程安全诊断 | `context_checker.hpp`、`race_checker.hpp` | 编译期检查 + 运行期竞态检测（依赖 tools/checks） |

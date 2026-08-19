@@ -2,12 +2,14 @@ cmake_minimum_required(VERSION ${CXXKIT_MIN_NEW_POLICY_CMAKE_VERSION}...${CXXKIT
 
 cxxkit_configure_library_begin(CxxKitUnits)
 
+file(GLOB _cxxkit_headers CONFIGURE_DEPENDS ${CMAKE_CURRENT_SOURCE_DIR}/*.hpp ${CMAKE_CURRENT_SOURCE_DIR}/detail/*.hpp)
 add_library(cxxkit_units
-    ${PROJECT_SOURCE_DIR}/src/units/data_rate.cpp
-    ${PROJECT_SOURCE_DIR}/src/units/data_size.cpp
-    ${PROJECT_SOURCE_DIR}/src/units/frequency.cpp
-    ${PROJECT_SOURCE_DIR}/src/units/time_delta.cpp
-    ${PROJECT_SOURCE_DIR}/src/units/timestamp.cpp)
+    ${_cxxkit_headers}
+    data_rate.cpp
+    data_size.cpp
+    frequency.cpp
+    time_delta.cpp
+    timestamp.cpp)
 add_library(cxxkit::units ALIAS cxxkit_units)
 
 target_include_directories(cxxkit_units PUBLIC
@@ -25,10 +27,10 @@ set_target_properties(cxxkit_units PROPERTIES
 cxxkit_generate_pkg_config(cxxkit_units units)
 cxxkit_configure_library_end(CxxKitUnits)
 
-set_property(TARGET cxxkit_units PROPERTY FOLDER "cxxkit/libs")
+set_property(TARGET cxxkit_units PROPERTY FOLDER "CxxKit/libs")
 if(CXXKIT_BUILD_INSTALL)
     install(TARGETS cxxkit_units EXPORT cxxkitTargets)
     install(DIRECTORY ${PROJECT_SOURCE_DIR}/cxxkit/units/
         DESTINATION include/cxxkit/units
-        FILES_MATCHING PATTERN "*.hpp")
+        FILES_MATCHING PATTERN "*.hpp" PATTERN "detail" EXCLUDE)
 endif()

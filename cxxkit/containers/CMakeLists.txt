@@ -1,7 +1,8 @@
 cmake_minimum_required(VERSION ${CXXKIT_MIN_NEW_POLICY_CMAKE_VERSION}...${CXXKIT_MAX_NEW_POLICY_CMAKE_VERSION})
 
 cxxkit_configure_library_begin(CxxKitContainers)
-add_library(cxxkit_containers INTERFACE)
+file(GLOB _cxxkit_headers CONFIGURE_DEPENDS ${CMAKE_CURRENT_SOURCE_DIR}/*.hpp ${CMAKE_CURRENT_SOURCE_DIR}/detail/*.hpp)
+add_library(cxxkit_containers INTERFACE ${_cxxkit_headers})
 add_library(cxxkit::containers ALIAS cxxkit_containers)
 set_property(TARGET cxxkit_containers PROPERTY EXPORT_NAME containers)
 target_include_directories(cxxkit_containers INTERFACE
@@ -12,10 +13,10 @@ target_compile_features(cxxkit_containers INTERFACE cxx_std_11)
 cxxkit_generate_pkg_config(cxxkit_containers containers)
 cxxkit_configure_library_end(CxxKitContainers)
 
-set_property(TARGET cxxkit_containers PROPERTY FOLDER "cxxkit/libs")
+set_property(TARGET cxxkit_containers PROPERTY FOLDER "CxxKit/libs")
 if(CXXKIT_BUILD_INSTALL)
     install(TARGETS cxxkit_containers EXPORT cxxkitTargets)
     install(DIRECTORY ${PROJECT_SOURCE_DIR}/cxxkit/containers/
         DESTINATION include/cxxkit/containers
-        FILES_MATCHING PATTERN "*.hpp")
+        FILES_MATCHING PATTERN "*.hpp" PATTERN "detail" EXCLUDE)
 endif()

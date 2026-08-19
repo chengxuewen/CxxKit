@@ -1,6 +1,6 @@
 ########################################################################################################################
 #
-# Library: cxxkit
+# Library: CxxKit
 #
 # Copyright (C) 2025~Present ChengXueWen.
 #
@@ -68,7 +68,7 @@ function(cxxkit_generate_pkg_config target pc_name)
     set(PC_LIBDIR "\${prefix}/lib")
     set(PC_INCLUDEDIR "\${prefix}/include")
     configure_file(
-        "${PROJECT_SOURCE_DIR}/cmake/cxxkit.pc.in"
+        "${PROJECT_SOURCE_DIR}/cmake/CxxKit.pc.in"
         "${CMAKE_CURRENT_BINARY_DIR}/cxxkit-${pc_name}.pc"
         @ONLY)
     install(FILES "${CMAKE_CURRENT_BINARY_DIR}/cxxkit-${pc_name}.pc"

@@ -2,9 +2,11 @@ cmake_minimum_required(VERSION ${CXXKIT_MIN_NEW_POLICY_CMAKE_VERSION}...${CXXKIT
 
 cxxkit_configure_library_begin(CxxKitTime)
 
+file(GLOB _cxxkit_headers CONFIGURE_DEPENDS ${CMAKE_CURRENT_SOURCE_DIR}/*.hpp ${CMAKE_CURRENT_SOURCE_DIR}/detail/*.hpp)
 add_library(cxxkit_time
-    ${PROJECT_SOURCE_DIR}/src/time/date_time.cpp
-    ${PROJECT_SOURCE_DIR}/src/time/elapsed_timer.cpp)
+    ${_cxxkit_headers}
+    date_time.cpp
+    elapsed_timer.cpp)
 add_library(cxxkit::time ALIAS cxxkit_time)
 
 target_include_directories(cxxkit_time PUBLIC
@@ -22,10 +24,10 @@ set_target_properties(cxxkit_time PROPERTIES
 cxxkit_generate_pkg_config(cxxkit_time time)
 cxxkit_configure_library_end(CxxKitTime)
 
-set_property(TARGET cxxkit_time PROPERTY FOLDER "cxxkit/libs")
+set_property(TARGET cxxkit_time PROPERTY FOLDER "CxxKit/libs")
 if(CXXKIT_BUILD_INSTALL)
     install(TARGETS cxxkit_time EXPORT cxxkitTargets)
     install(DIRECTORY ${PROJECT_SOURCE_DIR}/cxxkit/time/
         DESTINATION include/cxxkit/time
-        FILES_MATCHING PATTERN "*.hpp")
+        FILES_MATCHING PATTERN "*.hpp" PATTERN "detail" EXCLUDE)
 endif()

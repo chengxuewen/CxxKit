@@ -1,6 +1,6 @@
 /***********************************************************************************************************************
 **
-** Library: cxxkit
+** Library: CxxKit
 **
 ** Copyright (C) 2025~Present ChengXueWen.
 ** Copyright 2020 The WebRTC Project Authors. All rights reserved.

@@ -2,12 +2,14 @@ cmake_minimum_required(VERSION ${CXXKIT_MIN_NEW_POLICY_CMAKE_VERSION}...${CXXKIT
 
 cxxkit_configure_library_begin(CxxKitKernel)
 
+file(GLOB _cxxkit_headers CONFIGURE_DEPENDS ${CMAKE_CURRENT_SOURCE_DIR}/*.hpp ${CMAKE_CURRENT_SOURCE_DIR}/detail/*.hpp)
 add_library(cxxkit_kernel
-    ${PROJECT_SOURCE_DIR}/src/kernel/application.cpp
-    ${PROJECT_SOURCE_DIR}/src/kernel/event.cpp
-    ${PROJECT_SOURCE_DIR}/src/kernel/event_loop.cpp
-    ${PROJECT_SOURCE_DIR}/src/kernel/object.cpp
-    ${PROJECT_SOURCE_DIR}/src/kernel/signals.cpp)
+    ${_cxxkit_headers}
+    application.cpp
+    event.cpp
+    event_loop.cpp
+    object.cpp
+    signals.cpp)
 add_library(cxxkit::kernel ALIAS cxxkit_kernel)
 
 target_include_directories(cxxkit_kernel PUBLIC
@@ -25,10 +27,10 @@ set_target_properties(cxxkit_kernel PROPERTIES
 cxxkit_generate_pkg_config(cxxkit_kernel kernel)
 cxxkit_configure_library_end(CxxKitKernel)
 
-set_property(TARGET cxxkit_kernel PROPERTY FOLDER "cxxkit/libs")
+set_property(TARGET cxxkit_kernel PROPERTY FOLDER "CxxKit/libs")
 if(CXXKIT_BUILD_INSTALL)
     install(TARGETS cxxkit_kernel EXPORT cxxkitTargets)
     install(DIRECTORY ${PROJECT_SOURCE_DIR}/cxxkit/kernel/
         DESTINATION include/cxxkit/kernel
-        FILES_MATCHING PATTERN "*.hpp")
+        FILES_MATCHING PATTERN "*.hpp" PATTERN "detail" EXCLUDE)
 endif()

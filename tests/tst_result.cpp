@@ -1,6 +1,6 @@
 /***********************************************************************************************************************
 **
-** Library: cxxkit
+** Library: CxxKit
 **
 ** Copyright (C) 2026~Present ChengXueWen.
 **
@@ -24,6 +24,7 @@
 
 #include <cxxkit/tools/result.hpp>
 #include <cxxkit/tools/error.hpp>
+#include <cxxkit/text/string_view.hpp>
 
 #include <gmock/gmock.h>
 #include <gtest/gtest.h>
@@ -170,7 +171,7 @@ TEST(ResultTest, ConvertibleTypes)
 
     // Test move from convertible type
     Result<std::string> stringResult(std::string("test"));
-    Result<std::string_view> stringViewResult(std::move(stringResult));
+    Result<StringView> stringViewResult(std::move(stringResult));
     EXPECT_TRUE(stringViewResult.ok());
     EXPECT_EQ(stringViewResult.value(), "test");
 
@@ -183,7 +184,7 @@ TEST(ResultTest, ConvertibleTypes)
 
     // Test move assignment from convertible type
     Result<std::string> stringResult2(std::string("assign test"));
-    Result<std::string_view> stringViewResult2;
+    Result<StringView> stringViewResult2;
     stringViewResult2 = std::move(stringResult2);
     EXPECT_TRUE(stringViewResult2.ok());
     EXPECT_EQ(stringViewResult2.value(), "assign test");

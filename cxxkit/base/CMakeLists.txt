@@ -1,6 +1,6 @@
 ########################################################################################################################
 #
-# Library: cxxkit
+# Library: CxxKit
 #
 # Copyright (C) 2025~Present ChengXueWen.
 #
@@ -18,7 +18,8 @@ cxxkit_configure_library_begin(CxxKitBase)
 # Generate core_config.hpp into the build tree
 cxxkit_generate_core_config()
 
-add_library(cxxkit_base INTERFACE)
+file(GLOB _cxxkit_headers CONFIGURE_DEPENDS ${CMAKE_CURRENT_SOURCE_DIR}/*.hpp ${CMAKE_CURRENT_SOURCE_DIR}/detail/*.hpp)
+add_library(cxxkit_base INTERFACE ${_cxxkit_headers})
 add_library(cxxkit::base ALIAS cxxkit_base)
 set_property(TARGET cxxkit_base PROPERTY EXPORT_NAME base)
 
@@ -73,12 +74,12 @@ target_compile_features(cxxkit_base INTERFACE cxx_std_11)
 cxxkit_generate_pkg_config(cxxkit_base base)
 cxxkit_configure_library_end(CxxKitBase)
 
-set_property(TARGET cxxkit_base PROPERTY FOLDER "cxxkit/libs")
+set_property(TARGET cxxkit_base PROPERTY FOLDER "CxxKit/libs")
 if(CXXKIT_BUILD_INSTALL)
     install(TARGETS cxxkit_base EXPORT cxxkitTargets)
     install(DIRECTORY ${PROJECT_SOURCE_DIR}/cxxkit/base/
         DESTINATION include/cxxkit/base
-        FILES_MATCHING PATTERN "*.hpp")
+        FILES_MATCHING PATTERN "*.hpp" PATTERN "detail" EXCLUDE)
     install(FILES ${PROJECT_BINARY_DIR}/cxxkit/base/core_config.hpp
         DESTINATION include/cxxkit/base)
 endif()

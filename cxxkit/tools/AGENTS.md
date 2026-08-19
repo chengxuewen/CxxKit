@@ -13,7 +13,7 @@
 | 断言 | `checks.hpp` — CHECK/DCHECK 双轨（fatal 流式 + debug-only） |
 | 日志 | `logging.hpp` + `detail/logging_p.hpp`（私有实现，含 spdlog） |
 | 类型萃取 | `type_traits.hpp`（741 行，6+ 子库依赖） |
-| 错误/状态 | `error.hpp` / `status.hpp` / `result.hpp`（各自配 src/*.cpp） |
+| 错误/状态 | `error.hpp` / `status.hpp` / `result.hpp`（各自配同名 .cpp） |
 | 时间 | `clock.hpp` + `fake_clock.hpp` + `ntp_time.hpp` |
 | 随机 | `random.hpp` |
 | 并发原语 | `once_flag.hpp` |
@@ -22,7 +22,7 @@
 | 文件系统 | `filesystem.hpp`（ghc/std 别名） |
 | 单点小工具 | `assert.hpp` `buffer.hpp` `enum_flags.hpp` `exception.hpp` `iterator.hpp` `limits.hpp` `sanitizer.hpp` `scope_guard.hpp` `source_location.hpp` `strong_alias.hpp` `type_info.hpp` `type_list.hpp` `utility.hpp` |
 
-实现：`src/tools/*.cpp` 12 个（logging/random/assert/clock/status/error/once_flag/id_registry/shared_buffer/metrics/ntp_time/fake_clock）。头与 cpp 同名者才有编译实现，其余纯 header-only。
+实现：同目录 `.cpp` 12 个（logging/random/assert/clock/status/error/once_flag/id_registry/shared_buffer/metrics/ntp_time/fake_clock）。头与 cpp 同名者才有编译实现，其余纯 header-only。
 
 ## CONVENTIONS
 
@@ -31,7 +31,7 @@
 - **可选值语义**：可能无值 → `optional`；可分级失败 → `expected`；多态替代 → `variant`。禁裸哨兵值（-1/nullptr）当返回码。
 - **三方隔离**：fmt/spdlog 只活在 `detail/logging_p.hpp`，include 走 `<cxxkit/3rdparty/fmt/...>`；fmt 别名驻 `cxxkit::utils::`。
 - **命名空间**：公共 API 扁平 `cxxkit::`；私有实现进 `cxxkit::detail::` / `cxxkit::utils::`，不进公共头签名。
-- **新增编译型工具**：头 + src/*.cpp + CMakeLists 三件套同步提交，缺一不算完成。
+- **新增编译型工具**：头 + 同名 .cpp + CMakeLists 三件套同步提交，缺一不算完成。
 
 ## ANTI-PATTERNS
 

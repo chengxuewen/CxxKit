@@ -1,6 +1,6 @@
 ########################################################################################################################
 #
-# Library: cxxkit
+# Library: CxxKit
 #
 # Copyright (C) 2025~Present ChengXueWen.
 #
@@ -14,6 +14,9 @@
 
 # cxxkit_find_package(WrapName [PROVIDED_TARGETS target...])
 # The wrap find modules live in cmake/wrap/ and follow FindWrap<Name>.cmake naming.
+# Capture the wrap dir at include time: inside a function CMAKE_CURRENT_LIST_DIR
+# would resolve to the CALLING listfile's dir, not this helper's.
+set(CXXKIT_WRAP_DIR "${CMAKE_CURRENT_LIST_DIR}/wrap")
 function(cxxkit_find_package wrap_name)
     cxxkit_parse_all_arguments(arg "cxxkit_find_package" "" "" "PROVIDED_TARGETS" ${ARGN})
     if("${arg_PROVIDED_TARGETS}" STREQUAL "")
@@ -24,7 +27,7 @@ function(cxxkit_find_package wrap_name)
     else()
         set(package_targets ${arg_PROVIDED_TARGETS})
     endif()
-    set(_wrap_file "${CMAKE_MODULE_PATH}/wrap/FindWrap${wrap_name}.cmake")
+    set(_wrap_file "${CXXKIT_WRAP_DIR}/FindWrap${wrap_name}.cmake")
     if(NOT EXISTS "${_wrap_file}")
         message(FATAL_ERROR "cxxkit_find_package: FindWrap${wrap_name}.cmake not found in cmake/wrap/")
     endif()

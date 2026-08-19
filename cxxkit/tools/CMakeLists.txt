@@ -1,6 +1,6 @@
 ########################################################################################################################
 #
-# Library: cxxkit
+# Library: CxxKit
 #
 # Copyright (C) 2025~Present ChengXueWen.
 #
@@ -15,19 +15,21 @@ cmake_minimum_required(VERSION ${CXXKIT_MIN_NEW_POLICY_CMAKE_VERSION}...${CXXKIT
 
 cxxkit_configure_library_begin(CxxKitTools)
 
+file(GLOB _cxxkit_headers CONFIGURE_DEPENDS ${CMAKE_CURRENT_SOURCE_DIR}/*.hpp ${CMAKE_CURRENT_SOURCE_DIR}/detail/*.hpp)
 add_library(cxxkit_tools
-    ${PROJECT_SOURCE_DIR}/src/tools/logging.cpp
-    ${PROJECT_SOURCE_DIR}/src/tools/random.cpp
-    ${PROJECT_SOURCE_DIR}/src/tools/assert.cpp
-    ${PROJECT_SOURCE_DIR}/src/tools/clock.cpp
-    ${PROJECT_SOURCE_DIR}/src/tools/status.cpp
-    ${PROJECT_SOURCE_DIR}/src/tools/error.cpp
-    ${PROJECT_SOURCE_DIR}/src/tools/once_flag.cpp
-    ${PROJECT_SOURCE_DIR}/src/tools/id_registry.cpp
-    ${PROJECT_SOURCE_DIR}/src/tools/shared_buffer.cpp
-    ${PROJECT_SOURCE_DIR}/src/tools/metrics.cpp
-    ${PROJECT_SOURCE_DIR}/src/tools/ntp_time.cpp
-    ${PROJECT_SOURCE_DIR}/src/tools/fake_clock.cpp)
+    ${_cxxkit_headers}
+    logging.cpp
+    random.cpp
+    assert.cpp
+    clock.cpp
+    status.cpp
+    error.cpp
+    once_flag.cpp
+    id_registry.cpp
+    shared_buffer.cpp
+    metrics.cpp
+    ntp_time.cpp
+    fake_clock.cpp)
 add_library(cxxkit::tools ALIAS cxxkit_tools)
 
 target_include_directories(cxxkit_tools PUBLIC
@@ -45,10 +47,10 @@ set_target_properties(cxxkit_tools PROPERTIES
 cxxkit_generate_pkg_config(cxxkit_tools tools)
 cxxkit_configure_library_end(CxxKitTools)
 
-set_property(TARGET cxxkit_tools PROPERTY FOLDER "cxxkit/libs")
+set_property(TARGET cxxkit_tools PROPERTY FOLDER "CxxKit/libs")
 if(CXXKIT_BUILD_INSTALL)
     install(TARGETS cxxkit_tools EXPORT cxxkitTargets)
     install(DIRECTORY ${PROJECT_SOURCE_DIR}/cxxkit/tools/
         DESTINATION include/cxxkit/tools
-        FILES_MATCHING PATTERN "*.hpp")
+        FILES_MATCHING PATTERN "*.hpp" PATTERN "detail" EXCLUDE)
 endif()

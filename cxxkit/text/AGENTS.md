@@ -8,14 +8,14 @@
 
 | 任务 | 文件 | 备注 |
 |------|------|------|
-| 字符串基础操作 | `string.hpp` / `src/text/string.cpp` | 自定义 String 类 |
+| 字符串基础操作 | `string.hpp` / `string.cpp` | 自定义 String 类 |
 | 轻量字符串视图 | `string_view.hpp` | nonstd string_view_lite 包装 |
 | 字符串拼接/拆分 | `string_utils.hpp` / `.cpp` | split/join/trim 等 |
 | 流式拼接 | `string_builder.hpp` / `.cpp` | 链式 append |
 | 格式化输出 | `format.hpp` | fmt 包装 + utils::fmt 别名 |
 | 编解码 | `string_encode.hpp` / `.cpp` | URL/HTML 等 |
 | 字符串转数字 | `string_to_number.hpp` | 纯头文件 |
-| ASCII 判定/转换 | `ascii.hpp` / `src/text/ascii.cpp` | **最大文件**（785 行），行为契约严格 |
+| ASCII 判定/转换 | `ascii.hpp` / `ascii.cpp` | **最大文件**（785 行），行为契约严格 |
 | Base64 编解码 | `base64.hpp` / `.cpp` | |
 | 位缓冲区 | `bit_buffer.hpp` / `.cpp` | 位级读写 |
 | 构建入口 | `cxxkit/text/CMakeLists.txt` | TEXT_SOURCES 汇总 7 cpp |

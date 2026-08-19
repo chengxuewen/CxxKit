@@ -1,12 +1,12 @@
 ########################################################################################################################
 #
-# Library: cxxkit
+# Library: CxxKit
 #
 # Copyright (C) 2025~Present ChengXueWen.
 #
 # License: MIT License
 #
-# Examples: one executable per example source, FOLDER cxxkit/examples.
+# Examples: one executable per example source, FOLDER CxxKit/examples.
 #
 ########################################################################################################################
 
@@ -20,7 +20,7 @@ function(cxxkit_add_example name source)
     target_link_libraries(${name} PRIVATE ${CXXKIT_EXAMPLE_LINK_LIBRARIES})
     target_include_directories(${name} PRIVATE ${PROJECT_SOURCE_DIR})
     set_target_properties(${name} PROPERTIES
-        FOLDER "cxxkit/examples"
+        FOLDER "CxxKit/examples"
         CXX_STANDARD ${CXXKIT_FEATURE_CXX_STANDARD}
         CXX_STANDARD_REQUIRED ON
         CXX_EXTENSIONS OFF)

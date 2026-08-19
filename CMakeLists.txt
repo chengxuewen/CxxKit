@@ -1,6 +1,6 @@
 ########################################################################################################################
 #
-# Library: cxxkit
+# Library: CxxKit
 #
 # Copyright (C) 2025~Present ChengXueWen.
 #
@@ -11,12 +11,12 @@
 cmake_minimum_required(VERSION 3.15...3.31)
 include(.cmake.conf)
 
-project(cxxkit VERSION 0.1.0 LANGUAGES CXX C)
+project(CxxKit VERSION 0.1.0 LANGUAGES CXX C)
 
 set(CXXKIT_VERSION ${PROJECT_VERSION})
 set(CXXKIT_COPYRIGHT "Copyright (C) 2025~Present ChengXueWen.")
 set(CXXKIT_LICENSE "MIT License")
-set(CXXKIT_PRODUCT_NAME "cxxkit")
+set(CXXKIT_PRODUCT_NAME "CxxKit")
 
 #-----------------------------------------------------------------------------------------------------------------------
 # Pre-calculate the developer_build feature if it's set by the user via INPUT_CXXKIT_FEATURE_DEV_BUILD
@@ -156,7 +156,7 @@ add_subdirectory(cxxkit/tools)
 #-----------------------------------------------------------------------------------------------------------------------
 set_property(GLOBAL PROPERTY USE_FOLDER ON)
 
-# Phase 2: add_subdirectory(src/network) when migrated
+# Sublibraries (abseil-style: directory = sublibrary = CMake target)
 cxxkit_add_subdirectory(cxxkit/network CXXKIT_ENABLE_LIB_NETWORK)
 cxxkit_add_subdirectory(tests CXXKIT_BUILD_TESTS)
 cxxkit_add_subdirectory(examples CXXKIT_BUILD_EXAMPLES)
@@ -215,7 +215,7 @@ if(CXXKIT_BUILD_INSTALL)
         DESTINATION lib/cmake/cxxkit)
     include(CMakePackageConfigHelpers)
     configure_package_config_file(
-        "${CXXKIT_CMAKE_DIR}/cxxkitConfig.cmake.in"
+        "${CXXKIT_CMAKE_DIR}/CxxKitConfig.cmake.in"
         "${CMAKE_CURRENT_BINARY_DIR}/cxxkitConfig.cmake"
         INSTALL_DESTINATION lib/cmake/cxxkit)
     write_basic_package_version_file(
