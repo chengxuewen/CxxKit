@@ -61,6 +61,16 @@ else()
 endif()
 message(STATUS "Project install prefix set as '${CXXKIT_INSTALL_PREFIX}'.")
 
+#-----------------------------------------------------------------------------------------------------------------------
+# 3rdparty packages dir (vcpkg .7z cache; INPUT injection like QExt/OpenCTK)
+#-----------------------------------------------------------------------------------------------------------------------
+if(NOT DEFINED INPUT_CXXKIT_3RDPARTY_PACKAGES_DIR)
+    set(CXXKIT_3RDPARTY_PACKAGES_DIR "${PROJECT_SOURCE_DIR}/3rdparty")
+else()
+    set(CXXKIT_3RDPARTY_PACKAGES_DIR ${INPUT_CXXKIT_3RDPARTY_PACKAGES_DIR})
+endif()
+message(STATUS "3rdparty packages dir: ${CXXKIT_3RDPARTY_PACKAGES_DIR}")
+
 if(CXXKIT_INSTALL_PREFIX STREQUAL CMAKE_CURRENT_BINARY_DIR)
     set(CXXKIT_WILL_INSTALL_VALUE OFF)
 else()
@@ -103,6 +113,7 @@ include(CxxKitLibraryHelpers)
 include(CxxKitInstallHelpers)
 include(CxxKitTestHelpers)
 include(CxxKitPkgConfigHelpers)
+include(InstallVcpkg)
 
 #-----------------------------------------------------------------------------------------------------------------------
 # Build options
