@@ -111,3 +111,7 @@ grep -c "重复模式" <file>    # 期望 1；>1 = edit 重复插入
 ### 批量 edit 遇 hash mismatch → 完整 re-read 再重试
 
 批量 edit 报 "hash mismatch" 后，**先完整 re-read 目标文件再重试**；禁止直接用错误输出中部分 tags 拼接第二次调用。
+
+### CMake 批量修改后立即 configure 验证
+
+批量 sed/edit 多个 CMakeLists 后，**先 `cmake -S . -B build` 验证再继续**；configure 报错按顺序修第一个错误（后续多为级联）。本会话 3 次 configure 失败（INTERFACE_SOURCES / EXCLUDE pattern / GLOB 路径）均因批量修改未逐项验证，且错误链从第一个失败点级联扩散。

@@ -1,4 +1,4 @@
-# cxxkit 项目状态
+# CxxKit 项目状态
 
 ## 项目定位
 
@@ -22,6 +22,7 @@ cxxkit 是 OpenCTK（an open cpp toolkit）的成功重构版本 —— 精简�
 - [x] **基础设施完成**：CI（.github/workflows + scripts/check.sh）、pkg-config（13 个 .pc）、doxygen（Docs target）、examples（3 个）、BuildAll/BuildInstall target、FOLDER 归类、vcpkg 式三方依赖、默认 build/install 安装
 - [ ] OpenCTK 残留问题归档：network_config.hpp 死引用、tst_platform_thread POSIX 链接、36 个注释测试（含 inlined_vector absl 依赖）
 - [ ] media/imgui 续建路径（设计 B1，已延后）
+- [x] **2026-08-19 结构重构**：src/<sub>/ 合并入 cxxkit/<sub>/（49 cpp git mv，D14）；CMake 大小写统一（export/Config/.pc/doxygen GLOB，C7 落地）；text↔tools 循环依赖解除（PIT-5）；detail 私有头不再安装（PIT-3）；头文件进 target 源列表（D15，IDE 大纲可见）
 
 ## 已落地子库（13 个 target）
 
@@ -47,6 +48,7 @@ cxxkit 是 OpenCTK（an open cpp toolkit）的成功重构版本 —— 精简�
 - **33 个 gtest 套件全部通过（353 用例，与 OpenCTK 启用基线对等）**
 - OpenCTK 65 个测试文件中仅 30 个实际启用（36 个注释掉：inlined_vector/crypto_random/file_utils/task_queue 等引用不存在的头）
 - **不迁移**：tst_inlined_vector（absl test_instance_tracker 未 vendored）、tst_file_wrapper（io 子库已删）
+- cxxkit_tst_context_checker 偶发 SEGFAULT，单独重跑即过（与 semaphore 时序测试同类，非回归）
 
 ## 三方库体系
 
@@ -71,5 +73,8 @@ cxxkit 是 OpenCTK（an open cpp toolkit）的成功重构版本 —— 精简�
 ## 待办
 
 1. media/imgui 续建路径（设计 B1，已延后）
+2. 剩余 36 个 OpenCTK 注释测试是否补全（需先补依赖头）
+3. clang-tidy 静态分析接入（CI 目前只有 format/build/test）
+4. doc-audit LOW 缺口：CONTRIBUTING.md / SECURITY.md / CHANGELOG / 平台兼容矩阵（发布前补）
 2. 剩余 36 个 OpenCTK 注释测试是否补全（需先补依赖头）
 3. clang-tidy 静态分析接入（CI 目前只有 format/build/test）

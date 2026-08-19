@@ -18,10 +18,10 @@ Run these checks before committing C++ changes:
 
 ```bash
 # Format check
-clang-format --dry-run --Werror src/*.cpp src/*.hpp
+clang-format --dry-run --Werror cxxkit/*/*.cpp cxxkit/*/*.hpp
 
 # Static analysis
-clang-tidy src/*.cpp -- -std=c++17
+clang-tidy cxxkit/*/*.cpp -- -std=c++17
 
 # Build
 cmake --build build

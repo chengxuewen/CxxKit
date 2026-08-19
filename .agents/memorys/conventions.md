@@ -1,4 +1,4 @@
-# cxxkit 开发约定
+# CxxKit 开发约定
 
 ## C1：构建系统统一用 CMake
 
@@ -43,3 +43,22 @@ cmake -S . -B build    # 重新配置（3rdparty 走 stamp，秒级）
 
 仅当三方库自身需要重建时才删对应目录：`rm -rf build/3rdparty/<lib>-<buildtype>`
 （或按需删单个 wrap 目录）。
+
+## C7：品牌名 CxxKit，代码标识符一律小写 cxxkit
+
+品牌显示层（README 标题、`project(CxxKit)`、`CXXKIT_PRODUCT_NAME`、`CxxKit*Helpers` 模块名）用大写；
+代码标识层（头目录 `cxxkit/`、namespace `cxxkit::`、CMake target `cxxkit::<sub>`、
+include 路径 `<cxxkit/...>`、包名 `cxxkitConfig.cmake`/pkg-config）一律小写——
+Linux 大小写敏感 + abseil 式「目录=子库=target」三位一体，只保留一种拼写，避免同名异写。
+检查：`test -d cxxkit && grep -rn "#include <CxxKit" cxxkit/ tests/ examples/ | wc -l` 应为 0
+
+## C8：子库目录 = 头 + 源 + CMakeLists 聚合（abseil 式）
+
+编译实现与公共头同放 `cxxkit/<sub>/`（私有头在 `detail/`），**无 src/ 目录**（D14）。
+新增子库：头 + 同名 .cpp + CMakeLists 三件套放同一目录，头必须进 target 源列表：
+```cmake
+file(GLOB _cxxkit_headers CONFIGURE_DEPENDS ${CMAKE_CURRENT_SOURCE_DIR}/*.hpp ${CMAKE_CURRENT_SOURCE_DIR}/detail/*.hpp)
+add_library(cxxkit_xxx ${_cxxkit_headers} xxx.cpp)   # header-only 用 add_library(cxxkit_xxx INTERFACE ${_cxxkit_headers})
+```
+安装由 `install(DIRECTORY ... FILES_MATCHING "*.hpp" PATTERN "detail" EXCLUDE)` 控制——.cpp 与 detail/ 自动不装。
+检查：`test -d src` 应不存在；`find build/install/include -type d -name detail` 应为空

@@ -34,5 +34,5 @@ Use a consistent envelope for all API responses:
 
 ```bash
 # 验证：无大文件
-find src/ \( -name "*.cpp" -o -name "*.h" -o -name "*.hpp" \) -exec wc -l {} + | awk '$1>800{print}'
+find cxxkit/ \( -name "*.cpp" -o -name "*.h" -o -name "*.hpp" \) -exec wc -l {} + | awk '$1>800{print}'
 ```

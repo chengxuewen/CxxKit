@@ -32,7 +32,7 @@ If security issue found:
 
 ```bash
 # 验证：无明文密钥
-grep -rn "sk-\|api_key\|password=" --include="*.cpp" --include="*.h" src/ || true
+grep -rn "sk-\|api_key\|password=" --include="*.cpp" --include="*.h" cxxkit/ || true
 # 验证：静态分析无高危告警
-clang-tidy src/*.cpp -- -std=c++17 2>/dev/null | grep -i "warning" || true
+clang-tidy cxxkit/*/*.cpp -- -std=c++17 2>/dev/null | grep -i "warning" || true
 ```

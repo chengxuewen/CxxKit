@@ -33,5 +33,5 @@ If build fails:
 
 ```bash
 # 验证：无大文件（>800 行）
-find src/ \( -name "*.cpp" -o -name "*.h" \) -exec wc -l {} + | awk '$1>800{print}'
+find cxxkit/ \( -name "*.cpp" -o -name "*.h" \) -exec wc -l {} + | awk '$1>800{print}'
 ```

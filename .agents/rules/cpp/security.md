@@ -39,11 +39,11 @@ paths:
 
 - Use **clang-tidy** for automated checks:
   ```bash
-  clang-tidy --checks='*' src/*.cpp
+  clang-tidy --checks='*' cxxkit/*/*.cpp
   ```
 - Use **cppcheck** for additional analysis:
   ```bash
-  cppcheck --enable=all src/
+  cppcheck --enable=all cxxkit/
   ```
 
 ## Reference

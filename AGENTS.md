@@ -1,12 +1,13 @@
 # PROJECT KNOWLEDGE BASE
 
-**Generated:** 2026-08-18
+**Generated:** 2026-08-19
+**Commit:** (working tree — 49 cpp 迁移 + CMake 大小写修复未提交)
 **Commit:** d0a7a2f
 **Branch:** main
 
 ## OVERVIEW
 
-cxxkit — 跨平台 C++ 工具库（OpenCTK 重构版）。abseil 式组织：目录 = 子库 = CMake target 三位一体，按需取用。C++11 起步（测试 C++14），扁平 `cxxkit::` 命名空间，vendored 三方依赖。
+CxxKit — 跨平台 C++ 工具库（OpenCTK 重构版）。abseil 式组织：目录 = 子库 = CMake target 三位一体，按需取用。C++11 起步（测试 C++14），扁平 `cxxkit::` 命名空间，vendored 三方依赖。
 
 ## STRUCTURE
 
@@ -15,7 +16,7 @@ cxxkit/
 ├── cxxkit/<sub>/    # 13 个子库头文件（base/containers/functional/numerics/patterns/
 │                    #   memory/units/time/kernel/thread/text/tools/network）
 │   └── <sub>/detail/  # 私有实现头 *_p.hpp（不安装，doxygen 排除）
-├── src/<sub>/       # 编译型子库的 .cpp 实现（header+source 分离）
+├── cxxkit/<sub>/    # 13 个子库：头 + 源 .cpp + CMakeLists 聚合（abseil 式，无 src/ 目录）
 ├── tests/           # 33 个 gtest 套件（353 用例）
 ├── examples/        # 3 个示例（exp_core_version/logging/network_version）
 ├── cmake/           # 10 个 CxxKit*Helpers + wrap/FindWrap*.cmake（21 个）
@@ -47,7 +48,7 @@ cxxkit/
 | `tools/type_traits.hpp` | cxxkit/tools | 15 类 | 类型萃取枢纽，被 6+ 子库依赖 |
 | `base/macros.hpp` | cxxkit/base | 13 子库 | 宏中枢（1177 行） |
 | `tools/checks.hpp` | cxxkit/tools | 13 次 | 断言体系，几乎所有编译子库依赖 |
-| `thread/thread_pool.cpp` | src/thread | 15 类 | 线程池实现（706 行） |
+| `thread/thread_pool.cpp` | cxxkit/thread | 15 类 | 线程池实现（706 行） |
 | `kernel/signals.hpp` | cxxkit/kernel | — | 最大文件（1899 行） |
 | `network/http.hpp` | cxxkit/network | cpr | HTTP 封装（614 行） |
 
@@ -56,6 +57,9 @@ cxxkit/
 - **C1/D4**：唯一构建系统 CMake；三方依赖 vendored + stamp，**禁 FetchContent**
 - **C4/D3**：库代码 C++11（按子库可升级）；测试 target 强制 C++14（gtest 1.12.1）
 - **C6**：**禁 `rm -rf build`**——3rdparty stamp 缓存全清 = 5+ 分钟重建；只清 `build/CMakeCache.txt build/CMakeFiles build/Testing`
+- **C7**：品牌名 CxxKit（显示层）；代码标识符（头目录/namespace/target/include/包名）一律小写 `cxxkit`
+- **C8/D14**：子库目录 = 头 + 源 .cpp + CMakeLists 聚合（abseil 式），无 src/ 目录
+- **D15**：头文件进 target 源列表（GLOB CONFIGURE_DEPENDS），IDE 大纲可见
 - **D2**：扁平 `cxxkit::` 命名空间；内部实现 `cxxkit::detail::`；宏前缀 `CXXKIT_*`
 - **D8**：内部 include 一律**尖括号** `<cxxkit/...>`（禁引号，192 文件统一）
 - **D9**：私有头 `xxx_p.hpp` 放 `<sub>/detail/`，不安装
@@ -75,11 +79,11 @@ cxxkit/
 - **禁"恢复" `tools/checks.hpp` 注释掉的旧 Logger 版 CHECK**——那是历史，新实现用 `CXXKIT_FATAL()`
 - **禁静默简化设计文档写过的机制**（D6 教训）——如三方命名空间路径
 - **禁 claim 测试通过而不实跑**——`ctest --test-dir build` 输出为准
-- **禁 `octk`/`OCTK_` 残留**：`grep -rn "octk\|OCTK_" cxxkit/ src/ tests/` 清零
+- **禁 `octk`/`OCTK_` 残留**：`grep -rn "octk\|OCTK_" cxxkit/ tests/` 清零
 
 ## UNIQUE STYLES
 
-- 头文件顶部统一**箱式许可横幅**（`/*** Library: cxxkit ... ***/`）
+- 头文件顶部统一**箱式许可横幅**（`/*** Library: CxxKit ... ***/`）
 - Pimpl 惯例：`CXXKIT_DEFINE_DPTR(Class)` → `std::unique_ptr<Class##Private> mDPtr`，配 `detail/xxx_p.hpp`
 - 特性宏阶梯：`CXXKIT_CC_FEATURE_*` → `CXXKIT_CXX{11,14,17,20,23}_CONSTEXPR` 空降级链
 - 断言双轨：`CXXKIT_CHECK(_OP)`（fatal 流式）+ `CXXKIT_DCHECK` 家族（debug-only）

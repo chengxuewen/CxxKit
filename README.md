@@ -1,8 +1,8 @@
-# cxxkit
+# CxxKit
 
 ## An open cross-platform cpp toolkit.
 
-cxxkit is a portable cross-platform C++ development toolkit. It contains many algorithms, data structures, functional components, scripting languages and practical frameworks, which can facilitate developers to quickly develop applications and avoid the dilemma of repeated wheel building.
+CxxKit is a portable cross-platform C++ development toolkit. It contains many algorithms, data structures, functional components, scripting languages and practical frameworks, which can facilitate developers to quickly develop applications and avoid the dilemma of repeated wheel building.
 
 Organized abseil-style: **directory = sublibrary = CMake target**, pick only what you need (boost-like on-demand philosophy at abseil granularity). Minimum C++11, flat `cxxkit::` namespace, all internal includes use `<cxxkit/...>` angle-bracket paths.
 

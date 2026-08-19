@@ -31,8 +31,8 @@ Before marking code complete:
 - [ ] Files &lt;800 lines: verify with `wc -l` on changed files
 - [ ] No deep nesting (&gt;4 levels): check indent depth in diff
 - [ ] Errors handled explicitly: no swallowed exceptions or ignored return codes
-- [ ] No hardcoded secrets: `grep -rn 'sk-\|api_key\|password=' src/` clean
-- [ ] No debug leftovers: `grep -rn 'std::cout\|printf\|TODO' src/` reviewed
+- [ ] No hardcoded secrets: `grep -rn 'sk-\|api_key\|password=' cxxkit/` clean
+- [ ] No debug leftovers: `grep -rn 'std::cout\|printf\|TODO' cxxkit/` reviewed
 - [ ] Tests exist: `ctest --test-dir build --output-on-failure`
 - [ ] Coverage &gt;=80%: `llvm-cov` / `gcov` report
 

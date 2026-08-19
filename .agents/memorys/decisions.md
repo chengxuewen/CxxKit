@@ -1,4 +1,4 @@
-# cxxkit 决策记录
+# CxxKit 决策记录
 
 > 架构/技术决策 + 理由 + 参考。格式：`## D{N}: 标题`。
 
@@ -58,3 +58,11 @@ cxxkit 采用目录 = 子库 = CMake target 三位一体，参考 boost 按需�
 ## D13: 文档方案（2026-08-18）
 
 三层：① API 参考=doxygen（CXXKIT_BUILD_DOCS + Docs target，输出 build/doc/html，排除 detail/_p）；② 使用指南=README（子库表+快速开始+CMake/pkg-config 消费）+ examples（3 个）；③ 内部设计=docs/README.md 索引 + superpowers specs/plans + .agents memorys。doxygen 的 INPUT 需空格分隔 + 绝对路径（configure_file 分号坑）。
+
+## D14: 源码聚合到子库目录（2026-08-19）
+
+用户指出 src/<sub>/ 与 cxxkit/<sub>/ 分离不便，与 abseil 式组织（目录=子库=target，头源同目录）不符。已 `git mv` 49 个 .cpp 从 src/<sub>/ 到 cxxkit/<sub>/，删除 src/。子库 CMakeLists 源路径改相对路径。安装靠 install(DIRECTORY ... FILES_MATCHING "*.hpp" PATTERN "detail" EXCLUDE) 过滤，.cpp 自动不装。
+
+## D15: 头文件进 target 源列表（2026-08-19）
+
+用户反馈 CMake 项目大纲看不到 .hpp。13 个子库统一：`file(GLOB _cxxkit_headers CONFIGURE_DEPENDS ${CMAKE_CURRENT_SOURCE_DIR}/*.hpp ${CMAKE_CURRENT_SOURCE_DIR}/detail/*.hpp)`；编译型 add_library 引用，header-only 用 `add_library(xxx INTERFACE ${_cxxkit_headers})`（源参数仅供 IDE 显示，不编译）。教训：INTERFACE 库禁用 target_sources INTERFACE 加源目录内头（PIT-2）；GLOB 必须绝对路径（PIT-4）。
