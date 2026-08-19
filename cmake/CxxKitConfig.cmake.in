@@ -9,16 +9,17 @@ include(CMakeFindDependencyMacro)
 #   cprConfig    -> find_dependency(CURL)  (OpenSSL/ZLIB gated OFF at build)
 # Headers are namespaced under include/cxxkit/3rdparty/<lib>/; static libs are in lib/.
 #-----------------------------------------------------------------------------------------------------------------------
-foreach(_dep IN ITEMS
-        fmt
-        spdlog
-        cpr
-        CURL
-        MbedTLS)
+foreach(_dep IN ITEMS @CXXKIT_VENDORED_FIND_DEPS@)
     find_dependency(${_dep} CONFIG
         PATHS "${PACKAGE_PREFIX_DIR}/lib/cmake"
         NO_DEFAULT_PATH)
 endforeach()
+
+# Tracy headers are namespaced under include/cxxkit/3rdparty/tracy/; drop the official
+# include/tracy path from the imported target so it does not dangle in the install tree.
+if(TARGET Tracy::TracyClient)
+    set_property(TARGET Tracy::TracyClient PROPERTY INTERFACE_INCLUDE_DIRECTORIES "")
+endif()
 
 # Header-only / lite 3rdparty without installed Configs: keep INTERFACE stub targets
 # so exported link interfaces resolve. These contribute headers only (namespaced

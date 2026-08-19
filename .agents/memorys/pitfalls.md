@@ -42,3 +42,21 @@
 - **解法**: 只清 CMake 生成物 `rm -rf build/CMakeCache.txt build/CMakeFiles build/Testing`；三方库需重建时才删对应 `build/3rdparty/<lib>-<buildtype>`
 - **验证**: `ls build/3rdparty/ | wc -l` 应为 21（stamp 缓存未清）
 - **禁止**: 任何"图省事/求干净"的 rm -rf build（C6 硬禁令，用户已明确纠正）
+
+## PIT-7: cxxkit_evaluate_expression 不解引用 → OR_CONDITION 恒真 (2026-08-19)
+- **症状**: 未传 -D 的 CXXKIT_ENABLE_LIB_TRACY 强制 ON；排查发现所有 OR_CONDITION 选项恒真（network/tests 因显式传值或默认 ON 被掩盖）
+- **根因**: `cxxkit_evaluate_expression(or_condition ${arg_OR_CONDITION})` 把变量名当字符串，`if(expression)` 对非空字符串（"CXXKIT_BUILD_ALL"）恒真——不解引用
+- **解法**: `if(expression)` → `if(${expression})`（解引用变量名，CXXKIT_BUILD_ALL=OFF 时正确求假）
+- **验证**: `cmake -S . -B build` 后 `grep ENABLE_LIB_TRACY build/CMakeCache.txt` 应为 OFF（未传 -D 时）
+
+## PIT-8: TracyClient 需 C++17 编译（C++11 copy-init + atomic deleted）(2026-08-19)
+- **症状**: GCC 10.5 C++11 编译 TracyClient 报 "use of deleted function std::atomic copy ctor"（TracyProfiler.cpp:936 `static std::atomic<Thread*> s_sysTraceThread = nullptr;`）
+- **根因**: C++11 的 copy-initialization 要求拷贝构造可访问（atomic 拷贝构造 deleted）；C++17 guaranteed copy elision 后合法。Tracy 官方 cxx_std_11 声明与代码不符（Godot 等使用者全是 C++17+ 未踩到）
+- **解法**: FindWrapTracy 加 `-DCMAKE_CXX_STANDARD=17`（vendored 三方不受 C4 C++11 约束；Tracy 头文件保持 C++11 兼容有官方背书）
+- **验证**: wrap 构建通过；消费方 C++11 include Tracy.hpp 编译通过（exp_profiling）
+
+## PIT-9: Tracy v0.13 宏语义变化 ZoneScopedS→ZoneScopedN (2026-08-19)
+- **症状**: CXXKIT_PROFILE_SCOPE 展开报 "invalid conversion from const char* to int32_t"（name 传入 ScopedZone 的 depth 参数）
+- **根因**: v0.13 起 ZoneScopedS 是 static-zone 变体（3 参 ZoneNamedS 语义），带名 zone 改用 ZoneScopedN(name)
+- **解法**: 包装宏用 ZoneScopedN
+- **验证**: 预处理展开确认 `srcloc { name, ... }`；编译+链接通过

@@ -24,7 +24,7 @@ cxxkit 是 OpenCTK（an open cpp toolkit）的成功重构版本 —— 精简�
 - [ ] media/imgui 续建路径（设计 B1，已延后）
 - [x] **2026-08-19 结构重构**：src/<sub>/ 合并入 cxxkit/<sub>/（49 cpp git mv，D14）；CMake 大小写统一（export/Config/.pc/doxygen GLOB，C7 落地）；text↔tools 循环依赖解除（PIT-5）；detail 私有头不再安装（PIT-3）；头文件进 target 源列表（D15，IDE 大纲可见）
 
-## 已落地子库（13 个 target）
+## 已落地子库（14 个 target）
 
 | 子库 | 类型 | 内容 |
 |---|---|---|
@@ -42,6 +42,7 @@ cxxkit 是 OpenCTK（an open cpp toolkit）的成功重构版本 —— 精简�
 | `cxxkit::kernel` | 编译 | object/event/event_loop/signals/application（5 cpp） |
 | `cxxkit::thread` | 编译 | thread_pool/task_queue/event_loop_thread/future/semaphore/...（14 cpp） |
 | `cxxkit::network` | 编译 | http（cpr 后端，vendored cpr/curl/mbedtls） |
+| `cxxkit::profiling` | header-only | profiling.hpp — Tracy 后端包装（CXXKIT_PROFILE_SCOPE，opt-in，CXXKIT_ENABLE_LIB_TRACY） |
 
 ## 测试状态
 

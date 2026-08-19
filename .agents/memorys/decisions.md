@@ -66,3 +66,7 @@ cxxkit 采用目录 = 子库 = CMake target 三位一体，参考 boost 按需�
 ## D15: 头文件进 target 源列表（2026-08-19）
 
 用户反馈 CMake 项目大纲看不到 .hpp。13 个子库统一：`file(GLOB _cxxkit_headers CONFIGURE_DEPENDS ${CMAKE_CURRENT_SOURCE_DIR}/*.hpp ${CMAKE_CURRENT_SOURCE_DIR}/detail/*.hpp)`；编译型 add_library 引用，header-only 用 `add_library(xxx INTERFACE ${_cxxkit_headers})`（源参数仅供 IDE 显示，不编译）。教训：INTERFACE 库禁用 target_sources INTERFACE 加源目录内头（PIT-2）；GLOB 必须绝对路径（PIT-4）。
+
+## D16: profiling 子库（Tracy 后端，opt-in）（2026-08-19）
+
+新增第 14 个子库 `cxxkit::profiling`（header-only INTERFACE，仿 absl/profiling 功能命名，不绑定后端）。Tracy v0.13.1 vendored（FindWrapTracy，官方 CMake 构建 TracyClient 静态库，C++17 编译库——PIT-8；TracyConfig 随包分发走 D11 vcpkg 式）。`CXXKIT_ENABLE_LIB_TRACY=ON` 时注入 `CXXKIT_PROFILING_ENABLED`+`TRACY_ENABLE` INTERFACE 宏并链接 `Tracy::TracyClient`（LINK_ONLY——官方 include/tracy 路径由 cxxkitConfig.cmake 清空，头统一走 `<cxxkit/3rdparty/tracy/tracy/Tracy.hpp>` 命名空间，D6）。**不挂 tools**（tools 禁三方依赖），未来 breakpad 独立建 `cxxkit::crash`（folly/SerenityOS 分离模式）。

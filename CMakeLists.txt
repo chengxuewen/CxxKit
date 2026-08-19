@@ -127,6 +127,8 @@ cxxkit_option(CXXKIT_BUILD_INSTALL "Enable this to build the installer" ${CXXKIT
     OR_CONDITION CXXKIT_BUILD_ALL)
 cxxkit_option(CXXKIT_ENABLE_LIB_NETWORK "Enable this to build enable network lib" OFF
     OR_CONDITION CXXKIT_BUILD_ALL)
+cxxkit_option(CXXKIT_ENABLE_LIB_TRACY "Enable this to build enable Tracy profiler lib" OFF
+    OR_CONDITION CXXKIT_BUILD_ALL)
 
 #-----------------------------------------------------------------------------------------------------------------------
 # Testing
@@ -150,6 +152,7 @@ add_subdirectory(cxxkit/thread)
 add_subdirectory(cxxkit/time)
 add_subdirectory(cxxkit/text)
 add_subdirectory(cxxkit/tools)
+add_subdirectory(cxxkit/profiling)
 
 #-----------------------------------------------------------------------------------------------------------------------
 # IDE solution folders (VS/Xcode; no-op for make/ninja)
@@ -214,6 +217,16 @@ if(CXXKIT_BUILD_INSTALL)
         NAMESPACE cxxkit::
         DESTINATION lib/cmake/cxxkit)
     include(CMakePackageConfigHelpers)
+    # Vendored deps with their own Config.cmake (vcpkg-style find_dependency chain).
+    # Tracy is included only when the profiling lib is enabled.
+    set(CXXKIT_VENDORED_FIND_DEPS "fmt;spdlog;cpr;CURL;MbedTLS")
+    if(CXXKIT_ENABLE_LIB_TRACY)
+        list(APPEND CXXKIT_VENDORED_FIND_DEPS "Tracy")
+    endif()
+    configure_package_config_file(
+        "${CXXKIT_CMAKE_DIR}/CxxKitConfig.cmake.in"
+        "${CMAKE_CURRENT_BINARY_DIR}/cxxkitConfig.cmake"
+        INSTALL_DESTINATION lib/cmake/cxxkit)
     configure_package_config_file(
         "${CXXKIT_CMAKE_DIR}/CxxKitConfig.cmake.in"
         "${CMAKE_CURRENT_BINARY_DIR}/cxxkitConfig.cmake"

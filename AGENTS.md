@@ -13,10 +13,10 @@ CxxKit — 跨平台 C++ 工具库（OpenCTK 重构版）。abseil 式组织：�
 
 ```
 cxxkit/
-├── cxxkit/<sub>/    # 13 个子库头文件（base/containers/functional/numerics/patterns/
+├── cxxkit/<sub>/    # 14 个子库头文件（base/containers/functional/numerics/patterns/
 │                    #   memory/units/time/kernel/thread/text/tools/network）
 │   └── <sub>/detail/  # 私有实现头 *_p.hpp（随公共头安装，doxygen 排除）
-├── cxxkit/<sub>/    # 13 个子库：头 + 源 .cpp + CMakeLists 聚合（abseil 式，无 src/ 目录）
+├── cxxkit/<sub>/    # 14 个子库：头 + 源 .cpp + CMakeLists 聚合（abseil 式，无 src/ 目录）
 ├── tests/           # 33 个 gtest 套件（353 用例）
 ├── examples/        # 3 个示例（exp_core_version/logging/network_version）
 ├── cmake/           # 10 个 CxxKit*Helpers + wrap/FindWrap*.cmake（21 个）
@@ -110,4 +110,4 @@ clang-format -i <file>                                # 格式化（提交前）
 - vendored .pc 是**绝对 prefix**，安装树不可移动（vcpkg 同）
 - core_config.hpp 在 build 树生成，编辑源码头无效
 - semaphore 等时序测试偶发失败——单独重跑即过，非回归
-- 子库依赖方向：base → {containers,functional,numerics} → {units,memory} → text → time → thread → tools → network（无循环）
+- 子库依赖方向：base → {containers,functional,numerics} → {units,memory} → text → time → thread → tools → network → {profiling}（无循环）

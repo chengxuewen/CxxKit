@@ -115,3 +115,7 @@ grep -c "重复模式" <file>    # 期望 1；>1 = edit 重复插入
 ### CMake 批量修改后立即 configure 验证
 
 批量 sed/edit 多个 CMakeLists 后，**先 `cmake -S . -B build` 验证再继续**；configure 报错按顺序修第一个错误（后续多为级联）。本会话 3 次 configure 失败（INTERFACE_SOURCES / EXCLUDE pattern / GLOB 路径）均因批量修改未逐项验证，且错误链从第一个失败点级联扩散。
+
+### 单行 replace + 多行 lines = 插入而非替换（高频教训）
+
+edit 工具 `replace` 带 `pos`（单行）且 `lines` 为多行时，**只在目标行后插入，不会删除目标行**——连续使用会累积重复行（本会话 5+ 次：CMakeLists 选项块、examples 块、CxxKitConfig 模板、profiling CMakeLists、profiling.hpp 宏定义）。**正确姿势**：替换多行块用 `pos`+`end` 范围；插入用 `append`。每次 edit 后 `grep -c` 验证无重复。
