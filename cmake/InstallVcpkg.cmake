@@ -36,9 +36,9 @@
 #   TOOLS        - use the cloned vcpkg-tools copy (for tool packages, keeps the tools tree separate)
 #   DYNAMIC      - use the dynamic triplet variant (default: static)
 #   QUIET        - warn instead of FATAL on install failure
-#   FALLBACK     - allow the slow path (git clone vcpkg + install + export + repack) when the .7z cache is
-#                  missing. Default OFF: a missing archive is a FATAL_ERROR printing the exact commands to run.
-#                  Keep OFF for version-pinned packages (silent version drift breaks same-source guarantees).
+#   NO_FALLBACK - strict mode: when the .7z cache is missing, FATAL_ERROR with the exact commands instead of
+#                 auto-cloning vcpkg + install + export + repack (default is OpenCTK-style AUTO fallback).
+#                 Use NO_FALLBACK for version-pinned consumers that cannot tolerate silent version drift.
 #
 # One-value args: TARGET PREFIX OUTPUT_DIR PACK_NAME
 # Multi-value args: COMPONENTS IMPORTED_TARGETS
@@ -126,7 +126,7 @@ endfunction()
 function(cxxkit_vcpkg_install_package NAME)
     cxxkit_parse_all_arguments(arg
         "cxxkit_vcpkg_install_package"
-        "NOT_IMPORT;TOOLS;DYNAMIC;QUIET;FALLBACK"
+        "NOT_IMPORT;TOOLS;DYNAMIC;QUIET;NO_FALLBACK"
         "TARGET;PREFIX;OUTPUT_DIR;PACK_NAME"
         "COMPONENTS;IMPORTED_TARGETS" ${ARGN})
 
@@ -196,7 +196,7 @@ function(cxxkit_vcpkg_install_package NAME)
             if(NOT (UNPACK_RESULT MATCHES 0))
                 message(FATAL_ERROR "${${arg_PREFIX}_NAME} unpack failed.")
             endif()
-        elseif(arg_FALLBACK)
+        elseif(NOT arg_NO_FALLBACK)
             cxxkit_vcpkg_install()
             if(${arg_TOOLS})
                 set(Vcpkg_EXECUTABLE ${CxxKitVcpkgTools_EXECUTABLE})
@@ -259,7 +259,7 @@ function(cxxkit_vcpkg_install_package NAME)
                 message(FATAL_ERROR "${${arg_PREFIX}_NAME} export failed.")
             endif()
         else()
-            # FALLBACK OFF (default): never auto-install — version drift would silently break same-source
+            # NO_FALLBACK (strict): never auto-install — version drift would silently break same-source
             # guarantees (e.g. QExt::Breakpad coexistence). Print the exact commands instead.
             message(FATAL_ERROR
                 "${${arg_PREFIX}_PACKAGE_NAME} not found in ${CXXKIT_3RDPARTY_PACKAGES_DIR}.\n"
@@ -268,7 +268,7 @@ function(cxxkit_vcpkg_install_package NAME)
                 "  <vcpkg> export ${NAME}:${${arg_PREFIX}_VCPKG_TRIPLET} --raw --output=${${arg_PREFIX}_NAME} --output-dir=${arg_OUTPUT_DIR}\n"
                 "  cmake -E tar cvf \"${${arg_PREFIX}_PACKAGE_PATH}\" --format=7zip \"${${arg_PREFIX}_NAME}\"\n"
                 "   (WORKING_DIRECTORY: ${arg_OUTPUT_DIR})\n"
-                "Or pass FALLBACK to allow cxxkit_vcpkg_install_package to do this automatically.")
+                "Or pass NO_FALLBACK to keep this strict behavior.")
         endif()
     endif()
 

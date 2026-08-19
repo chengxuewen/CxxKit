@@ -61,6 +61,23 @@ if(NOT DEFINED CXXKIT_VCPKG_TRIPLET)
     set(CXXKIT_VCPKG_TRIPLET "${CXXKitWrapCrashDeps_TRIPLET}")
 endif()
 
+# ---- auto-provision: archive missing → run the version-locked export script (OpenCTK-style auto fetch) ----
+# The merged archive can only be produced by scripts/export_crash_deps.sh (manifest-pinned versions, -fPIC
+# overlay triplet, .version sidecar); a bare vcpkg install would drift versions and break the same-source
+# guarantee vs QExt::Breakpad, so we run the script instead of the generic helper's plain fallback.
+set(_cxxkit_crashdeps_archive "${CXXKIT_3RDPARTY_PACKAGES_DIR}/crash-deps-${CXXKitWrapCrashDeps_TRIPLET}.7z")
+if(NOT EXISTS "${_cxxkit_crashdeps_archive}")
+    message(STATUS "crash-deps archive missing — auto-running scripts/export_crash_deps.sh (vcpkg install + export)...")
+    execute_process(
+        COMMAND bash "${PROJECT_SOURCE_DIR}/scripts/export_crash_deps.sh" "" "crash-deps-${CXXKitWrapCrashDeps_TRIPLET}" "${CXXKIT_3RDPARTY_PACKAGES_DIR}"
+        RESULT_VARIABLE _cxxkit_crashdeps_export_result
+        COMMAND_ECHO STDOUT)
+    if(NOT _cxxkit_crashdeps_export_result MATCHES 0)
+        message(FATAL_ERROR "crash-deps auto-export failed (exit ${_cxxkit_crashdeps_export_result}). "
+            "Install vcpkg first (git clone https://github.com/microsoft/vcpkg ~/vcpkg && ~/vcpkg/bootstrap-vcpkg.sh) "
+            "or produce the archive manually per scripts/export_crash_deps.sh.")
+    endif()
+endif()
 # ---- consume the merged archive: single unpack, NOT_IMPORT (we create the two real targets below) ------------
 # PREFIX pinned to CXXKitWrapCrashDeps so the cache vars (…_ROOT_DIR/…_INSTALL_DIR/…_PACKAGE_PATH) are stable.
 # The dummy target CXXKitWrapCrashDeps_Unpack is the helper's own creation; it stays unused.
