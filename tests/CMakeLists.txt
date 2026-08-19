@@ -171,3 +171,23 @@ cxxkit_add_test(cxxkit_tst_unique_function
     SOURCES tst_unique_function.cpp
     INCLUDE_DIRECTORIES ${PROJECT_SOURCE_DIR}
     LIBRARIES ${CXXKIT_TEST_LINK_LIBRARIES} ${CMAKE_THREAD_LIBS_INIT})
+
+if(CXXKIT_ENABLE_LIB_CRASH)
+    # Standalone crash fixture: installs the handler and raises SIGSEGV in its own process.
+    # Built without gtest; the parent tst_crash spawns it via fork+exec (never death tests —
+    # breakpad intercepts the very signals death tests rely on).
+    add_executable(crash_fixture crash_fixture.cpp)
+    target_link_libraries(crash_fixture PRIVATE cxxkit::crash)
+    target_include_directories(crash_fixture PRIVATE ${PROJECT_SOURCE_DIR})
+    set_target_properties(crash_fixture PROPERTIES
+        CXX_STANDARD 14
+        CXX_STANDARD_REQUIRED ON
+        CXX_EXTENSIONS OFF)
+    set_property(TARGET crash_fixture PROPERTY FOLDER "CxxKit/tests")
+
+    cxxkit_add_test(cxxkit_tst_crash
+        SOURCES tst_crash.cpp
+        INCLUDE_DIRECTORIES ${PROJECT_SOURCE_DIR}
+        LIBRARIES ${CXXKIT_TEST_LINK_LIBRARIES} cxxkit::crash ${CMAKE_THREAD_LIBS_INIT})
+    target_compile_definitions(cxxkit_tst_crash PRIVATE TEST_BINARY_DIR="${CMAKE_CURRENT_BINARY_DIR}")
+endif()
