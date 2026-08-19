@@ -22,8 +22,7 @@
 **
 ***********************************************************************************************************************/
 
-#ifndef _CXXKIT_CLOCK_HPP
-#define _CXXKIT_CLOCK_HPP
+#pragma once
 
 #include <cxxkit/units/timestamp.hpp>
 #include <cxxkit/tools/ntp_time.hpp>
@@ -113,4 +112,3 @@ private:
 };
 CXXKIT_END_NAMESPACE
 
-#endif // _CXXKIT_CLOCK_HPP

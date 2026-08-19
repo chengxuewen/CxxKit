@@ -22,8 +22,7 @@
 **
 ***********************************************************************************************************************/
 
-#ifndef _CXXKIT_DATA_SIZE_HPP
-#define _CXXKIT_DATA_SIZE_HPP
+#pragma once
 
 #include <cxxkit/units/unit_base.hpp>
 
@@ -78,4 +77,3 @@ CXXKIT_CORE_API std::string toString(DataSize value);
 
 CXXKIT_END_NAMESPACE
 
-#endif // _CXXKIT_DATA_SIZE_HPP

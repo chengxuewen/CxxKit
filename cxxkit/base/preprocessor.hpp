@@ -22,8 +22,7 @@
 **
 ***********************************************************************************************************************/
 
-#ifndef _CXXKIT_PREPROCESSOR_HPP
-#define _CXXKIT_PREPROCESSOR_HPP
+#pragma once
 
 /**
  * @brief Stringify preprocessor macro
@@ -924,4 +923,3 @@
 #define CXXKIT_PP_WHILE_CHECK_PP_WHILE_4(PRED, OP, VAL) 0
 // ...
 
-#endif // _CXXKIT_PREPROCESSOR_HPP

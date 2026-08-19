@@ -22,8 +22,7 @@
 **
 ***********************************************************************************************************************/
 
-#ifndef _CXXKIT_DESKTOP_CAPTURE_SHARED_MEMORY_HPP
-#define _CXXKIT_DESKTOP_CAPTURE_SHARED_MEMORY_HPP
+#pragma once
 
 #include <cxxkit/base/global.hpp>
 
@@ -86,4 +85,3 @@ public:
 };
 CXXKIT_END_NAMESPACE
 
-#endif // _CXXKIT_DESKTOP_CAPTURE_SHARED_MEMORY_HPP

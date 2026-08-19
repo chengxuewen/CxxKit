@@ -22,8 +22,7 @@
 **
 ***********************************************************************************************************************/
 
-#ifndef _CXXKIT_LIMITS_HPP
-#define _CXXKIT_LIMITS_HPP
+#pragma once
 
 #include <cxxkit/base/global.hpp>
 
@@ -109,4 +108,3 @@ static constexpr T mathMax(const T &left, const T &right, P pred) noexcept
 }; // namespace utils
 CXXKIT_END_NAMESPACE
 
-#endif // _CXXKIT_LIMITS_HPP

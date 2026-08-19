@@ -22,8 +22,7 @@
 **
 ***********************************************************************************************************************/
 
-#ifndef _CXXKIT_EXCEPTION_HPP
-#define _CXXKIT_EXCEPTION_HPP
+#pragma once
 
 #include <cxxkit/base/global.hpp>
 #include <cxxkit/tools/logging.hpp>
@@ -135,4 +134,3 @@ CXXKIT_END_NAMESPACE
 #define CXXKIT_THROW_STD_BAD_FUNCTION_CALL()   CXXKIT_THROW_NO_MSG(std::bad_function_call)
 #define CXXKIT_THROW_STD_BAD_ALLOC()           CXXKIT_THROW_NO_MSG(std::bad_alloc)
 
-#endif // _CXXKIT_EXCEPTION_HPP

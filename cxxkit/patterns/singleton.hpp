@@ -23,8 +23,7 @@
 **
 ***********************************************************************************************************************/
 
-#ifndef _CXXKIT_SINGLETON_HPP
-#define _CXXKIT_SINGLETON_HPP
+#pragma once
 
 #include <cxxkit/tools/type_traits.hpp>
 
@@ -108,4 +107,3 @@ CXXKIT_END_NAMESPACE
 
 #define CXXKIT_DECLARE_SINGLETON(CLASS) friend class cxxkit::Singleton<CLASS, UseManualLifetime>;
 
-#endif // _CXXKIT_SINGLETON_HPP

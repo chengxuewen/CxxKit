@@ -2,8 +2,7 @@
 // Created by cxw on 25-8-15.
 //
 
-#ifndef _CXXKIT_FLAT_SET_HPP
-#define _CXXKIT_FLAT_SET_HPP
+#pragma once
 
 #include <cxxkit/base/global.hpp>
 
@@ -16,4 +15,3 @@ using FlatSet = std::set<T>;
 
 CXXKIT_END_NAMESPACE
 
-#endif // _CXXKIT_FLAT_SET_HPP

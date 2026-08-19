@@ -23,8 +23,7 @@
 **
 ***********************************************************************************************************************/
 
-#ifndef _CXXKIT_BASE64_HPP
-#define _CXXKIT_BASE64_HPP
+#pragma once
 
 #include <cxxkit/text/string_view.hpp>
 
@@ -131,4 +130,3 @@ private:
 };
 CXXKIT_END_NAMESPACE
 
-#endif // _CXXKIT_BASE64_HPP

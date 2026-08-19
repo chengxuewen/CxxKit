@@ -22,8 +22,7 @@
 **
 ***********************************************************************************************************************/
 
-#ifndef _CXXKIT_EXPECTED_HPP
-#define _CXXKIT_EXPECTED_HPP
+#pragma once
 
 #include <cxxkit/base/global.hpp>
 
@@ -49,4 +48,3 @@ Unexpected<typename std::decay<E>::type> makeUnexpected(E &&e)
 
 CXXKIT_END_NAMESPACE
 
-#endif // _CXXKIT_EXPECTED_HPP

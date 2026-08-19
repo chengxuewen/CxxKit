@@ -22,8 +22,7 @@
 **
 ***********************************************************************************************************************/
 
-#ifndef _CXXKIT_FILESYSTEM_HPP
-#define _CXXKIT_FILESYSTEM_HPP
+#pragma once
 
 #include <cxxkit/base/global.hpp>
 
@@ -49,4 +48,3 @@ namespace filesystem = ghc::filesystem;
 
 CXXKIT_END_NAMESPACE
 
-#endif // _CXXKIT_FILESYSTEM_HPP

@@ -1,5 +1,4 @@
-#ifndef _CXXKIT_NETWORK_GLOBAL_HPP
-#define _CXXKIT_NETWORK_GLOBAL_HPP
+#pragma once
 
 #include <cxxkit/base/global.hpp>
 
@@ -18,4 +17,3 @@
 #    define CXXKIT_NETWORK_HIDDEN
 #endif
 
-#endif // _CXXKIT_NETWORK_GLOBAL_HPP

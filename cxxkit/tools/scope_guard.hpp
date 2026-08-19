@@ -22,8 +22,7 @@
 **
 ***********************************************************************************************************************/
 
-#ifndef _CXXKIT_SCOPE_GUARD_HPP
-#define _CXXKIT_SCOPE_GUARD_HPP
+#pragma once
 
 #include <cxxkit/base/global.hpp>
 #include <cxxkit/tools/assert.hpp>
@@ -137,4 +136,3 @@ template <typename FC, typename F>
 
 CXXKIT_END_NAMESPACE
 
-#endif // _CXXKIT_SCOPE_GUARD_HPP

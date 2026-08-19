@@ -58,5 +58,5 @@ if(CXXKIT_BUILD_INSTALL)
     install(TARGETS cxxkit_thread EXPORT cxxkitTargets)
     install(DIRECTORY ${PROJECT_SOURCE_DIR}/cxxkit/thread/
         DESTINATION include/cxxkit/thread
-        FILES_MATCHING PATTERN "*.hpp" PATTERN "detail" EXCLUDE)
+        FILES_MATCHING PATTERN "*.hpp")
 endif()

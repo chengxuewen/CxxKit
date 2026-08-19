@@ -22,8 +22,7 @@
 **
 ***********************************************************************************************************************/
 
-#ifndef _CXXKIT_ZERO_MEMORY_HPP
-#define _CXXKIT_ZERO_MEMORY_HPP
+#pragma once
 
 #include <cxxkit/containers/array_view.hpp>
 
@@ -44,4 +43,3 @@ void ExplicitZeroMemory(ArrayView<T> a)
 
 CXXKIT_END_NAMESPACE
 
-#endif // _CXXKIT_ZERO_MEMORY_HPP

@@ -22,8 +22,7 @@
 **
 ***********************************************************************************************************************/
 
-#ifndef _CXXKIT_SPINLOCK_HPP
-#define _CXXKIT_SPINLOCK_HPP
+#pragma once
 
 #include <cxxkit/base/global.hpp>
 
@@ -95,4 +94,3 @@ private:
 
 CXXKIT_END_NAMESPACE
 
-#endif // _CXXKIT_SPINLOCK_HPP

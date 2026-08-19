@@ -22,8 +22,7 @@
 **
 ***********************************************************************************************************************/
 
-#ifndef _CXXKIT_VARIANT_HPP
-#define _CXXKIT_VARIANT_HPP
+#pragma once
 
 #include <cxxkit/base/global.hpp>
 
@@ -54,4 +53,3 @@ using mpark::holds_alternative;
 
 CXXKIT_END_NAMESPACE
 
-#endif // _CXXKIT_VARIANT_HPP

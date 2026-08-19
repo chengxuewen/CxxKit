@@ -79,7 +79,7 @@ if(CXXKIT_BUILD_INSTALL)
     install(TARGETS cxxkit_base EXPORT cxxkitTargets)
     install(DIRECTORY ${PROJECT_SOURCE_DIR}/cxxkit/base/
         DESTINATION include/cxxkit/base
-        FILES_MATCHING PATTERN "*.hpp" PATTERN "detail" EXCLUDE)
+        FILES_MATCHING PATTERN "*.hpp")
     install(FILES ${PROJECT_BINARY_DIR}/cxxkit/base/core_config.hpp
         DESTINATION include/cxxkit/base)
 endif()

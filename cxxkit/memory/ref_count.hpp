@@ -22,8 +22,7 @@
 **
 ***********************************************************************************************************************/
 
-#ifndef _CXXKIT_REF_COUNT_HPP
-#define _CXXKIT_REF_COUNT_HPP
+#pragma once
 
 #include <cxxkit/base/global.hpp>
 
@@ -229,4 +228,3 @@ private:
 
 CXXKIT_END_NAMESPACE
 
-#endif // _CXXKIT_REF_COUNT_HPP

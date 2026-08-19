@@ -22,8 +22,7 @@
 **
 ***********************************************************************************************************************/
 
-#ifndef _CXXKIT_DATE_TIME_HPP
-#define _CXXKIT_DATE_TIME_HPP
+#pragma once
 
 #include <cxxkit/base/global.hpp>
 #include <cxxkit/tools/checks.hpp>
@@ -173,4 +172,3 @@ public:
 };
 CXXKIT_END_NAMESPACE
 
-#endif // _CXXKIT_DATE_TIME_HPP

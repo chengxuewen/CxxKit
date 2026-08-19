@@ -49,5 +49,5 @@ if(CXXKIT_BUILD_INSTALL)
     install(TARGETS cxxkit_network EXPORT cxxkitTargets)
     install(DIRECTORY ${PROJECT_SOURCE_DIR}/cxxkit/network/
         DESTINATION include/cxxkit/network
-        FILES_MATCHING PATTERN "*.hpp" PATTERN "detail" EXCLUDE)
+        FILES_MATCHING PATTERN "*.hpp")
 endif()

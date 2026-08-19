@@ -18,5 +18,5 @@ if(CXXKIT_BUILD_INSTALL)
     install(TARGETS cxxkit_patterns EXPORT cxxkitTargets)
     install(DIRECTORY ${PROJECT_SOURCE_DIR}/cxxkit/patterns/
         DESTINATION include/cxxkit/patterns
-        FILES_MATCHING PATTERN "*.hpp" PATTERN "detail" EXCLUDE)
+        FILES_MATCHING PATTERN "*.hpp")
 endif()

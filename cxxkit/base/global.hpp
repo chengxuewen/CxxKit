@@ -22,8 +22,7 @@
 **
 ***********************************************************************************************************************/
 
-#ifndef _CXXKIT_GLOBAL_HPP
-#define _CXXKIT_GLOBAL_HPP
+#pragma once
 
 #include <cxxkit/base/core_config.hpp>
 #include <cxxkit/base/compiler.hpp>
@@ -75,4 +74,3 @@
 #    define CXXKIT_CORE_HIDDEN
 #endif
 
-#endif // _CXXKIT_GLOBAL_HPP

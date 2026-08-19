@@ -22,8 +22,7 @@
 **
 ***********************************************************************************************************************/
 
-#ifndef _CXXKIT_NULLABILITY_HPP
-#define _CXXKIT_NULLABILITY_HPP
+#pragma once
 
 #include <cxxkit/tools/type_traits.hpp>
 
@@ -177,4 +176,3 @@ template <typename T>
 using NullabilityUnknown = detail::NullabilityUnknownImpl<T>;
 CXXKIT_END_NAMESPACE
 
-#endif // _CXXKIT_NULLABILITY_HPP

@@ -22,8 +22,7 @@
 **
 ***********************************************************************************************************************/
 
-#ifndef _CXXKIT_SHARED_DATA_HPP
-#define _CXXKIT_SHARED_DATA_HPP
+#pragma once
 
 #include <cxxkit/tools/type_traits.hpp>
 #include <cxxkit/thread/reference_counter.hpp>
@@ -401,4 +400,3 @@ inline bool operator==(const ExplicitlySharedDataPointer<T> &p1, std::nullptr_t 
 
 CXXKIT_END_NAMESPACE
 
-#endif // _CXXKIT_SHARED_DATA_HPP

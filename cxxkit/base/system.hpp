@@ -22,8 +22,7 @@
 **
 ***********************************************************************************************************************/
 
-#ifndef _CXXKIT_SYSTEM_HPP
-#define _CXXKIT_SYSTEM_HPP
+#pragma once
 
 /*
    The operating system, must be one of: (CXXKIT_OS_x)
@@ -260,4 +259,3 @@
 #    endif
 #endif
 
-#endif // _CXXKIT_SYSTEM_HPP

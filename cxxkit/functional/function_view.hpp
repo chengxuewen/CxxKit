@@ -22,8 +22,7 @@
 **
 ***********************************************************************************************************************/
 
-#ifndef _CXXKIT_FUNCTION_VIEW_HPP
-#define _CXXKIT_FUNCTION_VIEW_HPP
+#pragma once
 
 #include <cxxkit/tools/checks.hpp>
 
@@ -175,4 +174,3 @@ private:
 
 CXXKIT_END_NAMESPACE
 
-#endif // _CXXKIT_FUNCTION_VIEW_HPP

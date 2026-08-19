@@ -23,8 +23,7 @@
 **
 ***********************************************************************************************************************/
 
-#ifndef _CXXKIT_DIVIDE_ROUND_HPP
-#define _CXXKIT_DIVIDE_ROUND_HPP
+#pragma once
 
 #include <cxxkit/base/global.hpp>
 #include <cxxkit/tools/checks.hpp>
@@ -129,4 +128,3 @@ inline auto CXXKIT_CXX14_CONSTEXPR DivideRoundToNearest(Dividend dividend, Divis
 }
 CXXKIT_END_NAMESPACE
 
-#endif // _CXXKIT_DIVIDE_ROUND_HPP

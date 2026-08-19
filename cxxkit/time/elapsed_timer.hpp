@@ -22,8 +22,7 @@
 **
 ***********************************************************************************************************************/
 
-#ifndef _CXXKIT_ELAPSED_TIMER_HPP
-#define _CXXKIT_ELAPSED_TIMER_HPP
+#pragma once
 
 #include <cxxkit/base/global.hpp>
 
@@ -221,4 +220,3 @@ private:
 
 CXXKIT_END_NAMESPACE
 
-#endif // _CXXKIT_ELAPSED_TIMER_HPP

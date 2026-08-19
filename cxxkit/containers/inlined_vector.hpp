@@ -22,8 +22,7 @@
 **
 ***********************************************************************************************************************/
 
-#ifndef _CXXKIT_INLINED_VECTOR_HPP
-#define _CXXKIT_INLINED_VECTOR_HPP
+#pragma once
 
 #include <cxxkit/base/global.hpp>
 #include <cxxkit/tools/checks.hpp>
@@ -278,4 +277,3 @@ public:
 };
 CXXKIT_END_NAMESPACE
 
-#endif // _CXXKIT_INLINED_VECTOR_HPP

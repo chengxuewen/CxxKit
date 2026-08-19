@@ -22,8 +22,7 @@
 **
 ***********************************************************************************************************************/
 
-#ifndef _CXXKIT_MACROS_HPP
-#define _CXXKIT_MACROS_HPP
+#pragma once
 
 #include <cxxkit/base/system.hpp>
 #include <cxxkit/base/compiler.hpp>
@@ -1174,4 +1173,3 @@ CXXKIT_EXPORT_TEMPLATE_TEST(DEFAULT, __declspec(dllimport));
 #    define CXXKIT_ATTRIBUTE_MUST_USE_RESULT
 #endif
 
-#endif // _CXXKIT_MACROS_HPP

@@ -23,8 +23,7 @@
 **
 ***********************************************************************************************************************/
 
-#ifndef _CXXKIT_SAFE_CONVERSIONS_HPP
-#define _CXXKIT_SAFE_CONVERSIONS_HPP
+#pragma once
 
 #include <cxxkit/tools/checks.hpp>
 #include <cxxkit/tools/limits.hpp>
@@ -252,4 +251,3 @@ inline Dst saturated_cast(Src value)
 
 CXXKIT_END_NAMESPACE
 
-#endif // _CXXKIT_SAFE_CONVERSIONS_HPP

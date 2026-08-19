@@ -22,8 +22,7 @@
 **
 ***********************************************************************************************************************/
 
-#ifndef _CXXKIT_COMPILER_HPP
-#define _CXXKIT_COMPILER_HPP
+#pragma once
 
 #include <cxxkit/base/preprocessor.hpp>
 #include <cxxkit/base/system.hpp>
@@ -844,5 +843,3 @@
         CXXKIT_WARNING_DISABLE_DEPRECATED                                                                              \
         statement CXXKIT_WARNING_POP
 #endif
-
-#endif // _CXXKIT_COMPILER_HPP

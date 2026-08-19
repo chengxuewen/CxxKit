@@ -22,8 +22,7 @@
 **
 ***********************************************************************************************************************/
 
-#ifndef _CXXKIT_TYPES_HPP
-#define _CXXKIT_TYPES_HPP
+#pragma once
 
 #include <cxxkit/base/macros.hpp>
 #include <cxxkit/base/system.hpp>
@@ -225,4 +224,3 @@ struct None
 
 CXXKIT_END_NAMESPACE
 
-#endif // _CXXKIT_TYPES_HPP

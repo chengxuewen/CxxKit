@@ -22,8 +22,7 @@
 **
 ***********************************************************************************************************************/
 
-#ifndef _CXXKIT_THREAD_POOL_P_HPP
-#define _CXXKIT_THREAD_POOL_P_HPP
+#pragma once
 
 #include <cxxkit/thread/thread_pool.hpp>
 #include <cxxkit/tools/logging.hpp>
@@ -267,4 +266,3 @@ public:
 
 CXXKIT_END_NAMESPACE
 
-#endif // _CXXKIT_THREAD_POOL_P_HPP

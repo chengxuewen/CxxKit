@@ -22,8 +22,7 @@
 **
 ***********************************************************************************************************************/
 
-#ifndef _CXXKIT_STRONG_ALIAS_HPP
-#define _CXXKIT_STRONG_ALIAS_HPP
+#pragma once
 
 #include <cxxkit/base/global.hpp>
 
@@ -77,4 +76,3 @@ protected:
 };
 CXXKIT_END_NAMESPACE
 
-#endif // _CXXKIT_STRONG_ALIAS_HPP

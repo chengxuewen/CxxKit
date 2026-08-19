@@ -22,8 +22,7 @@
 **
 ***********************************************************************************************************************/
 
-#ifndef _CXXKIT_INVOCABLE_HPP
-#define _CXXKIT_INVOCABLE_HPP
+#pragma once
 
 #include <cxxkit/functional/unique_function.hpp>
 
@@ -34,4 +33,3 @@ using Invocable = UniqueFunction<T>;
 
 CXXKIT_END_NAMESPACE
 
-#endif // _CXXKIT_INVOCABLE_HPP

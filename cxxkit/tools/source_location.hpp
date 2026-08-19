@@ -22,8 +22,7 @@
 **
 ***********************************************************************************************************************/
 
-#ifndef _CXXKIT_SOURCE_LOCATION_HPP
-#define _CXXKIT_SOURCE_LOCATION_HPP
+#pragma once
 
 #include <cxxkit/base/global.hpp>
 
@@ -71,4 +70,3 @@ CXXKIT_END_NAMESPACE
     cxxkit::SourceLocation(function_name, CXXKIT_STRFILE, CXXKIT_LINE)
 #define CXXKIT_SOURCE_LOCATION CXXKIT_SOURCE_LOCATION_WITH_FUNCTION(CXXKIT_STRFUNC)
 
-#endif // _CXXKIT_SOURCE_LOCATION_HPP

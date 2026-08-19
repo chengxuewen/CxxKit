@@ -22,8 +22,7 @@
 **
 ***********************************************************************************************************************/
 
-#ifndef _CXXKIT_REF_COUNTED_OBJECT_HPP
-#define _CXXKIT_REF_COUNTED_OBJECT_HPP
+#pragma once
 
 #include <cxxkit/memory/shared_ref_ptr.hpp>
 #include <cxxkit/memory/nullability.hpp>
@@ -212,4 +211,3 @@ Nonnull<SharedRefPtr<FinalRefCountedObject<T>>> makeRefCounted(Args &&...args)
 
 CXXKIT_END_NAMESPACE
 
-#endif // _CXXKIT_REF_COUNTED_OBJECT_HPP

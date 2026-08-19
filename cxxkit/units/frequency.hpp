@@ -22,8 +22,7 @@
 **
 ***********************************************************************************************************************/
 
-#ifndef _CXXKIT_FREQUENCY_HPP
-#define _CXXKIT_FREQUENCY_HPP
+#pragma once
 
 #include <cxxkit/units/time_delta.hpp>
 #include <cxxkit/tools/checks.hpp>
@@ -117,4 +116,3 @@ void AbslStringify(Sink &sink, Frequency value)
 }
 CXXKIT_END_NAMESPACE
 
-#endif // _CXXKIT_FREQUENCY_HPP

@@ -22,8 +22,7 @@
 **
 ***********************************************************************************************************************/
 
-#ifndef _CXXKIT_UNIQUE_FUNCTION_HPP
-#define _CXXKIT_UNIQUE_FUNCTION_HPP
+#pragma once
 
 #include <cxxkit/tools/checks.hpp>
 
@@ -57,4 +56,3 @@ using UniqueFunction = fu2::unique_function<T>;
 
 CXXKIT_END_NAMESPACE
 
-#endif // _CXXKIT_UNIQUE_FUNCTION_HPP

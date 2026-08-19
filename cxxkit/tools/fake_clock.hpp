@@ -22,8 +22,7 @@
 **
 ***********************************************************************************************************************/
 
-#ifndef _CXXKIT_FAKE_CLOCK_HPP
-#define _CXXKIT_FAKE_CLOCK_HPP
+#pragma once
 
 #include <cxxkit/units/time_delta.hpp>
 #include <cxxkit/time/date_time.hpp>
@@ -94,4 +93,3 @@ private:
 };
 CXXKIT_END_NAMESPACE
 
-#endif // _CXXKIT_FAKE_CLOCK_HPP

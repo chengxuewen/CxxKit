@@ -23,8 +23,7 @@
 **
 ***********************************************************************************************************************/
 
-#ifndef _CXXKIT_SAFE_COMPARE_HPP
-#define _CXXKIT_SAFE_COMPARE_HPP
+#pragma once
 
 #include <cxxkit/tools/type_traits.hpp>
 
@@ -177,4 +176,3 @@ CXXKIT_SAFECMP_MAKE_FUN(Ge)
 #undef CXXKIT_SAFECMP_MAKE_FUN
 CXXKIT_END_NAMESPACE
 
-#endif // _CXXKIT_SAFE_COMPARE_HPP

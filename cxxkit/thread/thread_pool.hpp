@@ -22,8 +22,7 @@
 **
 ***********************************************************************************************************************/
 
-#ifndef _CXXKIT_THREAD_POOL_HPP
-#define _CXXKIT_THREAD_POOL_HPP
+#pragma once
 
 #include <cxxkit/patterns/singleton.hpp>
 #include <cxxkit/thread/task.hpp>
@@ -309,4 +308,3 @@ CXXKIT_END_NAMESPACE
  * @}
  */
 
-#endif // _CXXKIT_THREAD_POOL_HPP

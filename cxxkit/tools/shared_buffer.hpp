@@ -22,8 +22,7 @@
 **
 ***********************************************************************************************************************/
 
-#ifndef _CXXKIT_SHARED_BUFFER_HPP
-#define _CXXKIT_SHARED_BUFFER_HPP
+#pragma once
 
 #include <cxxkit/memory/ref_counted_object.hpp>
 #include <cxxkit/memory/shared_ref_ptr.hpp>
@@ -333,4 +332,3 @@ private:
 };
 CXXKIT_END_NAMESPACE
 
-#endif // _CXXKIT_SHARED_BUFFER_HPP

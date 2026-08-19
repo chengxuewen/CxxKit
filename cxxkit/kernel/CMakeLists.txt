@@ -32,5 +32,5 @@ if(CXXKIT_BUILD_INSTALL)
     install(TARGETS cxxkit_kernel EXPORT cxxkitTargets)
     install(DIRECTORY ${PROJECT_SOURCE_DIR}/cxxkit/kernel/
         DESTINATION include/cxxkit/kernel
-        FILES_MATCHING PATTERN "*.hpp" PATTERN "detail" EXCLUDE)
+        FILES_MATCHING PATTERN "*.hpp")
 endif()

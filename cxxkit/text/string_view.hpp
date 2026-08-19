@@ -22,8 +22,7 @@
 **
 ***********************************************************************************************************************/
 
-#ifndef _CXXKIT_STRING_VIEW_HPP
-#define _CXXKIT_STRING_VIEW_HPP
+#pragma once
 
 #include <cxxkit/base/global.hpp>
 #include <cxxkit/base/core_config.hpp>
@@ -72,4 +71,3 @@ struct StringViewCmp
 
 CXXKIT_END_NAMESPACE
 
-#endif // _CXXKIT_STRING_VIEW_HPP

@@ -22,8 +22,7 @@
 **
 ***********************************************************************************************************************/
 
-#ifndef _CXXKIT_SHARED_REF_PTR_HPP
-#define _CXXKIT_SHARED_REF_PTR_HPP
+#pragma once
 
 #include <cxxkit/memory/nullability.hpp>
 
@@ -233,4 +232,3 @@ struct IsSupportedType<SharedRefPtr<T>> : std::true_type
 
 CXXKIT_END_NAMESPACE
 
-#endif // _CXXKIT_SHARED_REF_PTR_HPP

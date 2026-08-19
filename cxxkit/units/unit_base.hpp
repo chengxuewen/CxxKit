@@ -22,8 +22,7 @@
 **
 ***********************************************************************************************************************/
 
-#ifndef _CXXKIT_UNIT_BASE_HPP
-#define _CXXKIT_UNIT_BASE_HPP
+#pragma once
 
 #include <cxxkit/tools/limits.hpp>
 #include <cxxkit/tools/assert.hpp>
@@ -323,4 +322,3 @@ inline CXXKIT_CXX14_CONSTEXPR Unit_T operator-(RelativeUnit<Unit_T> other)
 
 CXXKIT_END_NAMESPACE
 
-#endif // _CXXKIT_UNIT_BASE_HPP

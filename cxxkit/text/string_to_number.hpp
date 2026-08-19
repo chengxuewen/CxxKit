@@ -22,8 +22,7 @@
 **
 ***********************************************************************************************************************/
 
-#ifndef _CXXKIT_STRING_TO_NUMBER_HPP
-#define _CXXKIT_STRING_TO_NUMBER_HPP
+#pragma once
 
 #include <cxxkit/tools/optional.hpp>
 #include <cxxkit/text/string_view.hpp>
@@ -204,4 +203,3 @@ typename std::enable_if<std::is_floating_point<T>::value, Optional<T>>::type str
 
 CXXKIT_END_NAMESPACE
 
-#endif // _CXXKIT_STRING_TO_NUMBER_HPP

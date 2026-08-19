@@ -22,8 +22,7 @@
 **
 ***********************************************************************************************************************/
 
-#ifndef _CXXKIT_ID_REGISTRY_HPP
-#define _CXXKIT_ID_REGISTRY_HPP
+#pragma once
 
 #include <cxxkit/base/global.hpp>
 
@@ -51,4 +50,3 @@ protected:
 
 CXXKIT_END_NAMESPACE
 
-#endif // _CXXKIT_ID_REGISTRY_HPP

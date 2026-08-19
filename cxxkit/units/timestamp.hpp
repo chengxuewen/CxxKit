@@ -22,8 +22,7 @@
 **
 ***********************************************************************************************************************/
 
-#ifndef _CXXKIT_TIMESTAMP_HPP
-#define _CXXKIT_TIMESTAMP_HPP
+#pragma once
 
 #include <cxxkit/units/time_delta.hpp>
 #include <cxxkit/units/unit_base.hpp>
@@ -162,4 +161,3 @@ void AbslStringify(Sink &sink, Timestamp value)
 
 CXXKIT_END_NAMESPACE
 
-#endif // _CXXKIT_TIMESTAMP_HPP

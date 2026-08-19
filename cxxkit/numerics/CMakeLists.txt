@@ -18,5 +18,5 @@ if(CXXKIT_BUILD_INSTALL)
     install(TARGETS cxxkit_numerics EXPORT cxxkitTargets)
     install(DIRECTORY ${PROJECT_SOURCE_DIR}/cxxkit/numerics/
         DESTINATION include/cxxkit/numerics
-        FILES_MATCHING PATTERN "*.hpp" PATTERN "detail" EXCLUDE)
+        FILES_MATCHING PATTERN "*.hpp")
 endif()

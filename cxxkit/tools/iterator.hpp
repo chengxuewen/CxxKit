@@ -22,8 +22,7 @@
 **
 ***********************************************************************************************************************/
 
-#ifndef _CXXKIT_ITERATOR_HPP
-#define _CXXKIT_ITERATOR_HPP
+#pragma once
 
 #include <cxxkit/base/global.hpp>
 
@@ -60,4 +59,3 @@ constexpr std::size_t size(const T (&)[N]) noexcept
 
 CXXKIT_END_NAMESPACE
 
-#endif // _CXXKIT_ITERATOR_HPP

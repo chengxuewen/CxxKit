@@ -22,8 +22,7 @@
 **
 ***********************************************************************************************************************/
 
-#ifndef _CXXKIT_NTP_TIME_HPP
-#define _CXXKIT_NTP_TIME_HPP
+#pragma once
 
 #include <cxxkit/numerics/safe_conversions.hpp>
 
@@ -162,4 +161,3 @@ inline int64_t Q32x32ToInt64Us(int64_t q32x32)
 
 CXXKIT_END_NAMESPACE
 
-#endif // _CXXKIT_NTP_TIME_HPP

@@ -24,8 +24,7 @@
 ***********************************************************************************************************************/
 
 
-#ifndef _CXXKIT_ALIGNED_MALLOC_HPP
-#define _CXXKIT_ALIGNED_MALLOC_HPP
+#pragma once
 
 #include <cxxkit/base/global.hpp>
 
@@ -74,4 +73,3 @@ struct AlignedFreeDeleter
 };
 CXXKIT_END_NAMESPACE
 
-#endif // _CXXKIT_ALIGNED_MALLOC_HPP

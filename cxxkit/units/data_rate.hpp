@@ -22,8 +22,7 @@
 **
 ***********************************************************************************************************************/
 
-#ifndef _CXXKIT_DATA_RATE_HPP
-#define _CXXKIT_DATA_RATE_HPP
+#pragma once
 
 #include <cxxkit/units/time_delta.hpp>
 #include <cxxkit/units/data_size.hpp>
@@ -164,4 +163,3 @@ CXXKIT_CORE_API std::string toString(DataRate value);
 
 CXXKIT_END_NAMESPACE
 
-#endif // _CXXKIT_DATA_RATE_HPP

@@ -22,8 +22,7 @@
 **
 ***********************************************************************************************************************/
 
-#ifndef _CXXKIT_PROCESSOR_HPP
-#define _CXXKIT_PROCESSOR_HPP
+#pragma once
 
 /*
     This file uses preprocessor #defines to set various CXXKIT_PROCESSOR_* #defines
@@ -369,4 +368,3 @@
 #    define CXXKIT_PROCESSOR_WORDSIZE CXXKIT_POINTER_SIZE
 #endif
 
-#endif // _CXXKIT_PROCESSOR_HPP
