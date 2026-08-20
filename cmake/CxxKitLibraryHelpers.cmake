@@ -76,8 +76,10 @@ function(cxxkit_add_library name)
     target_compile_features(${name} ${_cxxkit_vis} cxx_std_11)
 
     if(NOT arg_NO_ALIAS)
-        # Namespaced alias
-        add_library(cxxkit::${name} ALIAS ${name})
+        # Namespaced short alias: cxxkit_add_library(cxxkit_time ...) -> cxxkit::time (strip cxxkit_ prefix)
+        # so consumers reference cxxkit::<sub> (abseil convention), not cxxkit::cxxkit_<sub>.
+        string(REGEX REPLACE "^cxxkit_" "" _cxxkit_alias_name "${name}")
+        add_library(cxxkit::${_cxxkit_alias_name} ALIAS ${name})
     endif()
 
     if(NOT _cxxkit_type STREQUAL "INTERFACE")

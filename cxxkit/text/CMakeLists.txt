@@ -27,13 +27,10 @@ cxxkit_configure_library_begin(CxxKitText)
 
 cxxkit_add_library(cxxkit_text
     STATIC
-    NO_ALIAS
     SOURCES string_utils.cpp ascii.cpp string.cpp base64.cpp bit_buffer.cpp string_builder.cpp string_encode.cpp
     PUBLIC_LIBRARIES cxxkit::base cxxkit::numerics
     EXPORT_NAME text
     FOLDER "CxxKit/libs")
-add_library(cxxkit::text ALIAS cxxkit_text)
-
 cxxkit_generate_pkg_config(cxxkit_text text)
 cxxkit_configure_library_end(CxxKitText)
 

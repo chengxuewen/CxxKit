@@ -27,11 +27,8 @@ cxxkit_configure_library_begin(CxxKitPatterns)
 
 cxxkit_add_library(cxxkit_patterns
     INTERFACE
-    NO_ALIAS
     EXPORT_NAME patterns
     FOLDER "CxxKit/libs")
-add_library(cxxkit::patterns ALIAS cxxkit_patterns)
-
 target_link_libraries(cxxkit_patterns INTERFACE cxxkit::base)
 
 cxxkit_generate_pkg_config(cxxkit_patterns patterns)

@@ -27,13 +27,10 @@ cxxkit_configure_library_begin(CxxKitMemory)
 
 cxxkit_add_library(cxxkit_memory
     STATIC
-    NO_ALIAS
     SOURCES aligned_malloc.cpp shared_memory.cpp zero_memory.cpp
     PUBLIC_LIBRARIES cxxkit::base cxxkit::tools
     EXPORT_NAME memory
     FOLDER "CxxKit/libs")
-add_library(cxxkit::memory ALIAS cxxkit_memory)
-
 cxxkit_generate_pkg_config(cxxkit_memory memory)
 cxxkit_configure_library_end(CxxKitMemory)
 

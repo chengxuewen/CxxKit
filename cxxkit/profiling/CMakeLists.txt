@@ -30,11 +30,8 @@ cxxkit_configure_library_begin(CxxKitProfiling)
 
 cxxkit_add_library(cxxkit_profiling
     INTERFACE
-    NO_ALIAS
     EXPORT_NAME profiling
     FOLDER "CxxKit/libs")
-add_library(cxxkit::profiling ALIAS cxxkit_profiling)
-
 if(CXXKIT_ENABLE_LIB_TRACY)
     cxxkit_find_package(Tracy PROVIDED_TARGETS CxxKitWrapTracy::WrapTracy)
     # Link Tracy's own exported target directly: TracyConfig ships with Tracy (vcpkg-style),

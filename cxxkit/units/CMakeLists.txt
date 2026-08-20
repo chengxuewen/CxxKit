@@ -27,13 +27,10 @@ cxxkit_configure_library_begin(CxxKitUnits)
 
 cxxkit_add_library(cxxkit_units
     STATIC
-    NO_ALIAS
     SOURCES data_rate.cpp data_size.cpp frequency.cpp time_delta.cpp timestamp.cpp
     PUBLIC_LIBRARIES cxxkit::base cxxkit::numerics cxxkit::containers cxxkit::tools
     EXPORT_NAME units
     FOLDER "CxxKit/libs")
-add_library(cxxkit::units ALIAS cxxkit_units)
-
 cxxkit_generate_pkg_config(cxxkit_units units)
 cxxkit_configure_library_end(CxxKitUnits)
 

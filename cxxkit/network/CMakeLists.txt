@@ -29,13 +29,10 @@ cxxkit_find_package(Libcpr PROVIDED_TARGETS CxxKitWrapLibcpr::WrapLibcpr)
 
 cxxkit_add_library(cxxkit_network
     STATIC
-    NO_ALIAS
     SOURCES http.cpp
     PUBLIC_LIBRARIES cxxkit::base cxxkit::text cxxkit::thread cxxkit::memory cxxkit::tools CxxKitWrapLibcpr::WrapLibcpr
     EXPORT_NAME network
     FOLDER "CxxKit/libs")
-add_library(cxxkit::network ALIAS cxxkit_network)
-
 cxxkit_install_public_wrap_headers(cxxkit_network
     WRAPS
     CxxKitWrapLibcpr::WrapLibcpr|cpr

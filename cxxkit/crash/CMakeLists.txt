@@ -39,13 +39,10 @@ cxxkit_find_package(Backward PROVIDED_TARGETS CxxKitWrapBackward::WrapBackward)
 
 cxxkit_add_library(cxxkit_crash
     STATIC
-    NO_ALIAS
     SOURCES crash_handler.cpp
     PUBLIC_LIBRARIES cxxkit::base cxxkit::patterns cxxkit::tools CxxKitWrapBreakpad::WrapBreakpad CxxKitWrapBackward::WrapBackward
     EXPORT_NAME crash
     FOLDER "CxxKit/libs")
-add_library(cxxkit::crash ALIAS cxxkit_crash)
-
 target_compile_definitions(cxxkit_crash PUBLIC CXXKIT_FEATURE_ENABLE_CRASH=1)
 # backward.hpp dlopens libdw.so.1 at runtime (Linux): the shared lib must find the shipped .so next to itself.
 set_target_properties(cxxkit_crash PROPERTIES

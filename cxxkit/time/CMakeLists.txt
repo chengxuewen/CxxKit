@@ -27,13 +27,10 @@ cxxkit_configure_library_begin(CxxKitTime)
 
 cxxkit_add_library(cxxkit_time
     STATIC
-    NO_ALIAS
     SOURCES date_time.cpp elapsed_timer.cpp
     PUBLIC_LIBRARIES cxxkit::base cxxkit::text cxxkit::tools cxxkit::units
     EXPORT_NAME time
     FOLDER "CxxKit/libs")
-add_library(cxxkit::time ALIAS cxxkit_time)
-
 cxxkit_generate_pkg_config(cxxkit_time time)
 cxxkit_configure_library_end(CxxKitTime)
 

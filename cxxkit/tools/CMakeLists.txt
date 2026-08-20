@@ -27,13 +27,10 @@ cxxkit_configure_library_begin(CxxKitTools)
 
 cxxkit_add_library(cxxkit_tools
     STATIC
-    NO_ALIAS
     SOURCES logging.cpp random.cpp assert.cpp clock.cpp status.cpp error.cpp once_flag.cpp id_registry.cpp shared_buffer.cpp metrics.cpp ntp_time.cpp fake_clock.cpp
     PUBLIC_LIBRARIES cxxkit::base cxxkit::text
     EXPORT_NAME tools
     FOLDER "CxxKit/libs")
-add_library(cxxkit::tools ALIAS cxxkit_tools)
-
 cxxkit_generate_pkg_config(cxxkit_tools tools)
 cxxkit_configure_library_end(CxxKitTools)
 

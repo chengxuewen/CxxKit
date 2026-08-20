@@ -30,11 +30,8 @@ cxxkit_generate_core_config()
 
 cxxkit_add_library(cxxkit_base
     INTERFACE
-    NO_ALIAS
     EXPORT_NAME base
     FOLDER "CxxKit/libs")
-add_library(cxxkit::base ALIAS cxxkit_base)
-
 # Vendored 3rdparty wraps (headers namespaced as cxxkit/3rdparty/<lib>/)
 # This is the octk mechanism to avoid conflicts with system-installed libraries.
 cxxkit_find_package(Fmt PROVIDED_TARGETS CxxKitWrapFmt::WrapFmt)

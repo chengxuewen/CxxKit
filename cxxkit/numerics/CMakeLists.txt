@@ -27,11 +27,8 @@ cxxkit_configure_library_begin(CxxKitNumerics)
 
 cxxkit_add_library(cxxkit_numerics
     INTERFACE
-    NO_ALIAS
     EXPORT_NAME numerics
     FOLDER "CxxKit/libs")
-add_library(cxxkit::numerics ALIAS cxxkit_numerics)
-
 target_link_libraries(cxxkit_numerics INTERFACE cxxkit::base)
 
 cxxkit_generate_pkg_config(cxxkit_numerics numerics)

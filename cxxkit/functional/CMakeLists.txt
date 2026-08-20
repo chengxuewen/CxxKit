@@ -27,11 +27,8 @@ cxxkit_configure_library_begin(CxxKitFunctional)
 
 cxxkit_add_library(cxxkit_functional
     INTERFACE
-    NO_ALIAS
     EXPORT_NAME functional
     FOLDER "CxxKit/libs")
-add_library(cxxkit::functional ALIAS cxxkit_functional)
-
 target_link_libraries(cxxkit_functional INTERFACE cxxkit::base)
 
 cxxkit_generate_pkg_config(cxxkit_functional functional)

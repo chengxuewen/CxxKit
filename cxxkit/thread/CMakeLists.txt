@@ -47,13 +47,10 @@ endif()
 
 cxxkit_add_library(cxxkit_thread
     STATIC
-    NO_ALIAS
     SOURCES ${CXXKIT_THREAD_SOURCES}
     PUBLIC_LIBRARIES cxxkit::base cxxkit::functional cxxkit::kernel cxxkit::memory cxxkit::tools cxxkit::units cxxkit::time
     EXPORT_NAME thread
     FOLDER "CxxKit/libs")
-add_library(cxxkit::thread ALIAS cxxkit_thread)
-
 cxxkit_generate_pkg_config(cxxkit_thread thread)
 cxxkit_configure_library_end(CxxKitThread)
 

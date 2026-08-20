@@ -27,13 +27,10 @@ cxxkit_configure_library_begin(CxxKitKernel)
 
 cxxkit_add_library(cxxkit_kernel
     STATIC
-    NO_ALIAS
     SOURCES application.cpp event.cpp event_loop.cpp object.cpp signals.cpp
     PUBLIC_LIBRARIES cxxkit::base cxxkit::memory cxxkit::tools
     EXPORT_NAME kernel
     FOLDER "CxxKit/libs")
-add_library(cxxkit::kernel ALIAS cxxkit_kernel)
-
 cxxkit_generate_pkg_config(cxxkit_kernel kernel)
 cxxkit_configure_library_end(CxxKitKernel)
 

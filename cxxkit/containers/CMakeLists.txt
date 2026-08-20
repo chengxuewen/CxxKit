@@ -27,11 +27,8 @@ cxxkit_configure_library_begin(CxxKitContainers)
 
 cxxkit_add_library(cxxkit_containers
     INTERFACE
-    NO_ALIAS
     EXPORT_NAME containers
     FOLDER "CxxKit/libs")
-add_library(cxxkit::containers ALIAS cxxkit_containers)
-
 target_link_libraries(cxxkit_containers INTERFACE cxxkit::base)
 
 cxxkit_generate_pkg_config(cxxkit_containers containers)
