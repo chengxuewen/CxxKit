@@ -63,27 +63,37 @@ cxxkit_generate_pkg_config(cxxkit_crash crash DESCRIPTION "cxxkit crash module (
 cxxkit_configure_library_end(CxxKitCrash)
 
 set_property(TARGET cxxkit_crash PROPERTY FOLDER "CxxKit/libs")
-if(CXXKIT_BUILD_INSTALL)
-    install(TARGETS cxxkit_crash EXPORT cxxkitTargets)
-    install(DIRECTORY ${PROJECT_SOURCE_DIR}/cxxkit/crash/
-        DESTINATION include/cxxkit/crash
-        FILES_MATCHING PATTERN "*.hpp")
     # vcpkg payload (D11): static archive + configs + runtime .so so installed consumers resolve
     # find_dependency(unofficial-breakpad / Backward) from cxxkitConfig.cmake and dlopen libdw.so.1.
-    install(FILES "${CXXKitWrapCrashDeps_INSTALL_DIR}/lib/libbreakpad_client.a"
+    # Single-package unpack roots (QExt mechanism): one INSTALL_DIR per package.
+    install(FILES "${CXXKitWrapCrashDepsBreakpad_INSTALL_DIR}/lib/libbreakpad_client.a"
         DESTINATION lib)
-    install(DIRECTORY "${CXXKitWrapCrashDeps_INSTALL_DIR}/share/unofficial-breakpad"
+    install(DIRECTORY "${CXXKitWrapCrashDepsBreakpad_INSTALL_DIR}/share/unofficial-breakpad"
         DESTINATION lib/cmake)
-    install(DIRECTORY "${CXXKitWrapCrashDeps_INSTALL_DIR}/share/Backward"
+    install(DIRECTORY "${CXXKitWrapCrashDepsBackward_INSTALL_DIR}/share/Backward"
         DESTINATION lib/cmake)
     if(NOT APPLE AND NOT WIN32)
         # Linux runtime payload for backward-cpp's dlopen("libdw.so.1") (elfutils/libunwind chain).
         file(GLOB _cxxkit_crash_so_payload
-            "${CXXKitWrapCrashDeps_INSTALL_DIR}/lib/libdw.so*"
-            "${CXXKitWrapCrashDeps_INSTALL_DIR}/lib/libelf.so*"
-            "${CXXKitWrapCrashDeps_INSTALL_DIR}/lib/libunwind.so*"
-            "${CXXKitWrapCrashDeps_INSTALL_DIR}/lib/liblzma.so*")
+            "${CXXKitWrapCrashDepsElfUtils_INSTALL_DIR}/lib/libdw.so*"
+            "${CXXKitWrapCrashDepsElfUtils_INSTALL_DIR}/lib/libelf.so*"
+            "${CXXKitWrapCrashDepsLibUnwind_INSTALL_DIR}/lib/libunwind.so*"
+            "${CXXKitWrapCrashDepsElfUtils_INSTALL_DIR}/lib/liblzma.so*")
         install(FILES ${_cxxkit_crash_so_payload}
             DESTINATION lib)
     endif()
+endif()
+
+# Build-tree runtime payload: copy the dlopen'ed .so next to the built crash lib so local tests and
+# shared builds resolve libdw.so.1 at runtime (backward dlopens by name, RPATH \$ORIGIN applies).
+if(NOT APPLE AND NOT WIN32)
+    file(GLOB _cxxkit_crash_so_payload_build
+        "${CXXKitWrapCrashDepsElfUtils_INSTALL_DIR}/lib/libdw.so*"
+        "${CXXKitWrapCrashDepsElfUtils_INSTALL_DIR}/lib/libelf.so*"
+        "${CXXKitWrapCrashDepsLibUnwind_INSTALL_DIR}/lib/libunwind.so*"
+        "${CXXKitWrapCrashDepsElfUtils_INSTALL_DIR}/lib/liblzma.so*")
+    add_custom_command(TARGET cxxkit_crash POST_BUILD
+        COMMAND ${CMAKE_COMMAND} -E copy_if_different ${_cxxkit_crash_so_payload_build}
+        "$<TARGET_FILE_DIR:cxxkit_crash>"
+        VERBATIM)
 endif()
