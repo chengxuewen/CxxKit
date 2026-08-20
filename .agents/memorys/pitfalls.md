@@ -115,9 +115,29 @@
 - **解法**: 提交前 `git status` 发现异常 M/?? 文件 → 暂停并询问用户归属；用户人工修正如确认主动提交（本会话 88acec1）
 - **验证**: 工作树干净、所有人工修正已入库且语义正确（configure 验证 QExt 不打包行为）
 
-## PIT-16: 变量模板 `_v` 在 C++11 下必报且不可抑制（GCC）(2026-08-20)
+## PIT-19: 变量模板 `_v` 在 C++11 下必报且不可抑制（GCC）(2026-08-20)
 - **症状**: `constexpr bool is_void_v = ...` 等变量模板在 C++11 编译报 "variable templates only available with -std=c++14"，且 -Werror 下变硬错误
 - **根因**: 变量模板是 C++14 特性；GCC 无论 -Wno-c++14-extensions 还是 `#pragma GCC diagnostic ignored` 都无法抑制（该诊断无公开开关，pragma 报 unknown option）
 - **解法**: 变量模板物理无法 C++11 化 → 全部 `#if CXXKIT_CC_CPP14_OR_GREATER` 保护（C++11 不定义）+ 提供 C++11 结构体 `::value`（`template<T> struct is_X : std::is_X<T>{}`）+ 调用点 `_v<X>` 改 `<X>::value`
 - **验证**: 全库 c++11 编译 0 error 0 variable-template warning；ctest 33/33
 - **教训**: `_v` 简洁语法糖会掩盖 C++14 依赖；真 C++11 需彻底结构体化，type_traits/signals 大改
+
+## PIT-20: 正则/脚本替换破坏嵌套模板结构（signals.hpp 大改教训）(2026-08-20)
+- **症状**: 用 `std::xxx_t<[^<>]*>` 全局正则替换 C++14 别名，把含嵌套/多参的 `std::enable_if_t<cond, T>` 拆错、丢失 `::type`，制造语法破坏
+- **根因**: 正则无法处理嵌套尖括号与多模板参数（如 `enable_if_t<is_callable_v<A,B>, Connection>`）；首次草率替换后 signals.hpp 无法编译
+- **解法**: 用**括号匹配器**（`find_matching` 扫描 `<`/`>` 深度对齐）逐段替换结构性模板；替换后立即编译验证；宁慢勿破
+- **验证**: signals.hpp C++11 编译通过
+- **教训**: 大面积模板替换禁全局正则；用深度计数匹配器 + 每步编译
+
+## PIT-21: C++11 局部类不能有成员模板（函数内 struct + template）(2026-08-20)
+- **症状**: 泛型 lambda 在 TEST 内改 C++11 等价时，`struct VariadicFunc { template<typename...Args> void operator()(...); }` 定义在 TEST 函数内 → "invalid declaration of member template in local class"
+- **根因**: C++11 标准：局部类（函数内定义）不能有成员模板
+- **解法**: 把含成员模板的类移到**文件作用域**（include 后、TEST 前）
+- **验证**: 移出后 C++11 编译通过
+
+## PIT-22: base 强制 cxx_std_14 掩盖全库 C++14 依赖（真 C++11 化连锁）(2026-08-20)
+- **症状**: 移除 base 的 `target_compile_features(cxxkit_base INTERFACE cxx_std_14)` 后，string_view/units/data_rate/bit_buffer/type_traits/signals 陆续暴露 C++14 编译错误，逐层连锁
+- **根因**: base 的 cxx_std_14 通过 INTERFACE 传播给所有子库（全部链接 cxxkit::base），把全库标准抬到 C++14，掩盖了分散各处的 C++14 语法（constexpr 运算、变量模板、数字分隔符、泛型 lambda）
+- **解法**: 要么全库真 C++11（逐处改），要么诚实承认 C++14 基线；本会话选前者（用户坚持 C++11）
+- **验证**: 全库 c++11 编译 0 error 0 variable-template warning
+- **教训**: 公共 INTERFACE 上的标准基线是"隐藏编译器"——会掩盖实际代码标准；C++11 严格性需用真实 `-std=c++11` 编译验证而非靠传播
