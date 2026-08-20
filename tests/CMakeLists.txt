@@ -184,6 +184,11 @@ cxxkit_add_test(cxxkit_tst_unique_function
     INCLUDE_DIRECTORIES ${PROJECT_SOURCE_DIR}
     LIBRARIES ${CXXKIT_TEST_LINK_LIBRARIES} ${CMAKE_THREAD_LIBS_INIT})
 
+cxxkit_add_test(cxxkit_tst_boundary
+    SOURCES tst_boundary.cpp
+    INCLUDE_DIRECTORIES ${PROJECT_SOURCE_DIR}
+    LIBRARIES ${CXXKIT_TEST_LINK_LIBRARIES} ${CMAKE_THREAD_LIBS_INIT})
+
 if(CXXKIT_ENABLE_LIB_CRASH)
     # Standalone crash fixture: installs the handler and raises SIGSEGV in its own process.
     # Built without gtest; the parent tst_crash spawns it via fork+exec (never death tests —
