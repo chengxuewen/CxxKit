@@ -114,3 +114,10 @@
 - **根因**: 多写者工作树（AI + 用户 IDE）下，AI 的 commit 无法感知用户刚做的未提交修改；限路径提交虽安全但漏掉用户的修正
 - **解法**: 提交前 `git status` 发现异常 M/?? 文件 → 暂停并询问用户归属；用户人工修正如确认主动提交（本会话 88acec1）
 - **验证**: 工作树干净、所有人工修正已入库且语义正确（configure 验证 QExt 不打包行为）
+
+## PIT-16: 变量模板 `_v` 在 C++11 下必报且不可抑制（GCC）(2026-08-20)
+- **症状**: `constexpr bool is_void_v = ...` 等变量模板在 C++11 编译报 "variable templates only available with -std=c++14"，且 -Werror 下变硬错误
+- **根因**: 变量模板是 C++14 特性；GCC 无论 -Wno-c++14-extensions 还是 `#pragma GCC diagnostic ignored` 都无法抑制（该诊断无公开开关，pragma 报 unknown option）
+- **解法**: 变量模板物理无法 C++11 化 → 全部 `#if CXXKIT_CC_CPP14_OR_GREATER` 保护（C++11 不定义）+ 提供 C++11 结构体 `::value`（`template<T> struct is_X : std::is_X<T>{}`）+ 调用点 `_v<X>` 改 `<X>::value`
+- **验证**: 全库 c++11 编译 0 error 0 variable-template warning；ctest 33/33
+- **教训**: `_v` 简洁语法糖会掩盖 C++14 依赖；真 C++11 需彻底结构体化，type_traits/signals 大改
