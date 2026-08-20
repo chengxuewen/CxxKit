@@ -119,3 +119,20 @@ grep -c "重复模式" <file>    # 期望 1；>1 = edit 重复插入
 ### 单行 replace + 多行 lines = 插入而非替换（高频教训）
 
 edit 工具 `replace` 带 `pos`（单行）且 `lines` 为多行时，**只在目标行后插入，不会删除目标行**——连续使用会累积重复行（本会话 5+ 次：CMakeLists 选项块、examples 块、CxxKitConfig 模板、profiling CMakeLists、profiling.hpp 宏定义）。**正确姿势**：替换多行块用 `pos`+`end` 范围；插入用 `append`。每次 edit 后 `grep -c` 验证无重复。
+
+### 大面积模板替换禁全局正则——用括号深度匹配器（PIT-20 教训）
+
+正则（`[^<>]*` 等）无法处理嵌套尖括号与多模板参数（如 `std::enable_if_t<is_callable_v<A,B>, Connection>`），全局替换会拆错、丢 `::type`、制造语法破坏（signals.hpp 大改教训）。**正确姿势**：
+1. 用**括号深度匹配器**（扫描 `<`/`>` 计数对齐闭合）逐段替换结构性模板
+2. **每一步替换后立即编译验证**（grep error），不积累未验证变更
+3. 替换含逗号/嵌套实参的模板用显式逐块 `replace`（如 python 的 `s.replace(old, new)` 精确串），非全局 regex
+验证：`cmake --build build --target <affected>` 无 error。
+
+### 严格 C++11 门禁——CI 强制无 C++14 语法混入库代码（PIT-22 教训）
+
+base 曾 `target_compile_features(cxxkit_base INTERFACE cxx_std_14)` 传播给全库，掩盖了分散各文件的 C++14 依赖。**正确姿势**：库 target 统一 `cxx_std_11`（helper 已设），CI 用脚本检查 C++14 语法残留：
+```bash
+# check.sh 应含（无输出=通过）：
+grep -rnE "std::[a-z_]+_t<|if constexpr|\[\][^)]*\(auto|0b[01]'[, ]" cxxkit/ --include="*.hpp" --include="*.cpp" || true
+```
+（`_v` 变量模板、`_t` 别名、泛型 lambda、数字分隔符全禁）

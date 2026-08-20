@@ -211,7 +211,7 @@ public:
 
     template <typename Functor,
               typename ReturnT = traits::invoke_result_t<Functor>,
-              typename = typename std::enable_if_t<!traits::is_void<ReturnT>::value>>
+              typename = typename std::enable_if<!traits::is_void<ReturnT>::value>::type>
     ReturnT sendTask(Functor &&functor, const SourceLocation &location = SourceLocation::current())
     {
         ReturnT result;
