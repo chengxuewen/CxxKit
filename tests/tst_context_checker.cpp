@@ -115,7 +115,14 @@ TEST(ContextCheckerTest, InitializeForDifferentTaskQueue)
     auto queue = TaskQueueThread::makeShared();
     ContextChecker contextChecker(queue.get());
     EXPECT_EQ(contextChecker.isCurrent(), !CXXKIT_DCHECK_IS_ON);
-    queue->postTask([&] { EXPECT_TRUE(contextChecker.isCurrent()); });
+    Semaphore blocker;
+    queue->postTask(
+        [&]
+        {
+            EXPECT_TRUE(contextChecker.isCurrent());
+            blocker.release();
+        });
+    blocker.acquire();
 }
 
 TEST(ContextCheckerTest, DetachFromTaskQueueAndUseOnThread)
