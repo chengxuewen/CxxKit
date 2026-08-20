@@ -49,5 +49,30 @@ function(cxxkit_add_test name)
     endif()
 
     add_test(NAME ${name} COMMAND ${name})
-    set_property(TARGET ${name} PROPERTY FOLDER "CxxKit/tests")
+
+    # Auto-derive FOLDER from directory hierarchy (octk pattern); explicit
+    # pre-set FOLDER is kept as-is.
+    get_target_property(_cxxkit_folder ${name} FOLDER)
+    if(NOT _cxxkit_folder)
+        file(RELATIVE_PATH _dir "${PROJECT_SOURCE_DIR}" "${CMAKE_CURRENT_SOURCE_DIR}")
+        if(_dir MATCHES "^tests/(.+)$")
+            set_target_properties(${name} PROPERTIES FOLDER "CxxKit/tests/${CMAKE_MATCH_1}")
+        elseif(_dir STREQUAL "tests")
+            set_target_properties(${name} PROPERTIES FOLDER "CxxKit/tests")
+        else()
+            set_target_properties(${name} PROPERTIES FOLDER "CxxKit/tests/${_dir}")
+        endif()
+    endif()
+
+    # <name>_check: run this single test via ctest (octk pattern).
+    set(_test_config_options "")
+    get_cmake_property(_is_multi_config GENERATOR_IS_MULTI_CONFIG)
+    if(_is_multi_config)
+        set(_test_config_options -C $<CONFIG>)
+    endif()
+    add_custom_target(${name}_check
+        VERBATIM
+        COMMENT "Running ${CMAKE_CTEST_COMMAND} -V -R \"^${name}$\" ${_test_config_options}"
+        COMMAND ${CMAKE_CTEST_COMMAND} -V -R "^${name}$" ${_test_config_options})
+    add_dependencies(${name}_check ${name})
 endfunction()
