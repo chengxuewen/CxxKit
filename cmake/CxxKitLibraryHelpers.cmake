@@ -22,10 +22,10 @@
 ########################################################################################################################
 
 function(cxxkit_add_library name)
-    cxxkit_parse_all_arguments(arg "cxxkit_add_library"
+        cxxkit_parse_all_arguments(arg "cxxkit_add_library"
         "EXCEPTIONS;INTERFACE;STATIC;SHARED;NO_ALIAS"
-        "EXPORT_NAME;PRECOMPILED_HEADER"
-        "HEADERS;SOURCES;LIBRARIES;PUBLIC_LIBRARIES;INCLUDE_DIRECTORIES;FOLDER" ${ARGN})
+        "EXPORT_NAME;PRECOMPILED_HEADER;INSTALL_RPATH"
+        "HEADERS;SOURCES;LIBRARIES;PUBLIC_LIBRARIES;INCLUDE_DIRECTORIES;FOLDER;COMPILE_DEFINITIONS" ${ARGN})
 
     # Resolve library type: explicit option wins, otherwise CXXKIT_BUILD_SHARED_LIBS decides.
     if(arg_INTERFACE)
@@ -112,6 +112,12 @@ function(cxxkit_add_library name)
     endif()
     set_target_properties(${name} PROPERTIES FOLDER "${_cxxkit_folder}")
 
+    # COMPILE_DEFINITIONS: optional sublib-specific definitions (e.g. CXXKIT_FEATURE_ENABLE_CRASH=1).
+    # Visibility matches the include trio (PUBLIC for compiled, INTERFACE for header-only).
+    if(NOT "${arg_COMPILE_DEFINITIONS}" STREQUAL "")
+        target_compile_definitions(${name} ${_cxxkit_vis} ${arg_COMPILE_DEFINITIONS})
+    endif()
+
     # EXPORT_NAME: explicit arg wins, else target name minus "cxxkit_" prefix.
     if(NOT "${arg_EXPORT_NAME}" STREQUAL "")
         set(_cxxkit_export_name "${arg_EXPORT_NAME}")
@@ -119,6 +125,12 @@ function(cxxkit_add_library name)
         string(REGEX REPLACE "^cxxkit_" "" _cxxkit_export_name "${name}")
     endif()
     set_target_properties(${name} PROPERTIES EXPORT_NAME "${_cxxkit_export_name}")
+
+    # INSTALL_RPATH: optional runtime search path for the installed shared lib (e.g. "\$ORIGIN" for a lib
+    # like cxxkit_crash dlopening libdw.so.1). No-op for static/INTERFACE builds.
+    if(NOT "${arg_INSTALL_RPATH}" STREQUAL "")
+        set_target_properties(${name} PROPERTIES INSTALL_RPATH "${arg_INSTALL_RPATH}")
+    endif()
 
     if(TARGET ${name})
         target_compile_definitions(${name} ${_cxxkit_vis} ${CXXKIT_GLOBAL_COMPILE_DEFINITIONS})

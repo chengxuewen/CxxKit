@@ -37,32 +37,16 @@ cxxkit_configure_library_begin(CxxKitCrash)
 cxxkit_find_package(Breakpad PROVIDED_TARGETS CxxKitWrapBreakpad::WrapBreakpad)
 cxxkit_find_package(Backward PROVIDED_TARGETS CxxKitWrapBackward::WrapBackward)
 
+# backward.hpp dlopens libdw.so.1 at runtime: the shared lib must find the shipped .so next to itself
+# (INSTALL_RPATH keeps that working for the installed shared lib).
 cxxkit_add_library(cxxkit_crash
     STATIC
     SOURCES crash_handler.cpp
     PUBLIC_LIBRARIES cxxkit::base cxxkit::patterns cxxkit::tools CxxKitWrapBreakpad::WrapBreakpad CxxKitWrapBackward::WrapBackward
+    COMPILE_DEFINITIONS CXXKIT_FEATURE_ENABLE_CRASH=1
+    INSTALL_RPATH "$ORIGIN"
     EXPORT_NAME crash
     FOLDER "CxxKit/libs")
-target_compile_definitions(cxxkit_crash PUBLIC CXXKIT_FEATURE_ENABLE_CRASH=1)
-# backward.hpp dlopens libdw.so.1 at runtime (Linux): the shared lib must find the shipped .so next to itself.
-set_target_properties(cxxkit_crash PROPERTIES
-    INSTALL_RPATH "$ORIGIN")
 
 cxxkit_generate_pkg_config(cxxkit_crash crash DESCRIPTION "cxxkit crash module (breakpad + backward-cpp backend)")
 cxxkit_configure_library_end(CxxKitCrash)
-
-# set_property(TARGET cxxkit_crash PROPERTY FOLDER "CxxKit/libs")
-#     # vcpkg payload (D11): static archive + configs so installed consumers resolve
-#     # find_dependency(unofficial-breakpad / Backward) from cxxkitConfig.cmake.
-#     # Single-package unpack roots (QExt mechanism): one INSTALL_DIR per package.
-#     install(FILES "${CxxKitWrapBreakpad_INSTALL_DIR}/lib/libbreakpad_client.a"
-#         DESTINATION lib)
-#     install(DIRECTORY "${CxxKitWrapBreakpad_INSTALL_DIR}/share/unofficial-breakpad"
-#         DESTINATION lib/cmake)
-#     install(DIRECTORY "${CxxKitWrapBackward_INSTALL_DIR}/share/Backward"
-#         DESTINATION lib/cmake)
-# endif()
-
-# Note: elfutils/libunwind .so are NOT installed/packaged — backward-cpp without libdw degrades to
-# address-level traces (no crash). For full symbolization install libdw.so.1 system-wide or ship it
-# with the app. Tests inject LD_LIBRARY_PATH (see tests/CMakeLists.txt TEST_ELFUTILS_LIB_DIR).
