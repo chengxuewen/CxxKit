@@ -53,15 +53,15 @@ static bool isIdRegistered(ErrorId id)
 }
 static ErrorId fnv1aHash(StringView name)
 {
-    constexpr ErrorId prime = 0x01000193; // 16777619
-    ErrorId hash = 0x811C9DC5;            // 2166136261
+    constexpr uint32_t prime = 0x01000193; // 16777619
+    uint32_t hash = 0x811C9DC5;            // 2166136261
 
     for (size_t i = 0; i < name.size(); ++i)
     {
         hash ^= static_cast<uint8_t>(name[i]);
         hash *= prime;
     }
-    return hash;
+    return static_cast<ErrorId>(hash);
 }
 } // namespace detail
 
