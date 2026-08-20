@@ -96,3 +96,21 @@
 - **根因**: 注入行含换行符，且锚点选取在结构中间，破坏了大括号配平（edit-safety 警告的经典场景）
 - **解法**: 修括号配平 + 清理重复行；**注入含换行/条件编译块时用整块范围替换，不插入行内**；edit 后立即编译验证
 - **验证**: 重新编译 + 测试通过
+
+## PIT-16: vcpkg 打包默认值偏离 QExt 语义——源码树误产 .7z (2026-08-19)
+- **症状**: configure crash=ON 后 `3rdparty/breakpad-x64-linux.7z`、`backward-cpp-x64-linux.7z` 出现在源码树（未跟踪垃圾 + 与"vcpkg 产物不入库"初衷冲突）
+- **根因**: 移植时给 `CXXKIT_3RDPARTY_PACKAGES_DIR` 设了默认 `${PROJECT_SOURCE_DIR}/3rdparty`——QExt 是 `INPUT_` 未注入时保持空，pack 步骤 `if(NOT "X$dir" STREQUAL "X")` 直接跳过；"改进默认值"破坏了 QExt 契约
+- **解法**: 顶层仅当 `DEFINED INPUT_CXXKIT_3RDPARTY_PACKAGES_DIR` 才设置该 CACHE（否则空）；未传入 → 打包跳过（.7z 只留 build 树 output 目录）；已误产的 .7z 删除
+- **验证**: `git status` 无 3rdparty/*.7z 噪音；`cmake -D CXXKIT_ENABLE_LIB_CRASH=ON` 后 3rdparty/ 无新 .7z
+
+## PIT-17: 无路径 `git commit` 卷入整个 staging 区——62 文件误提交 (2026-08-19)
+- **症状**: `git commit`（无路径参数）提交了 62 个文件——含 worktree 中他人/用户未提交的人工修正（CMake 大小写重构、Helpers 全面改动），commit message 却只描述 memorys 更新
+- **根因**: 习惯性无路径 commit + 未在 commit 前 `git status` 核对；co-editing 场景（用户并行手工改文件）下 index 里有非预期改动
+- **解法**: 每次 commit 前 `git status --short` + `git diff --cached --stat` 核对；只 `git add` 明确路径；commit 带路径参数或确认 staging 区只含预期文件
+- **验证**: `git show --stat <commit>` 文件列表 == 预期；本会话 88acec1 起恢复限定提交
+
+## PIT-18: 用户并行人工修正与 AI 提交竞态——修正被无路径 commit 吞并 (2026-08-19)
+- **症状**: 用户手工把 `CXXKIT_3RDPARTY_PACKAGES_DIR` 默认值改为空（QExt 语义）+ 调整 .gitignore，但这些改动未及时提交，直到一次无路径 commit 才被卷入（连同 62 文件一起）
+- **根因**: 多写者工作树（AI + 用户 IDE）下，AI 的 commit 无法感知用户刚做的未提交修改；限路径提交虽安全但漏掉用户的修正
+- **解法**: 提交前 `git status` 发现异常 M/?? 文件 → 暂停并询问用户归属；用户人工修正如确认主动提交（本会话 88acec1）
+- **验证**: 工作树干净、所有人工修正已入库且语义正确（configure 验证 QExt 不打包行为）
