@@ -1,0 +1,24 @@
+# CxxKit LeakSanitizer suppressions
+#
+# Usage (build-asan, the sanitizer build configured with CXXKIT_BUILD_SANITIZERS=ON):
+#   LSAN_OPTIONS="suppressions=$(pwd)/scripts/lsan.supp" ctest --test-dir build-asan --output-on-failure
+#
+# ---------------------------------------------------------------------------
+# Designed process-lifetime AdoptedPlatformThread singleton (Task 4 / finding F1)
+#
+# Adopted threads (the main thread plus any std::thread that calls the thread
+# API, e.g. PlatformThread::currentThread()) allocate a PlatformThreadData and an
+# AdoptedPlatformThread via `new` in PlatformThreadData::current(). By design
+# (see cxxkit/thread/detail/platform_thread_p.hpp: "thread should be running and
+# not finished for the lifetime of the application") this data intentionally
+# lives until process exit - it mirrors Qt's adopted-thread lifetime model.
+#
+# The genuine per-thread leak was fixed by restoring `data->deref()` in
+# destroyCurrentThreadData() (platform_thread_posix.cpp), releasing each exiting
+# thread's reference so its own data is freed. What remains below is ONLY this
+# intended process-lifetime singleton on adopted threads (the mName std::string
+# buffers allocated via _M_mutate are its indirect children and are suppressed
+# by name for the same reason).
+leak:platform_thread_posix.cpp
+leak:platform_thread.cpp
+leak:_M_mutate
