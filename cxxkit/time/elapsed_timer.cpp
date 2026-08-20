@@ -51,6 +51,12 @@ int64_t ElapsedTimer::restart() noexcept
     const auto now = std::chrono::steady_clock::now();
     mStart = std::chrono::duration_cast<std::chrono::nanoseconds>(now.time_since_epoch()).count();
     mStop = 0;
+    // mStart is int64_t; if it was never started it holds kInvalidData (INT64_MIN).
+    // Subtracting the sentinel from the current ns counter overflows int64_t.
+    if (old == kInvalidData)
+    {
+        return 0;
+    }
     return (mStart - old) / 1000000;
 }
 
