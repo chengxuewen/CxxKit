@@ -139,6 +139,8 @@ cxxkit_option(CXXKIT_BUILD_SHARED_LIBS "Enable this to build as dynamically" OFF
 cxxkit_option(CXXKIT_BUILD_USE_PCH "Enable this to build use precompiled header files for compilation" ON)
 cxxkit_option(CXXKIT_BUILD_COMPILER_WARNING "Enable this to build target with compiler warnings" OFF)
 cxxkit_option(CXXKIT_BUILD_WARNINGS_ARE_ERRORS "Enable this to build with warnings as errors" ON)
+cxxkit_option(CXXKIT_BUILD_SANITIZERS "Enable ASAN/LSAN/UBSan for all targets" OFF
+    OR_CONDITION CXXKIT_BUILD_ALL)
 cxxkit_option(CXXKIT_BUILD_BENCHMARKS "Enable this to build the benchmarks" OFF)
 cxxkit_option(CXXKIT_BUILD_DOCS "Enable this to build the documentation" OFF)
 cxxkit_option(CXXKIT_BUILD_LIBS "Enable this to build libs" ON
@@ -157,6 +159,15 @@ cxxkit_option(CXXKIT_ENABLE_LIB_TRACY "Enable this to build enable Tracy profile
     OR_CONDITION CXXKIT_BUILD_ALL)
 cxxkit_option(CXXKIT_ENABLE_LIB_CRASH "Enable this to build enable crash lib" OFF
     OR_CONDITION CXXKIT_BUILD_ALL)
+
+#-----------------------------------------------------------------------------------------------------------------------
+# Sanitizers (ASAN/LSAN/UBSan) - applied at top-level scope so add_compile_options/add_link_options
+# propagate to every subdirectory (all libraries + tests, built and installed here).
+#-----------------------------------------------------------------------------------------------------------------------
+if(CXXKIT_BUILD_SANITIZERS)
+    add_compile_options("-fsanitize=address,leak,undefined" "-fno-omit-frame-pointer")
+    add_link_options("-fsanitize=address,leak,undefined")
+endif()
 
 #-----------------------------------------------------------------------------------------------------------------------
 # Testing
