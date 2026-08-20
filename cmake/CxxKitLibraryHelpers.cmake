@@ -23,23 +23,64 @@
 
 function(cxxkit_add_library name)
     cxxkit_parse_all_arguments(arg "cxxkit_add_library"
-        "EXCEPTIONS;INTERFACE"
-        ""
-        "SOURCES;LIBRARIES;PUBLIC_LIBRARIES;INCLUDE_DIRECTORIES;PRECOMPILED_HEADER" ${ARGN})
+        "EXCEPTIONS;INTERFACE;STATIC;SHARED;NO_ALIAS"
+        "EXPORT_NAME;PRECOMPILED_HEADER"
+        "HEADERS;SOURCES;LIBRARIES;PUBLIC_LIBRARIES;INCLUDE_DIRECTORIES;FOLDER" ${ARGN})
 
+    # Resolve library type: explicit option wins, otherwise CXXKIT_BUILD_SHARED_LIBS decides.
     if(arg_INTERFACE)
-        add_library(${name} INTERFACE)
+        set(_cxxkit_type INTERFACE)
+    elseif(arg_STATIC)
+        set(_cxxkit_type STATIC)
+    elseif(arg_SHARED)
+        set(_cxxkit_type SHARED)
+    elseif(CXXKIT_BUILD_SHARED_LIBS)
+        set(_cxxkit_type SHARED)
+    else()
+        set(_cxxkit_type STATIC)
+    endif()
+
+    # Default headers: auto-GLOB *.hpp + detail/*.hpp of the current dir (D15).
+    if("${arg_HEADERS}" STREQUAL "")
+        file(GLOB _cxxkit_headers CONFIGURE_DEPENDS
+            "${CMAKE_CURRENT_SOURCE_DIR}/*.hpp"
+            "${CMAKE_CURRENT_SOURCE_DIR}/detail/*.hpp")
+    else()
+        set(_cxxkit_headers ${arg_HEADERS})
+    endif()
+
+    if(_cxxkit_type STREQUAL "INTERFACE")
+        add_library(${name} INTERFACE ${_cxxkit_headers})
     else()
         if("${arg_SOURCES}" STREQUAL "")
             message(FATAL_ERROR "cxxkit_add_library(${name}): no SOURCES given and not INTERFACE.")
         endif()
-        add_library(${name} ${arg_SOURCES})
+        add_library(${name} ${_cxxkit_type} ${arg_SOURCES} ${_cxxkit_headers})
     endif()
 
-    # Namespaced alias
-    add_library(cxxkit::${name} ALIAS ${name})
+    # CXXKIT_<UPPER(name)>_INSTALL_INCLUDE_DIR for reuse by sublib install(DIRECTORY) lines.
+    file(RELATIVE_PATH _cxxkit_rel_dir "${PROJECT_SOURCE_DIR}" "${CMAKE_CURRENT_SOURCE_DIR}")
+    string(TOUPPER "${name}" _cxxkit_name_upper)
+    set(CXXKIT_${_cxxkit_name_upper}_INSTALL_INCLUDE_DIR "${PROJECT_SOURCE_DIR}/${_cxxkit_rel_dir}" PARENT_SCOPE)
 
-    if(NOT arg_INTERFACE)
+    # Include trio + C++ standard baseline (both compiled and INTERFACE targets).
+    if(_cxxkit_type STREQUAL "INTERFACE")
+        set(_cxxkit_vis INTERFACE)
+    else()
+        set(_cxxkit_vis PUBLIC)
+    endif()
+    target_include_directories(${name} ${_cxxkit_vis}
+        $<BUILD_INTERFACE:${PROJECT_SOURCE_DIR}>
+        $<BUILD_INTERFACE:${PROJECT_BINARY_DIR}>
+        $<INSTALL_INTERFACE:include>)
+    target_compile_features(${name} ${_cxxkit_vis} cxx_std_11)
+
+    if(NOT arg_NO_ALIAS)
+        # Namespaced alias
+        add_library(cxxkit::${name} ALIAS ${name})
+    endif()
+
+    if(NOT _cxxkit_type STREQUAL "INTERFACE")
         if(NOT "${arg_INCLUDE_DIRECTORIES}" STREQUAL "")
             target_include_directories(${name} PUBLIC ${arg_INCLUDE_DIRECTORIES})
         endif()
@@ -63,7 +104,25 @@ function(cxxkit_add_library name)
         endif()
     endif()
 
+    # FOLDER: explicit arg wins, else derive from source-relative path (octk-style).
+    if(NOT "${arg_FOLDER}" STREQUAL "")
+        set(_cxxkit_folder "${arg_FOLDER}")
+    elseif(_cxxkit_rel_dir MATCHES "^cxxkit/(.+)$")
+        set(_cxxkit_folder "CxxKit/libs/${CMAKE_MATCH_1}")
+    else()
+        set(_cxxkit_folder "CxxKit/libs")
+    endif()
+    set_target_properties(${name} PROPERTIES FOLDER "${_cxxkit_folder}")
+
+    # EXPORT_NAME: explicit arg wins, else target name minus "cxxkit_" prefix.
+    if(NOT "${arg_EXPORT_NAME}" STREQUAL "")
+        set(_cxxkit_export_name "${arg_EXPORT_NAME}")
+    else()
+        string(REGEX REPLACE "^cxxkit_" "" _cxxkit_export_name "${name}")
+    endif()
+    set_target_properties(${name} PROPERTIES EXPORT_NAME "${_cxxkit_export_name}")
+
     if(TARGET ${name})
-        target_compile_definitions(${name} PUBLIC ${CXXKIT_GLOBAL_COMPILE_DEFINITIONS})
+        target_compile_definitions(${name} ${_cxxkit_vis} ${CXXKIT_GLOBAL_COMPILE_DEFINITIONS})
     endif()
 endfunction()
