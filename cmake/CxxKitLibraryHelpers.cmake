@@ -58,10 +58,6 @@ function(cxxkit_add_library name)
         add_library(${name} ${_cxxkit_type} ${arg_SOURCES} ${_cxxkit_headers})
     endif()
 
-    # CXXKIT_<UPPER(name)>_INSTALL_INCLUDE_DIR for reuse by sublib install(DIRECTORY) lines.
-    file(RELATIVE_PATH _cxxkit_rel_dir "${PROJECT_SOURCE_DIR}" "${CMAKE_CURRENT_SOURCE_DIR}")
-    string(TOUPPER "${name}" _cxxkit_name_upper)
-    set(CXXKIT_${_cxxkit_name_upper}_INSTALL_INCLUDE_DIR "${PROJECT_SOURCE_DIR}/${_cxxkit_rel_dir}" PARENT_SCOPE)
 
     # Include trio + C++ standard baseline (both compiled and INTERFACE targets).
     if(_cxxkit_type STREQUAL "INTERFACE")
