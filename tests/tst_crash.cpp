@@ -167,8 +167,6 @@ TEST(CrashHandler, StackTraceOptIn)
         ::setenv("LD_LIBRARY_PATH", TEST_ELFUTILS_LIB_DIR, 1); // backward dlopen("libdw.so.1")
 #endif
         ::dup2(pipefd[1], STDERR_FILENO);
-    if (pid == 0) {
-        ::dup2(pipefd[1], STDERR_FILENO);
         ::close(pipefd[0]);
         ::close(pipefd[1]);
         ::execl(fixturePath.c_str(), "crash_fixture", dir.c_str(), "--stacktrace", nullptr);

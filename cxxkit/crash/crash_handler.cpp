@@ -1,7 +1,8 @@
 #include <cxxkit/crash/crash_handler.hpp>
 
-#include <cxxkit/crash/detail/crash_handler_p.hpp>
 #include <cxxkit/tools/checks.hpp>
+
+#include <cxxkit/crash/detail/crash_handler_p.hpp>
 
 #include <atomic>
 #include <cstdio>
@@ -24,7 +25,7 @@ void printStackTraceFromUcontext(void *ucontext)
 {
 #if defined(CXXKIT_OS_LINUX)
     backward::StackTrace stackTrace;
-    stackTrace.load_from(*static_cast<ucontext_t *>(ucontext)); // crashed thread's stack, not the handler's
+    stackTrace.load_from(nullptr, 32, ucontext); // backward API: (void* addr, size_t depth, void* ucontext)
     backward::Printer printer;
     printer.object = true;
     printer.color_mode = backward::ColorMode::always;
@@ -51,7 +52,11 @@ CrashHandler::~CrashHandler()
 
 CrashHandler &CrashHandler::instance()
 {
-    return cxxkit::Singleton<CrashHandler, true>::instance();
+    // C++11 function-local static: thread-safe, zero deps, lives for the process lifetime.
+    // (Singleton<CrashHandler, true> was abandoned: its template had never been instantiated — C++11
+    // atomic copy-init, missing CXXKIT_ASSERT include, and private-dtor-vs-unique_ptr all break.)
+    static CrashHandler instance;
+    return instance;
 }
 
 bool CrashHandler::isHandlerInstalled() const

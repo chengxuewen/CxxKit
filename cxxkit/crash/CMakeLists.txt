@@ -32,8 +32,8 @@ cmake_minimum_required(VERSION ${CXXKIT_MIN_NEW_POLICY_CMAKE_VERSION}...${CXXKIT
 cxxkit_configure_library_begin(CxxKitCrash)
 
 # QExt-style one wrap per package: FindWrapBreakpad.cmake + FindWrapBackward.cmake (cmake/InstallVcpkg.cmake).
-cxxkit_find_package(Breakpad PROVIDED_TARGETS CXXKitWrapBreakpad::WrapBreakpad)
-cxxkit_find_package(Backward PROVIDED_TARGETS CXXKitWrapBackward::WrapBackward)
+cxxkit_find_package(Breakpad PROVIDED_TARGETS CxxKitWrapBreakpad::WrapBreakpad)
+cxxkit_find_package(Backward PROVIDED_TARGETS CxxKitWrapBackward::WrapBackward)
 
 file(GLOB _cxxkit_headers CONFIGURE_DEPENDS ${CMAKE_CURRENT_SOURCE_DIR}/*.hpp ${CMAKE_CURRENT_SOURCE_DIR}/detail/*.hpp)
 add_library(cxxkit_crash
@@ -49,8 +49,8 @@ target_link_libraries(cxxkit_crash PUBLIC
     cxxkit::base
     cxxkit::patterns
     cxxkit::tools
-    CXXKitWrapBreakpad::WrapBreakpad
-    CXXKitWrapBackward::WrapBackward)
+    CxxKitWrapBreakpad::WrapBreakpad
+    CxxKitWrapBackward::WrapBackward)
 target_compile_features(cxxkit_crash PUBLIC cxx_std_11)
 target_compile_definitions(cxxkit_crash PUBLIC CXXKIT_FEATURE_ENABLE_CRASH=1)
 # backward.hpp dlopens libdw.so.1 at runtime (Linux): the shared lib must find the shipped .so next to itself.
@@ -68,11 +68,11 @@ cxxkit_configure_library_end(CxxKitCrash)
 #     # vcpkg payload (D11): static archive + configs so installed consumers resolve
 #     # find_dependency(unofficial-breakpad / Backward) from cxxkitConfig.cmake.
 #     # Single-package unpack roots (QExt mechanism): one INSTALL_DIR per package.
-#     install(FILES "${CXXKitWrapBreakpad_INSTALL_DIR}/lib/libbreakpad_client.a"
+#     install(FILES "${CxxKitWrapBreakpad_INSTALL_DIR}/lib/libbreakpad_client.a"
 #         DESTINATION lib)
-#     install(DIRECTORY "${CXXKitWrapBreakpad_INSTALL_DIR}/share/unofficial-breakpad"
+#     install(DIRECTORY "${CxxKitWrapBreakpad_INSTALL_DIR}/share/unofficial-breakpad"
 #         DESTINATION lib/cmake)
-#     install(DIRECTORY "${CXXKitWrapBackward_INSTALL_DIR}/share/Backward"
+#     install(DIRECTORY "${CxxKitWrapBackward_INSTALL_DIR}/share/Backward"
 #         DESTINATION lib/cmake)
 # endif()
 

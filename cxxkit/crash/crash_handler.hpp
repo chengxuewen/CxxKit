@@ -2,7 +2,6 @@
 
 #include <cxxkit/base/global.hpp>
 #include <cxxkit/crash/crash_global.hpp>
-#include <cxxkit/patterns/singleton.hpp>
 
 #include <string>
 #include <vector>
@@ -17,8 +16,9 @@ class CrashHandlerPrivate;
  * @brief Process-wide crash handler (Google breakpad backend + optional backward-cpp stack printing).
  *
  * Design contract (see docs/superpowers/plans/2026-08-19-cxxkit-crash-sublib.md):
- *  - Single instance per process. install() refuses a second installation (atomic guard) — coexistence
- *    with QExt::Breakpad in the same process is NOT supported: crash ON ⇒ QExt::Breakpad OFF.
+ *  - Single instance per process (C++11 function-local static, thread-safe). install() refuses a second
+ *    installation (atomic guard) — coexistence with QExt::Breakpad in the same process is NOT supported:
+ *    crash ON ⇒ QExt::Breakpad OFF.
  *  - Config-then-install: setDumpPath()/setStackTraceOnCrash()/setCallback() are only valid BEFORE
  *    install(); calling them after install triggers CXXKIT_CHECK.
  *  - The dump callback runs on breakpad's dedicated handler thread (NOT in signal context). Default
@@ -26,15 +26,16 @@ class CrashHandlerPrivate;
  *    stack (load_from ucontext) to stderr — best-effort, backward-cpp is not async-signal-safe.
  *  - v1 has NO upload: dump files stay on disk for offline symbolication (minidump_stackwalk).
  */
-class CXXKIT_CRASH_API CrashHandler : public cxxkit::Singleton<CrashHandler, true>
+class CXXKIT_CRASH_API CrashHandler
 {
 public:
-    static constexpr bool UseManualLifetime = true;
-
     /** User callback invoked after a minidump is written (handler thread, keep it fast). */
     using CrashCallback = bool (*)(const char *dumpPath, void *context, bool succeeded);
 
     static CrashHandler &instance();
+
+    /** Public so the function-local static can be destroyed at process exit (it is not in practice). */
+    ~CrashHandler();
 
     /** True once install() succeeded and the handler is armed. */
     bool isHandlerInstalled() const;
@@ -67,13 +68,11 @@ public:
     /** Deletes *.dmp files in the dump path. */
     void clearDumps();
 
-    CXXKIT_DECLARE_SINGLETON(CrashHandler)
     CXXKIT_DECLARE_PRIVATE(CrashHandler)
     CXXKIT_DISABLE_COPY_MOVE(CrashHandler)
 
 private:
     CrashHandler();
-    ~CrashHandler() override;
 
     CXXKIT_DEFINE_DPTR(CrashHandler)
 };

@@ -14,7 +14,7 @@
 cmake_minimum_required(VERSION ${CXXKIT_MIN_NEW_POLICY_CMAKE_VERSION}...${CXXKIT_MAX_NEW_POLICY_CMAKE_VERSION})
 find_package(Threads REQUIRED)
 
-cxxkit_find_package(GTest PROVIDED_TARGETS CXXKitWrapGTest::WrapGTest)
+cxxkit_find_package(GTest PROVIDED_TARGETS CxxKitWrapGTest::WrapGTest)
 
 set(CXXKIT_TEST_LINK_LIBRARIES
     cxxkit::base
@@ -29,7 +29,7 @@ set(CXXKIT_TEST_LINK_LIBRARIES
     cxxkit::thread
     cxxkit::text
     cxxkit::tools
-    CXXKitWrapGTest::WrapGTest)
+    CxxKitWrapGTest::WrapGTest)
 
 cxxkit_add_test(cxxkit_tst_array_view
     SOURCES tst_array_view.cpp
@@ -194,6 +194,6 @@ if(CXXKIT_ENABLE_LIB_CRASH)
         # Give the spawned fixture a deterministic libdw.so.1 search path for the stack-trace test
         # (backward dlopens it by name; no system elfutils dependency assumed).
         target_compile_definitions(cxxkit_tst_crash PRIVATE
-            TEST_ELFUTILS_LIB_DIR="${CXXKitWrapBackward_ElfUtils_INSTALL_DIR}/lib")
+            TEST_ELFUTILS_LIB_DIR="${CxxKitWrapBackward_ElfUtils_INSTALL_DIR}/lib")
     endif()
 endif()
