@@ -84,7 +84,10 @@ CMakeLists.txt.user
 # --------
 cmake-build*
 build*
-vcpkg*
+# vcpkg bootstrap clones (cxxkit_vcpkg_install) + any repo-root vcpkg artifacts;
+# anchored so scripts/crash-deps/vcpkg.json (a source file) is NOT ignored
+/vcpkg/
+/vcpkg-tools/
 
 # Temp dirs
 # --------

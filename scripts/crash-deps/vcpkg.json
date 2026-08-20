@@ -1,0 +1,10 @@
+{
+  "name": "cxxkit-crash-deps",
+  "version-string": "2026-08-19",
+  "dependencies": [
+    { "name": "breakpad", "version>=": "2024-02-16" },
+    { "name": "backward-cpp", "version>=": "2023-11-24" },
+    { "name": "elfutils", "version>=": "0.195", "platform": "linux" },
+    { "name": "libunwind", "version>=": "1.8.3", "platform": "linux" }
+  ]
+}
