@@ -75,4 +75,6 @@ function(cxxkit_add_test name)
         COMMENT "Running ${CMAKE_CTEST_COMMAND} -V -R \"^${name}$\" ${_test_config_options}"
         COMMAND ${CMAKE_CTEST_COMMAND} -V -R "^${name}$" ${_test_config_options})
     add_dependencies(${name}_check ${name})
+    # Group with the test target in the IDE (custom targets default to the top level).
+    set_property(TARGET ${name}_check PROPERTY FOLDER "CxxKit/tests")
 endfunction()
