@@ -87,8 +87,10 @@ function(cxxkit_vcpkg_install)
                 endif()
             endif()
             message(STATUS "Start clone ${CxxKitVcpkg_NAME} in ${CXXKIT_TOP_LEVEL_SOURCE_DIR}.")
+            # Full clone (no --depth): builtin-baseline version pinning needs port history to
+            # checkout baseline versions; a shallow clone fails with 'failed to unpack tree object'.
             execute_process(
-                COMMAND "${GIT_EXECUTABLE}" clone https://github.com/microsoft/vcpkg.git --depth 1
+                COMMAND "${GIT_EXECUTABLE}" clone https://github.com/microsoft/vcpkg.git
                 WORKING_DIRECTORY "${CXXKIT_TOP_LEVEL_SOURCE_DIR}"
                 RESULT_VARIABLE CLONE_RESULT
                 COMMAND_ECHO STDOUT)
