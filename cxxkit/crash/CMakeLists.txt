@@ -21,7 +21,6 @@
 #
 ########################################################################################################################
 
-
 ########################################################################################################################
 #
 # cxxkit::crash — crash handling sublibrary (breakpad backend + backward-cpp stack printing, opt-in).
@@ -38,30 +37,18 @@ cxxkit_configure_library_begin(CxxKitCrash)
 cxxkit_find_package(Breakpad PROVIDED_TARGETS CxxKitWrapBreakpad::WrapBreakpad)
 cxxkit_find_package(Backward PROVIDED_TARGETS CxxKitWrapBackward::WrapBackward)
 
-file(GLOB _cxxkit_headers CONFIGURE_DEPENDS ${CMAKE_CURRENT_SOURCE_DIR}/*.hpp ${CMAKE_CURRENT_SOURCE_DIR}/detail/*.hpp)
-add_library(cxxkit_crash
-    ${_cxxkit_headers}
-    crash_handler.cpp)
+cxxkit_add_library(cxxkit_crash
+    STATIC
+    NO_ALIAS
+    SOURCES crash_handler.cpp
+    PUBLIC_LIBRARIES cxxkit::base cxxkit::patterns cxxkit::tools CxxKitWrapBreakpad::WrapBreakpad CxxKitWrapBackward::WrapBackward
+    EXPORT_NAME crash
+    FOLDER "CxxKit/libs")
 add_library(cxxkit::crash ALIAS cxxkit_crash)
 
-target_include_directories(cxxkit_crash PUBLIC
-    $<BUILD_INTERFACE:${PROJECT_SOURCE_DIR}>
-    $<BUILD_INTERFACE:${PROJECT_BINARY_DIR}>
-    $<INSTALL_INTERFACE:include>)
-target_link_libraries(cxxkit_crash PUBLIC
-    cxxkit::base
-    cxxkit::patterns
-    cxxkit::tools
-    CxxKitWrapBreakpad::WrapBreakpad
-    CxxKitWrapBackward::WrapBackward)
-target_compile_features(cxxkit_crash PUBLIC cxx_std_11)
 target_compile_definitions(cxxkit_crash PUBLIC CXXKIT_FEATURE_ENABLE_CRASH=1)
 # backward.hpp dlopens libdw.so.1 at runtime (Linux): the shared lib must find the shipped .so next to itself.
 set_target_properties(cxxkit_crash PROPERTIES
-    EXPORT_NAME crash
-    CXX_STANDARD ${CXXKIT_FEATURE_CXX_STANDARD}
-    CXX_STANDARD_REQUIRED ON
-    CXX_EXTENSIONS OFF
     INSTALL_RPATH "$ORIGIN")
 
 cxxkit_generate_pkg_config(cxxkit_crash crash DESCRIPTION "cxxkit crash module (breakpad + backward-cpp backend)")

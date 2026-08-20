@@ -28,10 +28,12 @@ cxxkit_configure_library_begin(CxxKitBase)
 # Generate core_config.hpp into the build tree
 cxxkit_generate_core_config()
 
-file(GLOB _cxxkit_headers CONFIGURE_DEPENDS ${CMAKE_CURRENT_SOURCE_DIR}/*.hpp ${CMAKE_CURRENT_SOURCE_DIR}/detail/*.hpp)
-add_library(cxxkit_base INTERFACE ${_cxxkit_headers})
+cxxkit_add_library(cxxkit_base
+    INTERFACE
+    NO_ALIAS
+    EXPORT_NAME base
+    FOLDER "CxxKit/libs")
 add_library(cxxkit::base ALIAS cxxkit_base)
-set_property(TARGET cxxkit_base PROPERTY EXPORT_NAME base)
 
 # Vendored 3rdparty wraps (headers namespaced as cxxkit/3rdparty/<lib>/)
 # This is the octk mechanism to avoid conflicts with system-installed libraries.
@@ -61,11 +63,10 @@ cxxkit_install_public_wrap_headers(cxxkit_base
     CxxKitWrapBenchmark::WrapBenchmark|benchmark)
 
 # cxxkit/3rdparty/ 统一 include 根（三方头命名空间拷贝）
+# Helper adds the source/build/install include trio; base additionally exposes the
+# build tree's 3rdparty header copy root.
 target_include_directories(cxxkit_base INTERFACE
-    $<BUILD_INTERFACE:${PROJECT_SOURCE_DIR}>
-    $<BUILD_INTERFACE:${PROJECT_BINARY_DIR}>
-    $<BUILD_INTERFACE:${PROJECT_BINARY_DIR}/include>
-    $<INSTALL_INTERFACE:include>)
+    $<BUILD_INTERFACE:${PROJECT_BINARY_DIR}/include>)
 target_link_libraries(cxxkit_base INTERFACE
     CxxKitWrapFmt::WrapFmt
     CxxKitWrapStringViewLite::WrapStringViewLite
@@ -79,12 +80,9 @@ target_link_libraries(cxxkit_base INTERFACE
     CxxKitWrapVariant::WrapVariant
     CxxKitWrapBenchmark::WrapBenchmark)
 
-target_compile_features(cxxkit_base INTERFACE cxx_std_11)
-
 cxxkit_generate_pkg_config(cxxkit_base base)
 cxxkit_configure_library_end(CxxKitBase)
 
-set_property(TARGET cxxkit_base PROPERTY FOLDER "CxxKit/libs")
 if(CXXKIT_BUILD_INSTALL)
     install(TARGETS cxxkit_base EXPORT cxxkitTargets)
     install(DIRECTORY ${PROJECT_SOURCE_DIR}/cxxkit/base/

@@ -28,16 +28,12 @@ cmake_minimum_required(VERSION ${CXXKIT_MIN_NEW_POLICY_CMAKE_VERSION}...${CXXKIT
 
 cxxkit_configure_library_begin(CxxKitProfiling)
 
-file(GLOB _cxxkit_headers CONFIGURE_DEPENDS ${CMAKE_CURRENT_SOURCE_DIR}/*.hpp ${CMAKE_CURRENT_SOURCE_DIR}/detail/*.hpp)
-add_library(cxxkit_profiling INTERFACE ${_cxxkit_headers})
+cxxkit_add_library(cxxkit_profiling
+    INTERFACE
+    NO_ALIAS
+    EXPORT_NAME profiling
+    FOLDER "CxxKit/libs")
 add_library(cxxkit::profiling ALIAS cxxkit_profiling)
-set_property(TARGET cxxkit_profiling PROPERTY EXPORT_NAME profiling)
-
-target_include_directories(cxxkit_profiling INTERFACE
-    $<BUILD_INTERFACE:${PROJECT_SOURCE_DIR}>
-    $<BUILD_INTERFACE:${PROJECT_BINARY_DIR}>
-    $<INSTALL_INTERFACE:include>)
-target_compile_features(cxxkit_profiling INTERFACE cxx_std_11)
 
 if(CXXKIT_ENABLE_LIB_TRACY)
     cxxkit_find_package(Tracy PROVIDED_TARGETS CxxKitWrapTracy::WrapTracy)
@@ -56,7 +52,6 @@ endif()
 
 cxxkit_configure_library_end(CxxKitProfiling)
 
-set_property(TARGET cxxkit_profiling PROPERTY FOLDER "CxxKit/libs")
 if(CXXKIT_BUILD_INSTALL)
     install(TARGETS cxxkit_profiling EXPORT cxxkitTargets)
     install(DIRECTORY ${PROJECT_SOURCE_DIR}/cxxkit/profiling/

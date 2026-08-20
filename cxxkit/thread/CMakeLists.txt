@@ -45,26 +45,18 @@ else()
     list(APPEND CXXKIT_THREAD_SOURCES platform_thread_win.cpp)
 endif()
 
-file(GLOB _cxxkit_headers CONFIGURE_DEPENDS ${CMAKE_CURRENT_SOURCE_DIR}/*.hpp ${CMAKE_CURRENT_SOURCE_DIR}/detail/*.hpp)
-add_library(cxxkit_thread ${_cxxkit_headers} ${CXXKIT_THREAD_SOURCES})
-add_library(cxxkit::thread ALIAS cxxkit_thread)
-
-target_include_directories(cxxkit_thread PUBLIC
-    $<BUILD_INTERFACE:${PROJECT_SOURCE_DIR}>
-    $<BUILD_INTERFACE:${PROJECT_BINARY_DIR}>
-    $<INSTALL_INTERFACE:include>)
-target_link_libraries(cxxkit_thread PUBLIC cxxkit::base cxxkit::functional cxxkit::kernel cxxkit::memory cxxkit::tools cxxkit::units cxxkit::time)
-target_compile_features(cxxkit_thread PUBLIC cxx_std_11)
-set_target_properties(cxxkit_thread PROPERTIES
+cxxkit_add_library(cxxkit_thread
+    STATIC
+    NO_ALIAS
+    SOURCES ${CXXKIT_THREAD_SOURCES}
+    PUBLIC_LIBRARIES cxxkit::base cxxkit::functional cxxkit::kernel cxxkit::memory cxxkit::tools cxxkit::units cxxkit::time
     EXPORT_NAME thread
-    CXX_STANDARD ${CXXKIT_FEATURE_CXX_STANDARD}
-    CXX_STANDARD_REQUIRED ON
-    CXX_EXTENSIONS OFF)
+    FOLDER "CxxKit/libs")
+add_library(cxxkit::thread ALIAS cxxkit_thread)
 
 cxxkit_generate_pkg_config(cxxkit_thread thread)
 cxxkit_configure_library_end(CxxKitThread)
 
-set_property(TARGET cxxkit_thread PROPERTY FOLDER "CxxKit/libs")
 if(CXXKIT_BUILD_INSTALL)
     install(TARGETS cxxkit_thread EXPORT cxxkitTargets)
     install(DIRECTORY ${PROJECT_SOURCE_DIR}/cxxkit/thread/

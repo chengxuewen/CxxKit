@@ -25,34 +25,18 @@ cmake_minimum_required(VERSION ${CXXKIT_MIN_NEW_POLICY_CMAKE_VERSION}...${CXXKIT
 
 cxxkit_configure_library_begin(CxxKitText)
 
-file(GLOB _cxxkit_headers CONFIGURE_DEPENDS ${CMAKE_CURRENT_SOURCE_DIR}/*.hpp ${CMAKE_CURRENT_SOURCE_DIR}/detail/*.hpp)
-add_library(cxxkit_text
-    ${_cxxkit_headers}
-    string_utils.cpp
-    ascii.cpp
-    string.cpp
-    base64.cpp
-    bit_buffer.cpp
-    string_builder.cpp
-    string_encode.cpp)
-add_library(cxxkit::text ALIAS cxxkit_text)
-
-target_include_directories(cxxkit_text PUBLIC
-    $<BUILD_INTERFACE:${PROJECT_SOURCE_DIR}>
-    $<BUILD_INTERFACE:${PROJECT_BINARY_DIR}>
-    $<INSTALL_INTERFACE:include>)
-target_link_libraries(cxxkit_text PUBLIC cxxkit::base cxxkit::numerics)
-target_compile_features(cxxkit_text PUBLIC cxx_std_11)
-set_target_properties(cxxkit_text PROPERTIES
+cxxkit_add_library(cxxkit_text
+    STATIC
+    NO_ALIAS
+    SOURCES string_utils.cpp ascii.cpp string.cpp base64.cpp bit_buffer.cpp string_builder.cpp string_encode.cpp
+    PUBLIC_LIBRARIES cxxkit::base cxxkit::numerics
     EXPORT_NAME text
-    CXX_STANDARD ${CXXKIT_FEATURE_CXX_STANDARD}
-    CXX_STANDARD_REQUIRED ON
-    CXX_EXTENSIONS OFF)
+    FOLDER "CxxKit/libs")
+add_library(cxxkit::text ALIAS cxxkit_text)
 
 cxxkit_generate_pkg_config(cxxkit_text text)
 cxxkit_configure_library_end(CxxKitText)
 
-set_property(TARGET cxxkit_text PROPERTY FOLDER "CxxKit/libs")
 if(CXXKIT_BUILD_INSTALL)
     install(TARGETS cxxkit_text EXPORT cxxkitTargets)
     install(DIRECTORY ${PROJECT_SOURCE_DIR}/cxxkit/text/
