@@ -86,8 +86,8 @@ cmake-build*
 build*
 # vcpkg bootstrap clones (cxxkit_vcpkg_install) + any repo-root vcpkg artifacts;
 # anchored so scripts/crash-deps/vcpkg.json (a source file) is NOT ignored
-/vcpkg/
-/vcpkg-tools/
+vcpkg-tools/
+vcpkg/
 
 # Temp dirs
 # --------
@@ -105,6 +105,3 @@ stash
 # --------
 !.vscode/settings.json
 !.omo/omo.jsonc
-# crash-deps export cache (scripts/export_crash_deps.sh) — build cache, not sources
-3rdparty/*.7z
-3rdparty/*.7z.version
