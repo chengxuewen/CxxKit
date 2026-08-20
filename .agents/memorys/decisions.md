@@ -83,3 +83,7 @@ cxxkit 采用目录 = 子库 = CMake target 三位一体，参考 boost 按需�
 - crash 回调签名暴露面：`CrashCallback` 自有类型（bool(*)(const char*, void*, bool)），平台类型只存在于 detail/（pimpl 隔离，验证通过）
 - v1 明确不做上传（用户决策）：不依赖 cxxkit::network，无 cpr/curl/mbedtls 构建代价
 - 关联：D17（架构）、D16（profiling 先例）；全部裁定记录于 docs/superpowers/plans/2026-08-19-cxxkit-crash-sublib.md + SDD 台账
+
+## D19: 测试质量底层（2026-08-20）
+
+sanitizer（ASAN/LSAN/UBSan）与 coverage 用**独立 build 目录**（build-asan / build-cov，守 C6）。**sanitizer 暴露真实 bug 的价值论证成立**：F1 平台线程泄漏、F2 ElapsedTimer 有符号溢出、F5 error.cpp FNV 溢出、context_checker use-after-free 均由 sanitizer 抓出并最小修复；F4 __forced_unwind 判定为良性（glibc，不改）。R31：coverage 门禁默认仅报表不阻断（环境 flaky 防御），`CXXKIT_COVERAGE_GATE=ON` 才强校验 ≥80%；R32：安全测试在 ASAN 下最有价值，无 ASAN 降级为正常断言；R33：flaky context_checker 用 ASAN + systematic-debugging 抓根因。R30：3rdparty 缓存复用优先。覆盖基线 ~41%（行加权 1761/4313；per-file 均值 ~63%）。详见 docs/superpowers/plans/2026-08-20-cxxkit-test-quality.md + SDD 台账

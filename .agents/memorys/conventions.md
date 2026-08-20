@@ -86,3 +86,4 @@ add_library(cxxkit_xxx ${_cxxkit_headers} xxx.cpp)   # header-only 用 add_libra
 - **CxxKit vs octk 封装边界（2026-08-20 裁定）**：cxxkit_add_library 并入 COMPILE_DEFINITIONS + INSTALL_RPATH（纯参数透传）；pkg-config（cxxkit_generate_pkg_config，D11/vcpkg 定制需 DESCRIPTION + 三方链映射）与 configure_begin/end（配对语义）**保持调用外**——不照搬 octk 1550 行单函数全封装，KISS ~140 行
 - 注意：helper 参数列表内禁注释行（CMake 解析会当额外参数段报错）；多值参数表不要重复新增（会双行残留）
 - **C4 补充（2026-08-20）**：测试 target 也已 C++11（gtest 1.12.1 最低即 C++11，非 C++14——旧注释误导）。测试代码含 C++14 语法时用 `#if CXXKIT_CC_CPP14_OR_GREATER` 适配（如泛型 lambda），全项目统一 cxx_std_11
+- **C4 测试质量补充（2026-08-20）**：sanitizer/coverage 用**独立 build 目录**（build-asan/build-cov，守 C6）；`lsan.supp` 抑制设计性单例泄露；覆盖基线 ~41%（行加权；per-file 均值 ~63%）。检查：`grep -n "CXXKIT_BUILD_SANITIZERS\|CXXKIT_BUILD_COVERAGE" cxxkit/ cmake/ scripts/check.sh` 非空

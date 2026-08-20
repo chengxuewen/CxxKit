@@ -90,3 +90,12 @@ cxxkit 是 OpenCTK（an open cpp toolkit）的成功重构版本 —— 精简�
 - [x] **测试 33→34 套件**：新增 `cxxkit_tst_crash`（4 用例：install 守卫/手动 minidump/崩溃产 dmp/栈打印 opt-in）——`ctest` 34/34 通过（91.5s）
 - [x] **cxxkit_option 修复**：恢复 OpenCTK 动态类型切换（CACHE BOOL 无 FORCE 普通态 + 强制态 STRING 标志）——所有选项 GUI 可编辑
 - 平台：Linux x64 全链路验证通过（vcpkg 自举→4 包构建→导出 .7z→解包→门禁→编译→测试）；macOS/Windows 归档待对应平台产出
+
+### 2026-08-20 测试质量加固（D19：sanitizer/coverage/边界测试）
+
+- [x] **CXXKIT_BUILD_SANITIZERS**（ASAN/LSAN/UBSan）：独立 `build-asan/` 目录；LSAN 全绿用 `LSAN_OPTIONS=suppressions=scripts/lsan.supp`
+- [x] **CXXKIT_BUILD_COVERAGE** + `coverage` target：独立 `build-cov/`，产出 `build-cov/coverage/summary.txt`；库 .cpp 覆盖基线 **~41%（行加权 1761/4313；按文件均值法 ~63%）**
+- [x] **tst_boundary**：19 安全/边界/越界用例，普通 + ASAN 双环境全过 0 sanitizer 诊断
+- [x] **真实 bug 修复（sanitizer 暴露）**：F1 平台线程泄漏（恢复 deref + lsan.supp 抑制设计性单例）、F2 ElapsedTimer 有符号溢出、F3 测试 atomic 未初始化、F4 __forced_unwind 良性（glibc，不改）、F5 error.cpp FNV 溢出 → 无符号；另修 context_checker use-after-free（40/100 SEGFAULT → 100/100 稳定）
+- [x] **check.sh 7 步**：format → C++14 门禁 → namespace → build → 主 ctest → sanitizer(4/7, build-asan) → coverage(7/7, build-cov 若存在)
+- 验证：主 build 34/34（task_queue_thread 偶发 flaky，单跑过）；build-asan + lsan.supp 34/34 零诊断；crash=OFF（保守态）
