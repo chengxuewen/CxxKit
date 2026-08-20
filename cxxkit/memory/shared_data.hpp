@@ -60,7 +60,7 @@ struct SharedDataRefCounter final
 {
     template <typename T>
     SharedDataRefCounter(T *data) noexcept
-        : mRefCount(dynamic_cast<SharedData *>(const_cast<std::remove_const_t<T> *>(data))->mRefCount)
+        : mRefCount(dynamic_cast<SharedData *>(const_cast<typename std::remove_const<T>::type *>(data))->mRefCount)
     {
         static_assert(traits::is_base_of_v<SharedData, T>, "T must be derived from SharedData");
     }

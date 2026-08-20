@@ -134,7 +134,6 @@ private:
 class CXXKIT_CORE_API BitBufferWriter
 {
 public:
-    static constexpr DataSize kMaxLeb128Length = DataSize::Bytes(10);
 
     // Constructs a bit buffer for the writable buffer of `bytes`.
     BitBufferWriter(uint8_t *bytes, size_t byte_count);

@@ -83,3 +83,5 @@ add_library(cxxkit_xxx ${_cxxkit_headers} xxx.cpp)   # header-only 用 add_libra
 - 测试注册 `cxxkit_add_test`：FOLDER 自动推导（tests → CxxKit/tests/<sub>）+ `<name>_check` target（ctest -V -R 单测）
 - 检查：`grep -rnE "^(add_library|add_executable)" cxxkit/ examples/` 应为空（注册全走函数）
 - 参考 OpenCTK octk_* 骨架，剔除 Octk 生态（framework/plugin/Android/WASM/RC/依赖扫描，YAGNI）
+- **CxxKit vs octk 封装边界（2026-08-20 裁定）**：cxxkit_add_library 并入 COMPILE_DEFINITIONS + INSTALL_RPATH（纯参数透传）；pkg-config（cxxkit_generate_pkg_config，D11/vcpkg 定制需 DESCRIPTION + 三方链映射）与 configure_begin/end（配对语义）**保持调用外**——不照搬 octk 1550 行单函数全封装，KISS ~140 行
+- 注意：helper 参数列表内禁注释行（CMake 解析会当额外参数段报错）；多值参数表不要重复新增（会双行残留）

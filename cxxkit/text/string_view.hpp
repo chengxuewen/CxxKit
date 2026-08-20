@@ -46,19 +46,21 @@ using BaseStringView = nonstd::basic_string_view<CharT, Traits>;
 using nonstd::to_string;
 using nonstd::to_string_view;
 
-constexpr bool operator<(StringView lhs, StringView rhs) noexcept
+// CXX14_CONSTEXPR degrades comparison to plain inline under C++11 (nonstd::string_view::compare(basic_string_view)
+// is CXX14-only; keeps these operators C++11-usable). text must stay C++11 per AGENTS.md.
+inline CXXKIT_CXX14_CONSTEXPR bool operator<(StringView lhs, StringView rhs) noexcept
 {
     return lhs.compare(rhs) < 0;
 }
-constexpr bool operator>(StringView lhs, StringView rhs) noexcept
+inline CXXKIT_CXX14_CONSTEXPR bool operator>(StringView lhs, StringView rhs) noexcept
 {
     return rhs < lhs;
 }
-constexpr bool operator<=(StringView lhs, StringView rhs) noexcept
+inline CXXKIT_CXX14_CONSTEXPR bool operator<=(StringView lhs, StringView rhs) noexcept
 {
     return !(rhs < lhs);
 }
-constexpr bool operator>=(StringView lhs, StringView rhs) noexcept
+inline CXXKIT_CXX14_CONSTEXPR bool operator>=(StringView lhs, StringView rhs) noexcept
 {
     return !(lhs < rhs);
 }

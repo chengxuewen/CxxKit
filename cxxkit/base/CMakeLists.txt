@@ -38,11 +38,6 @@ cxxkit_add_library(cxxkit_base
 # 供仅 include base 的 header-only 消费者可见拷贝的三方头。
 target_include_directories(cxxkit_base INTERFACE
     $<BUILD_INTERFACE:${PROJECT_BINARY_DIR}/include>)
-# 全库实际按 C++14 编译：此前 function2 的 INTERFACE 编译特性（cxx_generic_lambdas/
-# cxx_return_type_deduction，均 C++14）经 base 的 blanket 三方链接传给所有子库，
-# 掩盖了“库用 C++11”的错觉，但 kernel/memory/text/tools 等编译子库实为 C++14 代码。
-# 迁移后把 standard 基线显式抬到 C++14，保持各子库既有编译水平。
-target_compile_features(cxxkit_base INTERFACE cxx_std_14)
 
 cxxkit_generate_pkg_config(cxxkit_base base)
 cxxkit_configure_library_end(CxxKitBase)

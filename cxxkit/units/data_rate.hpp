@@ -122,7 +122,7 @@ inline CXXKIT_CXX14_CONSTEXPR DataSize operator*(const DataRate rate, const Time
     int64_t microbits = rate.bps() * duration.us();
     return DataSize::Bytes((microbits + 4000000) / 8000000);
 }
-inline constexpr DataSize operator*(const TimeDelta duration, const DataRate rate)
+inline CXXKIT_CXX14_CONSTEXPR DataSize operator*(const TimeDelta duration, const DataRate rate)
 {
     return rate * duration;
 }
@@ -145,7 +145,7 @@ inline CXXKIT_CXX14_CONSTEXPR DataRate operator*(const DataSize size, const Freq
     int64_t millibits_per_second = size.bytes() * 8 * frequency.millihertz<int64_t>();
     return DataRate::BitsPerSec((millibits_per_second + 500) / 1000);
 }
-inline constexpr DataRate operator*(const Frequency frequency, const DataSize size)
+inline CXXKIT_CXX14_CONSTEXPR DataRate operator*(const Frequency frequency, const DataSize size)
 {
     return size * frequency;
 }
