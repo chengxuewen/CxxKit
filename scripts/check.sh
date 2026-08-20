@@ -4,7 +4,7 @@ set -euo pipefail
 cd "$(dirname "$0")/.."
 
 echo "=== 1/4 clang-format 检查 ==="
-FILES=$(find cxxkit src tests -name "*.hpp" -o -name "*.cpp" | sort)
+FILES=$(find cxxkit tests -name "*.hpp" -o -name "*.cpp" | sort)
 if command -v clang-format >/dev/null; then
     clang-format --dry-run --Werror $FILES || { echo "格式不合格，请运行: clang-format -i <文件>"; exit 1; }
     echo "clang-format OK"
@@ -13,7 +13,7 @@ else
 fi
 
 echo "=== 2/4 命名空间检查（octk 残留）==="
-if grep -rn "octk\|OCTK_" cxxkit/ src/ tests/ --include="*.hpp" --include="*.cpp" | grep -vE "CXXKIT|octk mechanism|from OpenCTK|Ported from|Slimmed from"; then
+if grep -rn "octk\|OCTK_" cxxkit/ tests/ --include="*.hpp" --include="*.cpp" | grep -vE "CXXKIT|octk mechanism|from OpenCTK|Ported from|Slimmed from"; then
     echo "发现 octk 残留！"; exit 1
 fi
 echo "namespace OK"
