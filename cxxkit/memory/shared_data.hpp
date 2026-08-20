@@ -62,7 +62,7 @@ struct SharedDataRefCounter final
     SharedDataRefCounter(T *data) noexcept
         : mRefCount(dynamic_cast<SharedData *>(const_cast<typename std::remove_const<T>::type *>(data))->mRefCount)
     {
-        static_assert(traits::is_base_of_v<SharedData, T>, "T must be derived from SharedData");
+        static_assert(traits::is_base_of<SharedData, T>::value, "T must be derived from SharedData");
     }
     ReferenceCounter::Value &mRefCount;
     inline bool ref() noexcept { return ReferenceCounter::ref(mRefCount); }

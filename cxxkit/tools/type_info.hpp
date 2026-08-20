@@ -157,7 +157,7 @@ struct TypeInfoFlags
             isComplex = (((FLAGS) & CXXKIT_PRIMITIVE_TYPE) == 0) && !std::is_trivial<TYPE>::value,                     \
             isStatic = (((FLAGS) & (CXXKIT_MOVABLE_TYPE | CXXKIT_PRIMITIVE_TYPE)) == 0),                               \
             isRelocatable = !isStatic || ((FLAGS) & CXXKIT_RELOCATABLE_TYPE) ||                                        \
-                            cxxkit::traits::is_relocatable_v<TYPE>,                                                    \
+                            cxxkit::traits::is_relocatable<TYPE>::value,                                                    \
             isPointer = false,                                                                                         \
             isIntegral = std::is_integral<TYPE>::value,                                                                \
         };                                                                                                             \

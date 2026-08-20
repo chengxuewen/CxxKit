@@ -143,7 +143,7 @@ inline T MsanUninitialized(T t)
 {
 #if CXXKIT_HAS_MSAN
     // becomes available in downstream projects.
-    static_assert(sanittraits::is_trivially_copyable_v<T>(), "");
+    static_assert(sanittraits::is_trivially_copyable<T>::value(), "");
 #endif
     cxxkit_msan_mark_uninitialized(&t, sizeof(T), 1);
     return t;

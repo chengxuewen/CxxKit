@@ -92,7 +92,11 @@ using is_nullptr_t = std::is_same<T, std::nullptr_t>;
 using std::is_void_v;
 #else
 template <typename T>
+using is_void = std::is_void<T>;
+#if CXXKIT_CC_CPP14_OR_GREATER
+template <typename T>
 constexpr bool is_void_v = std::is_void<T>::value;
+#endif
 #endif
 
 /***********************************************************************************************************************
@@ -102,7 +106,11 @@ constexpr bool is_void_v = std::is_void<T>::value;
 using std::is_same_v;
 #else
 template <typename T, typename U>
+using is_same = std::is_same<T, U>;
+#if CXXKIT_CC_CPP14_OR_GREATER
+template <typename T, typename U>
 constexpr bool is_same_v = std::is_same<T, U>::value;
+#endif
 #endif
 
 /***********************************************************************************************************************
@@ -114,7 +122,11 @@ using std::is_trivially_destructible;
 using std::is_trivially_destructible_v;
 #else
 template <typename T>
+using is_trivially_copyable = std::is_trivially_copyable<T>;
+#if CXXKIT_CC_CPP14_OR_GREATER
+template <typename T>
 constexpr bool is_trivially_copyable_v = std::is_trivially_copyable<T>::value;
+#endif
 template <typename T>
 struct is_trivially_destructible
     : public std::integral_constant<bool,
@@ -122,8 +134,10 @@ struct is_trivially_destructible
                                         (std::is_trivially_copyable<T>::value || std::is_trivial<T>::value)>
 {
 };
+#if CXXKIT_CC_CPP14_OR_GREATER
 template <typename T>
 constexpr bool is_trivially_destructible_v = is_trivially_destructible<T>::value;
+#endif
 #endif
 
 /***********************************************************************************************************************
@@ -132,16 +146,17 @@ constexpr bool is_trivially_destructible_v = is_trivially_destructible<T>::value
 template <typename T>
 struct is_relocatable : public std::integral_constant<bool,
 #if defined(CXXKIT_CC_CLANG) || !defined(CXXKIT_CC_GNU) || CXXKIT_CC_GNU >= 501
-                                                      is_trivially_copyable_v<T> && is_trivially_destructible_v<T>
+                                                      std::is_trivially_copyable<T>::value && is_trivially_destructible<T>::value
 #else
                                                       std::is_enum<T>::value || std::is_integral<T>::value
 #endif
                                                       >
 {
 };
+#if CXXKIT_CC_CPP14_OR_GREATER
 template <typename T>
 constexpr bool is_relocatable_v = is_relocatable<T>::value;
-
+#endif
 /***********************************************************************************************************************
  * like cxx17 std::is_convertible_v
 ***********************************************************************************************************************/
@@ -149,7 +164,11 @@ constexpr bool is_relocatable_v = is_relocatable<T>::value;
 using std::is_convertible_v;
 #else
 template <typename F, typename T>
+using is_convertible = std::is_convertible<F, T>;
+#if CXXKIT_CC_CPP14_OR_GREATER
+template <typename F, typename T>
 constexpr bool is_convertible_v = std::is_convertible<F, T>::value;
+#endif
 #endif
 
 /***********************************************************************************************************************
@@ -159,7 +178,11 @@ constexpr bool is_convertible_v = std::is_convertible<F, T>::value;
 using std::is_function_v;
 #else
 template <typename T>
+using is_function = std::is_function<T>;
+#if CXXKIT_CC_CPP14_OR_GREATER
+template <typename T>
 constexpr bool is_function_v = std::is_function<T>::value;
+#endif
 #endif
 
 /***********************************************************************************************************************
@@ -169,7 +192,11 @@ constexpr bool is_function_v = std::is_function<T>::value;
 using std::is_pointer_v;
 #else
 template <typename T>
+using is_pointer = std::is_pointer<T>;
+#if CXXKIT_CC_CPP14_OR_GREATER
+template <typename T>
 constexpr bool is_pointer_v = std::is_pointer<T>::value;
+#endif
 #endif
 
 /***********************************************************************************************************************
@@ -179,7 +206,11 @@ constexpr bool is_pointer_v = std::is_pointer<T>::value;
 using std::is_base_of_v;
 #else
 template <typename B, typename D>
+using is_base_of = std::is_base_of<B, D>;
+#if CXXKIT_CC_CPP14_OR_GREATER
+template <typename B, typename D>
 constexpr bool is_base_of_v = std::is_base_of<B, D>::value;
+#endif
 #endif
 
 /***********************************************************************************************************************
@@ -189,7 +220,11 @@ constexpr bool is_base_of_v = std::is_base_of<B, D>::value;
 using std::is_member_function_pointer_v;
 #else
 template <typename T>
+using is_member_function_pointer = std::is_member_function_pointer<T>;
+#if CXXKIT_CC_CPP14_OR_GREATER
+template <typename T>
 constexpr bool is_member_function_pointer_v = std::is_member_function_pointer<T>::value;
+#endif
 #endif
 
 /***********************************************************************************************************************
@@ -200,9 +235,10 @@ struct is_function_pointer
     : std::integral_constant<bool, std::is_pointer<T>::value && std::is_function<remove_pointer_t<T>>::value>
 {
 };
+#if CXXKIT_CC_CPP14_OR_GREATER
 template <typename T>
 constexpr bool is_function_pointer_v = is_function_pointer<T>::value;
-
+#endif
 /***********************************************************************************************************************
  * like cxx17 std::void_t
 ***********************************************************************************************************************/
@@ -427,15 +463,19 @@ struct IsInvocableRImpl<void_t<invoke_result_t<F, Args...>>, R, F, Args...>
 } // namespace detail
 template <typename F, typename... Args>
 using is_invocable = detail::IsInvocableRImpl<void, void, F, Args...>;
+#if CXXKIT_CC_CPP14_OR_GREATER
 template <typename F, typename... Args>
 constexpr bool is_invocable_v = is_invocable<F, Args...>::value;
+#endif
 // Type trait whose member `value` is true if invoking `F` with `Args` is valid,
 // and either the return type is convertible to `R`, or `R` is void.
 // C++11-compatible version of `std::is_invocable_r`.
 template <typename R, typename F, typename... Args>
 using is_invocable_r = detail::IsInvocableRImpl<void, R, F, Args...>;
+#if CXXKIT_CC_CPP14_OR_GREATER
 template <typename R, typename F, typename... Args>
 constexpr bool is_invocable_r_v = is_invocable_r<R, F, Args...>::value;
+#endif
 #endif
 
 /***********************************************************************************************************************
@@ -465,9 +505,10 @@ struct is_weak_ptr<T,
                           decltype(std::declval<T>().reset())>> : std::true_type
 {
 };
+#if CXXKIT_CC_CPP14_OR_GREATER
 template <typename T>
 constexpr bool is_weak_ptr_v = is_weak_ptr<T>::value;
-
+#endif
 template <typename T, typename = void>
 struct is_weak_ptr_compatible : std::false_type
 {
@@ -477,9 +518,10 @@ struct is_weak_ptr_compatible<T, void_t<decltype(detail::toWeakPtr(std::declval<
     : is_weak_ptr<decltype(detail::toWeakPtr(std::declval<T>()))>
 {
 };
+#if CXXKIT_CC_CPP14_OR_GREATER
 template <typename T>
 constexpr bool is_weak_ptr_compatible_v = is_weak_ptr_compatible<T>::value;
-
+#endif
 /***********************************************************************************************************************
   * has_call_operator has_call_operator_v
 ***********************************************************************************************************************/
@@ -499,9 +541,10 @@ struct has_call_operator<F, void_t<decltype(&std::remove_reference<F>::type::ope
 {
 };
 #endif
+#if CXXKIT_CC_CPP14_OR_GREATER
 template <typename T>
 constexpr bool has_call_operator_v = has_call_operator<T>::value;
-
+#endif
 /***********************************************************************************************************************
  * A slightly different decay than in the standard, the extent of arrays are not removed.
  * Applies lvalue-to-rvalue, function-to-pointer implicit conversions to the type T and removes cv-qualifiers.

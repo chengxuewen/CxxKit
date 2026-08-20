@@ -88,8 +88,10 @@ struct IsCallableImpl<F, P, TypeList<Args...>> : traits::is_invocable<F, P, Args
 };
 template <typename... Args>
 using is_callable = IsCallableImpl<Args...>;
+#if CXXKIT_CC_CPP14_OR_GREATER
 template <typename... Args>
 constexpr bool is_callable_v = is_callable<Args...>::value;
+#endif
 } // namespace detail
 
 template <typename... Args>
@@ -103,20 +105,35 @@ static constexpr bool with_rtti =
 #    endif
 
 template <typename T>
-constexpr bool is_pointer_v = traits::is_pointer_v<T>;
+struct is_pointer : traits::is_pointer<T> {};
 template <typename T>
-constexpr bool is_function_v = traits::is_function_v<T>;
+struct is_function : traits::is_function<T> {};
 template <typename T>
-constexpr bool is_weak_ptr_v = traits::is_weak_ptr_v<T>;
+struct is_weak_ptr : traits::is_weak_ptr<T> {};
 template <typename P>
-constexpr bool is_weak_ptr_compatible_v = traits::is_weak_ptr_compatible_v<typename std::decay<P>::type>;
-
+struct is_weak_ptr_compatible : traits::is_weak_ptr_compatible<typename std::decay<P>::type> {};
 template <typename T>
-constexpr bool has_call_operator_v = traits::has_call_operator_v<T>;
+struct has_call_operator : traits::has_call_operator<T> {};
 template <typename L, typename... Args>
-constexpr bool is_callable_v = detail::is_callable_v<Args..., L>;
+using is_callable = detail::is_callable<Args..., L>;
 template <typename T>
-constexpr bool is_member_function_pointer_v = traits::is_member_function_pointer_v<T>;
+struct is_member_function_pointer : traits::is_member_function_pointer<T> {};
+#if CXXKIT_CC_CPP14_OR_GREATER
+template <typename T>
+constexpr bool is_pointer_v = traits::is_pointer<T>::value;
+template <typename T>
+constexpr bool is_function_v = traits::is_function<T>::value;
+template <typename T>
+constexpr bool is_weak_ptr_v = traits::is_weak_ptr<T>::value;
+template <typename P>
+constexpr bool is_weak_ptr_compatible_v = traits::is_weak_ptr_compatible<typename std::decay<P>::type>::value;
+template <typename T>
+constexpr bool has_call_operator_v = traits::has_call_operator<T>::value;
+template <typename L, typename... Args>
+constexpr bool is_callable_v = detail::is_callable<Args..., L>::value;
+template <typename T>
+constexpr bool is_member_function_pointer_v = traits::is_member_function_pointer<T>::value;
+#endif
 
 
 template <typename...>
@@ -127,12 +144,19 @@ template <typename L, typename... T>
 struct is_signal<SignalBase<L, T...>> : std::true_type
 {
 };
+template <typename T>
+struct is_observer
+    : std::is_base_of<::cxxkit::signals::detail::ObserverType,
+                      typename std::remove_pointer<typename std::remove_reference<T>::type>::type>
+{
+};
+#if CXXKIT_CC_CPP14_OR_GREATER
 template <typename S>
 constexpr bool is_signal_v = is_signal<S>::value;
-
 template <typename T>
 constexpr bool is_observer_v =
     std::is_base_of<::cxxkit::signals::detail::ObserverType, typename std::remove_pointer<typename std::remove_reference<T>::type>::type>::value;
+#endif
 
 } // namespace trait
 
@@ -242,7 +266,7 @@ struct function_traits
 };
 
 template <typename T>
-struct function_traits<T, typename std::enable_if<trait::is_function_v<T>>::type>
+struct function_traits<T, typename std::enable_if<trait::is_function<T>::value>::type>
 {
     static void ptr(T &t, func_ptr &d) { d.store(&t); }
 
@@ -257,7 +281,7 @@ struct function_traits<T, typename std::enable_if<trait::is_function_v<T>>::type
 };
 
 template <typename T>
-struct function_traits<T *, typename std::enable_if<trait::is_function_v<T>>::type>
+struct function_traits<T *, typename std::enable_if<trait::is_function<T>::value>::type>
 {
     static void ptr(T *t, func_ptr &d) { function_traits<T>::ptr(*t, d); }
 
@@ -268,7 +292,7 @@ struct function_traits<T *, typename std::enable_if<trait::is_function_v<T>>::ty
 };
 
 template <typename T>
-struct function_traits<T, typename std::enable_if<trait::is_member_function_pointer_v<T>>::type>
+struct function_traits<T, typename std::enable_if<trait::is_member_function_pointer<T>::value>::type>
 {
     static void ptr(T t, func_ptr &d) { d.store(t); }
 
@@ -284,7 +308,7 @@ struct function_traits<T, typename std::enable_if<trait::is_member_function_poin
 
 // for function objects, the assumption is that we are looking for the call operator
 template <typename T>
-struct function_traits<T, typename std::enable_if<trait::has_call_operator_v<T>>::type>
+struct function_traits<T, typename std::enable_if<trait::has_call_operator<T>::value>::type>
 {
     using call_type = decltype(&std::remove_reference<T>::type::operator());
 
@@ -327,13 +351,13 @@ struct object_pointer
 };
 
 template <typename T>
-struct object_pointer<T *, typename std::enable_if<trait::is_pointer_v<T *>>::type>
+struct object_pointer<T *, typename std::enable_if<trait::is_pointer<T *>::value>::type>
 {
     static obj_ptr get(const T *t) { return reinterpret_cast<obj_ptr>(t); }
 };
 
 template <typename T>
-struct object_pointer<T, typename std::enable_if<trait::is_weak_ptr_v<T>>::type>
+struct object_pointer<T, typename std::enable_if<trait::is_weak_ptr<T>::value>::type>
 {
     static obj_ptr get(const T &t)
     {
@@ -345,7 +369,7 @@ struct object_pointer<T, typename std::enable_if<trait::is_weak_ptr_v<T>>::type>
 template <typename T>
 struct object_pointer<
     T,
-    typename std::enable_if<!trait::is_pointer_v<T> && !trait::is_weak_ptr_v<T> && trait::is_weak_ptr_compatible_v<T>>::type>
+    typename std::enable_if<!trait::is_pointer<T>::value && !trait::is_weak_ptr<T>::value && trait::is_weak_ptr_compatible<T>::value>::type>
 {
     static obj_ptr get(const T &t) { return t ? reinterpret_cast<obj_ptr>(t.get()) : nullptr; }
 };
@@ -1368,7 +1392,7 @@ public:
      * @return a connection object that can be used to interact with the slot
      */
     template <typename Callable>
-    typename std::enable_if<trait::is_callable_v<arg_list, Callable>, Connection>::type connect(Callable &&c, GroupId gid = 0)
+    typename std::enable_if<trait::detail::is_callable<arg_list, Callable>::value, Connection>::type connect(Callable &&c, GroupId gid = 0)
     {
         using slot_t = detail::Slot<Callable, T...>;
         auto s = make_slot<slot_t>(std::forward<Callable>(c), gid);
@@ -1388,7 +1412,7 @@ public:
      * @return a connection object that can be used to interact with the slot
      */
     template <typename Callable>
-    typename std::enable_if<trait::is_callable_v<ext_arg_list, Callable>, Connection>::type connect_extended(Callable &&c,
+    typename std::enable_if<trait::detail::is_callable<ext_arg_list, Callable>::value, Connection>::type connect_extended(Callable &&c,
                                                                                                 GroupId gid = 0)
     {
         using slot_t = detail::SlotExtended<Callable, T...>;
@@ -1409,7 +1433,7 @@ public:
      * @return a connection object that can be used to interact with the slot
      */
     template <typename Pmf, typename Ptr>
-    typename std::enable_if<trait::is_callable_v<arg_list, Pmf, Ptr> && trait::is_observer_v<Ptr>, Connection>::type
+    typename std::enable_if<trait::detail::is_callable<arg_list, Pmf, Ptr>::value && trait::is_observer<Ptr>::value, Connection>::type
     connect(Pmf &&pmf, Ptr &&ptr, GroupId gid = 0)
     {
         using slot_t = detail::slot_pmf<Pmf, Ptr, T...>;
@@ -1429,8 +1453,8 @@ public:
      * @return a connection object that can be used to interact with the slot
      */
     template <typename Pmf, typename Ptr>
-    typename std::enable_if<trait::is_callable_v<arg_list, Pmf, Ptr> && !trait::is_observer_v<Ptr> &&
-                         !trait::is_weak_ptr_compatible_v<Ptr>,
+    typename std::enable_if<trait::detail::is_callable<arg_list, Pmf, Ptr>::value && !trait::is_observer<Ptr>::value &&
+                         !trait::is_weak_ptr_compatible<Ptr>::value,
                      Connection>::type
     connect(Pmf &&pmf, Ptr &&ptr, GroupId gid = 0)
     {
@@ -1454,7 +1478,7 @@ public:
      * @return a connection object that can be used to interact with the slot
      */
     template <typename Pmf, typename Ptr>
-    typename std::enable_if<trait::is_callable_v<ext_arg_list, Pmf, Ptr> && !trait::is_weak_ptr_compatible_v<Ptr>, Connection>::type
+    typename std::enable_if<trait::detail::is_callable<ext_arg_list, Pmf, Ptr>::value && !trait::is_weak_ptr_compatible<Ptr>::value, Connection>::type
     connect_extended(Pmf &&pmf, Ptr &&ptr, GroupId gid = 0)
     {
         using slot_t = detail::slot_pmf_extended<Pmf, Ptr, T...>;
@@ -1483,7 +1507,7 @@ public:
      * @return a connection object that can be used to interact with the slot
      */
     template <typename Pmf, typename Ptr>
-    typename std::enable_if<!trait::is_callable_v<arg_list, Pmf> && trait::is_weak_ptr_compatible_v<Ptr>, Connection>::type
+    typename std::enable_if<!trait::detail::is_callable<arg_list, Pmf>::value && trait::is_weak_ptr_compatible<Ptr>::value, Connection>::type
     connect(Pmf &&pmf, Ptr &&ptr, GroupId gid = 0)
     {
         auto w = utils::toWeakPtr(std::forward<Ptr>(ptr));
@@ -1516,7 +1540,7 @@ public:
      * @return a connection object that can be used to interact with the slot
      */
     template <typename Pmf, typename Ptr>
-    typename std::enable_if<!trait::is_callable_v<ext_arg_list, Pmf> && trait::is_weak_ptr_compatible_v<Ptr>, Connection>::type
+    typename std::enable_if<!trait::detail::is_callable<ext_arg_list, Pmf>::value && trait::is_weak_ptr_compatible<Ptr>::value, Connection>::type
     connect_extended(Pmf &&pmf, Ptr &&ptr, GroupId gid = 0)
     {
         auto w = utils::toWeakPtr(std::forward<Ptr>(ptr));
@@ -1546,7 +1570,7 @@ public:
      * @return a connection object that can be used to interact with the slot
      */
     template <typename Callable, typename Trackable>
-    typename std::enable_if<trait::is_callable_v<arg_list, Callable> && trait::is_weak_ptr_compatible_v<Trackable>, Connection>::type
+    typename std::enable_if<trait::detail::is_callable<arg_list, Callable>::value && trait::is_weak_ptr_compatible<Trackable>::value, Connection>::type
     connect(Callable &&c, Trackable &&ptr, GroupId gid = 0)
     {
         auto w = utils::toWeakPtr(std::forward<Trackable>(ptr));
@@ -1579,7 +1603,7 @@ public:
      * @return a connection object that can be used to interact with the slot
      */
     template <typename Callable, typename Trackable>
-    typename std::enable_if<trait::is_callable_v<ext_arg_list, Callable> && trait::is_weak_ptr_compatible_v<Trackable>,
+    typename std::enable_if<trait::detail::is_callable<ext_arg_list, Callable>::value && trait::is_weak_ptr_compatible<Trackable>::value,
                      Connection>::type
     connect_extended(Callable &&c, Trackable &&ptr, GroupId gid = 0)
     {
@@ -1618,8 +1642,8 @@ public:
      */
     template <typename Callable>
     typename std::enable_if<
-        (trait::is_callable_v<arg_list, Callable> || trait::is_callable_v<ext_arg_list, Callable> ||
-         trait::is_member_function_pointer_v<Callable>)&&detail::function_traits<Callable>::is_disconnectable,
+        (trait::detail::is_callable<arg_list, Callable>::value || trait::detail::is_callable<ext_arg_list, Callable>::value ||
+         trait::is_member_function_pointer<Callable>::value)&&detail::function_traits<Callable>::is_disconnectable,
         size_t>::type
     disconnect(const Callable &c)
     {
@@ -1639,8 +1663,8 @@ public:
      * @return the number of disconnected slots
      */
     template <typename Obj>
-    typename std::enable_if<!trait::is_callable_v<arg_list, Obj> && !trait::is_callable_v<ext_arg_list, Obj> &&
-                         !trait::is_member_function_pointer_v<Obj>,
+    typename std::enable_if<!trait::detail::is_callable<arg_list, Obj>::value && !trait::detail::is_callable<ext_arg_list, Obj>::value &&
+                         !trait::is_member_function_pointer<Obj>::value,
                      size_t>::type
     disconnect(const Obj &obj)
     {
@@ -1849,7 +1873,7 @@ private:
  * Freestanding connect function that defers to the `signal_base::connect` member.
  */
 template <typename Lockable, typename Arg, typename... T, typename... Args>
-typename std::enable_if<!trait::is_signal_v<typename std::decay<Arg>::type>, Connection>::type connect(SignalBase<Lockable, T...> &sig,
+typename std::enable_if<!trait::is_signal<typename std::decay<Arg>::type>::value, Connection>::type connect(SignalBase<Lockable, T...> &sig,
                                                                              Arg &&arg,
                                                                              Args &&...args)
 {
