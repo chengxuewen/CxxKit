@@ -32,50 +32,17 @@ cxxkit_add_library(cxxkit_base
     INTERFACE
     EXPORT_NAME base
     FOLDER "CxxKit/libs")
-# Vendored 3rdparty wraps (headers namespaced as cxxkit/3rdparty/<lib>/)
-# This is the octk mechanism to avoid conflicts with system-installed libraries.
-cxxkit_find_package(Fmt PROVIDED_TARGETS CxxKitWrapFmt::WrapFmt)
-cxxkit_find_package(StringViewLite PROVIDED_TARGETS CxxKitWrapStringViewLite::WrapStringViewLite)
-cxxkit_find_package(Optional PROVIDED_TARGETS CxxKitWrapOptional::WrapOptional)
-cxxkit_find_package(Expected PROVIDED_TARGETS CxxKitWrapExpected::WrapExpected)
-cxxkit_find_package(ConcurrentQueue PROVIDED_TARGETS CxxKitWrapConcurrentQueue::WrapConcurrentQueue)
-cxxkit_find_package(ReaderWriterQueue PROVIDED_TARGETS CxxKitWrapReaderWriterQueue::WrapReaderWriterQueue)
-cxxkit_find_package(Function2 PROVIDED_TARGETS CxxKitWrapFunction2::WrapFunction2)
-cxxkit_find_package(Filesystem PROVIDED_TARGETS CxxKitWrapFilesystem::WrapFilesystem)
-cxxkit_find_package(Spdlog PROVIDED_TARGETS CxxKitWrapSpdlog::WrapSpdlog)
-cxxkit_find_package(Variant PROVIDED_TARGETS CxxKitWrapVariant::WrapVariant)
-cxxkit_find_package(Benchmark PROVIDED_TARGETS CxxKitWrapBenchmark::WrapBenchmark)
-cxxkit_install_public_wrap_headers(cxxkit_base
-    WRAPS
-    CxxKitWrapFmt::WrapFmt|fmt
-    CxxKitWrapStringViewLite::WrapStringViewLite|nonstd
-    CxxKitWrapOptional::WrapOptional|tl
-    CxxKitWrapExpected::WrapExpected|tl
-    CxxKitWrapConcurrentQueue::WrapConcurrentQueue|concurrentqueue
-    CxxKitWrapReaderWriterQueue::WrapReaderWriterQueue|readerwriterqueue
-    CxxKitWrapFunction2::WrapFunction2|function2
-    CxxKitWrapFilesystem::WrapFilesystem|ghc
-    CxxKitWrapSpdlog::WrapSpdlog|spdlog
-    CxxKitWrapVariant::WrapVariant|mpark
-    CxxKitWrapBenchmark::WrapBenchmark|benchmark)
-
 # cxxkit/3rdparty/ 统一 include 根（三方头命名空间拷贝）
-# Helper adds the source/build/install include trio; base additionally exposes the
-# build tree's 3rdparty header copy root.
+# Base 本身不消费三方头；各消费子库经 cxxkit_install_public_wrap_headers
+# 把三方头拷到 build 树并烤进自己的 target。Base 保留 BUILD_INTERFACE 根，
+# 供仅 include base 的 header-only 消费者可见拷贝的三方头。
 target_include_directories(cxxkit_base INTERFACE
     $<BUILD_INTERFACE:${PROJECT_BINARY_DIR}/include>)
-target_link_libraries(cxxkit_base INTERFACE
-    CxxKitWrapFmt::WrapFmt
-    CxxKitWrapStringViewLite::WrapStringViewLite
-    CxxKitWrapOptional::WrapOptional
-    CxxKitWrapExpected::WrapExpected
-    CxxKitWrapConcurrentQueue::WrapConcurrentQueue
-    CxxKitWrapReaderWriterQueue::WrapReaderWriterQueue
-    CxxKitWrapFunction2::WrapFunction2
-    CxxKitWrapFilesystem::WrapFilesystem
-    CxxKitWrapSpdlog::WrapSpdlog
-    CxxKitWrapVariant::WrapVariant
-    CxxKitWrapBenchmark::WrapBenchmark)
+# 全库实际按 C++14 编译：此前 function2 的 INTERFACE 编译特性（cxx_generic_lambdas/
+# cxx_return_type_deduction，均 C++14）经 base 的 blanket 三方链接传给所有子库，
+# 掩盖了“库用 C++11”的错觉，但 kernel/memory/text/tools 等编译子库实为 C++14 代码。
+# 迁移后把 standard 基线显式抬到 C++14，保持各子库既有编译水平。
+target_compile_features(cxxkit_base INTERFACE cxx_std_14)
 
 cxxkit_generate_pkg_config(cxxkit_base base)
 cxxkit_configure_library_end(CxxKitBase)

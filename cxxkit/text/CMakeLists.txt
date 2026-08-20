@@ -28,9 +28,15 @@ cxxkit_configure_library_begin(CxxKitText)
 cxxkit_add_library(cxxkit_text
     STATIC
     SOURCES string_utils.cpp ascii.cpp string.cpp base64.cpp bit_buffer.cpp string_builder.cpp string_encode.cpp
-    PUBLIC_LIBRARIES cxxkit::base cxxkit::numerics
+    PUBLIC_LIBRARIES cxxkit::base cxxkit::numerics CxxKitWrapFmt::WrapFmt CxxKitWrapStringViewLite::WrapStringViewLite
     EXPORT_NAME text
     FOLDER "CxxKit/libs")
+cxxkit_find_package(Fmt PROVIDED_TARGETS CxxKitWrapFmt::WrapFmt)
+cxxkit_install_public_wrap_headers(cxxkit_text
+    WRAPS CxxKitWrapFmt::WrapFmt|fmt)
+cxxkit_find_package(StringViewLite PROVIDED_TARGETS CxxKitWrapStringViewLite::WrapStringViewLite)
+cxxkit_install_public_wrap_headers(cxxkit_text
+    WRAPS CxxKitWrapStringViewLite::WrapStringViewLite|nonstd)
 cxxkit_generate_pkg_config(cxxkit_text text)
 cxxkit_configure_library_end(CxxKitText)
 

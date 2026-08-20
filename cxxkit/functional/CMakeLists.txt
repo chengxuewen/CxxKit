@@ -30,6 +30,10 @@ cxxkit_add_library(cxxkit_functional
     EXPORT_NAME functional
     FOLDER "CxxKit/libs")
 target_link_libraries(cxxkit_functional INTERFACE cxxkit::base)
+cxxkit_find_package(Function2 PROVIDED_TARGETS CxxKitWrapFunction2::WrapFunction2)
+cxxkit_install_public_wrap_headers(cxxkit_functional
+    WRAPS CxxKitWrapFunction2::WrapFunction2|function2)
+target_link_libraries(cxxkit_functional INTERFACE CxxKitWrapFunction2::WrapFunction2)
 
 cxxkit_generate_pkg_config(cxxkit_functional functional)
 cxxkit_configure_library_end(CxxKitFunctional)

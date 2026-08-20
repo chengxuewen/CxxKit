@@ -25,6 +25,7 @@ cmake_minimum_required(VERSION ${CXXKIT_MIN_NEW_POLICY_CMAKE_VERSION}...${CXXKIT
 find_package(Threads REQUIRED)
 
 cxxkit_find_package(GTest PROVIDED_TARGETS CxxKitWrapGTest::WrapGTest)
+cxxkit_find_package(Benchmark PROVIDED_TARGETS CxxKitWrapBenchmark::WrapBenchmark)
 
 set(CXXKIT_TEST_LINK_LIBRARIES
     cxxkit::base
@@ -39,7 +40,8 @@ set(CXXKIT_TEST_LINK_LIBRARIES
     cxxkit::thread
     cxxkit::text
     cxxkit::tools
-    CxxKitWrapGTest::WrapGTest)
+    CxxKitWrapGTest::WrapGTest
+    CxxKitWrapBenchmark::WrapBenchmark)
 
 cxxkit_add_test(cxxkit_tst_array_view
     SOURCES tst_array_view.cpp

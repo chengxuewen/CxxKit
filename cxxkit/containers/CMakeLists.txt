@@ -30,6 +30,14 @@ cxxkit_add_library(cxxkit_containers
     EXPORT_NAME containers
     FOLDER "CxxKit/libs")
 target_link_libraries(cxxkit_containers INTERFACE cxxkit::base)
+cxxkit_find_package(ConcurrentQueue PROVIDED_TARGETS CxxKitWrapConcurrentQueue::WrapConcurrentQueue)
+cxxkit_install_public_wrap_headers(cxxkit_containers
+    WRAPS CxxKitWrapConcurrentQueue::WrapConcurrentQueue|concurrentqueue)
+target_link_libraries(cxxkit_containers INTERFACE CxxKitWrapConcurrentQueue::WrapConcurrentQueue)
+cxxkit_find_package(ReaderWriterQueue PROVIDED_TARGETS CxxKitWrapReaderWriterQueue::WrapReaderWriterQueue)
+cxxkit_install_public_wrap_headers(cxxkit_containers
+    WRAPS CxxKitWrapReaderWriterQueue::WrapReaderWriterQueue|readerwriterqueue)
+target_link_libraries(cxxkit_containers INTERFACE CxxKitWrapReaderWriterQueue::WrapReaderWriterQueue)
 
 cxxkit_generate_pkg_config(cxxkit_containers containers)
 cxxkit_configure_library_end(CxxKitContainers)

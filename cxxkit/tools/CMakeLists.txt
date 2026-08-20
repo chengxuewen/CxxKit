@@ -28,9 +28,19 @@ cxxkit_configure_library_begin(CxxKitTools)
 cxxkit_add_library(cxxkit_tools
     STATIC
     SOURCES logging.cpp random.cpp assert.cpp clock.cpp status.cpp error.cpp once_flag.cpp id_registry.cpp shared_buffer.cpp metrics.cpp ntp_time.cpp fake_clock.cpp
-    PUBLIC_LIBRARIES cxxkit::base cxxkit::text
+    PUBLIC_LIBRARIES cxxkit::base cxxkit::text CxxKitWrapOptional::WrapOptional CxxKitWrapExpected::WrapExpected CxxKitWrapVariant::WrapVariant CxxKitWrapFilesystem::WrapFilesystem CxxKitWrapSpdlog::WrapSpdlog
     EXPORT_NAME tools
     FOLDER "CxxKit/libs")
+cxxkit_find_package(Optional PROVIDED_TARGETS CxxKitWrapOptional::WrapOptional)
+cxxkit_install_public_wrap_headers(cxxkit_tools WRAPS CxxKitWrapOptional::WrapOptional|tl)
+cxxkit_find_package(Expected PROVIDED_TARGETS CxxKitWrapExpected::WrapExpected)
+cxxkit_install_public_wrap_headers(cxxkit_tools WRAPS CxxKitWrapExpected::WrapExpected|tl)
+cxxkit_find_package(Variant PROVIDED_TARGETS CxxKitWrapVariant::WrapVariant)
+cxxkit_install_public_wrap_headers(cxxkit_tools WRAPS CxxKitWrapVariant::WrapVariant|mpark)
+cxxkit_find_package(Filesystem PROVIDED_TARGETS CxxKitWrapFilesystem::WrapFilesystem)
+cxxkit_install_public_wrap_headers(cxxkit_tools WRAPS CxxKitWrapFilesystem::WrapFilesystem|ghc)
+cxxkit_find_package(Spdlog PROVIDED_TARGETS CxxKitWrapSpdlog::WrapSpdlog)
+cxxkit_install_public_wrap_headers(cxxkit_tools WRAPS CxxKitWrapSpdlog::WrapSpdlog|spdlog)
 cxxkit_generate_pkg_config(cxxkit_tools tools)
 cxxkit_configure_library_end(CxxKitTools)
 
