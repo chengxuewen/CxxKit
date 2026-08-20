@@ -74,3 +74,12 @@ cxxkit 采用目录 = 子库 = CMake target 三位一体，参考 boost 按需�
 ## D17: crash 子库设计定案（2026-08-19）
 
 第 15 子库 `cxxkit::crash`（breakpad + backward-cpp，opt-in `CXXKIT_ENABLE_LIB_CRASH`，纯 C++11 无 Qt 无网络上传 v1）。依赖走 **QExt/OpenCTK 式 vcpkg 导出 .7z 缓存**：`cmake/InstallVcpkg.cmake` 移植（`cxxkit_vcpkg_install_package`，**默认 OpenCTK 式自动拉取**——无 .7z 时 clone vcpkg + install + export + repack；`NO_FALLBACK` 严格模式）；`scripts/export_crash_deps.sh` 产出合并归档 `crash-deps-<triplet>.7z`（manifest 锁定 breakpad 2024-02-16 与 QExt 同源 + -fPIC overlay triplet + .version sidecar + license 断言）。FindWrapCrashDeps 单解包双 target + 三重门禁（版本/relocatability/PIC 冒烟），归档缺失自动跑导出脚本。**二进制级互斥契约**：crash ON ⇒ QExt::Breakpad OFF（install() 原子守卫拒二次安装）。backward-cpp 不注册自身 SignalHandling，仅 opt-in 回调内 `load_from(崩溃线程 ucontext)` 打栈（Linux；macOS 无 ucontext 跳过）。公共头零三方类型泄漏（pimpl 隔离，回调签名自有）。测试用独立 fixture + fork/exec（禁 gtest death test）。
+
+## D18: crash 实施期裁定汇总（2026-08-19 用户多轮对齐）
+
+- **R11（OpenCTK 式自动拉取）**：install_vcpkg 缓存缺失默认自动自举 vcpkg 构建导出；`NO_FALLBACK` 保留严格模式（评审 R-H3 版本漂移担忧由"缓存优先 + FindWrap 门禁"兜底）。已实测：vcpkg 自举 → 4 包构建 → 导出 .7z → 解包 → 门禁全通
+- **R12（弃 Singleton<T,true> 模板）**：该模板从未被实例化——C++11 atomic copy-init、缺 CXXKIT_ASSERT include、private 析构 vs unique_ptr 三处编译错误。CrashHandler 改用 C++11 函数局部静态（线程安全、进程生命周期）+ public 析构。**patterns 子库的模板缺陷待修**
+- **R13（每库一 wrap）**：删 FindWrapCrashDeps 聚合模块，回归 QExt 一对一惯例（FindWrapBreakpad/FindWrapBackward）；删 export 脚本层（纯 CMake 函数完成一切）；砍 .so 安装/POST_BUILD 复制（backward 无 libdw 降级为地址级栈，测试用 LD_LIBRARY_PATH 注入）
+- crash 回调签名暴露面：`CrashCallback` 自有类型（bool(*)(const char*, void*, bool)），平台类型只存在于 detail/（pimpl 隔离，验证通过）
+- v1 明确不做上传（用户决策）：不依赖 cxxkit::network，无 cpr/curl/mbedtls 构建代价
+- 关联：D17（架构）、D16（profiling 先例）；全部裁定记录于 docs/superpowers/plans/2026-08-19-cxxkit-crash-sublib.md + SDD 台账

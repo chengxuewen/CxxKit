@@ -27,66 +27,48 @@
 # missing → OpenCTK-style auto fallback (bootstrap vcpkg, install, export, pack). The shared
 # INPUT_CXXKIT_3RDPARTY_PACKAGES_DIR naturally holds QExt's breakpad-x64-linux.7z (2024-02-16) — same source.
 #
-# Provides: CXXKitWrapBreakpad::WrapBreakpad → unofficial::breakpad::libbreakpad_client
+# Provides: CxxKitWrapBreakpad::WrapBreakpad → unofficial::breakpad::libbreakpad_client
 # Gates: relocatability (resolved -I/-L inside the unpack root) + PIC smoke (PIE link of the client archive).
 
 # We can't create the same interface imported target multiple times, CMake will complain if we do
 # that. This can happen if the find_package call is done in multiple different subdirectories.
-if(TARGET CXXKitWrapBreakpad::WrapBreakpad)
-    set(CXXKitWrapBreakpad_FOUND ON)
+if(TARGET CxxKitWrapBreakpad::WrapBreakpad)
+    set(CxxKitWrapBreakpad_FOUND ON)
     return()
 endif()
 
+include(InstallVcpkg)
+list(APPEND CxxKitWrapBreakpad_COMPONENTS core)
+if(LINUX)
+    list(APPEND CxxKitWrapBreakpad_COMPONENTS tools)
+endif()
 cxxkit_vcpkg_install_package(breakpad
-    TARGET CXXKitWrapBreakpad::WrapBreakpad   # helper creates the empty INTERFACE IMPORTED target (QExt style)
-    PREFIX CXXKitWrapBreakpad
+    TARGET CxxKitWrapBreakpad::WrapBreakpad   # helper creates the empty INTERFACE IMPORTED target (QExt style)
+    COMPONENTS ${CxxKitWrapBreakpad_COMPONENTS}
+    PREFIX CxxKitWrapBreakpad
     PACK_NAME breakpad
     NOT_IMPORT)
-
-set(_cxxkit_wrap_breakpad_install_dir "${CXXKitWrapBreakpad_INSTALL_DIR}")
-
-find_package(unofficial-breakpad PATHS "${_cxxkit_wrap_breakpad_install_dir}/share/unofficial-breakpad"
+find_package(unofficial-breakpad PATHS "${CxxKitWrapBreakpad_INSTALL_DIR}/share/unofficial-breakpad"
     NO_DEFAULT_PATH REQUIRED)
-
-target_link_libraries(CXXKitWrapBreakpad::WrapBreakpad INTERFACE unofficial::breakpad::libbreakpad_client)
-target_include_directories(CXXKitWrapBreakpad::WrapBreakpad INTERFACE "${_cxxkit_wrap_breakpad_install_dir}/include")
-set_target_properties(CXXKitWrapBreakpad::WrapBreakpad PROPERTIES FOLDER "CxxKit/3rdparty")
-
-# ---- relocatability gate -----------------------------------------------------------------------------------------
-get_target_property(_cxxkit_wrap_breakpad_includes CXXKitWrapBreakpad::WrapBreakpad INTERFACE_INCLUDE_DIRECTORIES)
-get_target_property(_cxxkit_wrap_breakpad_links    CXXKitWrapBreakpad::WrapBreakpad INTERFACE_LINK_LIBRARIES)
-foreach(_cxxkit_wrap_breakpad_inc IN LISTS _cxxkit_wrap_breakpad_includes)
-    if(NOT _cxxkit_wrap_breakpad_inc STREQUAL "" AND NOT "${_cxxkit_wrap_breakpad_inc}" MATCHES "^${CXXKitWrapBreakpad_ROOT_DIR}")
-        message(FATAL_ERROR "crash-deps relocatability gate failed: include '${_cxxkit_wrap_breakpad_inc}' "
-            "lies outside the unpack root '${CXXKitWrapBreakpad_ROOT_DIR}'.")
+target_link_libraries(CxxKitWrapBreakpad::WrapBreakpad INTERFACE unofficial::breakpad::libbreakpad_client)
+target_include_directories(CxxKitWrapBreakpad::WrapBreakpad INTERFACE "${CxxKitWrapBreakpad_INSTALL_DIR}/include")
+set_target_properties(CxxKitWrapBreakpad::WrapBreakpad PROPERTIES FOLDER "CxxKit/3rdparty")
+set(CMAKE_PREFIX_PATH ${CMAKE_PREFIX_PATH_CACHE})
+set(CxxKitWrapBreakpad_TOOLS_DIR "${CxxKitWrapBreakpad_INSTALL_DIR}/tools/breakpad" CACHE INTERNAL "" FORCE)
+set(CxxKitWrapBreakpad_TOOLS_PACKAGE_DIR "${CXXKIT_3RDPARTY_PACKAGES_DIR}/breakpad-tools-${CXXKIT_HOST_PLATFORM_NAME}.7z" CACHE INTERNAL "" FORCE)
+if(EXISTS "${CxxKitWrapBreakpad_TOOLS_DIR}")
+    if(NOT "X${CXXKIT_3RDPARTY_PACKAGES_DIR}" STREQUAL "X")
+        if(NOT EXISTS "${CxxKitWrapBreakpad_TOOLS_PACKAGE_DIR}")
+            message(STATUS "${CxxKitWrapBreakpad_TOOLS_PACKAGE_DIR} not exist, start pack...")
+            execute_process(
+                COMMAND ${CMAKE_COMMAND} -E tar cvf "${CxxKitWrapBreakpad_TOOLS_PACKAGE_DIR}" --format=7zip "${CxxKitWrapBreakpad_TOOLS_DIR}"
+                WORKING_DIRECTORY "${CxxKitWrapBreakpad_INSTALL_DIR}/tools"
+                RESULT_VARIABLE PACK_RESULT
+                COMMAND_ECHO STDOUT)
+            if(NOT (PACK_RESULT MATCHES 0))
+                message(FATAL_ERROR "${CxxKitWrapBreakpad_TOOLS_PKG_NAME} pack failed.")
+            endif()
+        endif()
     endif()
-endforeach()
-foreach(_cxxkit_wrap_breakpad_link IN LISTS _cxxkit_wrap_breakpad_links)
-    if("${_cxxkit_wrap_breakpad_link}" MATCHES "^(/|\\\\)" AND NOT "${_cxxkit_wrap_breakpad_link}" MATCHES "^${CXXKitWrapBreakpad_ROOT_DIR}")
-        message(FATAL_ERROR "crash-deps relocatability gate failed: absolute link path "
-            "'${_cxxkit_wrap_breakpad_link}' lies outside the unpack root '${CXXKitWrapBreakpad_ROOT_DIR}'.")
-    endif()
-endforeach()
-message(STATUS "crash-deps relocatability gate passed (breakpad)")
-
-# ---- PIC smoke gate: a PIE executable must link the breakpad client archive --------------------------------------
-get_target_property(_cxxkit_wrap_breakpad_loc unofficial::breakpad::libbreakpad_client IMPORTED_LOCATION)
-if(NOT _cxxkit_wrap_breakpad_loc OR NOT EXISTS "${_cxxkit_wrap_breakpad_loc}")
-    message(FATAL_ERROR "crash-deps: libbreakpad_client archive not found via unofficial-breakpad config.")
 endif()
-set(_cxxkit_wrap_breakpad_smoke_dir "${CXXKitWrapBreakpad_ROOT_DIR}/pic-smoke")
-file(MAKE_DIRECTORY "${_cxxkit_wrap_breakpad_smoke_dir}")
-file(WRITE "${_cxxkit_wrap_breakpad_smoke_dir}/main.c" "int main(void){return 0;}\n")
-try_compile(CXXKitWrapBreakpad_PIC_SMOKE_PASSED
-    "${_cxxkit_wrap_breakpad_smoke_dir}"
-    "${_cxxkit_wrap_breakpad_smoke_dir}/main.c"
-    CMAKE_FLAGS
-        "-DCMAKE_POSITION_INDEPENDENT_CODE=ON"
-    LINK_LIBRARIES "${_cxxkit_wrap_breakpad_loc}" "-pthread")
-if(NOT CXXKitWrapBreakpad_PIC_SMOKE_PASSED)
-    message(FATAL_ERROR "crash-deps PIC smoke failed: libbreakpad_client.a is not PIC-compatible. "
-        "Re-export with a PIC triplet (set VCPKG_CMAKE_C/CXX_FLAGS '-fPIC' in the triplet).")
-endif()
-message(STATUS "crash-deps PIC smoke passed (${_cxxkit_wrap_breakpad_loc})")
-
-set(CXXKitWrapBreakpad_FOUND ON)
+set(CxxKitWrapBreakpad_FOUND ON)

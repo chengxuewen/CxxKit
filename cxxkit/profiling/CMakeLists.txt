@@ -40,7 +40,7 @@ target_include_directories(cxxkit_profiling INTERFACE
 target_compile_features(cxxkit_profiling INTERFACE cxx_std_11)
 
 if(CXXKIT_ENABLE_LIB_TRACY)
-    cxxkit_find_package(Tracy PROVIDED_TARGETS CXXKitWrapTracy::WrapTracy)
+    cxxkit_find_package(Tracy PROVIDED_TARGETS CxxKitWrapTracy::WrapTracy)
     # Link Tracy's own exported target directly: TracyConfig ships with Tracy (vcpkg-style),
     # so the installed link interface resolves via find_dependency(Tracy) in cxxkitConfig.cmake.
     target_link_libraries(cxxkit_profiling INTERFACE Tracy::TracyClient)
@@ -49,7 +49,7 @@ if(CXXKIT_ENABLE_LIB_TRACY)
     # Namespace Tracy headers as <cxxkit/3rdparty/tracy/...> (build + install trees).
     cxxkit_install_public_wrap_headers(cxxkit_profiling
         WRAPS
-        CXXKitWrapTracy::WrapTracy|tracy)
+        CxxKitWrapTracy::WrapTracy|tracy)
     cxxkit_generate_pkg_config(cxxkit_profiling profiling
         DESCRIPTION "cxxkit profiling module (Tracy backend)")
 endif()

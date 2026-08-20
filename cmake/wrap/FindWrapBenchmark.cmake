@@ -23,28 +23,28 @@
 
 # We can't create the same interface imported target multiple times, CMake will complain if we do
 # that. This can happen if the find_package call is done in multiple different subdirectories.
-if(TARGET CXXKitWrapBenchmark::WrapBenchmark)
-    set(CXXKitWrapBenchmark_FOUND ON)
+if(TARGET CxxKitWrapBenchmark::WrapBenchmark)
+    set(CxxKitWrapBenchmark_FOUND ON)
     return()
 endif()
 
-set(CXXKitWrapBenchmark_NAME "benchmark-1.8.4")
-set(CXXKitWrapBenchmark_PKG_NAME "${CXXKitWrapBenchmark_NAME}.tar.gz")
-set(CXXKitWrapBenchmark_DIR_NAME "${CXXKitWrapBenchmark_NAME}-${CXXKIT_LOWER_BUILD_TYPE}")
-set(CXXKitWrapBenchmark_URL_PATH "${PROJECT_SOURCE_DIR}/3rdparty/${CXXKitWrapBenchmark_PKG_NAME}")
-set(CXXKitWrapBenchmark_ROOT_DIR "${PROJECT_BINARY_DIR}/3rdparty/${CXXKitWrapBenchmark_DIR_NAME}")
-set(CXXKitWrapBenchmark_BUILD_DIR "${CXXKitWrapBenchmark_ROOT_DIR}/build" CACHE INTERNAL "" FORCE)
-set(CXXKitWrapBenchmark_SOURCE_DIR "${CXXKitWrapBenchmark_ROOT_DIR}/source" CACHE INTERNAL "" FORCE)
-set(CXXKitWrapBenchmark_INSTALL_DIR "${CXXKitWrapBenchmark_ROOT_DIR}/install" CACHE INTERNAL "" FORCE)
-cxxkit_stamp_file_info(CXXKitWrapBenchmark OUTPUT_DIR "${CXXKitWrapBenchmark_ROOT_DIR}")
-cxxkit_fetch_3rdparty(CXXKitWrapBenchmark URL "${CXXKitWrapBenchmark_URL_PATH}" OUTPUT_NAME "${CXXKitWrapBenchmark_DIR_NAME}")
-if(NOT EXISTS "${CXXKitWrapBenchmark_STAMP_FILE_PATH}")
-    if(NOT EXISTS ${CXXKitWrapBenchmark_SOURCE_DIR})
-        message(FATAL_ERROR "${CXXKitWrapBenchmark_DIR_NAME} FetchContent failed.")
+set(CxxKitWrapBenchmark_NAME "benchmark-1.8.4")
+set(CxxKitWrapBenchmark_PKG_NAME "${CxxKitWrapBenchmark_NAME}.tar.gz")
+set(CxxKitWrapBenchmark_DIR_NAME "${CxxKitWrapBenchmark_NAME}-${CXXKIT_LOWER_BUILD_TYPE}")
+set(CxxKitWrapBenchmark_URL_PATH "${PROJECT_SOURCE_DIR}/3rdparty/${CxxKitWrapBenchmark_PKG_NAME}")
+set(CxxKitWrapBenchmark_ROOT_DIR "${PROJECT_BINARY_DIR}/3rdparty/${CxxKitWrapBenchmark_DIR_NAME}")
+set(CxxKitWrapBenchmark_BUILD_DIR "${CxxKitWrapBenchmark_ROOT_DIR}/build" CACHE INTERNAL "" FORCE)
+set(CxxKitWrapBenchmark_SOURCE_DIR "${CxxKitWrapBenchmark_ROOT_DIR}/source" CACHE INTERNAL "" FORCE)
+set(CxxKitWrapBenchmark_INSTALL_DIR "${CxxKitWrapBenchmark_ROOT_DIR}/install" CACHE INTERNAL "" FORCE)
+cxxkit_stamp_file_info(CxxKitWrapBenchmark OUTPUT_DIR "${CxxKitWrapBenchmark_ROOT_DIR}")
+cxxkit_fetch_3rdparty(CxxKitWrapBenchmark URL "${CxxKitWrapBenchmark_URL_PATH}" OUTPUT_NAME "${CxxKitWrapBenchmark_DIR_NAME}")
+if(NOT EXISTS "${CxxKitWrapBenchmark_STAMP_FILE_PATH}")
+    if(NOT EXISTS ${CxxKitWrapBenchmark_SOURCE_DIR})
+        message(FATAL_ERROR "${CxxKitWrapBenchmark_DIR_NAME} FetchContent failed.")
     endif()
-    cxxkit_reset_dir(${CXXKitWrapBenchmark_BUILD_DIR})
+    cxxkit_reset_dir(${CxxKitWrapBenchmark_BUILD_DIR})
 
-    message(STATUS "Configure ${CXXKitWrapBenchmark_DIR_NAME} lib...")
+    message(STATUS "Configure ${CxxKitWrapBenchmark_DIR_NAME} lib...")
     execute_process(
         COMMAND ${CMAKE_COMMAND}
         -Wno-deprecated
@@ -54,37 +54,37 @@ if(NOT EXISTS "${CXXKitWrapBenchmark_STAMP_FILE_PATH}")
         -DBENCHMARK_ENABLE_TESTING=OFF
         -DCMAKE_POSITION_INDEPENDENT_CODE=ON
         -DCMAKE_BUILD_TYPE=${CMAKE_BUILD_TYPE}
-        -DCMAKE_INSTALL_PREFIX=${CXXKitWrapBenchmark_INSTALL_DIR}
-        ${CXXKitWrapBenchmark_SOURCE_DIR}
-        WORKING_DIRECTORY "${CXXKitWrapBenchmark_BUILD_DIR}"
+        -DCMAKE_INSTALL_PREFIX=${CxxKitWrapBenchmark_INSTALL_DIR}
+        ${CxxKitWrapBenchmark_SOURCE_DIR}
+        WORKING_DIRECTORY "${CxxKitWrapBenchmark_BUILD_DIR}"
         RESULT_VARIABLE CONFIGURE_RESULT)
     if(NOT CONFIGURE_RESULT MATCHES 0)
-        message(FATAL_ERROR "${CXXKitWrapBenchmark_DIR_NAME} configure failed.")
+        message(FATAL_ERROR "${CxxKitWrapBenchmark_DIR_NAME} configure failed.")
     endif()
-    message(STATUS "${CXXKitWrapBenchmark_DIR_NAME} configure success")
+    message(STATUS "${CxxKitWrapBenchmark_DIR_NAME} configure success")
 
     execute_process(
         COMMAND ${CMAKE_COMMAND} --build ./ --parallel ${CXXKIT_NUMBER_OF_ASYNC_JOBS} --config 
         ${CMAKE_BUILD_TYPE} --target install
-        WORKING_DIRECTORY "${CXXKitWrapBenchmark_BUILD_DIR}"
+        WORKING_DIRECTORY "${CxxKitWrapBenchmark_BUILD_DIR}"
         RESULT_VARIABLE BUILD_RESULT)
     if(NOT BUILD_RESULT MATCHES 0)
-        message(FATAL_ERROR "${CXXKitWrapBenchmark_DIR_NAME} build failed.")
+        message(FATAL_ERROR "${CxxKitWrapBenchmark_DIR_NAME} build failed.")
     endif()
-    message(STATUS "${CXXKitWrapBenchmark_DIR_NAME} build success")
+    message(STATUS "${CxxKitWrapBenchmark_DIR_NAME} build success")
 
     execute_process(
         COMMAND ${CMAKE_COMMAND} --install ./ --config ${CMAKE_BUILD_TYPE}
-        WORKING_DIRECTORY "${CXXKitWrapBenchmark_BUILD_DIR}"
+        WORKING_DIRECTORY "${CxxKitWrapBenchmark_BUILD_DIR}"
         RESULT_VARIABLE INSTALL_RESULT)
     if(NOT INSTALL_RESULT MATCHES 0)
-        message(FATAL_ERROR "${CXXKitWrapBenchmark_DIR_NAME} install failed.")
+        message(FATAL_ERROR "${CxxKitWrapBenchmark_DIR_NAME} install failed.")
     endif()
-    message(STATUS "${CXXKitWrapBenchmark_DIR_NAME} install success")
-    cxxkit_make_stamp_file("${CXXKitWrapBenchmark_STAMP_FILE_PATH}")
+    message(STATUS "${CxxKitWrapBenchmark_DIR_NAME} install success")
+    cxxkit_make_stamp_file("${CxxKitWrapBenchmark_STAMP_FILE_PATH}")
 endif()
 # wrap lib
-add_library(CXXKitWrapBenchmark::WrapBenchmark INTERFACE IMPORTED)
-find_package(benchmark HINTS ${CXXKitWrapBenchmark_INSTALL_DIR} NO_DEFAULT_PATH REQUIRED)
-target_link_libraries(CXXKitWrapBenchmark::WrapBenchmark INTERFACE benchmark::benchmark)
-set(CXXKitWrapBenchmark_FOUND ON)
+add_library(CxxKitWrapBenchmark::WrapBenchmark INTERFACE IMPORTED)
+find_package(benchmark HINTS ${CxxKitWrapBenchmark_INSTALL_DIR} NO_DEFAULT_PATH REQUIRED)
+target_link_libraries(CxxKitWrapBenchmark::WrapBenchmark INTERFACE benchmark::benchmark)
+set(CxxKitWrapBenchmark_FOUND ON)

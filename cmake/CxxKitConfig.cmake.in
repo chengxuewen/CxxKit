@@ -26,20 +26,20 @@ endif()
 # include path comes from cxxkit targets).
 set(_cxxkit_3rdparty_libdir "${PACKAGE_PREFIX_DIR}/lib")
 foreach(_stub_spec IN ITEMS
-        "CXXKitWrapFmt::WrapFmt;"
-        "CXXKitWrapStringViewLite::WrapStringViewLite;"
-        "CXXKitWrapOptional::WrapOptional;"
-        "CXXKitWrapExpected::WrapExpected;"
-        "CXXKitWrapConcurrentQueue::WrapConcurrentQueue;"
-        "CXXKitWrapReaderWriterQueue::WrapReaderWriterQueue;"
-        "CXXKitWrapFunction2::WrapFunction2;"
-        "CXXKitWrapFilesystem::WrapFilesystem;"
-        "CXXKitWrapSpdlog::WrapSpdlog;"
-        "CXXKitWrapVariant::WrapVariant;"
-        "CXXKitWrapBenchmark::WrapBenchmark;"
-        "CXXKitWrapLibcpr::WrapLibcpr;"
-        "CXXKitWrapLibcurl::WrapLibcurl;"
-        "CXXKitWrapMbedTLS::WrapMbedTLS;")
+        "CxxKitWrapFmt::WrapFmt;"
+        "CxxKitWrapStringViewLite::WrapStringViewLite;"
+        "CxxKitWrapOptional::WrapOptional;"
+        "CxxKitWrapExpected::WrapExpected;"
+        "CxxKitWrapConcurrentQueue::WrapConcurrentQueue;"
+        "CxxKitWrapReaderWriterQueue::WrapReaderWriterQueue;"
+        "CxxKitWrapFunction2::WrapFunction2;"
+        "CxxKitWrapFilesystem::WrapFilesystem;"
+        "CxxKitWrapSpdlog::WrapSpdlog;"
+        "CxxKitWrapVariant::WrapVariant;"
+        "CxxKitWrapBenchmark::WrapBenchmark;"
+        "CxxKitWrapLibcpr::WrapLibcpr;"
+        "CxxKitWrapLibcurl::WrapLibcurl;"
+        "CxxKitWrapMbedTLS::WrapMbedTLS;")
     string(REPLACE ";" "|" _stub_parts "${_stub_spec}")
     string(REPLACE "|" ";" _stub_list "${_stub_parts}")
     list(GET _stub_list 0 _stub_target)

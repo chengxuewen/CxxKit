@@ -23,28 +23,28 @@
 
 # We can't create the same interface imported target multiple times, CMake will complain if we do
 # that. This can happen if the find_package call is done in multiple different subdirectories.
-if(TARGET CXXKitWrapFmt::WrapFmt)
-    set(CXXKitWrapFmt_FOUND ON)
+if(TARGET CxxKitWrapFmt::WrapFmt)
+    set(CxxKitWrapFmt_FOUND ON)
     return()
 endif()
 
-set(CXXKitWrapFmt_NAME "fmt-12.1.0")
-set(CXXKitWrapFmt_PKG_NAME "${CXXKitWrapFmt_NAME}.zip")
-set(CXXKitWrapFmt_DIR_NAME "${CXXKitWrapFmt_NAME}-${CXXKIT_LOWER_BUILD_TYPE}")
-set(CXXKitWrapFmt_URL_PATH "${PROJECT_SOURCE_DIR}/3rdparty/${CXXKitWrapFmt_PKG_NAME}")
-set(CXXKitWrapFmt_ROOT_DIR "${PROJECT_BINARY_DIR}/3rdparty/${CXXKitWrapFmt_DIR_NAME}")
-set(CXXKitWrapFmt_BUILD_DIR "${CXXKitWrapFmt_ROOT_DIR}/build" CACHE INTERNAL "" FORCE)
-set(CXXKitWrapFmt_SOURCE_DIR "${CXXKitWrapFmt_ROOT_DIR}/source" CACHE INTERNAL "" FORCE)
-set(CXXKitWrapFmt_INSTALL_DIR "${CXXKitWrapFmt_ROOT_DIR}/install" CACHE INTERNAL "" FORCE)
-cxxkit_stamp_file_info(CXXKitWrapFmt OUTPUT_DIR "${CXXKitWrapFmt_ROOT_DIR}")
-cxxkit_fetch_3rdparty(CXXKitWrapFmt URL "${CXXKitWrapFmt_URL_PATH}" OUTPUT_NAME "${CXXKitWrapFmt_DIR_NAME}")
-if(NOT EXISTS "${CXXKitWrapFmt_STAMP_FILE_PATH}")
-    if(NOT EXISTS ${CXXKitWrapFmt_SOURCE_DIR})
-        message(FATAL_ERROR "${CXXKitWrapFmt_NAME} FetchContent failed.")
+set(CxxKitWrapFmt_NAME "fmt-12.1.0")
+set(CxxKitWrapFmt_PKG_NAME "${CxxKitWrapFmt_NAME}.zip")
+set(CxxKitWrapFmt_DIR_NAME "${CxxKitWrapFmt_NAME}-${CXXKIT_LOWER_BUILD_TYPE}")
+set(CxxKitWrapFmt_URL_PATH "${PROJECT_SOURCE_DIR}/3rdparty/${CxxKitWrapFmt_PKG_NAME}")
+set(CxxKitWrapFmt_ROOT_DIR "${PROJECT_BINARY_DIR}/3rdparty/${CxxKitWrapFmt_DIR_NAME}")
+set(CxxKitWrapFmt_BUILD_DIR "${CxxKitWrapFmt_ROOT_DIR}/build" CACHE INTERNAL "" FORCE)
+set(CxxKitWrapFmt_SOURCE_DIR "${CxxKitWrapFmt_ROOT_DIR}/source" CACHE INTERNAL "" FORCE)
+set(CxxKitWrapFmt_INSTALL_DIR "${CxxKitWrapFmt_ROOT_DIR}/install" CACHE INTERNAL "" FORCE)
+cxxkit_stamp_file_info(CxxKitWrapFmt OUTPUT_DIR "${CxxKitWrapFmt_ROOT_DIR}")
+cxxkit_fetch_3rdparty(CxxKitWrapFmt URL "${CxxKitWrapFmt_URL_PATH}" OUTPUT_NAME "${CxxKitWrapFmt_DIR_NAME}")
+if(NOT EXISTS "${CxxKitWrapFmt_STAMP_FILE_PATH}")
+    if(NOT EXISTS ${CxxKitWrapFmt_SOURCE_DIR})
+        message(FATAL_ERROR "${CxxKitWrapFmt_NAME} FetchContent failed.")
     endif()
-    cxxkit_reset_dir(${CXXKitWrapFmt_BUILD_DIR})
+    cxxkit_reset_dir(${CxxKitWrapFmt_BUILD_DIR})
 
-    message(STATUS "Configure ${CXXKitWrapFmt_NAME} lib...")
+    message(STATUS "Configure ${CxxKitWrapFmt_NAME} lib...")
     execute_process(
         COMMAND ${CMAKE_COMMAND}
         -Wno-deprecated
@@ -55,36 +55,36 @@ if(NOT EXISTS "${CXXKitWrapFmt_STAMP_FILE_PATH}")
         -DFMT_CUDA_TEST=OFF
         -DFMT_INSTALL=ON
         -DCMAKE_POSITION_INDEPENDENT_CODE=ON
-        -DCMAKE_INSTALL_PREFIX=${CXXKitWrapFmt_INSTALL_DIR}
-        ${CXXKitWrapFmt_SOURCE_DIR}
-        WORKING_DIRECTORY "${CXXKitWrapFmt_BUILD_DIR}"
+        -DCMAKE_INSTALL_PREFIX=${CxxKitWrapFmt_INSTALL_DIR}
+        ${CxxKitWrapFmt_SOURCE_DIR}
+        WORKING_DIRECTORY "${CxxKitWrapFmt_BUILD_DIR}"
         RESULT_VARIABLE CONFIGURE_RESULT)
     if(NOT CONFIGURE_RESULT MATCHES 0)
-        message(FATAL_ERROR "${CXXKitWrapFmt_NAME} configure failed.")
+        message(FATAL_ERROR "${CxxKitWrapFmt_NAME} configure failed.")
     endif()
-    message(STATUS "${CXXKitWrapFmt_NAME} configure success")
+    message(STATUS "${CxxKitWrapFmt_NAME} configure success")
 
     execute_process(
         COMMAND ${CMAKE_COMMAND} --build ./ --parallel ${CXXKIT_NUMBER_OF_ASYNC_JOBS} --config Release --target install
-        WORKING_DIRECTORY "${CXXKitWrapFmt_BUILD_DIR}"
+        WORKING_DIRECTORY "${CxxKitWrapFmt_BUILD_DIR}"
         RESULT_VARIABLE BUILD_RESULT)
     if(NOT BUILD_RESULT MATCHES 0)
-        message(FATAL_ERROR "${CXXKitWrapFmt_NAME} build failed.")
+        message(FATAL_ERROR "${CxxKitWrapFmt_NAME} build failed.")
     endif()
-    message(STATUS "${CXXKitWrapFmt_NAME} build success")
+    message(STATUS "${CxxKitWrapFmt_NAME} build success")
 
     execute_process(
         COMMAND ${CMAKE_COMMAND} --install ./ --config ${CMAKE_BUILD_TYPE}
-        WORKING_DIRECTORY "${CXXKitWrapFmt_BUILD_DIR}"
+        WORKING_DIRECTORY "${CxxKitWrapFmt_BUILD_DIR}"
         RESULT_VARIABLE INSTALL_RESULT)
     if(NOT INSTALL_RESULT MATCHES 0)
-        message(FATAL_ERROR "${CXXKitWrapFmt_NAME} install failed.")
+        message(FATAL_ERROR "${CxxKitWrapFmt_NAME} install failed.")
     endif()
-    message(STATUS "${CXXKitWrapFmt_NAME} install success")
-    cxxkit_make_stamp_file("${CXXKitWrapFmt_STAMP_FILE_PATH}")
+    message(STATUS "${CxxKitWrapFmt_NAME} install success")
+    cxxkit_make_stamp_file("${CxxKitWrapFmt_STAMP_FILE_PATH}")
 endif()
 # wrap lib
-add_library(CXXKitWrapFmt::WrapFmt INTERFACE IMPORTED)
-find_package(fmt PATHS ${CXXKitWrapFmt_INSTALL_DIR} NO_DEFAULT_PATH REQUIRED)
-target_link_libraries(CXXKitWrapFmt::WrapFmt INTERFACE fmt::fmt)
-set(CXXKitWrapFmt_FOUND ON)
+add_library(CxxKitWrapFmt::WrapFmt INTERFACE IMPORTED)
+find_package(fmt PATHS ${CxxKitWrapFmt_INSTALL_DIR} NO_DEFAULT_PATH REQUIRED)
+target_link_libraries(CxxKitWrapFmt::WrapFmt INTERFACE fmt::fmt)
+set(CxxKitWrapFmt_FOUND ON)

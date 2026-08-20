@@ -2,12 +2,22 @@
 #
 # Library: CxxKit
 #
-# Copyright (C) 2025~Present ChengXueWen.
+# Copyright (C) 2026~Present ChengXueWen.
 #
 # License: MIT License
 #
-# cxxkit::base — header-only foundation sublibrary (macros, types, compiler detection).
-# Also the hub for vendored 3rdparty header namespacing (cxxkit/3rdparty/<lib>/).
+# Permission is hereby granted, free of charge, to any person obtaining a copy of this software and associated
+# documentation files (the "Software"), to deal in the Software without restriction, including without limitation
+# the rights to use, copy, modify, merge, publish, distribute, sublicense, and/or sell copies of the Software, and
+# to permit persons to whom the Software is furnished to do so, subject to the following conditions:
+#
+# The above copyright notice and this permission notice shall be included in all copies or substantial portions
+# of the Software.
+#
+# THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE
+# WARRANTIES OF MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE AUTHORS
+# OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR
+# OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 #
 ########################################################################################################################
 
@@ -25,30 +35,30 @@ set_property(TARGET cxxkit_base PROPERTY EXPORT_NAME base)
 
 # Vendored 3rdparty wraps (headers namespaced as cxxkit/3rdparty/<lib>/)
 # This is the octk mechanism to avoid conflicts with system-installed libraries.
-cxxkit_find_package(Fmt PROVIDED_TARGETS CXXKitWrapFmt::WrapFmt)
-cxxkit_find_package(StringViewLite PROVIDED_TARGETS CXXKitWrapStringViewLite::WrapStringViewLite)
-cxxkit_find_package(Optional PROVIDED_TARGETS CXXKitWrapOptional::WrapOptional)
-cxxkit_find_package(Expected PROVIDED_TARGETS CXXKitWrapExpected::WrapExpected)
-cxxkit_find_package(ConcurrentQueue PROVIDED_TARGETS CXXKitWrapConcurrentQueue::WrapConcurrentQueue)
-cxxkit_find_package(ReaderWriterQueue PROVIDED_TARGETS CXXKitWrapReaderWriterQueue::WrapReaderWriterQueue)
-cxxkit_find_package(Function2 PROVIDED_TARGETS CXXKitWrapFunction2::WrapFunction2)
-cxxkit_find_package(Filesystem PROVIDED_TARGETS CXXKitWrapFilesystem::WrapFilesystem)
-cxxkit_find_package(Spdlog PROVIDED_TARGETS CXXKitWrapSpdlog::WrapSpdlog)
-cxxkit_find_package(Variant PROVIDED_TARGETS CXXKitWrapVariant::WrapVariant)
-cxxkit_find_package(Benchmark PROVIDED_TARGETS CXXKitWrapBenchmark::WrapBenchmark)
+cxxkit_find_package(Fmt PROVIDED_TARGETS CxxKitWrapFmt::WrapFmt)
+cxxkit_find_package(StringViewLite PROVIDED_TARGETS CxxKitWrapStringViewLite::WrapStringViewLite)
+cxxkit_find_package(Optional PROVIDED_TARGETS CxxKitWrapOptional::WrapOptional)
+cxxkit_find_package(Expected PROVIDED_TARGETS CxxKitWrapExpected::WrapExpected)
+cxxkit_find_package(ConcurrentQueue PROVIDED_TARGETS CxxKitWrapConcurrentQueue::WrapConcurrentQueue)
+cxxkit_find_package(ReaderWriterQueue PROVIDED_TARGETS CxxKitWrapReaderWriterQueue::WrapReaderWriterQueue)
+cxxkit_find_package(Function2 PROVIDED_TARGETS CxxKitWrapFunction2::WrapFunction2)
+cxxkit_find_package(Filesystem PROVIDED_TARGETS CxxKitWrapFilesystem::WrapFilesystem)
+cxxkit_find_package(Spdlog PROVIDED_TARGETS CxxKitWrapSpdlog::WrapSpdlog)
+cxxkit_find_package(Variant PROVIDED_TARGETS CxxKitWrapVariant::WrapVariant)
+cxxkit_find_package(Benchmark PROVIDED_TARGETS CxxKitWrapBenchmark::WrapBenchmark)
 cxxkit_install_public_wrap_headers(cxxkit_base
     WRAPS
-    CXXKitWrapFmt::WrapFmt|fmt
-    CXXKitWrapStringViewLite::WrapStringViewLite|nonstd
-    CXXKitWrapOptional::WrapOptional|tl
-    CXXKitWrapExpected::WrapExpected|tl
-    CXXKitWrapConcurrentQueue::WrapConcurrentQueue|concurrentqueue
-    CXXKitWrapReaderWriterQueue::WrapReaderWriterQueue|readerwriterqueue
-    CXXKitWrapFunction2::WrapFunction2|function2
-    CXXKitWrapFilesystem::WrapFilesystem|ghc
-    CXXKitWrapSpdlog::WrapSpdlog|spdlog
-    CXXKitWrapVariant::WrapVariant|mpark
-    CXXKitWrapBenchmark::WrapBenchmark|benchmark)
+    CxxKitWrapFmt::WrapFmt|fmt
+    CxxKitWrapStringViewLite::WrapStringViewLite|nonstd
+    CxxKitWrapOptional::WrapOptional|tl
+    CxxKitWrapExpected::WrapExpected|tl
+    CxxKitWrapConcurrentQueue::WrapConcurrentQueue|concurrentqueue
+    CxxKitWrapReaderWriterQueue::WrapReaderWriterQueue|readerwriterqueue
+    CxxKitWrapFunction2::WrapFunction2|function2
+    CxxKitWrapFilesystem::WrapFilesystem|ghc
+    CxxKitWrapSpdlog::WrapSpdlog|spdlog
+    CxxKitWrapVariant::WrapVariant|mpark
+    CxxKitWrapBenchmark::WrapBenchmark|benchmark)
 
 # cxxkit/3rdparty/ 统一 include 根（三方头命名空间拷贝）
 target_include_directories(cxxkit_base INTERFACE
@@ -57,17 +67,17 @@ target_include_directories(cxxkit_base INTERFACE
     $<BUILD_INTERFACE:${PROJECT_BINARY_DIR}/include>
     $<INSTALL_INTERFACE:include>)
 target_link_libraries(cxxkit_base INTERFACE
-    CXXKitWrapFmt::WrapFmt
-    CXXKitWrapStringViewLite::WrapStringViewLite
-    CXXKitWrapOptional::WrapOptional
-    CXXKitWrapExpected::WrapExpected
-    CXXKitWrapConcurrentQueue::WrapConcurrentQueue
-    CXXKitWrapReaderWriterQueue::WrapReaderWriterQueue
-    CXXKitWrapFunction2::WrapFunction2
-    CXXKitWrapFilesystem::WrapFilesystem
-    CXXKitWrapSpdlog::WrapSpdlog
-    CXXKitWrapVariant::WrapVariant
-    CXXKitWrapBenchmark::WrapBenchmark)
+    CxxKitWrapFmt::WrapFmt
+    CxxKitWrapStringViewLite::WrapStringViewLite
+    CxxKitWrapOptional::WrapOptional
+    CxxKitWrapExpected::WrapExpected
+    CxxKitWrapConcurrentQueue::WrapConcurrentQueue
+    CxxKitWrapReaderWriterQueue::WrapReaderWriterQueue
+    CxxKitWrapFunction2::WrapFunction2
+    CxxKitWrapFilesystem::WrapFilesystem
+    CxxKitWrapSpdlog::WrapSpdlog
+    CxxKitWrapVariant::WrapVariant
+    CxxKitWrapBenchmark::WrapBenchmark)
 
 target_compile_features(cxxkit_base INTERFACE cxx_std_11)
 

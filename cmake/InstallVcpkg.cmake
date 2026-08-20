@@ -2,7 +2,7 @@
 #
 # Library: CxxKit
 #
-# Copyright (C) 2025~Present ChengXueWen.
+# Copyright (C) 2026~Present ChengXueWen.
 #
 # License: MIT License
 #
@@ -28,7 +28,7 @@
 #
 # Usage (from a FindWrap module or sublibrary CMakeLists):
 #   include(InstallVcpkg)
-#   cxxkit_vcpkg_install_package(breakpad TARGET CXXKitWrapBreakpad::WrapBreakpad
+#   cxxkit_vcpkg_install_package(breakpad TARGET CxxKitWrapBreakpad::WrapBreakpad
 #       IMPORTED_TARGETS unofficial::breakpad::libbreakpad_client)
 #
 # Options:

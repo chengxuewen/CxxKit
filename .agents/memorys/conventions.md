@@ -63,3 +63,14 @@ add_library(cxxkit_xxx ${_cxxkit_headers} xxx.cpp)   # header-only 用 add_libra
 安装由 `install(DIRECTORY ... FILES_MATCHING "*.hpp")` 控制——.cpp 自动不装；detail/ 私有头随公共头安装（D9，2026-08-19 用户决策）。
 检查：`test -d src` 应不存在；`find build/install/include -type d -name detail` 应为 4（kernel/thread/tools/network）
 检查：`test -d src` 应不存在；`find build/install/include -type d -name detail` 应为空
+
+## C9：vcpkg 集成方式（2026-08-19，用户多轮对齐 QExt/OpenCTK）
+
+- **直接移植** InstallVcpkg.cmake 为通用基础设施 `cxxkit_vcpkg_install_package()`，不发明脚本层（QExt/OpenCTK 无 export 脚本——一切在 CMake 函数内完成）
+- **默认 OpenCTK 式自动拉取**：.7z 缓存缺失 → `cxxkit_vcpkg_install()` 自举 vcpkg（**必须全量 clone，禁 --depth 1**——builtin-baseline 版本锁定需要 port 历史 checkout）→ `vcpkg install` → `export --raw` → `cmake -E tar cvf --format=7zip` 打包 .7z；`NO_FALLBACK` 严格模式（FATAL 附导出命令）
+- **每库一个 wrap 文件**（`FindWrap<Name>.cmake` → `CXXKitWrap*::Wrap*` target，QExt FindWrapBreakpad 同款：helper 直接传真 TARGET 建空 INTERFACE IMPORTED target + 显式 INTERFACE include 目录 + NOT_IMPORT 自 import）
+- **缓存优先 = 同源保证**：共享 `INPUT_CXXKIT_3RDPARTY_PACKAGES_DIR` 注入目录（plain set 非 CACHE）天然含 QExt/父项目导出的 .7z（breakpad-x64-linux.7z = 2024-02-16），FindWrap 优先解包用之
+- **vcpkg 产物 gitignore**：`/vcpkg/` `/vcpkg-tools/`（**锚定路径**——`vcpkg*` 过宽会误吞 `scripts/*/vcpkg.json` 源文件）；`.7z`/`.version` 归档不入库
+- **vcpkg manifest 版本锁定**：`version>=` + 顶层 `builtin-baseline`（vcpkg.json 里 `version<` 是非法字段）；custom triplet 必须声明 `VCPKG_CMAKE_SYSTEM_NAME`（未知后缀默认按 Windows 处理）
+- **GUI 可编辑性**：cxxkit_option 普通态 `CACHE BOOL` 无 FORCE + `_option_string_type_if_cache_<var>` 标志跟踪强制态（OpenCTK 原版机制，曾移植丢失）
+- 检查：`grep -rn "CrashDeps\|export_crash_deps" cmake/ cxxkit/` 应为空；`find cmake/wrap -name "FindWrap*" | wc -l`（当前 23 个）

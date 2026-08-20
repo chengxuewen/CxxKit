@@ -270,7 +270,7 @@ for f in FindWrapFmt FindWrapJson FindWrapCLI11 FindWrapJwtcpp FindWrapSpdlog \
          FindWrapConcurrentQueue FindWrapReaderWriterQueue FindWrapGTest FindWrapBenchmark; do
   cp ${f}.cmake /Users/cxw/Documents/Code/Work/DEVSYS/cxxkit/cmake/wrap/${f}.cmake
 done
-# 每个文件：OpenCTKWrap → CXXKitWrap、OpenCTK → CXXKIT、OCTK_ → CXXKIT_、octk_ → cxxkit_
+# 每个文件：OpenCTKWrap → CxxKitWrap、OpenCTK → CXXKIT、OCTK_ → CXXKIT_、octk_ → cxxkit_
 ```
 
 - [ ] **Step 4: 验证**
@@ -485,7 +485,7 @@ find_package(Threads REQUIRED)
 set(CXXKIT_TEST_LINK_LIBRARIES
     cxxkit::base cxxkit::containers cxxkit::functional
     cxxkit::numerics cxxkit::io
-    CXXKitWrapGTest::WrapGTest)
+    CxxKitWrapGTest::WrapGTest)
 
 # 测试 target 必须 C++14（gtest 1.12.1 要求），库保持 11
 function(cxxkit_add_test_target name source)

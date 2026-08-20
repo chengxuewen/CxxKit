@@ -23,28 +23,28 @@
 
 # We can't create the same interface imported target multiple times, CMake will complain if we do
 # that. This can happen if the find_package call is done in multiple different subdirectories.
-if(TARGET CXXKitWrapZLIB::WrapZLIB)
-	set(CXXKitWrapZLIB_FOUND ON)
+if(TARGET CxxKitWrapZLIB::WrapZLIB)
+	set(CxxKitWrapZLIB_FOUND ON)
 	return()
 endif()
 
-set(CXXKitWrapZLIB_NAME "zlib-1.3.1")
-set(CXXKitWrapZLIB_DIR_NAME "${CXXKitWrapZLIB_NAME}")
-set(CXXKitWrapZLIB_PKG_NAME "${CXXKitWrapZLIB_NAME}.tar.gz")
-set(CXXKitWrapZLIB_URL_PATH "${PROJECT_SOURCE_DIR}/3rdparty/${CXXKitWrapZLIB_PKG_NAME}")
-set(CXXKitWrapZLIB_ROOT_DIR "${PROJECT_BINARY_DIR}/3rdparty/${CXXKitWrapZLIB_DIR_NAME}")
-set(CXXKitWrapZLIB_BUILD_DIR "${CXXKitWrapZLIB_ROOT_DIR}/build" CACHE INTERNAL "" FORCE)
-set(CXXKitWrapZLIB_SOURCE_DIR "${CXXKitWrapZLIB_ROOT_DIR}/source" CACHE INTERNAL "" FORCE)
-set(CXXKitWrapZLIB_INSTALL_DIR "${CXXKitWrapZLIB_ROOT_DIR}/install" CACHE INTERNAL "" FORCE)
-cxxkit_stamp_file_info(CXXKitWrapZLIB OUTPUT_DIR "${CXXKitWrapZLIB_ROOT_DIR}")
-cxxkit_fetch_3rdparty(CXXKitWrapZLIB URL "${CXXKitWrapZLIB_URL_PATH}")
-if(NOT EXISTS "${CXXKitWrapZLIB_STAMP_FILE_PATH}")
-	if(NOT EXISTS ${CXXKitWrapZLIB_SOURCE_DIR})
-		message(FATAL_ERROR "${CXXKitWrapZLIB_DIR_NAME} FetchContent failed.")
+set(CxxKitWrapZLIB_NAME "zlib-1.3.1")
+set(CxxKitWrapZLIB_DIR_NAME "${CxxKitWrapZLIB_NAME}")
+set(CxxKitWrapZLIB_PKG_NAME "${CxxKitWrapZLIB_NAME}.tar.gz")
+set(CxxKitWrapZLIB_URL_PATH "${PROJECT_SOURCE_DIR}/3rdparty/${CxxKitWrapZLIB_PKG_NAME}")
+set(CxxKitWrapZLIB_ROOT_DIR "${PROJECT_BINARY_DIR}/3rdparty/${CxxKitWrapZLIB_DIR_NAME}")
+set(CxxKitWrapZLIB_BUILD_DIR "${CxxKitWrapZLIB_ROOT_DIR}/build" CACHE INTERNAL "" FORCE)
+set(CxxKitWrapZLIB_SOURCE_DIR "${CxxKitWrapZLIB_ROOT_DIR}/source" CACHE INTERNAL "" FORCE)
+set(CxxKitWrapZLIB_INSTALL_DIR "${CxxKitWrapZLIB_ROOT_DIR}/install" CACHE INTERNAL "" FORCE)
+cxxkit_stamp_file_info(CxxKitWrapZLIB OUTPUT_DIR "${CxxKitWrapZLIB_ROOT_DIR}")
+cxxkit_fetch_3rdparty(CxxKitWrapZLIB URL "${CxxKitWrapZLIB_URL_PATH}")
+if(NOT EXISTS "${CxxKitWrapZLIB_STAMP_FILE_PATH}")
+	if(NOT EXISTS ${CxxKitWrapZLIB_SOURCE_DIR})
+		message(FATAL_ERROR "${CxxKitWrapZLIB_DIR_NAME} FetchContent failed.")
 	endif()
-	cxxkit_reset_dir(${CXXKitWrapZLIB_BUILD_DIR})
+	cxxkit_reset_dir(${CxxKitWrapZLIB_BUILD_DIR})
 
-	message(STATUS "Configure ${CXXKitWrapZLIB_DIR_NAME} lib...")
+	message(STATUS "Configure ${CxxKitWrapZLIB_DIR_NAME} lib...")
 	execute_process(
 		COMMAND ${CMAKE_COMMAND}
         -Wno-deprecated
@@ -53,39 +53,39 @@ if(NOT EXISTS "${CXXKitWrapZLIB_STAMP_FILE_PATH}")
 		-DZLIB_BUILD_TESTING=OFF
 		-DZLIB_BUILD_SHARED=OFF
 		-DCMAKE_BUILD_TYPE=${CMAKE_BUILD_TYPE}
-		-DCMAKE_INSTALL_PREFIX=${CXXKitWrapZLIB_INSTALL_DIR}
-		${CXXKitWrapZLIB_SOURCE_DIR}
-		WORKING_DIRECTORY "${CXXKitWrapZLIB_BUILD_DIR}"
+		-DCMAKE_INSTALL_PREFIX=${CxxKitWrapZLIB_INSTALL_DIR}
+		${CxxKitWrapZLIB_SOURCE_DIR}
+		WORKING_DIRECTORY "${CxxKitWrapZLIB_BUILD_DIR}"
 		RESULT_VARIABLE CONFIGURE_RESULT)
 	if(NOT CONFIGURE_RESULT MATCHES 0)
-		message(FATAL_ERROR "${CXXKitWrapZLIB_DIR_NAME} configure failed.")
+		message(FATAL_ERROR "${CxxKitWrapZLIB_DIR_NAME} configure failed.")
 	endif()
-	message(STATUS "${CXXKitWrapZLIB_DIR_NAME} configure success")
+	message(STATUS "${CxxKitWrapZLIB_DIR_NAME} configure success")
 
 	execute_process(
 		COMMAND ${CMAKE_COMMAND} --build ./ --parallel ${CXXKIT_NUMBER_OF_ASYNC_JOBS} --config
 		${CMAKE_BUILD_TYPE} --target install
-		WORKING_DIRECTORY "${CXXKitWrapZLIB_BUILD_DIR}"
+		WORKING_DIRECTORY "${CxxKitWrapZLIB_BUILD_DIR}"
 		RESULT_VARIABLE BUILD_RESULT)
 	if(NOT BUILD_RESULT MATCHES 0)
-		message(FATAL_ERROR "${CXXKitWrapZLIB_DIR_NAME} build failed.")
+		message(FATAL_ERROR "${CxxKitWrapZLIB_DIR_NAME} build failed.")
 	endif()
-	message(STATUS "${CXXKitWrapZLIB_DIR_NAME} build success")
+	message(STATUS "${CxxKitWrapZLIB_DIR_NAME} build success")
 
 	execute_process(
 		COMMAND ${CMAKE_COMMAND} --install ./ --config ${CMAKE_BUILD_TYPE}
-		WORKING_DIRECTORY "${CXXKitWrapZLIB_BUILD_DIR}"
+		WORKING_DIRECTORY "${CxxKitWrapZLIB_BUILD_DIR}"
 		RESULT_VARIABLE INSTALL_RESULT)
 	if(NOT INSTALL_RESULT MATCHES 0)
-		message(FATAL_ERROR "${CXXKitWrapZLIB_DIR_NAME} install failed.")
+		message(FATAL_ERROR "${CxxKitWrapZLIB_DIR_NAME} install failed.")
 	endif()
-	message(STATUS "${CXXKitWrapZLIB_DIR_NAME} install success")
-	cxxkit_make_stamp_file("${CXXKitWrapZLIB_STAMP_FILE_PATH}")
+	message(STATUS "${CxxKitWrapZLIB_DIR_NAME} install success")
+	cxxkit_make_stamp_file("${CxxKitWrapZLIB_STAMP_FILE_PATH}")
 endif()
 # wrap lib
-add_library(CXXKitWrapZLIB::WrapZLIB INTERFACE IMPORTED)
+add_library(CxxKitWrapZLIB::WrapZLIB INTERFACE IMPORTED)
 cxxkit_pkgconf_check_modules(ZLIB REQUIRED
-	PATH "${CXXKitWrapZLIB_INSTALL_DIR}/share/pkgconfig"
+	PATH "${CxxKitWrapZLIB_INSTALL_DIR}/share/pkgconfig"
 	IMPORTED_TARGET zlib)
-target_link_libraries(CXXKitWrapZLIB::WrapZLIB INTERFACE PkgConfig::ZLIB)
-set(CXXKitWrapZLIB_FOUND ON)
+target_link_libraries(CxxKitWrapZLIB::WrapZLIB INTERFACE PkgConfig::ZLIB)
+set(CxxKitWrapZLIB_FOUND ON)

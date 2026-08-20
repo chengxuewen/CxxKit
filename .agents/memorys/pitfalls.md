@@ -60,3 +60,39 @@
 - **根因**: v0.13 起 ZoneScopedS 是 static-zone 变体（3 参 ZoneNamedS 语义），带名 zone 改用 ZoneScopedN(name)
 - **解法**: 包装宏用 ZoneScopedN
 - **验证**: 预处理展开确认 `srcloc { name, ... }`；编译+链接通过
+
+## PIT-10: vcpkg manifest `version<` 非法字段 + 强制需要 builtin-baseline (2026-08-19)
+- **症状**: `vcpkg install` 报 "unexpected field 'version<', did you mean 'version>='?"；去掉后报 "uses version>= and does not have a builtin-baseline"
+- **根因**: vcpkg manifest 依赖对象只支持 `version>=`（下限）；版本上界/精确锁定靠顶层 `builtin-baseline`（vcpkg 仓库 commit）约束
+- **解法**: 依赖用 `version>=` + 顶层 `"builtin-baseline": "<commit>"`（取 vcpkg HEAD，验证该 commit 的 breakpad=2024-02-16#1 与 QExt 同源）
+- **验证**: vcpkg install 通过并解析到目标版本
+
+## PIT-11: 浅克隆 vcpkg 无法 checkout builtin-baseline 版本树 (2026-08-19)
+- **症状**: `read-tree <sha> failed: failed to unpack tree object` + "vcpkg was cloned as a shallow repository. Try again with a full vcpkg clone"
+- **根因**: `git clone --depth 1`（QExt 原版）无 port 历史，builtin-baseline 的版本 checkout 需要完整树
+- **解法**: 移植版改全量 clone（去掉 --depth 1）；已浅克隆的可 `git fetch --unshallow` 补救
+- **验证**: `git cat-file -t <版本tree sha>` 命中
+
+## PIT-12: vcpkg custom triplet 未声明系统名按 Windows 处理 (2026-08-19)
+- **症状**: `error: in triplet x64-linux-cxxkit: Use of Visual Studio's Developer Prompt is unsupported on non-Windows hosts`
+- **根因**: triolet 名 `<arch>-<os>` 的 os 部分未知（`linux-cxxkit`）→ vcpkg 默认按 Windows 主机处理
+- **解法**: overlay triplet 内 `set(VCPKG_CMAKE_SYSTEM_NAME Linux)`
+- **验证**: vcpkg install 通过
+
+## PIT-13: `.gitignore` 的 `vcpkg*` 过宽误吞源文件 (2026-08-19)
+- **症状**: `git add scripts/crash-deps/vcpkg.json` 被拒（"根据一个 .gitignore 文件而被忽略"）
+- **根因**: `vcpkg*` 匹配任意以 vcpkg 开头的路径段，含 `scripts/crash-deps/vcpkg.json`
+- **解法**: 锚定 `/vcpkg/` `/vcpkg-tools/`（仅忽略仓库根的自举克隆目录）
+- **验证**: `git ls-files scripts/crash-deps/` 命中 vcpkg.json
+
+## PIT-14: `Singleton<T,true>` 模板从未被实例化——三处编译错误 (2026-08-19)
+- **症状**: 用 `Singleton<CrashHandler,true>` 编译 crash_handler.cpp：①`std::atomic<T*>::mInstance = nullptr` 报 deleted copy ctor（C++11/14，PIT-8 同类）；②`CXXKIT_ASSERT` 未声明（模板用它却只依赖用户先 include tools/checks.hpp）；③`virtual ~T()` private 与内部 `unique_ptr<T>` 的 default_delete 冲突
+- **根因**: patterns/singleton.hpp 的 ManualLifetime 分支设计缺陷，此前零使用者（grep CXXKIT_DECLARE_SINGLETON 无命中）——我成了第一个踩坑者
+- **解法**: 不修复模板（避免动现有子库），崩溃代码改用 C++11 函数局部静态 + public 析构（线程安全、进程生命周期）；**模板缺陷记待办**
+- **验证**: 编译链接通过，单例句柄工作正常
+
+## PIT-15: 多行文本注入打断代码括号配平（edit 工具） (2026-08-19)
+- **症状**: tst_crash.cpp 注入 `#if defined(TEST_ELFUTILS_LIB_DIR) ... #endif` 后报 "expected '}' at end of input"，且出现重复的 `if (pid == 0) {` 残留
+- **根因**: 注入行含换行符，且锚点选取在结构中间，破坏了大括号配平（edit-safety 警告的经典场景）
+- **解法**: 修括号配平 + 清理重复行；**注入含换行/条件编译块时用整块范围替换，不插入行内**；edit 后立即编译验证
+- **验证**: 重新编译 + 测试通过

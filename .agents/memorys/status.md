@@ -47,7 +47,7 @@ cxxkit 是 OpenCTK（an open cpp toolkit）的成功重构版本 —— 精简�
 
 ## 测试状态
 
-- **33 个 gtest 套件全部通过（353 用例，与 OpenCTK 启用基线对等）**；crash 套件 `cxxkit_tst_crash`（4 用例，`CXXKIT_ENABLE_LIB_CRASH=ON` 时启用）
+- **33 个 gtest 套件 + crash 套件共 34 个全部通过（357 用例）**：crash 套件 `cxxkit_tst_crash`（4 用例，`CXXKIT_ENABLE_LIB_CRASH=ON` 时启用）——2026-08-19 实测 `ctest` 34/34 通过（91.5s）
 - OpenCTK 65 个测试文件中仅 30 个实际启用（36 个注释掉：inlined_vector/crypto_random/file_utils/task_queue 等引用不存在的头）
 - **不迁移**：tst_inlined_vector（absl test_instance_tracker 未 vendored）、tst_file_wrapper（io 子库已删）
 - cxxkit_tst_context_checker 偶发 SEGFAULT，单独重跑即过（与 semaphore 时序测试同类，非回归）
@@ -80,3 +80,11 @@ cxxkit 是 OpenCTK（an open cpp toolkit）的成功重构版本 —— 精简�
 4. doc-audit LOW 缺口：CONTRIBUTING.md / SECURITY.md / CHANGELOG / 平台兼容矩阵（发布前补）
 2. 剩余 36 个 OpenCTK 注释测试是否补全（需先补依赖头）
 3. clang-tidy 静态分析接入（CI 目前只有 format/build/test）
+
+### 2026-08-19 崩溃库落地（D17 + vcpkg 基础设施）
+
+- [x] **第 15 子库 `cxxkit::crash` 完成**（commit 47af11a 链，482be7b..47af11a 13 个提交）
+- [x] **vcpkg 通用基础设施**：`cmake/InstallVcpkg.cmake`（`cxxkit_vcpkg_install_package`，QExt/OpenCTK 移植，默认自动拉取 + NO_FALLBACK 严格模式）；`cmake/wrap/FindWrapBreakpad.cmake` + `cmake/wrap/FindWrapBackward.cmake`（每库一 wrap，单包 .7z 缓存 + find_package + PIC/relocatability 门禁）
+- [x] **测试 33→34 套件**：新增 `cxxkit_tst_crash`（4 用例：install 守卫/手动 minidump/崩溃产 dmp/栈打印 opt-in）——`ctest` 34/34 通过（91.5s）
+- [x] **cxxkit_option 修复**：恢复 OpenCTK 动态类型切换（CACHE BOOL 无 FORCE 普通态 + 强制态 STRING 标志）——所有选项 GUI 可编辑
+- 平台：Linux x64 全链路验证通过（vcpkg 自举→4 包构建→导出 .7z→解包→门禁→编译→测试）；macOS/Windows 归档待对应平台产出

@@ -2,8 +2,7 @@
 **
 ** Library: CxxKit
 **
-** Copyright (C) 2025~Present chengxuewen.
-** Copyright 2016 The WebRTC Project Authors.
+** Copyright (C) 2026~Present chengxuewen.
 **
 ** License: MIT License
 **

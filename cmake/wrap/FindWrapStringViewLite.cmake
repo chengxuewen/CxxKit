@@ -23,64 +23,64 @@
 
 # We can't create the same interface imported target multiple times, CMake will complain if we do
 # that. This can happen if the find_package call is done in multiple different subdirectories.
-if(TARGET CXXKitWrapStringViewLite::WrapStringViewLite)
-    set(CXXKitWrapStringViewLite_FOUND ON)
+if(TARGET CxxKitWrapStringViewLite::WrapStringViewLite)
+    set(CxxKitWrapStringViewLite_FOUND ON)
     return()
 endif()
 
-set(CXXKitWrapStringViewLite_NAME "string-view-lite-1.8.0")
-set(CXXKitWrapStringViewLite_PKG_NAME "${CXXKitWrapStringViewLite_NAME}.tar.gz")
-set(CXXKitWrapStringViewLite_DIR_NAME "${CXXKitWrapStringViewLite_NAME}-${CXXKIT_LOWER_BUILD_TYPE}")
-set(CXXKitWrapStringViewLite_URL_PATH "${PROJECT_SOURCE_DIR}/3rdparty/${CXXKitWrapStringViewLite_PKG_NAME}")
-set(CXXKitWrapStringViewLite_ROOT_DIR "${PROJECT_BINARY_DIR}/3rdparty/${CXXKitWrapStringViewLite_DIR_NAME}")
-set(CXXKitWrapStringViewLite_BUILD_DIR "${CXXKitWrapStringViewLite_ROOT_DIR}/build" CACHE INTERNAL "" FORCE)
-set(CXXKitWrapStringViewLite_SOURCE_DIR "${CXXKitWrapStringViewLite_ROOT_DIR}/source" CACHE INTERNAL "" FORCE)
-set(CXXKitWrapStringViewLite_INSTALL_DIR "${CXXKitWrapStringViewLite_ROOT_DIR}/install" CACHE INTERNAL "" FORCE)
-cxxkit_stamp_file_info(CXXKitWrapStringViewLite OUTPUT_DIR "${CXXKitWrapStringViewLite_ROOT_DIR}")
-cxxkit_fetch_3rdparty(CXXKitWrapStringViewLite URL "${CXXKitWrapStringViewLite_URL_PATH}" OUTPUT_NAME "${CXXKitWrapStringViewLite_DIR_NAME}")
-if(NOT EXISTS "${CXXKitWrapStringViewLite_STAMP_FILE_PATH}")
-    if(NOT EXISTS ${CXXKitWrapStringViewLite_SOURCE_DIR})
-        message(FATAL_ERROR "${CXXKitWrapStringViewLite_NAME} FetchContent failed.")
+set(CxxKitWrapStringViewLite_NAME "string-view-lite-1.8.0")
+set(CxxKitWrapStringViewLite_PKG_NAME "${CxxKitWrapStringViewLite_NAME}.tar.gz")
+set(CxxKitWrapStringViewLite_DIR_NAME "${CxxKitWrapStringViewLite_NAME}-${CXXKIT_LOWER_BUILD_TYPE}")
+set(CxxKitWrapStringViewLite_URL_PATH "${PROJECT_SOURCE_DIR}/3rdparty/${CxxKitWrapStringViewLite_PKG_NAME}")
+set(CxxKitWrapStringViewLite_ROOT_DIR "${PROJECT_BINARY_DIR}/3rdparty/${CxxKitWrapStringViewLite_DIR_NAME}")
+set(CxxKitWrapStringViewLite_BUILD_DIR "${CxxKitWrapStringViewLite_ROOT_DIR}/build" CACHE INTERNAL "" FORCE)
+set(CxxKitWrapStringViewLite_SOURCE_DIR "${CxxKitWrapStringViewLite_ROOT_DIR}/source" CACHE INTERNAL "" FORCE)
+set(CxxKitWrapStringViewLite_INSTALL_DIR "${CxxKitWrapStringViewLite_ROOT_DIR}/install" CACHE INTERNAL "" FORCE)
+cxxkit_stamp_file_info(CxxKitWrapStringViewLite OUTPUT_DIR "${CxxKitWrapStringViewLite_ROOT_DIR}")
+cxxkit_fetch_3rdparty(CxxKitWrapStringViewLite URL "${CxxKitWrapStringViewLite_URL_PATH}" OUTPUT_NAME "${CxxKitWrapStringViewLite_DIR_NAME}")
+if(NOT EXISTS "${CxxKitWrapStringViewLite_STAMP_FILE_PATH}")
+    if(NOT EXISTS ${CxxKitWrapStringViewLite_SOURCE_DIR})
+        message(FATAL_ERROR "${CxxKitWrapStringViewLite_NAME} FetchContent failed.")
     endif()
-    cxxkit_reset_dir(${CXXKitWrapStringViewLite_BUILD_DIR})
+    cxxkit_reset_dir(${CxxKitWrapStringViewLite_BUILD_DIR})
 
-    message(STATUS "Configure ${CXXKitWrapStringViewLite_NAME} lib...")
+    message(STATUS "Configure ${CxxKitWrapStringViewLite_NAME} lib...")
     execute_process(
         COMMAND ${CMAKE_COMMAND}
         -Wno-deprecated
         --no-warn-unused-cli
         -G ${CMAKE_GENERATOR}
         -DSTRING_VIEW_LITE_OPT_BUILD_TESTS=OFF
-        -DCMAKE_INSTALL_PREFIX=${CXXKitWrapStringViewLite_INSTALL_DIR}
-        ${CXXKitWrapStringViewLite_SOURCE_DIR}
-        WORKING_DIRECTORY "${CXXKitWrapStringViewLite_BUILD_DIR}"
+        -DCMAKE_INSTALL_PREFIX=${CxxKitWrapStringViewLite_INSTALL_DIR}
+        ${CxxKitWrapStringViewLite_SOURCE_DIR}
+        WORKING_DIRECTORY "${CxxKitWrapStringViewLite_BUILD_DIR}"
         RESULT_VARIABLE CONFIGURE_RESULT)
     if(NOT CONFIGURE_RESULT MATCHES 0)
-        message(FATAL_ERROR "${CXXKitWrapStringViewLite_NAME} configure failed.")
+        message(FATAL_ERROR "${CxxKitWrapStringViewLite_NAME} configure failed.")
     endif()
-    message(STATUS "${CXXKitWrapStringViewLite_NAME} configure success")
+    message(STATUS "${CxxKitWrapStringViewLite_NAME} configure success")
 
     execute_process(
         COMMAND ${CMAKE_COMMAND} --build ./ --parallel ${CXXKIT_NUMBER_OF_ASYNC_JOBS} --config Release --target install
-        WORKING_DIRECTORY "${CXXKitWrapStringViewLite_BUILD_DIR}"
+        WORKING_DIRECTORY "${CxxKitWrapStringViewLite_BUILD_DIR}"
         RESULT_VARIABLE BUILD_RESULT)
     if(NOT BUILD_RESULT MATCHES 0)
-        message(FATAL_ERROR "${CXXKitWrapStringViewLite_NAME} build failed.")
+        message(FATAL_ERROR "${CxxKitWrapStringViewLite_NAME} build failed.")
     endif()
-    message(STATUS "${CXXKitWrapStringViewLite_NAME} build success")
+    message(STATUS "${CxxKitWrapStringViewLite_NAME} build success")
 
     execute_process(
         COMMAND ${CMAKE_COMMAND} --install ./ --config ${CMAKE_BUILD_TYPE}
-        WORKING_DIRECTORY "${CXXKitWrapStringViewLite_BUILD_DIR}"
+        WORKING_DIRECTORY "${CxxKitWrapStringViewLite_BUILD_DIR}"
         RESULT_VARIABLE INSTALL_RESULT)
     if(NOT INSTALL_RESULT MATCHES 0)
-        message(FATAL_ERROR "${CXXKitWrapStringViewLite_NAME} install failed.")
+        message(FATAL_ERROR "${CxxKitWrapStringViewLite_NAME} install failed.")
     endif()
-    message(STATUS "${CXXKitWrapStringViewLite_NAME} install success")
-    cxxkit_make_stamp_file("${CXXKitWrapStringViewLite_STAMP_FILE_PATH}")
+    message(STATUS "${CxxKitWrapStringViewLite_NAME} install success")
+    cxxkit_make_stamp_file("${CxxKitWrapStringViewLite_STAMP_FILE_PATH}")
 endif()
 # wrap lib
-add_library(CXXKitWrapStringViewLite::WrapStringViewLite INTERFACE IMPORTED)
-find_package(string-view-lite PATHS ${CXXKitWrapStringViewLite_INSTALL_DIR} REQUIRED)
-target_link_libraries(CXXKitWrapStringViewLite::WrapStringViewLite INTERFACE nonstd::string-view-lite)
-set(CXXKitWrapStringViewLite_FOUND ON)
+add_library(CxxKitWrapStringViewLite::WrapStringViewLite INTERFACE IMPORTED)
+find_package(string-view-lite PATHS ${CxxKitWrapStringViewLite_INSTALL_DIR} REQUIRED)
+target_link_libraries(CxxKitWrapStringViewLite::WrapStringViewLite INTERFACE nonstd::string-view-lite)
+set(CxxKitWrapStringViewLite_FOUND ON)

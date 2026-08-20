@@ -2,13 +2,22 @@
 #
 # Library: CxxKit
 #
-# Copyright (C) 2025~Present ChengXueWen.
+# Copyright (C) 2026~Present ChengXueWen.
 #
 # License: MIT License
 #
-# PkgConfig generation: cxxkit_generate_pkg_config(target) writes <prefix>/lib/pkgconfig/cxxkit-<name>.pc
-# for sublibraries (compiled and header-only). Static-build friendly.
-# Slimmed from OpenCTK OpenCTKPkgConfigHelpers.cmake (no walk-libs machinery).
+# Permission is hereby granted, free of charge, to any person obtaining a copy of this software and associated
+# documentation files (the "Software"), to deal in the Software without restriction, including without limitation
+# the rights to use, copy, modify, merge, publish, distribute, sublicense, and/or sell copies of the Software, and
+# to permit persons to whom the Software is furnished to do so, subject to the following conditions:
+#
+# The above copyright notice and this permission notice shall be included in all copies or substantial portions
+# of the Software.
+#
+# THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE
+# WARRANTIES OF MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE AUTHORS
+# OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR
+# OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 #
 ########################################################################################################################
 
@@ -46,20 +55,20 @@ function(cxxkit_generate_pkg_config target pc_name)
     # goes to Libs.
     set(_pc_requires "${_requires_str}")
     foreach(_lib IN LISTS _link_libs)
-        if(_lib STREQUAL "CXXKitWrapFmt::WrapFmt")
+        if(_lib STREQUAL "CxxKitWrapFmt::WrapFmt")
             list(APPEND _pc_requires "fmt")
-        elseif(_lib STREQUAL "CXXKitWrapSpdlog::WrapSpdlog")
+        elseif(_lib STREQUAL "CxxKitWrapSpdlog::WrapSpdlog")
             list(APPEND _pc_requires "spdlog")
-        elseif(_lib STREQUAL "CXXKitWrapLibcurl::WrapLibcurl")
+        elseif(_lib STREQUAL "CxxKitWrapLibcurl::WrapLibcurl")
             list(APPEND _pc_requires "libcurl")
-        elseif(_lib STREQUAL "CXXKitWrapMbedTLS::WrapMbedTLS")
+        elseif(_lib STREQUAL "CxxKitWrapMbedTLS::WrapMbedTLS")
             list(APPEND _pc_requires "mbedtls")
-        elseif(_lib STREQUAL "CXXKitWrapLibcpr::WrapLibcpr")
+        elseif(_lib STREQUAL "CxxKitWrapLibcpr::WrapLibcpr")
             list(APPEND _pc_extra_libs "-lcpr")
             list(APPEND _pc_requires "libcurl" "mbedtls")
         elseif(_lib STREQUAL "Tracy::TracyClient")
             list(APPEND _pc_extra_libs "-lTracyClient")
-        elseif(_lib STREQUAL "CXXKitWrapBreakpad::WrapBreakpad")
+        elseif(_lib STREQUAL "CxxKitWrapBreakpad::WrapBreakpad")
             list(APPEND _pc_extra_libs "-lbreakpad_client -pthread")
         endif()
     endforeach()
