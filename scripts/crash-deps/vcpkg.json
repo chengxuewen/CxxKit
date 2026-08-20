@@ -1,6 +1,7 @@
 {
   "name": "cxxkit-crash-deps",
   "version-string": "2026-08-19",
+  "builtin-baseline": "45f9f39362a4c52e2b1fbe57b7e649db7f3d96d4",
   "dependencies": [
     { "name": "breakpad", "version>=": "2024-02-16" },
     { "name": "backward-cpp", "version>=": "2023-11-24" },
