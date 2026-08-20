@@ -42,6 +42,9 @@ int runFixture(const std::string &dumpDir, const std::string &fixturePath, bool 
 {
     const pid_t pid = ::fork();
     if (pid == 0) {
+#if defined(TEST_ELFUTILS_LIB_DIR)
+        ::setenv("LD_LIBRARY_PATH", TEST_ELFUTILS_LIB_DIR, 1); // backward dlopen("libdw.so.1")
+#endif
         if (stacktrace) {
             ::execl(fixturePath.c_str(), "crash_fixture", dumpDir.c_str(), "--stacktrace", nullptr);
         } else {
@@ -159,6 +162,11 @@ TEST(CrashHandler, StackTraceOptIn)
     ASSERT_EQ(::pipe(pipefd), 0);
     const pid_t pid = ::fork();
     ASSERT_GE(pid, 0);
+    if (pid == 0) {
+#if defined(TEST_ELFUTILS_LIB_DIR)
+        ::setenv("LD_LIBRARY_PATH", TEST_ELFUTILS_LIB_DIR, 1); // backward dlopen("libdw.so.1")
+#endif
+        ::dup2(pipefd[1], STDERR_FILENO);
     if (pid == 0) {
         ::dup2(pipefd[1], STDERR_FILENO);
         ::close(pipefd[0]);

@@ -23,7 +23,7 @@
 #
 # cxxkit::crash — crash handling sublibrary (breakpad backend + backward-cpp stack printing, opt-in).
 # Gated by CXXKIT_ENABLE_LIB_CRASH at the top level (cxxkit_add_subdirectory), like cxxkit::network.
-# Depends on the crash-deps merged archive via FindWrapCrashDeps (see cmake/InstallVcpkg.cmake).
+# Depends on breakpad + backward-cpp via FindWrapBreakpad/FindWrapBackward (cmake/InstallVcpkg.cmake).
 #
 ########################################################################################################################
 
@@ -31,7 +31,9 @@ cmake_minimum_required(VERSION ${CXXKIT_MIN_NEW_POLICY_CMAKE_VERSION}...${CXXKIT
 
 cxxkit_configure_library_begin(CxxKitCrash)
 
-cxxkit_find_package(CrashDeps PROVIDED_TARGETS CXXKitWrapCrashDeps::WrapBreakpad CXXKitWrapCrashDeps::WrapBackward)
+# QExt-style one wrap per package: FindWrapBreakpad.cmake + FindWrapBackward.cmake (cmake/InstallVcpkg.cmake).
+cxxkit_find_package(Breakpad PROVIDED_TARGETS CXXKitWrapBreakpad::WrapBreakpad)
+cxxkit_find_package(Backward PROVIDED_TARGETS CXXKitWrapBackward::WrapBackward)
 
 file(GLOB _cxxkit_headers CONFIGURE_DEPENDS ${CMAKE_CURRENT_SOURCE_DIR}/*.hpp ${CMAKE_CURRENT_SOURCE_DIR}/detail/*.hpp)
 add_library(cxxkit_crash
@@ -47,8 +49,8 @@ target_link_libraries(cxxkit_crash PUBLIC
     cxxkit::base
     cxxkit::patterns
     cxxkit::tools
-    CXXKitWrapCrashDeps::WrapBreakpad
-    CXXKitWrapCrashDeps::WrapBackward)
+    CXXKitWrapBreakpad::WrapBreakpad
+    CXXKitWrapBackward::WrapBackward)
 target_compile_features(cxxkit_crash PUBLIC cxx_std_11)
 target_compile_definitions(cxxkit_crash PUBLIC CXXKIT_FEATURE_ENABLE_CRASH=1)
 # backward.hpp dlopens libdw.so.1 at runtime (Linux): the shared lib must find the shipped .so next to itself.
@@ -62,38 +64,18 @@ set_target_properties(cxxkit_crash PROPERTIES
 cxxkit_generate_pkg_config(cxxkit_crash crash DESCRIPTION "cxxkit crash module (breakpad + backward-cpp backend)")
 cxxkit_configure_library_end(CxxKitCrash)
 
-set_property(TARGET cxxkit_crash PROPERTY FOLDER "CxxKit/libs")
-    # vcpkg payload (D11): static archive + configs + runtime .so so installed consumers resolve
-    # find_dependency(unofficial-breakpad / Backward) from cxxkitConfig.cmake and dlopen libdw.so.1.
-    # Single-package unpack roots (QExt mechanism): one INSTALL_DIR per package.
-    install(FILES "${CXXKitWrapCrashDepsBreakpad_INSTALL_DIR}/lib/libbreakpad_client.a"
-        DESTINATION lib)
-    install(DIRECTORY "${CXXKitWrapCrashDepsBreakpad_INSTALL_DIR}/share/unofficial-breakpad"
-        DESTINATION lib/cmake)
-    install(DIRECTORY "${CXXKitWrapCrashDepsBackward_INSTALL_DIR}/share/Backward"
-        DESTINATION lib/cmake)
-    if(NOT APPLE AND NOT WIN32)
-        # Linux runtime payload for backward-cpp's dlopen("libdw.so.1") (elfutils/libunwind chain).
-        file(GLOB _cxxkit_crash_so_payload
-            "${CXXKitWrapCrashDepsElfUtils_INSTALL_DIR}/lib/libdw.so*"
-            "${CXXKitWrapCrashDepsElfUtils_INSTALL_DIR}/lib/libelf.so*"
-            "${CXXKitWrapCrashDepsLibUnwind_INSTALL_DIR}/lib/libunwind.so*"
-            "${CXXKitWrapCrashDepsElfUtils_INSTALL_DIR}/lib/liblzma.so*")
-        install(FILES ${_cxxkit_crash_so_payload}
-            DESTINATION lib)
-    endif()
-endif()
+# set_property(TARGET cxxkit_crash PROPERTY FOLDER "CxxKit/libs")
+#     # vcpkg payload (D11): static archive + configs so installed consumers resolve
+#     # find_dependency(unofficial-breakpad / Backward) from cxxkitConfig.cmake.
+#     # Single-package unpack roots (QExt mechanism): one INSTALL_DIR per package.
+#     install(FILES "${CXXKitWrapBreakpad_INSTALL_DIR}/lib/libbreakpad_client.a"
+#         DESTINATION lib)
+#     install(DIRECTORY "${CXXKitWrapBreakpad_INSTALL_DIR}/share/unofficial-breakpad"
+#         DESTINATION lib/cmake)
+#     install(DIRECTORY "${CXXKitWrapBackward_INSTALL_DIR}/share/Backward"
+#         DESTINATION lib/cmake)
+# endif()
 
-# Build-tree runtime payload: copy the dlopen'ed .so next to the built crash lib so local tests and
-# shared builds resolve libdw.so.1 at runtime (backward dlopens by name, RPATH \$ORIGIN applies).
-if(NOT APPLE AND NOT WIN32)
-    file(GLOB _cxxkit_crash_so_payload_build
-        "${CXXKitWrapCrashDepsElfUtils_INSTALL_DIR}/lib/libdw.so*"
-        "${CXXKitWrapCrashDepsElfUtils_INSTALL_DIR}/lib/libelf.so*"
-        "${CXXKitWrapCrashDepsLibUnwind_INSTALL_DIR}/lib/libunwind.so*"
-        "${CXXKitWrapCrashDepsElfUtils_INSTALL_DIR}/lib/liblzma.so*")
-    add_custom_command(TARGET cxxkit_crash POST_BUILD
-        COMMAND ${CMAKE_COMMAND} -E copy_if_different ${_cxxkit_crash_so_payload_build}
-        "$<TARGET_FILE_DIR:cxxkit_crash>"
-        VERBATIM)
-endif()
+# Note: elfutils/libunwind .so are NOT installed/packaged — backward-cpp without libdw degrades to
+# address-level traces (no crash). For full symbolization install libdw.so.1 system-wide or ship it
+# with the app. Tests inject LD_LIBRARY_PATH (see tests/CMakeLists.txt TEST_ELFUTILS_LIB_DIR).

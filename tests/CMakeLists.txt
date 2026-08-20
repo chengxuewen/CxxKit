@@ -190,4 +190,10 @@ if(CXXKIT_ENABLE_LIB_CRASH)
         INCLUDE_DIRECTORIES ${PROJECT_SOURCE_DIR}
         LIBRARIES ${CXXKIT_TEST_LINK_LIBRARIES} cxxkit::crash ${CMAKE_THREAD_LIBS_INIT})
     target_compile_definitions(cxxkit_tst_crash PRIVATE TEST_BINARY_DIR="${CMAKE_CURRENT_BINARY_DIR}")
+    if(NOT APPLE AND NOT WIN32)
+        # Give the spawned fixture a deterministic libdw.so.1 search path for the stack-trace test
+        # (backward dlopens it by name; no system elfutils dependency assumed).
+        target_compile_definitions(cxxkit_tst_crash PRIVATE
+            TEST_ELFUTILS_LIB_DIR="${CXXKitWrapBackward_ElfUtils_INSTALL_DIR}/lib")
+    endif()
 endif()
