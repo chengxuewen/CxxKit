@@ -75,3 +75,11 @@ add_library(cxxkit_xxx ${_cxxkit_headers} xxx.cpp)   # header-only 用 add_libra
 - **vcpkg manifest 版本锁定**：`version>=` + 顶层 `builtin-baseline`（vcpkg.json 里 `version<` 是非法字段）；custom triplet 必须声明 `VCPKG_CMAKE_SYSTEM_NAME`（未知后缀默认按 Windows 处理）
 - **GUI 可编辑性**：cxxkit_option 普通态 `CACHE BOOL` 无 FORCE + `_option_string_type_if_cache_<var>` 标志跟踪强制态（OpenCTK 原版机制，曾移植丢失）
 - 检查：`grep -rn "CrashDeps\|export_crash_deps" cmake/ cxxkit/` 应为空；`find cmake/wrap -name "FindWrap*" | wc -l`（当前 23 个）
+
+## C10: target 注册统一走 cxxkit_add_* helper（2026-08-20）
+
+- 库注册统一 `cxxkit_add_library`（签名见 cmake/CxxKitLibraryHelpers.cmake）：类型 STATIC/SHARED/INTERFACE（现有子库显式 STATIC 保现状 R20，新库默认跟随 CXXKIT_BUILD_SHARED_LIBS）；HEADERS 默认自动 GLOB *.hpp+detail/*.hpp（D15）；自动 alias `cxxkit::<sub>`（剥 cxxkit_ 前缀）、include 三元组、cxx_std_11、CXX_STANDARD、GLOBAL_COMPILE_DEFINITIONS；参数 EXPORT_NAME/FOLDER/PRECOMPILED_HEADER/EXCEPTIONS/NO_ALIAS
+- 可执行注册统一 `cxxkit_add_executable`（cmake/CxxKitExecutableHelpers.cmake）：SOURCES/INCLUDE_DIRECTORIES/LIBRARIES/EXCEPTIONS/FOLDER/WIN32/MACOSX_BUNDLE
+- 测试注册 `cxxkit_add_test`：FOLDER 自动推导（tests → CxxKit/tests/<sub>）+ `<name>_check` target（ctest -V -R 单测）
+- 检查：`grep -rnE "^(add_library|add_executable)" cxxkit/ examples/` 应为空（注册全走函数）
+- 参考 OpenCTK octk_* 骨架，剔除 Octk 生态（framework/plugin/Android/WASM/RC/依赖扫描，YAGNI）
