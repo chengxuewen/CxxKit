@@ -580,7 +580,7 @@ TEST(ThreadPoolTest, ReserveAndStart)
     class WaitingTask : public Task
     {
     public:
-        std::atomic<int> count;
+        std::atomic<int> count{0};
         Semaphore waitForStarted;
         Semaphore waitBeforeDone;
 
