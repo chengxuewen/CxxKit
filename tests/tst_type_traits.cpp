@@ -32,6 +32,14 @@
 
 #include <gtest/gtest.h>
 
+// C++11 has no generic lambdas and no member templates in local classes — a file-scope variadic
+// function object is the equivalent invocable-under-test.
+struct VariadicFunc
+{
+    template <typename... Args>
+    void operator()(Args &&...) const {}
+};
+
 CXXKIT_BEGIN_NAMESPACE
 
 namespace
@@ -484,13 +492,22 @@ TEST(IsInvocableTest, RvalueReferenceArguments)
 
 TEST(IsInvocableTest, VariadicFunction)
 {
+#if CXXKIT_CC_CPP14_OR_GREATER
     auto variadic_func = [](auto &&...) {};
     static_assert(traits::is_invocable<decltype(variadic_func)>::value, "Should be true for variadic with zero args");
     static_assert(traits::is_invocable<decltype(variadic_func), int>::value,
                   "Should be true for variadic with one arg");
     static_assert(traits::is_invocable<decltype(variadic_func), int, double, std::string>::value,
                   "Should be true for variadic with multiple args");
+#else
+    static_assert(traits::is_invocable<VariadicFunc>::value, "Should be true for variadic with zero args");
+    static_assert(traits::is_invocable<VariadicFunc, int>::value,
+                  "Should be true for variadic with one arg");
+    static_assert(traits::is_invocable<VariadicFunc, int, double, std::string>::value,
+                  "Should be true for variadic with multiple args");
+#endif
 }
+
 
 TEST(IsInvocableTest, MoveOnlyArguments)
 {

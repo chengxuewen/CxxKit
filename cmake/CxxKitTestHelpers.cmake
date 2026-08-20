@@ -38,9 +38,9 @@ function(cxxkit_add_test name)
     if(NOT "${arg_LIBRARIES}" STREQUAL "")
         target_link_libraries(${name} PRIVATE ${arg_LIBRARIES})
     endif()
-    # gtest 1.12.1 requires C++14 (M1: test targets override, libraries stay 11)
+    # tests compile at C++11 (gtest 1.12.1 min is C++11; generic-lambda/number-separator tests are #if CXX14-adapted)
     set_target_properties(${name} PROPERTIES
-        CXX_STANDARD 14
+        CXX_STANDARD 11
         CXX_STANDARD_REQUIRED ON
         CXX_EXTENSIONS OFF)
 
