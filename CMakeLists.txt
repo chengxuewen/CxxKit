@@ -141,6 +141,8 @@ cxxkit_option(CXXKIT_BUILD_COMPILER_WARNING "Enable this to build target with co
 cxxkit_option(CXXKIT_BUILD_WARNINGS_ARE_ERRORS "Enable this to build with warnings as errors" ON)
 cxxkit_option(CXXKIT_BUILD_SANITIZERS "Enable ASAN/LSAN/UBSan for all targets" OFF
     OR_CONDITION CXXKIT_BUILD_ALL)
+cxxkit_option(CXXKIT_BUILD_COVERAGE "Enable gcov coverage instrumentation" OFF
+    OR_CONDITION CXXKIT_BUILD_ALL)
 cxxkit_option(CXXKIT_BUILD_BENCHMARKS "Enable this to build the benchmarks" OFF)
 cxxkit_option(CXXKIT_BUILD_DOCS "Enable this to build the documentation" OFF)
 cxxkit_option(CXXKIT_BUILD_LIBS "Enable this to build libs" ON
@@ -170,10 +172,32 @@ if(CXXKIT_BUILD_SANITIZERS)
 endif()
 
 #-----------------------------------------------------------------------------------------------------------------------
+# Coverage (gcov) - applied at top-level scope so add_compile_options/add_link_options
+# propagate to every subdirectory (all libraries + tests). --coverage implies -fprofile-arcs
+# -ftest-coverage and produces gcov-compatible .gcno/.gcda data.
+#-----------------------------------------------------------------------------------------------------------------------
+if(CXXKIT_BUILD_COVERAGE)
+    add_compile_options("--coverage")
+    add_link_options("--coverage")
+endif()
+
+#-----------------------------------------------------------------------------------------------------------------------
 # Testing
 #-----------------------------------------------------------------------------------------------------------------------
 if(CXXKIT_BUILD_TESTS)
     enable_testing()
+endif()
+
+#-----------------------------------------------------------------------------------------------------------------------
+# Coverage report target - runs ctest, then summarizes per-file line coverage from gcov
+# output (no lcov/gcovr needed). Generates a plain textual report in <build>/coverage/.
+#-----------------------------------------------------------------------------------------------------------------------
+if(CXXKIT_BUILD_COVERAGE)
+    add_custom_target(coverage
+        COMMAND ${CMAKE_CTEST_COMMAND} --test-dir ${CMAKE_CURRENT_BINARY_DIR} --output-on-failure || true
+        COMMAND ${CMAKE_COMMAND} -E env bash -c "cd ${CMAKE_CURRENT_BINARY_DIR} && mkdir -p coverage && rm -f coverage/summary.txt && for gcda in `find . -name '*.gcda'`; do d=`dirname $gcda`; f=`basename $gcda`; (cd $d && gcov -b -c $f 2>/dev/null | grep 'Lines executed' | sed s|^|`basename $d`/|); done > coverage/summary.txt && { echo '===== CxxKit gcov coverage summary (per source file) ====='; sort -t: -k2 -rn coverage/summary.txt | head -n 60; }"
+        WORKING_DIRECTORY ${CMAKE_CURRENT_BINARY_DIR}
+        COMMENT "Collecting gcov coverage report")
 endif()
 
 #-----------------------------------------------------------------------------------------------------------------------
