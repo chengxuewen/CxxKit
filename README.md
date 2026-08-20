@@ -38,6 +38,8 @@ ctest --test-dir build              # run tests
 
 Options: `-DCXXKIT_BUILD_TESTS=OFF`, `-DCXXKIT_ENABLE_LIB_NETWORK=ON`,
 `-DCXXKIT_ENABLE_LIB_CRASH=ON`, `-DCXXKIT_BUILD_DOCS=ON`, `-DCMAKE_INSTALL_PREFIX=/path/to/prefix`.
+Sanitizer / coverage（`scripts/check.sh` 步骤 4/7 与 7/7 会自动接入，若对应 build 目录存在）:
+`-DCXXKIT_BUILD_SANITIZERS=ON`（用 -B build-asan 生成）、`-DCXXKIT_BUILD_COVERAGE=ON`（用 -B build-cov 生成，`coverage` target 产出 `build-cov/coverage/summary.txt`）。
 
 ### crash sublibrary (breakpad + backward-cpp)
 

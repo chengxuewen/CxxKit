@@ -1,9 +1,9 @@
 #!/usr/bin/env bash
-# CxxKit 本地质量门禁：format + namespace + build + test
+# CxxKit 本地质量门禁：format + namespace + build + test + sanitizer + coverage
 set -euo pipefail
 cd "$(dirname "$0")/.."
 
-echo "=== 1/5 clang-format 检查 ==="
+echo "=== 1/7 clang-format 检查 ==="
 FILES=$(find cxxkit tests -name "*.hpp" -o -name "*.cpp" | sort)
 if command -v clang-format >/dev/null; then
     clang-format --dry-run --Werror $FILES || { echo "格式不合格，请运行: clang-format -i <文件>"; exit 1; }
@@ -12,22 +12,42 @@ else
     echo "跳过（clang-format 未安装）"
 fi
 
-echo "=== 2/5 命名空间检查（octk 残留）==="
+echo "=== 2/7 命名空间检查（octk 残留）==="
 if grep -rn "octk\|OCTK_" cxxkit/ tests/ --include="*.hpp" --include="*.cpp" | grep -vE "CXXKIT|octk mechanism|from OpenCTK|Ported from|Slimmed from"; then
     echo "发现 octk 残留！"; exit 1
 fi
 echo "namespace OK"
 
-echo "=== 3/5 C++11 严格性检查（PIT-22：禁 C++14 语法混入库代码）==="
+echo "=== 3/7 C++11 严格性检查（PIT-22：禁 C++14 语法混入库代码）==="
 if grep -rnE "std::[a-z_]+_t<|if constexpr|\[\][^)]*\(auto|0b[01]'[, ]" cxxkit/ --include="*.hpp" --include="*.cpp"; then
     echo "发现 C++14 语法残留（变量模板/_t 别名/泛型 lambda/数字分隔符）——库代码必须 C++11！"; exit 1
 fi
 echo "C++11 OK"
 
-echo "=== 4/5 构建 ==="
+echo "=== 4/7 sanitizer 测试（build-asan，LSAN suppression）==="
+if [ -d build-asan ]; then
+    # C6：用独立 build-asan 目录（CXXKIT_BUILD_SANITIZERS=ON 生成），不动主 build
+    # LSAN_OPTIONS 指向 commit 的 scripts/lsan.supp（设计进程单例，Task 4/F1 文档化）
+    LSAN_OPTIONS="suppressions=$(pwd)/scripts/lsan.supp" ctest --test-dir build-asan --output-on-failure || exit 1
+    echo "sanitizer OK"
+else
+    echo "跳过（无 build-asan；用 -DCXXKIT_BUILD_SANITIZERS=ON 生成后启用此步）"
+fi
+
+echo "=== 5/7 构建 ==="
 cmake -S . -B build -G Ninja -DCXXKIT_BUILD_TESTS=ON -DCXXKIT_ENABLE_LIB_NETWORK=ON
 cmake --build build --parallel 4
 
-echo "=== 5/5 测试 ==="
+echo "=== 6/7 测试 ==="
 ctest --test-dir build --output-on-failure
+
+echo "=== 7/7 覆盖率报表（build-cov，R31：默认仅报表不阻断）==="
+if [ -d build-cov/coverage ] && [ -f build-cov/coverage/summary.txt ]; then
+    echo '--- 库源码覆盖率（build-cov/coverage/summary.txt）---'
+    cat build-cov/coverage/summary.txt
+    echo '--- 覆盖率报表完成（不阻断；如需强校验：CXXKIT_COVERAGE_GATE=ON 要求 ≥80%）---'
+else
+    echo "跳过（无 build-cov/coverage/summary.txt；用 -DCXXKIT_BUILD_COVERAGE=ON 生成后启用此步）"
+fi
+
 echo "=== ALL CHECKS PASSED ==="
