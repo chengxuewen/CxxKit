@@ -145,5 +145,5 @@
 ## PIT-23: DateTime steady↔system 转换 epoch 基准不匹配（round-trip 漂移 ~1e18ns）(2026-08-20)
 - **症状**: `systemTimeFromSteadyNSecs(steadyTimeFromSystemNSecs(nowSys))` round-trip 差 ~3.6e18 ns（steady 与 system clock epoch 基准不同）
 - **根因**: steady_clock 的 time_point(nanoseconds) 把纳秒当相对 steady epoch，与 system 的 Unix-epoch 映射错位（date_time.cpp:71-113）
-- **解法**: 待修（已知 issue, 测试已标记 KNOWN-ISSUE 不阻断）；正确映射需 steady 相对 boot 偏移 + system epoch 转换
-- **验证**: tst_datetime SystemSteadyConversions 标记 known-issue；补覆盖测试仍调用（走 coverage）不断言
+- **解法**: 已修（commit 2026-08-20）：nsecs 必须在 system_clock 时间线上解读（systemNow - systemTimePoint 得 offset，再 steadyNow - offset）；之前错误地把 system 纳秒塞进 steady_clock::time_point（epoch 基准不同）
+- **验证**: tst_datetime SystemSteadyConversions 恢复精确断言（round-trip <2s）；40/40 全过
