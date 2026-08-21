@@ -505,7 +505,10 @@ CXXKIT_TEXT_API bool ascii_string_to_unsigned(const char *str,
  */
 static CXXKIT_FORCE_INLINE void ascii_string_tolower(std::string &s)
 {
-    s = ascii_strlwr(s.data(), s.length());
+    for (char &c : s)
+    {
+        c = ascii_tolower(c);
+    }
 }
 
 /**
@@ -515,7 +518,12 @@ static CXXKIT_FORCE_INLINE void ascii_string_tolower(std::string &s)
  */
 static CXXKIT_FORCE_INLINE std::string ascii_string_tolower(StringView s)
 {
-    return ascii_strlwr(s.data(), s.length());
+    std::string result(s.data(), s.length());
+    for (char &c : result)
+    {
+        c = ascii_tolower(c);
+    }
+    return result;
 }
 
 /**
@@ -524,7 +532,10 @@ static CXXKIT_FORCE_INLINE std::string ascii_string_tolower(StringView s)
  */
 static CXXKIT_FORCE_INLINE void ascii_string_toupper(std::string &s)
 {
-    s = ascii_strupr(s.data(), s.length());
+    for (char &c : s)
+    {
+        c = ascii_toupper(c);
+    }
 }
 
 /**
@@ -534,7 +545,12 @@ static CXXKIT_FORCE_INLINE void ascii_string_toupper(std::string &s)
  */
 static CXXKIT_FORCE_INLINE std::string ascii_string_toupper(StringView s)
 {
-    return ascii_strupr(s.data(), s.length());
+    std::string result(s.data(), s.length());
+    for (char &c : result)
+    {
+        c = ascii_toupper(c);
+    }
+    return result;
 }
 
 CXXKIT_END_NAMESPACE

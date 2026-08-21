@@ -37,7 +37,7 @@ public:
     explicit StringPrivate(String *p);
     virtual ~StringPrivate();
 
-    char mBuffer[kBufferSize];
+    char mBuffer[kBufferSize]{};
     char *mDynamic{nullptr};
     size_t mLength{0};
 
