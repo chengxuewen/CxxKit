@@ -22,6 +22,16 @@ jobs:
             clang-format --dry-run --Werror $(find cxxkit src tests -name '*.hpp' -o -name '*.cpp') || exit 1
           fi
 
+      - name: Namespace / identifier checks (C7)
+        run: |
+          test -d cxxkit || exit 1
+          grep -rn "#include <CxxKit" cxxkit/ tests/ examples/ | wc -l | grep -q '^0$' || exit 1
+          grep -rnE "octk::|#define OCTK_|octk_config" cxxkit/ tests/ --include="*.cpp" --include="*.hpp" | wc -l | grep -q '^0$' || exit 1
+
+      - name: C++11 strictness gate (C4)
+        run: |
+          grep -rnE "std::[a-z_]+_t<|if constexpr|\[\][^)]*\(auto|0b[01]'[, ]" cxxkit/ --include="*.hpp" --include="*.cpp" | wc -l | grep -q '^0$' || exit 1
+
       - name: Install dependencies (Linux)
         if: runner.os == 'Linux'
         run: |
@@ -29,7 +39,7 @@ jobs:
           sudo apt-get install -y ninja-build pkg-config
 
       - name: Configure
-        run: cmake -S . -B build -G Ninja -DCXXKIT_BUILD_TESTS=ON -DCXXKIT_ENABLE_LIB_NETWORK=ON
+        run: cmake -S . -B build -G Ninja -DCXXKIT_BUILD_TESTS=ON
 
       - name: Build
         run: cmake --build build --parallel 2
