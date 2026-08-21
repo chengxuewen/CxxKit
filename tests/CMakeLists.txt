@@ -189,6 +189,32 @@ cxxkit_add_test(cxxkit_tst_boundary
     INCLUDE_DIRECTORIES ${PROJECT_SOURCE_DIR}
     LIBRARIES ${CXXKIT_TEST_LINK_LIBRARIES} ${CMAKE_THREAD_LIBS_INIT})
 
+# Coverage: low-coverage library .cpp files (raise library coverage toward 80%)
+cxxkit_add_test(cxxkit_tst_ascii
+    SOURCES tst_ascii.cpp
+    INCLUDE_DIRECTORIES ${PROJECT_SOURCE_DIR}
+    LIBRARIES ${CXXKIT_TEST_LINK_LIBRARIES} ${CMAKE_THREAD_LIBS_INIT})
+cxxkit_add_test(cxxkit_tst_string
+    SOURCES tst_string.cpp
+    INCLUDE_DIRECTORIES ${PROJECT_SOURCE_DIR}
+    LIBRARIES ${CXXKIT_TEST_LINK_LIBRARIES} ${CMAKE_THREAD_LIBS_INIT})
+cxxkit_add_test(cxxkit_tst_datetime
+    SOURCES tst_datetime.cpp
+    INCLUDE_DIRECTORIES ${PROJECT_SOURCE_DIR}
+    LIBRARIES ${CXXKIT_TEST_LINK_LIBRARIES} ${CMAKE_THREAD_LIBS_INIT})
+cxxkit_add_test(cxxkit_tst_clock
+    SOURCES tst_clock.cpp
+    INCLUDE_DIRECTORIES ${PROJECT_SOURCE_DIR}
+    LIBRARIES ${CXXKIT_TEST_LINK_LIBRARIES} ${CMAKE_THREAD_LIBS_INIT})
+cxxkit_add_test(cxxkit_tst_logging
+    SOURCES tst_logging.cpp
+    INCLUDE_DIRECTORIES ${PROJECT_SOURCE_DIR}
+    LIBRARIES ${CXXKIT_TEST_LINK_LIBRARIES} ${CMAKE_THREAD_LIBS_INIT})
+cxxkit_add_test(cxxkit_tst_assert
+    SOURCES tst_assert.cpp
+    INCLUDE_DIRECTORIES ${PROJECT_SOURCE_DIR}
+    LIBRARIES ${CXXKIT_TEST_LINK_LIBRARIES} ${CMAKE_THREAD_LIBS_INIT})
+
 if(CXXKIT_ENABLE_LIB_CRASH)
     # Standalone crash fixture: installs the handler and raises SIGSEGV in its own process.
     # Built without gtest; the parent tst_crash spawns it via fork+exec (never death tests —
