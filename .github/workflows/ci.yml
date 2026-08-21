@@ -39,10 +39,22 @@ jobs:
           sudo apt-get install -y ninja-build pkg-config
 
       - name: Configure
-        run: cmake -S . -B build -G Ninja -DCXXKIT_BUILD_TESTS=ON
+        run: cmake -S . -B build -G Ninja -DCXXKIT_BUILD_TESTS=ON -DCMAKE_EXPORT_COMPILE_COMMANDS=ON
 
       - name: Build
         run: cmake --build build --parallel 2
+
+      - name: clang-tidy static analysis (Linux)
+        if: runner.os == 'Linux'
+        run: |
+          sudo apt-get install -y clang-tidy
+          set +e
+          clang-tidy -p build -header-filter='cxxkit/' $(find cxxkit -name '*.cpp' -not -path '*3rdparty*') > /tmp/clang-tidy-report.txt 2>&1
+          findings=$(grep -cE 'warning:|error:' /tmp/clang-tidy-report.txt)
+          echo "clang-tidy findings: ${findings}"
+          grep -E 'warning:|error:' /tmp/clang-tidy-report.txt | head -30
+          # Warn-only gate: report findings without failing. Tighten to zero once baseline is clean.
+          exit 0
 
       - name: Test
         run: ctest --test-dir build --output-on-failure

@@ -1,0 +1,31 @@
+# CxxKit clang-tidy configuration
+# Targets library .cpp files only (tests excluded via HeaderFilterRegex + explicit paths).
+# Checks chosen for high signal / low noise on a C++11 codebase:
+#   - clang-analyzer-*  : real defect detection (zero-false-positive policy)
+#   - bugprone-*        : common bug patterns (noise filters applied)
+#   - performance-*     : copy/alloc hotspots
+#   - misc-*            : misc quality (tame subset only)
+# Excluded on purpose:
+#   - modernize-*       : would push C++14/17 constructs — conflicts with C4 (C++11 only)
+#   - readability-*     : naming/style noise; formatting is clang-format's job
+#   - bugprone-easily-swappable-parameters / -exception-escape : known noisy
+#   - misc-no-recursion / misc-non-private-member-variables-in-classes : callback/API noise
+Checks: >
+    clang-analyzer-*,
+    bugprone-*,
+    -bugprone-easily-swappable-parameters,
+    -bugprone-exception-escape,
+    performance-*,
+    -performance-noexcept-move-constructor,
+    misc-*,
+    -misc-non-private-member-variables-in-classes,
+    -misc-unused-parameters,
+    -misc-definitions-in-headers,
+    -misc-no-recursion
+
+# Only analyze library code (skip 3rdparty/vendored and tests)
+HeaderFilterRegex: 'cxxkit/'
+
+# C++11 (C4). compile_commands.json (-p build) provides flags; gate is warn-only.
+WarningsAsErrors: ''
+FormatStyle: none
