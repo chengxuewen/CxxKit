@@ -14,6 +14,10 @@
 | Phase 1 plan | [superpowers/plans/2026-08-18-cxxkit-phase1-skeleton-sublibs.md](superpowers/plans/2026-08-18-cxxkit-phase1-skeleton-sublibs.md) | skeleton, helpers, header-only sublibraries, tests, install |
 | Project memory | [.agents/memorys/](../.agents/memorys/) | status (phases), conventions (C1-C6), decisions (D1-D10), pitfalls |
 | Dev rules | [.agents/rules/](../.agents/rules/) | common + cpp coding/review/testing/security rules |
+| Platform support | [platform-support.md](platform-support.md) | OS/toolchain & sublibrary compatibility matrix |
+| Contributing | [../CONTRIBUTING.md](../CONTRIBUTING.md) | dev setup, conventions, local gate, PR process |
+| Security | [../SECURITY.md](../SECURITY.md) | vulnerability reporting, security-relevant areas |
+| Changelog | [../CHANGELOG.md](../CHANGELOG.md) | release history (Keep a Changelog / SemVer) |
 
 ## Examples
 
