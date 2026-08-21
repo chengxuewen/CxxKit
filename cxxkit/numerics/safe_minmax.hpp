@@ -199,6 +199,13 @@ template <typename R = safe_minmax_impl::DefaultType,
               R,
               typename safe_minmax_impl::MType<typename safe_minmax_impl::UnderlyingType<T1>::type,
                                                typename safe_minmax_impl::UnderlyingType<T2>::type>::min_t>::type>
+/** @brief Type-safe minimum: static_assert guards result-type capacity.
+ * @tparam R Optional return type (default: inferred from T1/T2).
+ * @tparam T1, T2 Input types (integral or floating-point).
+ * @param a, b Values to compare.
+ * @return Smaller of @p a and @p b in type @c R2.
+ * @see SafeMax, SafeClamp
+ */
 constexpr R2 SafeMin(T1 a, T2 b)
 {
     static_assert(IsIntLike<T1>::value || std::is_floating_point<T1>::value,
@@ -215,6 +222,13 @@ template <typename R = safe_minmax_impl::DefaultType,
               R,
               typename safe_minmax_impl::MType<typename safe_minmax_impl::UnderlyingType<T1>::type,
                                                typename safe_minmax_impl::UnderlyingType<T2>::type>::max_t>::type>
+/** @brief Type-safe maximum: static_assert guards result-type capacity.
+ * @tparam R Optional return type.
+ * @tparam T1, T2 Input types.
+ * @param a, b Values to compare.
+ * @return Larger of @p a and @p b in type @c R2.
+ * @see SafeMin, SafeClamp
+ */
 constexpr R2 SafeMax(T1 a, T2 b)
 {
     static_assert(IsIntLike<T1>::value || std::is_floating_point<T1>::value,

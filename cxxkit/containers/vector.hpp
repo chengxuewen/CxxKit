@@ -31,6 +31,18 @@
 CXXKIT_BEGIN_NAMESPACE
 
 template <typename T>
+/**
+ * @brief Lightweight owning vector using raw new[]/delete[].
+ *
+ * Owns a dynamically-allocated array of @p T. Provides copy/move semantics,
+ * move-references, std::vector conversion, and array subscript access.
+ * NOT thread-safe. Prefer std::vector for new code; this class exists for
+ * legacy compatibility and zero-copy migration paths.
+ *
+ * @tparam T Element type (must be trivially destructible or have a proper destructor).
+ *
+ * @see InlinedVector
+ */
 class Vector
 {
 protected:
@@ -173,6 +185,7 @@ public:
    */
     MoveReference move() { return MoveReference(*this); }
 
+    /// @brief Converts this Vector to a std::vector<T> (deep copy).
     std::vector<T> std_vector() const
     {
         std::vector<T> v;
@@ -184,14 +197,19 @@ public:
         return v;
     }
 
+    /// @brief Access raw data pointer (may be nullptr if empty).
     const T *data() const { return mArray; }
 
+    /// @brief Returns the number of elements currently held.
     size_t size() const { return mSize; }
 
+    /// @brief Non-bounds-checked element access (mutating).
     T &operator[](size_t i) { return mArray[i]; }
 
+    /// @brief Non-bounds-checked element access (const).
     const T &operator[](size_t i) const { return mArray[i]; }
 
+    /// @brief Destroys all elements and resets size to zero.
     void clear() { this->destroyAll(); }
 
 protected:
