@@ -108,11 +108,13 @@ int64_t DateTime::steadyTimeFromSystemNSecs(int64_t nsecs)
 {
     auto systemNow = std::chrono::system_clock::now();
     auto steadyNow = std::chrono::steady_clock::now();
-    auto steadyTimePoint = std::chrono::steady_clock::time_point(std::chrono::nanoseconds(nsecs));
-
-    auto offset = steadyTimePoint - steadyNow;
-    auto systemTimePoint = systemNow + std::chrono::duration_cast<std::chrono::system_clock::duration>(offset);
-    return systemTimePoint.time_since_epoch().count();
+    // PIT-23 fix: nsecs is a SYSTEM-clock timestamp (Unix epoch). It must be
+    // interpreted on the system_clock timeline, NOT passed to steady_clock's
+    // time_point (different epoch basis — steady starts at boot, not 1970).
+    auto systemTimePoint = std::chrono::system_clock::time_point(std::chrono::nanoseconds(nsecs));
+    const auto offset = systemNow - systemTimePoint;
+    auto steadyTimePoint = steadyNow - std::chrono::duration_cast<std::chrono::steady_clock::duration>(offset);
+    return steadyTimePoint.time_since_epoch().count();
 }
 
 DateTime::LocalTime DateTime::localTimeFromSystemTimeSecs(int64_t secs)

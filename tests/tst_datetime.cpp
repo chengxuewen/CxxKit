@@ -97,14 +97,11 @@ TEST(DateTime, SystemSteadyConversions)
     // system time.
     const int64_t nowSys = DateTime::systemTimeNSecs();
     const int64_t steadyNow = DateTime::steadyTimeNSecs();
-    EXPECT_GT(nowSys, (int64_t)1e12);   // system time in a modern era (> 2001)
-    EXPECT_GT(steadyNow, (int64_t)0);   // steady clock runs from boot
-    // KNOWN-ISSUE (B-XXX): steadyTimeFromSystemNSecs / systemTimeFromSteadyNSecs
-    // round-trip drifts by ~1e18 ns (epoch-basis mismatch: steady vs system clock).
-    // Exact equality assertion removed; the pair is exercised (coverage) but its
-    // correctness is a separate library fix. See test-quality finding.
-    (void)DateTime::systemTimeFromSteadyNSecs(steadyNow);
-    (void)DateTime::steadyTimeFromSystemNSecs(nowSys);
+    // PIT-23 regression: steady<->system mapping must be symmetric now
+    // (was ~1e18 ns drift from epoch-basis mismatch). Small window covers the
+    // two clock-sample instants.
+    EXPECT_NEAR(DateTime::systemTimeFromSteadyNSecs(steadyNow), nowSys, (int64_t)2e9);
+    EXPECT_NEAR(DateTime::steadyTimeFromSystemNSecs(nowSys), steadyNow, (int64_t)2e9);
 }
 
 TEST(DateTime, LocalTimeFromSystem)
