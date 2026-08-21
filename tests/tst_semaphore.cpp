@@ -237,12 +237,17 @@ TEST(PerformanceTest, MultiRelease)
     {
     public:
         Semaphore &sem;
+        Semaphore startup;
         MultiReleaseThread(Semaphore &sem)
             : sem(sem)
         {
         }
 
-        void run() override { sem.acquire(); }
+        void run() override
+        {
+            startup.release(); // signal: this thread has reached acquire()
+            sem.acquire();
+        }
     };
 
     Semaphore sem;
@@ -258,8 +263,11 @@ TEST(PerformanceTest, MultiRelease)
         t->start();
     }
 
-    // wait for all threads to reach the sem.acquire() and then release them all
-    std::this_thread::sleep_for(std::chrono::milliseconds(1));
+    // wait for all threads to reach the sem.acquire() (startup signals), then release them all
+    for (MultiReleaseThread *&t : threads)
+    {
+        t->startup.acquire();
+    }
     sem.release(threads.size());
 
     for (MultiReleaseThread *&t : threads)
@@ -275,6 +283,7 @@ TEST(PerformanceTest, MultiAcquireRelease)
     {
     public:
         Semaphore &sem;
+        Semaphore startup;
         MultiAcquireReleaseThread(Semaphore &sem)
             : sem(sem)
         {
@@ -282,6 +291,7 @@ TEST(PerformanceTest, MultiAcquireRelease)
 
         void run() override
         {
+            startup.release(); // signal: this thread has reached acquire()
             sem.acquire();
             sem.release();
         }
@@ -300,8 +310,11 @@ TEST(PerformanceTest, MultiAcquireRelease)
         t->start();
     }
 
-    // wait for all threads to reach the sem.acquire() and then release them all
-    std::this_thread::sleep_for(std::chrono::milliseconds(1));
+    // wait for all threads to reach the sem.acquire() (startup signals), then release
+    for (MultiAcquireReleaseThread *&t : threads)
+    {
+        t->startup.acquire();
+    }
     sem.release();
 
     for (MultiAcquireReleaseThread *&t : threads)
