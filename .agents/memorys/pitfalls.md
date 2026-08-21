@@ -147,3 +147,9 @@
 - **根因**: steady_clock 的 time_point(nanoseconds) 把纳秒当相对 steady epoch，与 system 的 Unix-epoch 映射错位（date_time.cpp:71-113）
 - **解法**: 已修（commit 2026-08-20）：nsecs 必须在 system_clock 时间线上解读（systemNow - systemTimePoint 得 offset，再 steadyNow - offset）；之前错误地把 system 纳秒塞进 steady_clock::time_point（epoch 基准不同）
 - **验证**: tst_datetime SystemSteadyConversions 恢复精确断言（round-trip <2s）；40/40 全过
+
+## PIT-24: text 子库两处内存缺陷（String buffer 未初始化 + ascii_string_* 泄漏）(2026-08-20)
+- **症状**: a) 空 String 的 c_str()[0] 返回垃圾值（\xBE 而非 \0）；b) ascii_string_tolower/toupper 每次调用泄漏 strndup 指针（LSAN 20B/4 alloc）
+- **根因**: a) StringPrivate::mBuffer[48] 无 NSDMI 初始化；b) 封装把 strlwr/strupr（strndup 新分配）结果直接赋给 std::string，op=/隐式构造只拷贝不释放
+- **解法**: a) `char mBuffer[kBufferSize]{};`；b) 4 个封装改 in-place/本地转换（零分配，同时避开 strlwr NUL 截断坑）
+- **验证**: 三形态全绿 40/40；ASAN/LSAN 零诊断；tst_ascii/tst_string 单测 15/10 全过
