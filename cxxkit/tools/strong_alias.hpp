@@ -28,51 +28,103 @@
 
 CXXKIT_BEGIN_NAMESPACE
 
-// This is a copy of
-// https://source.chromium.org/chromium/chromium/src/+/main:base/types/strong_alias.h
-// as the API (and internals) are using type-safe integral identifiers, but this
-// library can't depend on that file. The ostream operator has been removed
-// per WebRTC library conventions, and the underlying type is exposed.
-
+/**
+ * @defgroup cxxkit_tools_strong_alias Strong Alias (strong-typedef)
+ * @{
+ *
+ * @brief Type-safe wrapper around an underlying type, preventing implicit
+ *        assignment between different tagged types even when they share
+ *        the same underlying representation.
+ *
+ * @details Based on Chromium's `base::StrongAlias` (source.chromium.org).
+ *          Prevents accidental mixing of semantically distinct but
+ *          identically-represented values (e.g., file handles, socket IDs,
+ *          resource identifiers). The ostream operator was removed per
+ *          library conventions.
+ *
+ * @code
+ * // Two "int" values that the compiler treats as distinct types
+ * StrongAlias<class UserIdTag, int> UserId;
+ * StrongAlias<class FileIdTag, int> FileId;
+ *
+ * UserId uid(1);
+ * FileId fid(1);
+ * // uid == fid   // compilation error — different types
+ * @endcode
+ */
 template <typename TagType, typename TheUnderlyingType>
 class StrongAlias
 {
 public:
+    /** @brief The underlying value type (e.g., int, std::string). */
     using UnderlyingType = TheUnderlyingType;
+
+    /**
+     * @brief Default constructor. Leaves @p value_ default-initialized.
+     */
     constexpr StrongAlias() = default;
+
+    /**
+     * @brief Constructs from an lvalue underlying.
+     * @param v The underlying value to wrap.
+     */
     constexpr explicit StrongAlias(const UnderlyingType &v)
         : value_(v)
     {
     }
+
+    /**
+     * @brief Constructs from an rvalue underlying.
+     * @param v The underlying value to move-construct into.
+     */
     constexpr explicit StrongAlias(UnderlyingType &&v) noexcept
         : value_(std::move(v))
     {
     }
 
+    /** @brief Dereference to mutable underlying pointer. */
     CXXKIT_CXX14_CONSTEXPR UnderlyingType *operator->() { return &value_; }
+    /** @brief Dereference to const underlying pointer. */
     constexpr const UnderlyingType *operator->() const { return &value_; }
 
+    /** @brief Dereference to mutable underlying reference. */
     CXXKIT_CXX14_CONSTEXPR UnderlyingType &operator*() & { return value_; }
+    /** @brief Dereference to const underlying reference (lvalue). */
     constexpr const UnderlyingType &operator*() const & { return value_; }
+    /** @brief Dereference to rvalue underlying (move). */
     CXXKIT_CXX14_CONSTEXPR UnderlyingType &&operator*() && { return std::move(value_); }
+    /** @brief Dereference to const rvalue underlying (move). */
     constexpr const UnderlyingType &&operator*() const && { return std::move(value_); }
 
+    /** @brief Access mutable underlying value. */
     CXXKIT_CXX14_CONSTEXPR UnderlyingType &value() & { return value_; }
+    /** @brief Access const underlying value (lvalue). */
     constexpr const UnderlyingType &value() const & { return value_; }
+    /** @brief Move-construct underlying value from this. */
     CXXKIT_CXX14_CONSTEXPR UnderlyingType &&value() && { return std::move(value_); }
+    /** @brief Move-construct const underlying from this. */
     constexpr const UnderlyingType &&value() const && { return std::move(value_); }
 
+    /** @brief Explicit conversion to const underlying reference. */
     constexpr explicit operator const UnderlyingType &() const & { return value_; }
 
+    /** @brief Equality comparison between two StrongAlias of the same tag/underlying. */
     constexpr bool operator==(const StrongAlias &other) const { return value_ == other.value_; }
+    /** @brief Inequality comparison. */
     constexpr bool operator!=(const StrongAlias &other) const { return value_ != other.value_; }
+    /** @brief Less-than ordering. */
     constexpr bool operator<(const StrongAlias &other) const { return value_ < other.value_; }
+    /** @brief Less-than-or-equal ordering. */
     constexpr bool operator<=(const StrongAlias &other) const { return value_ <= other.value_; }
+    /** @brief Greater-than ordering. */
     constexpr bool operator>(const StrongAlias &other) const { return value_ > other.value_; }
+    /** @brief Greater-than-or-equal ordering. */
     constexpr bool operator>=(const StrongAlias &other) const { return value_ >= other.value_; }
 
 protected:
-    UnderlyingType value_;
+    UnderlyingType value_; ///< The wrapped underlying value.
 };
-CXXKIT_END_NAMESPACE
 
+/** @} */ // end of cxxkit_tools_strong_alias
+
+CXXKIT_END_NAMESPACE

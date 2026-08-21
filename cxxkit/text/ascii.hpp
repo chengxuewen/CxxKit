@@ -32,6 +32,9 @@
 CXXKIT_BEGIN_NAMESPACE
 
 /**
+ * @brief Buffer size (29 + 10 = 39 bytes) sufficient for any value that
+ * ascii_dtostr() can produce, including the terminating NUL.
+ */
  * @brief 29 bytes should enough for all possible values that ascii_dtostr can produce.
  * Then add 10 for good measure
  */
@@ -227,14 +230,26 @@ static CXXKIT_FORCE_INLINE char ascii_toupper(unsigned char c)
 CXXKIT_TEXT_API int ascii_digit_value(char c);
 
 /**
- * @brief Determines the numeric value of a character as a hexadecimal digit.
- * Differs from unichar_xdigit_value() because it takes a char, so there's no worry about sign extension
- * if characters are signed.
+ * @brief Convenience overload that converts a hexadecimal character to its
+ * numeric value in the range [0, 15].
  *
- * @param c an ASCII character.
- * @return If @c is a hex digit (according to CXXKIT_ASCII_ISXDIGIT()), its numeric value. Otherwise, -1.
+ * @param c An ASCII character.
+ * @return The numeric value if @c is a hex digit; -1 otherwise.
+ *
+ * @note Hexadecimal inputs must NOT be prefixed with "0x" or "0X".
  */
-CXXKIT_TEXT_API int ascii_xdigit_value(char c);
+ * @brief Determines the numeric value of a character as a hexadecimal digit.
+ * Differs from unichar_xdigit_value() because it takes a char, so there's no
+ * worry about sign extension if characters are signed.
+ *
+ * @param c An ASCII character.
+ * @return If @c is a hex digit (according to ascii_isxdigit()), its numeric
+ * value. Otherwise, -1.
+ *
+ * @note Hexadecimal parsing contract: inputs do NOT accept a "0x" or "0X"
+ * prefix. Passing "0xff" is undefined behavior. Callers must strip the
+ * prefix themselves before calling this function.
+ */
 
 /**
  * @brief Converts a string to a double value.
@@ -292,13 +307,14 @@ CXXKIT_TEXT_API double_t ascii_strtod(const char *nptr, char **endptr);
  * If the string conversion fails, zero is returned, and @a endptr returns
  * @a nptr (if @a endptr is non-%NULL).
  *
- * @param nptr      the string to convert to a numeric value.
- * @param endptr    (out) (transfer none) (optional): if non-%NULL, it returns the
- * character after the last character used in the conversion.
- * @param base      to be used for the conversion, 2..36 or 0
- * @return the uint64_t value or zero on error.
+ * @param base Base for the conversion, 2..36 or 0 (auto-detect).
+ * @return The uint64_t value or zero on error.
+ *
+ * @note Hexadecimal inputs (base == 16 or auto-detected via 0x prefix in
+ * base == 0) must NOT be prefixed with "0x" or "0X". Passing a "0x"-prefixed
+ * string is undefined behavior; the caller must strip the prefix before
+ * passing to this function. See AGENTS.md for the contract rationale.
  */
-CXXKIT_TEXT_API uint64_t ascii_strtoull(const char *nptr, char **endptr, unsigned int base);
 
 /**
  * @brief Converts a string to a int64_t value.
@@ -319,13 +335,14 @@ CXXKIT_TEXT_API uint64_t ascii_strtoull(const char *nptr, char **endptr, unsigne
  * string conversion fails, zero is returned, and @a endptr returns @a nptr
  * (if @a endptr is non-%NULL).
  *
- * @param nptr: the string to convert to a numeric value.
- * @param endptr: (out) (transfer none) (optional): if non-%NULL, it returns the
- * character after the last character used in the conversion.
- * @param base: to be used for the conversion, 2..36 or 0
- * @return the int64_t value or zero on error.
+ * @param base Base for the conversion, 2..36 or 0 (auto-detect).
+ * @return The int64_t value or zero on error.
+ *
+ * @note Hexadecimal inputs (base == 16 or auto-detected via 0x prefix in
+ * base == 0) must NOT be prefixed with "0x" or "0X". Passing a "0x"-prefixed
+ * string is undefined behavior; the caller must strip the prefix before
+ * passing to this function.
  */
-CXXKIT_TEXT_API int64_t ascii_strtoll(const char *nptr, char **endptr, unsigned int base);
 
 /**
  * @brief Converts a double to a string, using the '.' as decimal point.
@@ -500,10 +517,11 @@ CXXKIT_TEXT_API bool ascii_string_to_unsigned(const char *str,
                                               uint64_t *out_num);
 
 /**
- * @brief
- * @param s
+ * @brief Converts all characters in @a s to lowercase, in place, using
+ * ascii_tolower() semantics.
+ *
+ * @param s The string to convert (modified in place).
  */
-static CXXKIT_FORCE_INLINE void ascii_string_tolower(std::string &s)
 {
     for (char &c : s)
     {
@@ -512,11 +530,12 @@ static CXXKIT_FORCE_INLINE void ascii_string_tolower(std::string &s)
 }
 
 /**
- * @brief
- * @param s
- * @return
+ * @brief Returns a new std::string with all characters of @a s converted to
+ * lowercase, using ascii_tolower() semantics.
+ *
+ * @param s The input string view.
+ * @return A lowercase copy of @a s.
  */
-static CXXKIT_FORCE_INLINE std::string ascii_string_tolower(StringView s)
 {
     std::string result(s.data(), s.length());
     for (char &c : result)
@@ -527,10 +546,11 @@ static CXXKIT_FORCE_INLINE std::string ascii_string_tolower(StringView s)
 }
 
 /**
- * @brief
- * @param s
+ * @brief Converts all characters in @a s to uppercase, in place, using
+ * ascii_toupper() semantics.
+ *
+ * @param s The string to convert (modified in place).
  */
-static CXXKIT_FORCE_INLINE void ascii_string_toupper(std::string &s)
 {
     for (char &c : s)
     {
@@ -539,11 +559,12 @@ static CXXKIT_FORCE_INLINE void ascii_string_toupper(std::string &s)
 }
 
 /**
- * @brief
- * @param s
- * @return
+ * @brief Returns a new std::string with all characters of @a s converted to
+ * uppercase, using ascii_toupper() semantics.
+ *
+ * @param s The input string view.
+ * @return An uppercase copy of @a s.
  */
-static CXXKIT_FORCE_INLINE std::string ascii_string_toupper(StringView s)
 {
     std::string result(s.data(), s.length());
     for (char &c : result)
