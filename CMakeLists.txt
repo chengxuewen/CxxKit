@@ -195,7 +195,7 @@ endif()
 if(CXXKIT_BUILD_COVERAGE)
     add_custom_target(coverage
         COMMAND ${CMAKE_CTEST_COMMAND} --test-dir ${CMAKE_CURRENT_BINARY_DIR} --output-on-failure || true
-        COMMAND ${CMAKE_COMMAND} -E env bash -c "cd ${CMAKE_CURRENT_BINARY_DIR} && mkdir -p coverage && rm -f coverage/summary.txt && for gcda in `find . -name '*.gcda'`; do d=`dirname $gcda`; f=`basename $gcda`; (cd $d && gcov -b -c $f 2>/dev/null | grep 'Lines executed' | sed s|^|`basename $d`/|); done > coverage/summary.txt && { echo '===== CxxKit gcov coverage summary (per source file) ====='; sort -t: -k2 -rn coverage/summary.txt | head -n 60; }"
+        COMMAND ${CMAKE_COMMAND} -E env bash "${PROJECT_SOURCE_DIR}/scripts/coverage.sh" "${CMAKE_CURRENT_BINARY_DIR}"
         WORKING_DIRECTORY ${CMAKE_CURRENT_BINARY_DIR}
         COMMENT "Collecting gcov coverage report")
 endif()
