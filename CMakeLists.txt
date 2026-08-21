@@ -283,7 +283,10 @@ if(CXXKIT_BUILD_INSTALL)
     include(CMakePackageConfigHelpers)
     # Vendored deps with their own Config.cmake (vcpkg-style find_dependency chain).
     # Tracy is included only when the profiling lib is enabled.
-    set(CXXKIT_VENDORED_FIND_DEPS "fmt;spdlog;cpr;CURL;MbedTLS")
+    set(CXXKIT_VENDORED_FIND_DEPS "fmt;spdlog")  # base vendored via text/tools
+    if(CXXKIT_ENABLE_LIB_NETWORK)
+        list(APPEND CXXKIT_VENDORED_FIND_DEPS "cpr" "CURL" "MbedTLS")  # network-only
+    endif()
     if(CXXKIT_ENABLE_LIB_TRACY)
         list(APPEND CXXKIT_VENDORED_FIND_DEPS "Tracy")
     endif()
