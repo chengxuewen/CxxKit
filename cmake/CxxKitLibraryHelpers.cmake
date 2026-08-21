@@ -126,10 +126,6 @@ function(cxxkit_add_library name)
     endif()
     set_target_properties(${name} PROPERTIES EXPORT_NAME "${_cxxkit_export_name}")
 
-    # Per-lib shared/export gates (octk: octk_add_library injects these):
-    #   CXXKIT_BUILDING_<SUB>_LIB  - set while compiling this lib so its API macro EXPORTs
-    #   CXXKIT_BUILD_SHARED_<SUB> - set when shared build so <sub>_global.hpp enters the
-    #                               EXPORT/IMPORT (dynamic) branch instead of the static (empty) one.
     # INTERFACE (header-only) libs need none (no symbols to export).
     if(NOT _cxxkit_type STREQUAL "INTERFACE")
         string(TOUPPER "${_cxxkit_export_name}" _cxxkit_export_upper)
@@ -137,6 +133,13 @@ function(cxxkit_add_library name)
         if(CXXKIT_BUILD_SHARED_LIBS)
             target_compile_definitions(${name} PRIVATE CXXKIT_BUILD_SHARED_${_cxxkit_export_upper})
         endif()
+        # ELF soname/ABI versioning (octk: octk_add_library sets VERSION+SOVERSION):
+        #   VERSION    = full package version  (libcxxkit_text.so.<VER>)
+        #   SOVERSION  = major only             (libcxxkit_text.so.<MAJOR>, soname)
+        # so major changes mark ABI break, minor/patch bump in place; matches Qt/octk library model.
+        set_target_properties(${name} PROPERTIES
+            VERSION ${PROJECT_VERSION}
+            SOVERSION ${PROJECT_VERSION_MAJOR})
     endif()
 
     if(TARGET ${name})
