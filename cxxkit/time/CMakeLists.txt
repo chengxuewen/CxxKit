@@ -26,7 +26,6 @@ cmake_minimum_required(VERSION ${CXXKIT_MIN_NEW_POLICY_CMAKE_VERSION}...${CXXKIT
 cxxkit_configure_library_begin(CxxKitTime)
 
 cxxkit_add_library(cxxkit_time
-    STATIC
     SOURCES date_time.cpp elapsed_timer.cpp
     PUBLIC_LIBRARIES cxxkit::base cxxkit::text cxxkit::tools cxxkit::units
     EXPORT_NAME time

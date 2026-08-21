@@ -24,6 +24,8 @@
 
 #pragma once
 
+#include <cxxkit/units/units_global.hpp>
+
 #include <cxxkit/units/time_delta.hpp>
 #include <cxxkit/tools/checks.hpp>
 
@@ -107,7 +109,7 @@ inline constexpr double operator*(TimeDelta time_delta, Frequency frequency)
     return frequency * time_delta;
 }
 
-CXXKIT_CORE_API std::string toString(Frequency value);
+CXXKIT_UNITS_API std::string toString(Frequency value);
 
 template <typename Sink>
 void AbslStringify(Sink &sink, Frequency value)

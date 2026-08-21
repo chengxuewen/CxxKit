@@ -28,7 +28,6 @@ cxxkit_configure_library_begin(CxxKitNetwork)
 cxxkit_find_package(Libcpr PROVIDED_TARGETS CxxKitWrapLibcpr::WrapLibcpr)
 
 cxxkit_add_library(cxxkit_network
-    STATIC
     SOURCES http.cpp
     PUBLIC_LIBRARIES cxxkit::base cxxkit::text cxxkit::thread cxxkit::memory cxxkit::tools CxxKitWrapLibcpr::WrapLibcpr
     EXPORT_NAME network

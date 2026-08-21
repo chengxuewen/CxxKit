@@ -24,6 +24,8 @@
 
 #pragma once
 
+#include <cxxkit/thread/thread_global.hpp>
+
 #include <cxxkit/thread/platform_thread.hpp>
 #include <cxxkit/tools/checks.hpp>
 
@@ -33,7 +35,7 @@
 
 CXXKIT_BEGIN_NAMESPACE
 
-class CXXKIT_CORE_API CXXKIT_ATTRIBUTE_LOCKABLE RaceChecker final
+class CXXKIT_THREAD_API CXXKIT_ATTRIBUTE_LOCKABLE RaceChecker final
 {
 public:
     class CXXKIT_ATTRIBUTE_SCOPED_LOCKABLE Scope

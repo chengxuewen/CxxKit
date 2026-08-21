@@ -24,6 +24,8 @@
 
 #pragma once
 
+#include <cxxkit/tools/tools_global.hpp>
+
 #include <cxxkit/tools/logging.hpp>
 
 #include <cxxkit/3rdparty/spdlog/spdlog.h>
@@ -35,7 +37,7 @@
 
 CXXKIT_BEGIN_NAMESPACE
 
-class CXXKIT_CORE_API LoggerPrivate
+class CXXKIT_TOOLS_API LoggerPrivate
 {
 public:
     using Context = Logger::Context;

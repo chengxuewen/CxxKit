@@ -3,7 +3,7 @@
 set -euo pipefail
 cd "$(dirname "$0")/.."
 
-echo "=== 1/7 clang-format 检查 ==="
+echo "=== 1/8 clang-format 检查 ==="
 FILES=$(find cxxkit tests -name "*.hpp" -o -name "*.cpp" | sort)
 if command -v clang-format >/dev/null; then
     clang-format --dry-run --Werror $FILES || { echo "格式不合格，请运行: clang-format -i <文件>"; exit 1; }
@@ -12,19 +12,19 @@ else
     echo "跳过（clang-format 未安装）"
 fi
 
-echo "=== 2/7 命名空间检查（octk 残留）==="
+echo "=== 2/8 命名空间检查（octk 残留）==="
 if grep -rn "octk\|OCTK_" cxxkit/ tests/ --include="*.hpp" --include="*.cpp" | grep -vE "CXXKIT|octk mechanism|from OpenCTK|Ported from|Slimmed from"; then
     echo "发现 octk 残留！"; exit 1
 fi
 echo "namespace OK"
 
-echo "=== 3/7 C++11 严格性检查（PIT-22：禁 C++14 语法混入库代码）==="
+echo "=== 3/8 C++11 严格性检查（PIT-22：禁 C++14 语法混入库代码）==="
 if grep -rnE "std::[a-z_]+_t<|if constexpr|\[\][^)]*\(auto|0b[01]'[, ]" cxxkit/ --include="*.hpp" --include="*.cpp"; then
     echo "发现 C++14 语法残留（变量模板/_t 别名/泛型 lambda/数字分隔符）——库代码必须 C++11！"; exit 1
 fi
 echo "C++11 OK"
 
-echo "=== 4/7 sanitizer 测试（build-asan，LSAN suppression）==="
+echo "=== 4/8 sanitizer 测试（build-asan，LSAN suppression）==="
 if [ -d build-asan ]; then
     # C6：用独立 build-asan 目录（CXXKIT_BUILD_SANITIZERS=ON 生成），不动主 build
     # LSAN_OPTIONS 指向 commit 的 scripts/lsan.supp（设计进程单例，Task 4/F1 文档化）
@@ -34,14 +34,23 @@ else
     echo "跳过（无 build-asan；用 -DCXXKIT_BUILD_SANITIZERS=ON 生成后启用此步）"
 fi
 
-echo "=== 5/7 构建 ==="
+echo "=== 5/8 共享构建验证（CXXKIT_BUILD_SHARED_LIBS 动态形态; 若 build-shared 存在）==="
+if [ -d build-shared ]; then
+    cmake -S . -B build-shared -G Ninja -DCXXKIT_BUILD_SHARED_LIBS=ON -DCXXKIT_BUILD_TESTS=ON -DCXXKIT_ENABLE_LIB_NETWORK=OFF -DCXXKIT_ENABLE_LIB_CRASH=OFF
+    cmake --build build-shared --parallel 4
+    ctest --test-dir build-shared --output-on-failure || exit 1
+else
+    echo "跳过（无 build-shared——配置 CXXKIT_BUILD_SHARED_LIBS=ON 生成后验证动态库）"
+fi
+
+echo "=== 6/8 构建 ==="
 cmake -S . -B build -G Ninja -DCXXKIT_BUILD_TESTS=ON -DCXXKIT_ENABLE_LIB_NETWORK=ON
 cmake --build build --parallel 4
 
-echo "=== 6/7 测试 ==="
+echo "=== 7/8 测试 ==="
 ctest --test-dir build --output-on-failure
 
-echo "=== 7/7 覆盖率报表（build-cov，R31：默认仅报表不阻断）==="
+echo "=== 8/8 覆盖率报表（build-cov，R31：默认仅报表不阻断）==="
 if [ -d build-cov/coverage ] && [ -f build-cov/coverage/summary.txt ]; then
     echo '--- 库源码覆盖率（build-cov/coverage/summary.txt）---'
     cat build-cov/coverage/summary.txt

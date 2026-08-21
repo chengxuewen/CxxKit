@@ -26,7 +26,6 @@ cmake_minimum_required(VERSION ${CXXKIT_MIN_NEW_POLICY_CMAKE_VERSION}...${CXXKIT
 cxxkit_configure_library_begin(CxxKitMemory)
 
 cxxkit_add_library(cxxkit_memory
-    STATIC
     SOURCES aligned_malloc.cpp shared_memory.cpp zero_memory.cpp
     PUBLIC_LIBRARIES cxxkit::base cxxkit::tools
     EXPORT_NAME memory

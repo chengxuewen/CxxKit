@@ -24,6 +24,8 @@
 
 #pragma once
 
+#include <cxxkit/kernel/kernel_global.hpp>
+
 #include <cxxkit/base/global.hpp>
 #include <cxxkit/base/core_config.hpp>
 
@@ -33,7 +35,7 @@ CXXKIT_BEGIN_NAMESPACE
 
 class Object;
 
-class CXXKIT_CORE_API Event
+class CXXKIT_KERNEL_API Event
 {
 public:
     enum class Type
@@ -78,7 +80,7 @@ private:
 };
 
 
-class CXXKIT_CORE_API TimerEvent : public Event
+class CXXKIT_KERNEL_API TimerEvent : public Event
 {
 public:
     explicit TimerEvent(int timerId);
@@ -91,7 +93,7 @@ protected:
 };
 
 
-class CXXKIT_CORE_API ChildEvent : public Event
+class CXXKIT_KERNEL_API ChildEvent : public Event
 {
 public:
     ChildEvent(Type type, Object *child);

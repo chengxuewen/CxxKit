@@ -24,6 +24,8 @@
 
 #pragma once
 
+#include <cxxkit/text/text_global.hpp>
+
 #include <cxxkit/text/string_to_number.hpp>
 #include <cxxkit/text/string_view.hpp>
 #include <cxxkit/containers/array_view.hpp>
@@ -34,9 +36,9 @@ CXXKIT_BEGIN_NAMESPACE
 
 namespace utils
 {
-CXXKIT_CORE_API std::string hex_encode(StringView str);
+CXXKIT_TEXT_API std::string hex_encode(StringView str);
 
-CXXKIT_CORE_API std::string hex_encode_with_delimiter(StringView source, char delimiter);
+CXXKIT_TEXT_API std::string hex_encode_with_delimiter(StringView source, char delimiter);
 
 // hex_decode converts ascii hex to binary.
 size_t hex_decode(ArrayView<char> buffer, StringView source);
@@ -49,12 +51,12 @@ size_t hex_decode_with_delimiter(ArrayView<char> buffer, StringView source, char
 
 // Splits the source string into multiple fields separated by delimiter,
 // with duplicates of delimiter ignored.  Trailing delimiter ignored.
-CXXKIT_CORE_API size_t tokenize(StringView source, char delimiter, std::vector<std::string> *fields);
+CXXKIT_TEXT_API size_t tokenize(StringView source, char delimiter, std::vector<std::string> *fields);
 
 // Extract the first token from source as separated by delimiter, with
 // duplicates of delimiter ignored. Return false if the delimiter could not be
 // found, otherwise return true.
-CXXKIT_CORE_API bool tokenize_first(StringView source, char delimiter, std::string *token, std::string *rest);
+CXXKIT_TEXT_API bool tokenize_first(StringView source, char delimiter, std::string *token, std::string *rest);
 
 template <typename T, typename std::enable_if<std::is_integral<T>::value>::type * = nullptr>
 std::string toString(T value)
@@ -108,7 +110,7 @@ static bool FromString(StringView s, T *t)
     return result.has_value();
 }
 
-CXXKIT_CORE_API bool FromString(StringView s, bool *b);
+CXXKIT_TEXT_API bool FromString(StringView s, bool *b);
 
 template <typename T>
 static inline T FromString(StringView str)

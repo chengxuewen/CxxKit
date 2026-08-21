@@ -24,6 +24,8 @@
 
 #pragma once
 
+#include <cxxkit/thread/thread_global.hpp>
+
 #include <cxxkit/kernel/object.hpp>
 #include <cxxkit/thread/platform_thread.hpp>
 #include <cxxkit/thread/task_queue_thread.hpp>
@@ -32,7 +34,7 @@ CXXKIT_BEGIN_NAMESPACE
 
 #if 0
 class EventLoopPrivate;
-class CXXKIT_CORE_API EventLoopThread : public Qbject, public PlatformThread
+class CXXKIT_THREAD_API EventLoopThread : public Qbject, public PlatformThread
 {
 public:
     explicit EventLoopThread(Object *parent = nullptr);

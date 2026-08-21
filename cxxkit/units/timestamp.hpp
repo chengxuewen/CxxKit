@@ -24,6 +24,8 @@
 
 #pragma once
 
+#include <cxxkit/units/units_global.hpp>
+
 #include <cxxkit/units/time_delta.hpp>
 #include <cxxkit/units/unit_base.hpp>
 #include <cxxkit/tools/checks.hpp>
@@ -151,7 +153,7 @@ private:
     static constexpr bool kOneSided = true;
 };
 
-CXXKIT_CORE_API std::string toString(Timestamp value);
+CXXKIT_UNITS_API std::string toString(Timestamp value);
 
 template <typename Sink>
 void AbslStringify(Sink &sink, Timestamp value)

@@ -24,6 +24,8 @@
 
 #pragma once
 
+#include <cxxkit/thread/thread_global.hpp>
+
 #include <cxxkit/patterns/singleton.hpp>
 #include <cxxkit/thread/task.hpp>
 
@@ -78,7 +80,7 @@ CXXKIT_BEGIN_NAMESPACE
 class ThreadPoolLocalData;
 
 class ThreadPoolPrivate;
-class CXXKIT_CORE_API ThreadPool : public AutoSingleton<ThreadPool>
+class CXXKIT_THREAD_API ThreadPool : public AutoSingleton<ThreadPool>
 {
 public:
     enum Priority : int8_t
@@ -91,7 +93,7 @@ public:
     };
 
     class ThreadPrivate;
-    class CXXKIT_CORE_API Thread
+    class CXXKIT_THREAD_API Thread
     {
         friend class ThreadPoolLocalData;
         friend class ThreadPoolTaskThread;

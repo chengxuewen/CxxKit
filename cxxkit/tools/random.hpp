@@ -24,13 +24,15 @@
 
 #pragma once
 
+#include <cxxkit/tools/tools_global.hpp>
+
 #include <cxxkit/tools/checks.hpp>
 
 #include <limits>
 
 CXXKIT_BEGIN_NAMESPACE
 
-class CXXKIT_CORE_API Random
+class CXXKIT_TOOLS_API Random
 {
 public:
     // TODO(tommi): Change this so that the seed can be initialized internally,
@@ -134,19 +136,19 @@ bool InitRandom(const char *seed, size_t len);
 
 // Generates a (cryptographically) random string of the given length.
 // We generate base64 values so that they will be printable.
-CXXKIT_CORE_API std::string CreateRandomString(size_t length);
+CXXKIT_TOOLS_API std::string CreateRandomString(size_t length);
 
 // Generates a (cryptographically) random string of the given length.
 // We generate base64 values so that they will be printable.
 // Return false if the random number generator failed.
-CXXKIT_CORE_API bool CreateRandomString(size_t length, std::string *str);
+CXXKIT_TOOLS_API bool CreateRandomString(size_t length, std::string *str);
 
 // Generates a (cryptographically) random string of the given length,
 // with characters from the given table. Return false if the random
 // number generator failed.
 // For ease of implementation, the function requires that the table
 // size evenly divide 256; otherwise, it returns false.
-CXXKIT_CORE_API bool CreateRandomString(size_t length, StringView table, std::string *str);
+CXXKIT_TOOLS_API bool CreateRandomString(size_t length, StringView table, std::string *str);
 
 // Generates (cryptographically) random data of the given length.
 // Return false if the random number generator failed.
@@ -159,7 +161,7 @@ std::string CreateRandomUuid();
 uint32_t CreateRandomId();
 
 // Generates a 64 bit random id.
-CXXKIT_CORE_API uint64_t CreateRandomId64();
+CXXKIT_TOOLS_API uint64_t CreateRandomId64();
 
 // Generates a random id > 0.
 uint32_t CreateRandomNonZeroId();

@@ -24,6 +24,8 @@
 
 #pragma once
 
+#include <cxxkit/tools/tools_global.hpp>
+
 #include <cxxkit/text/format.hpp>
 #include <cxxkit/text/string_utils.hpp>
 
@@ -52,7 +54,7 @@ static constexpr int LogLevelNum = 7;
 
 class LoggerPrivate;
 
-class CXXKIT_CORE_API Logger
+class CXXKIT_TOOLS_API Logger
 {
 public:
     using Pointer = Logger *;
@@ -421,7 +423,7 @@ CXXKIT_END_NAMESPACE
 #define CXXKIT_LOGGING_CRITICAL(logger, ...) CXXKIT_LOGGING(logger, cxxkit::LogLevel::Critical, __VA_ARGS__)
 #define CXXKIT_LOGGING_FATAL(logger, ...)    CXXKIT_LOGGING(logger, cxxkit::LogLevel::Fatal, __VA_ARGS__)
 
-CXXKIT_DECLARE_LOGGER(CXXKIT_CORE_API, CXXKIT_LOGGER)
+CXXKIT_DECLARE_LOGGER(CXXKIT_TOOLS_API, CXXKIT_LOGGER)
 #define CXXKIT_TRACE                                                                                                   \
     for (bool enabled = CXXKIT_LOGGER().isLevelEnabled(cxxkit::LogLevel::Trace); enabled; enabled = false)             \
     cxxkit::Logger::Streamer(CXXKIT_LOGGER(), cxxkit::LogLevel::Trace, __FILE__, CXXKIT_STRFUNC, __LINE__).logging

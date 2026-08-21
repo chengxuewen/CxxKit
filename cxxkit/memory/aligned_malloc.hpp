@@ -26,6 +26,8 @@
 
 #pragma once
 
+#include <cxxkit/memory/memory_global.hpp>
+
 #include <cxxkit/base/global.hpp>
 
 // The functions declared here
@@ -43,14 +45,14 @@ namespace utils
 // address of `ptr`.
 // Note that there is no guarantee that the memory in question is available.
 // `ptr` has no requirements other than it can't be NULL.
-CXXKIT_CORE_API void *getRightAlign(const void *ptr, size_t alignment);
+CXXKIT_MEMORY_API void *getRightAlign(const void *ptr, size_t alignment);
 
 // Allocates memory of `size` bytes aligned on an `alignment` boundry.
 // The return value is a pointer to the memory. Note that the memory must
 // be de-allocated using alignedFree.
-CXXKIT_CORE_API void *alignedMalloc(size_t size, size_t alignment);
+CXXKIT_MEMORY_API void *alignedMalloc(size_t size, size_t alignment);
 // De-allocates memory created using the alignedMalloc() API.
-CXXKIT_CORE_API void alignedFree(void *mem_block);
+CXXKIT_MEMORY_API void alignedFree(void *mem_block);
 
 // Templated versions to facilitate usage of aligned malloc without casting
 // to and from void*.

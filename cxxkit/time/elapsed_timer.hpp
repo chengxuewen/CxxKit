@@ -24,6 +24,8 @@
 
 #pragma once
 
+#include <cxxkit/time/time_global.hpp>
+
 #include <cxxkit/base/global.hpp>
 
 CXXKIT_BEGIN_NAMESPACE
@@ -43,7 +45,7 @@ CXXKIT_BEGIN_NAMESPACE
  * The simplest example of such a case is for debugging purposes, as in the following example:
  */
 
-class CXXKIT_CORE_API ElapsedTimer
+class CXXKIT_TIME_API ElapsedTimer
 {
 public:
     /**
@@ -206,7 +208,7 @@ public:
      * @param v2 The second ElapsedTimer to compare.
      * @return Returns \c true if \a v1 was started before \a v2, false otherwise.
      */
-    friend bool CXXKIT_CORE_API operator<(const ElapsedTimer &v1, const ElapsedTimer &v2) noexcept;
+    friend bool CXXKIT_TIME_API operator<(const ElapsedTimer &v1, const ElapsedTimer &v2) noexcept;
 
 private:
     int64_t mStart{kInvalidData};

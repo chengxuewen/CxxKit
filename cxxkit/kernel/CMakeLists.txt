@@ -26,7 +26,6 @@ cmake_minimum_required(VERSION ${CXXKIT_MIN_NEW_POLICY_CMAKE_VERSION}...${CXXKIT
 cxxkit_configure_library_begin(CxxKitKernel)
 
 cxxkit_add_library(cxxkit_kernel
-    STATIC
     SOURCES application.cpp event.cpp event_loop.cpp object.cpp signals.cpp
     PUBLIC_LIBRARIES cxxkit::base cxxkit::memory cxxkit::tools
     EXPORT_NAME kernel

@@ -24,13 +24,15 @@
 
 #pragma once
 
+#include <cxxkit/tools/tools_global.hpp>
+
 #include <cxxkit/base/global.hpp>
 
 /***********************************************************************************************************************
    cxxkit assert macro
 ***********************************************************************************************************************/
-CXXKIT_CORE_API void cxxkit_assert_x(const char *where, const char *what, const char *file, int line) CXXKIT_NOTHROW;
-CXXKIT_CORE_API void cxxkit_assert(const char *assertion, const char *file, int line) CXXKIT_NOTHROW;
+CXXKIT_TOOLS_API void cxxkit_assert_x(const char *where, const char *what, const char *file, int line) CXXKIT_NOTHROW;
+CXXKIT_TOOLS_API void cxxkit_assert(const char *assertion, const char *file, int line) CXXKIT_NOTHROW;
 static inline void cxxkit_noop(void)
 {
 }

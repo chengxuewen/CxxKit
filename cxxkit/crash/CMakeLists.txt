@@ -40,7 +40,6 @@ cxxkit_find_package(Backward PROVIDED_TARGETS CxxKitWrapBackward::WrapBackward)
 # backward.hpp dlopens libdw.so.1 at runtime: the shared lib must find the shipped .so next to itself
 # (INSTALL_RPATH keeps that working for the installed shared lib).
 cxxkit_add_library(cxxkit_crash
-    STATIC
     SOURCES crash_handler.cpp
     PUBLIC_LIBRARIES cxxkit::base cxxkit::patterns cxxkit::tools CxxKitWrapBreakpad::WrapBreakpad CxxKitWrapBackward::WrapBackward
     COMPILE_DEFINITIONS CXXKIT_FEATURE_ENABLE_CRASH=1

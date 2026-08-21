@@ -24,6 +24,8 @@
 
 #pragma once
 
+#include <cxxkit/memory/memory_global.hpp>
+
 #include <cxxkit/base/global.hpp>
 
 #include <memory>
@@ -36,7 +38,7 @@ CXXKIT_BEGIN_NAMESPACE
 // for video frames must extend this class with creation and destruction logic
 // specific for the target platform and then call
 // DesktopCapturer::SetSharedMemoryFactory().
-class CXXKIT_CORE_API SharedMemory
+class CXXKIT_MEMORY_API SharedMemory
 {
 public:
 #if defined(CXXKIT_OS_WINDOWS)

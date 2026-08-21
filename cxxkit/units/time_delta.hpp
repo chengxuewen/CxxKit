@@ -24,6 +24,8 @@
 
 #pragma once
 
+#include <cxxkit/units/units_global.hpp>
+
 #include <cxxkit/units/unit_base.hpp>
 
 CXXKIT_BEGIN_NAMESPACE
@@ -35,7 +37,7 @@ CXXKIT_BEGIN_NAMESPACE
 // undefined. To simplify usage, it can be constructed and converted to
 // different units, specifically seconds (s), milliseconds (ms) and
 // microseconds (us).
-class CXXKIT_CORE_API TimeDelta final : public RelativeUnit<TimeDelta>
+class CXXKIT_UNITS_API TimeDelta final : public RelativeUnit<TimeDelta>
 {
 public:
     template <typename T>
@@ -105,7 +107,7 @@ private:
 
 namespace utils
 {
-CXXKIT_CORE_API std::string toString(TimeDelta value);
+CXXKIT_UNITS_API std::string toString(TimeDelta value);
 
 // template <typename Sink>
 // void stringify(Sink &sink, TimeDelta value)

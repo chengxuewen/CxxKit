@@ -24,6 +24,8 @@
 
 #pragma once
 
+#include <cxxkit/thread/thread_global.hpp>
+
 #include <cxxkit/tools/status.hpp>
 #include <cxxkit/thread/mutex.hpp>
 #include <cxxkit/base/core_config.hpp>
@@ -88,7 +90,7 @@ struct Callable
 } // namespace detail
 
 class PlatformThreadPrivate;
-class CXXKIT_CORE_API PlatformThread
+class CXXKIT_THREAD_API PlatformThread
 {
     using ThreadMutex = RecursiveMutex;
 

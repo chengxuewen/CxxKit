@@ -24,6 +24,8 @@
 
 #pragma once
 
+#include <cxxkit/tools/tools_global.hpp>
+
 #include <cxxkit/text/string_view.hpp>
 #include <cxxkit/memory/shared_data.hpp>
 
@@ -43,14 +45,14 @@
 CXXKIT_BEGIN_NAMESPACE
 
 using ErrorId = int32_t;
-class CXXKIT_CORE_API Error : public SharedData
+class CXXKIT_TOOLS_API Error : public SharedData
 {
 public:
     using SharedDataPtr = ImplicitlySharedDataPointer<Error>;
 
     CXXKIT_STATIC_CONSTANT_NUMBER(kInvalidId, std::numeric_limits<ErrorId>::max())
 
-    class CXXKIT_CORE_API Domain
+    class CXXKIT_TOOLS_API Domain
     {
         StringView mType;
         StringView mName;
@@ -59,7 +61,7 @@ public:
         mutable std::atomic<bool> mCacheInitialized{false};
 
     public:
-        struct CXXKIT_CORE_API Registry
+        struct CXXKIT_TOOLS_API Registry
         {
             static ErrorId registerDomain(StringView type, StringView name, StringView description = "");
         };
@@ -177,6 +179,6 @@ inline std::ostream &operator<<(std::ostream &os, const Error &error)
     return os;
 }
 
-CXXKIT_DECLARE_ERROR_DOMAIN(CXXKIT_CORE_API, invalidDomain)
+CXXKIT_DECLARE_ERROR_DOMAIN(CXXKIT_TOOLS_API, invalidDomain)
 
 CXXKIT_END_NAMESPACE

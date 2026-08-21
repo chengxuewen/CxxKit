@@ -24,13 +24,15 @@
 
 #pragma once
 
+#include <cxxkit/thread/thread_global.hpp>
+
 #include <cxxkit/thread/task_queue.hpp>
 #include <cxxkit/tools/logging.hpp>
 
 CXXKIT_BEGIN_NAMESPACE
 
 class TaskQueueThreadPrivate;
-class CXXKIT_CORE_API TaskQueueThread : public TaskQueueBase
+class CXXKIT_THREAD_API TaskQueueThread : public TaskQueueBase
 {
 protected:
     struct NextTask

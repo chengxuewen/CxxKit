@@ -24,6 +24,8 @@
 
 #pragma once
 
+#include <cxxkit/kernel/kernel_global.hpp>
+
 #include <cxxkit/kernel/object.hpp>
 #include <cxxkit/tools/enum_flags.hpp>
 #include <cxxkit/base/core_config.hpp>
@@ -33,7 +35,7 @@
 CXXKIT_BEGIN_NAMESPACE
 
 class EventLoopPrivate;
-class CXXKIT_CORE_API EventLoop : public Object
+class CXXKIT_KERNEL_API EventLoop : public Object
 {
 public:
     enum class ProcessFlag

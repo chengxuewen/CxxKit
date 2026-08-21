@@ -24,6 +24,8 @@
 
 #pragma once
 
+#include <cxxkit/units/units_global.hpp>
+
 #include <cxxkit/units/unit_base.hpp>
 
 #include <type_traits>
@@ -66,7 +68,7 @@ private:
 
 namespace utils
 {
-CXXKIT_CORE_API std::string toString(DataSize value);
+CXXKIT_UNITS_API std::string toString(DataSize value);
 
 // template <typename Sink>
 // void stringify(Sink &sink, DataSize value)

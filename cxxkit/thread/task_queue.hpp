@@ -24,6 +24,8 @@
 
 #pragma once
 
+#include <cxxkit/thread/thread_global.hpp>
+
 #include <cxxkit/tools/source_location.hpp>
 #include <cxxkit/memory/nullability.hpp>
 #include <cxxkit/units/time_delta.hpp>
@@ -32,7 +34,7 @@
 
 CXXKIT_BEGIN_NAMESPACE
 
-class CXXKIT_CORE_API TaskQueueBase
+class CXXKIT_THREAD_API TaskQueueBase
 {
 public:
     struct Deleter final
@@ -42,7 +44,7 @@ public:
     using SharedPtr = std::shared_ptr<TaskQueueBase>;
     using UniquePtr = std::unique_ptr<TaskQueueBase, Deleter>;
 
-    class CXXKIT_CORE_API CurrentSetter final
+    class CXXKIT_THREAD_API CurrentSetter final
     {
         TaskQueueBase *const mPrevious;
         CXXKIT_DISABLE_COPY_MOVE(CurrentSetter)
@@ -85,7 +87,7 @@ public:
      *    task_queue->postTask(SafeTask(safety_flag, [this] { MyMethod(); }));
      */
     class SafetyFlagPrivate;
-    class CXXKIT_CORE_API SafetyFlag final
+    class CXXKIT_THREAD_API SafetyFlag final
     {
         CXXKIT_DEFINE_DPTR(SafetyFlag)
         CXXKIT_DECLARE_PRIVATE(SafetyFlag)
@@ -255,4 +257,4 @@ public:
 
 CXXKIT_END_NAMESPACE
 
-CXXKIT_DECLARE_LOGGER(CXXKIT_CORE_API, CXXKIT_TASK_QUEUE_LOGGER)
+CXXKIT_DECLARE_LOGGER(CXXKIT_THREAD_API, CXXKIT_TASK_QUEUE_LOGGER)

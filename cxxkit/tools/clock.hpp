@@ -24,6 +24,8 @@
 
 #pragma once
 
+#include <cxxkit/tools/tools_global.hpp>
+
 #include <cxxkit/units/timestamp.hpp>
 #include <cxxkit/tools/ntp_time.hpp>
 
@@ -40,7 +42,7 @@ const uint32_t kNtpJan1970 = 2208988800UL;
 const double kMagicNtpFractionalUnit = 4.294967296E+9;
 
 // A clock interface that allows reading of absolute and relative timestamps.
-class CXXKIT_CORE_API Clock
+class CXXKIT_TOOLS_API Clock
 {
 public:
     virtual ~Clock() { }
@@ -83,7 +85,7 @@ public:
     static Clock *GetRealTimeClock();
 };
 
-class CXXKIT_CORE_API SimulatedClock : public Clock
+class CXXKIT_TOOLS_API SimulatedClock : public Clock
 {
 public:
     // The constructors assume an epoch of Jan 1, 1970.

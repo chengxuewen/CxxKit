@@ -26,7 +26,6 @@ cmake_minimum_required(VERSION ${CXXKIT_MIN_NEW_POLICY_CMAKE_VERSION}...${CXXKIT
 cxxkit_configure_library_begin(CxxKitUnits)
 
 cxxkit_add_library(cxxkit_units
-    STATIC
     SOURCES data_rate.cpp data_size.cpp frequency.cpp time_delta.cpp timestamp.cpp
     PUBLIC_LIBRARIES cxxkit::base cxxkit::numerics cxxkit::containers cxxkit::tools
     EXPORT_NAME units

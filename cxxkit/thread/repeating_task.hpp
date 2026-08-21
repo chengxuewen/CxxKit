@@ -24,6 +24,8 @@
 
 #pragma once
 
+#include <cxxkit/thread/thread_global.hpp>
+
 #include <cxxkit/thread/task_queue.hpp>
 #include <cxxkit/units/time_delta.hpp>
 #include <cxxkit/tools/clock.hpp>
@@ -32,7 +34,7 @@
 
 CXXKIT_BEGIN_NAMESPACE
 
-class CXXKIT_CORE_API RepeatingTaskHandle final
+class CXXKIT_THREAD_API RepeatingTaskHandle final
 {
 public:
     RepeatingTaskHandle() = default;

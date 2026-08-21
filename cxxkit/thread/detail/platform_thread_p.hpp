@@ -24,6 +24,8 @@
 
 #pragma once
 
+#include <cxxkit/thread/thread_global.hpp>
+
 #include <cxxkit/thread/reference_counter.hpp>
 #include <cxxkit/thread/platform_thread.hpp>
 #include <cxxkit/tools/logging.hpp>
@@ -87,7 +89,7 @@ public:
     std::atomic<PlatformThread *> thread{nullptr};
 };
 
-class CXXKIT_CORE_API PlatformThreadPrivate
+class CXXKIT_THREAD_API PlatformThreadPrivate
 {
 public:
     using ThreadMutex = PlatformThread::ThreadMutex;

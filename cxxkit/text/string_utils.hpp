@@ -24,6 +24,8 @@
 
 #pragma once
 
+#include <cxxkit/text/text_global.hpp>
+
 #include <cxxkit/text/string_view.hpp>
 #include <cxxkit/base/global.hpp>
 
@@ -64,14 +66,14 @@ std::string pointerToString(T *ptr)
  * @param filePath
  * @return
  */
-CXXKIT_CORE_API const char *extractFileName(const char *filePath);
+CXXKIT_TEXT_API const char *extractFileName(const char *filePath);
 
 /**
  * @brief
  * @param function
  * @return
  */
-CXXKIT_CORE_API std::string extractFunctionName(const char *function, const char *suffix = "");
+CXXKIT_TEXT_API std::string extractFunctionName(const char *function, const char *suffix = "");
 
 /**
  * @brief
@@ -81,7 +83,7 @@ CXXKIT_CORE_API std::string extractFunctionName(const char *function, const char
  * @param ignoreCase
  * @return
  */
-CXXKIT_CORE_API bool stringCompare(const char *s1, const char *s2, size_t len, bool ignoreCase);
+CXXKIT_TEXT_API bool stringCompare(const char *s1, const char *s2, size_t len, bool ignoreCase);
 
 /**
  * @brief Performs a byte-by-byte comparison of `len` bytes of the strings `s1` and `s2`,
@@ -89,13 +91,13 @@ CXXKIT_CORE_API bool stringCompare(const char *s1, const char *s2, size_t len, b
  * It returns an integer less than, equal to, or greater than zero if `s1` is found, respectively, to be less than,
  * to match, or be greater than `s2`.
  */
-CXXKIT_CORE_API int stringCaseCmp(const char *s1, const char *s2, size_t len);
+CXXKIT_TEXT_API int stringCaseCmp(const char *s1, const char *s2, size_t len);
 
 /**
  * @brief Returns whether a given ASCII string `haystack` contains the ASCII substring `needle`,
  * ignoring case in the comparison.
  */
-CXXKIT_CORE_API bool stringContainsIgnoreCase(StringView haystack, StringView needle) noexcept;
+CXXKIT_TEXT_API bool stringContainsIgnoreCase(StringView haystack, StringView needle) noexcept;
 
 /**
  * @brief
@@ -103,7 +105,7 @@ CXXKIT_CORE_API bool stringContainsIgnoreCase(StringView haystack, StringView ne
  * @param needle
  * @return
  */
-CXXKIT_CORE_API bool stringContainsIgnoreCase(StringView haystack, char needle) noexcept;
+CXXKIT_TEXT_API bool stringContainsIgnoreCase(StringView haystack, char needle) noexcept;
 
 /**
  * @brief Returns whether a given string `haystack` contains the substring `needle`.
@@ -166,13 +168,13 @@ static CXXKIT_FORCE_INLINE bool stringEndsWith(StringView text, StringView suffi
  * @param ...
  * @return
  */
-CXXKIT_CORE_API std::string stringFormat(const char *format, ...) CXXKIT_ATTRIBUTE_FORMAT_PRINTF(1, 2);
+CXXKIT_TEXT_API std::string stringFormat(const char *format, ...) CXXKIT_ATTRIBUTE_FORMAT_PRINTF(1, 2);
 
 
 // Splits the source string into multiple fields separated by delimiter,
 // with duplicates of delimiter creating empty fields. Empty input produces a
 // single, empty, field.
-CXXKIT_CORE_API std::vector<StringView> stringSplit(StringView source, char delimiter);
+CXXKIT_TEXT_API std::vector<StringView> stringSplit(StringView source, char delimiter);
 
 ///////////////////////////////////////////////////////////////////////////////
 // UTF helpers (Windows only)

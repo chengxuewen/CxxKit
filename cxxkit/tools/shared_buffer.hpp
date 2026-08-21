@@ -24,6 +24,8 @@
 
 #pragma once
 
+#include <cxxkit/tools/tools_global.hpp>
+
 #include <cxxkit/memory/ref_counted_object.hpp>
 #include <cxxkit/memory/shared_ref_ptr.hpp>
 #include <cxxkit/text/string_view.hpp>
@@ -38,7 +40,7 @@
 
 CXXKIT_BEGIN_NAMESPACE
 
-class CXXKIT_CORE_API SharedBuffer
+class CXXKIT_TOOLS_API SharedBuffer
 {
 public:
     // An empty buffer.

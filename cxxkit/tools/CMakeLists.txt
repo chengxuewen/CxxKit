@@ -26,9 +26,8 @@ cmake_minimum_required(VERSION ${CXXKIT_MIN_NEW_POLICY_CMAKE_VERSION}...${CXXKIT
 cxxkit_configure_library_begin(CxxKitTools)
 
 cxxkit_add_library(cxxkit_tools
-    STATIC
     SOURCES logging.cpp random.cpp assert.cpp clock.cpp status.cpp error.cpp once_flag.cpp id_registry.cpp shared_buffer.cpp metrics.cpp ntp_time.cpp fake_clock.cpp
-    PUBLIC_LIBRARIES cxxkit::base cxxkit::text CxxKitWrapOptional::WrapOptional CxxKitWrapExpected::WrapExpected CxxKitWrapVariant::WrapVariant CxxKitWrapFilesystem::WrapFilesystem CxxKitWrapSpdlog::WrapSpdlog
+    PUBLIC_LIBRARIES cxxkit::base cxxkit::text cxxkit::time CxxKitWrapOptional::WrapOptional CxxKitWrapExpected::WrapExpected CxxKitWrapVariant::WrapVariant CxxKitWrapFilesystem::WrapFilesystem CxxKitWrapSpdlog::WrapSpdlog
     EXPORT_NAME tools
     FOLDER "CxxKit/libs")
 cxxkit_find_package(Optional PROVIDED_TARGETS CxxKitWrapOptional::WrapOptional)

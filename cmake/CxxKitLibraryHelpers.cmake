@@ -126,10 +126,17 @@ function(cxxkit_add_library name)
     endif()
     set_target_properties(${name} PROPERTIES EXPORT_NAME "${_cxxkit_export_name}")
 
-    # INSTALL_RPATH: optional runtime search path for the installed shared lib (e.g. "\$ORIGIN" for a lib
-    # like cxxkit_crash dlopening libdw.so.1). No-op for static/INTERFACE builds.
-    if(NOT "${arg_INSTALL_RPATH}" STREQUAL "")
-        set_target_properties(${name} PROPERTIES INSTALL_RPATH "${arg_INSTALL_RPATH}")
+    # Per-lib shared/export gates (octk: octk_add_library injects these):
+    #   CXXKIT_BUILDING_<SUB>_LIB  - set while compiling this lib so its API macro EXPORTs
+    #   CXXKIT_BUILD_SHARED_<SUB> - set when shared build so <sub>_global.hpp enters the
+    #                               EXPORT/IMPORT (dynamic) branch instead of the static (empty) one.
+    # INTERFACE (header-only) libs need none (no symbols to export).
+    if(NOT _cxxkit_type STREQUAL "INTERFACE")
+        string(TOUPPER "${_cxxkit_export_name}" _cxxkit_export_upper)
+        target_compile_definitions(${name} PRIVATE CXXKIT_BUILDING_${_cxxkit_export_upper}_LIB)
+        if(CXXKIT_BUILD_SHARED_LIBS)
+            target_compile_definitions(${name} PRIVATE CXXKIT_BUILD_SHARED_${_cxxkit_export_upper})
+        endif()
     endif()
 
     if(TARGET ${name})

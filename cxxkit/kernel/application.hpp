@@ -24,6 +24,8 @@
 
 #pragma once
 
+#include <cxxkit/kernel/kernel_global.hpp>
+
 #include <cxxkit/kernel/object.hpp>
 
 #if CXXKIT_FEATURE_ENABLE_KERNEL
@@ -31,7 +33,7 @@
 CXXKIT_BEGIN_NAMESPACE
 
 // class ApplicationPrivate;
-// class CXXKIT_CORE_API Application : public Object
+// class CXXKIT_KERNEL_API Application : public Object
 // {
 // public:
 //     Application(int &argc, char **argv, int flags = CXXKIT_VERSION);

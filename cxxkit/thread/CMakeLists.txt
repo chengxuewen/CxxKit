@@ -46,7 +46,6 @@ else()
 endif()
 
 cxxkit_add_library(cxxkit_thread
-    STATIC
     SOURCES ${CXXKIT_THREAD_SOURCES}
     PUBLIC_LIBRARIES cxxkit::base cxxkit::functional cxxkit::kernel cxxkit::memory cxxkit::tools cxxkit::units cxxkit::time
     EXPORT_NAME thread

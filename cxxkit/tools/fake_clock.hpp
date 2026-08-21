@@ -24,6 +24,8 @@
 
 #pragma once
 
+#include <cxxkit/tools/tools_global.hpp>
+
 #include <cxxkit/units/time_delta.hpp>
 #include <cxxkit/time/date_time.hpp>
 #include <cxxkit/units/timestamp.hpp>
@@ -35,7 +37,7 @@ CXXKIT_BEGIN_NAMESPACE
 // Starts at time 0.
 //
 // TODO(deadbeef): Unify with SimulatedClock.
-class CXXKIT_CORE_API FakeClock : public ClockInterface
+class CXXKIT_TOOLS_API FakeClock : public ClockInterface
 {
 public:
     FakeClock() = default;
@@ -58,7 +60,7 @@ private:
     int64_t time_ns_ CXXKIT_ATTRIBUTE_GUARDED_BY(lock_) = 0;
 };
 
-class CXXKIT_CORE_API ThreadProcessingFakeClock : public ClockInterface
+class CXXKIT_TOOLS_API ThreadProcessingFakeClock : public ClockInterface
 {
 public:
     int64_t TimeNanos() const override { return clock_.TimeNanos(); }
@@ -71,7 +73,7 @@ private:
 
 // Helper class that sets itself as the global clock in its constructor and
 // unsets it in its destructor.
-class CXXKIT_CORE_API ScopedBaseFakeClock : public FakeClock
+class CXXKIT_TOOLS_API ScopedBaseFakeClock : public FakeClock
 {
 public:
     ScopedBaseFakeClock();
@@ -82,7 +84,7 @@ private:
 };
 
 // TODO(srte): Rename this to reflect that it also does thread processing.
-class CXXKIT_CORE_API ScopedFakeClock : public ThreadProcessingFakeClock
+class CXXKIT_TOOLS_API ScopedFakeClock : public ThreadProcessingFakeClock
 {
 public:
     ScopedFakeClock();

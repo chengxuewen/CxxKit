@@ -24,11 +24,13 @@
 
 #pragma once
 
+#include <cxxkit/thread/thread_global.hpp>
+
 #include <cxxkit/functional/unique_function.hpp>
 
 CXXKIT_BEGIN_NAMESPACE
 
-class CXXKIT_CORE_API Task
+class CXXKIT_THREAD_API Task
 {
     CXXKIT_DISABLE_COPY_MOVE(Task)
 public:

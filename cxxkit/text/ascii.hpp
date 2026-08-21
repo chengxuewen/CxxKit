@@ -24,6 +24,8 @@
 
 #pragma once
 
+#include <cxxkit/text/text_global.hpp>
+
 #include <cxxkit/base/types.hpp>
 #include <cxxkit/text/string_view.hpp>
 
@@ -56,17 +58,17 @@ typedef enum
 /**
  * @brief Declaration for an array of bitfields holding character information.
  */
-CXXKIT_CORE_API extern const uint16_t *const ascii_table;
+CXXKIT_TEXT_API extern const uint16_t *const ascii_table;
 
 /**
  * @brief Declaration for the array of characters to lower-case characters.
  */
-CXXKIT_CORE_API extern const char *const ascii_lower_table;
+CXXKIT_TEXT_API extern const char *const ascii_lower_table;
 
 /**
  * @brief Declaration for the array of characters to upper-case characters.
  */
-CXXKIT_CORE_API extern const char *const ascii_upper_table;
+CXXKIT_TEXT_API extern const char *const ascii_upper_table;
 
 /**
  * @brief Determines whether the given character is an alphanumeric character.
@@ -222,7 +224,7 @@ static CXXKIT_FORCE_INLINE char ascii_toupper(unsigned char c)
  * @param c an ASCII character
  * @return If @c is a decimal digit (according to ascii_is_digit()), its numeric value. Otherwise, -1.
  */
-CXXKIT_CORE_API int ascii_digit_value(char c);
+CXXKIT_TEXT_API int ascii_digit_value(char c);
 
 /**
  * @brief Determines the numeric value of a character as a hexadecimal digit.
@@ -232,7 +234,7 @@ CXXKIT_CORE_API int ascii_digit_value(char c);
  * @param c an ASCII character.
  * @return If @c is a hex digit (according to CXXKIT_ASCII_ISXDIGIT()), its numeric value. Otherwise, -1.
  */
-CXXKIT_CORE_API int ascii_xdigit_value(char c);
+CXXKIT_TEXT_API int ascii_xdigit_value(char c);
 
 /**
  * @brief Converts a string to a double value.
@@ -264,7 +266,7 @@ CXXKIT_CORE_API int ascii_xdigit_value(char c);
  * the character after the last character used in the conversion.
  * @return the double value.
  */
-CXXKIT_CORE_API double_t ascii_strtod(const char *nptr, char **endptr);
+CXXKIT_TEXT_API double_t ascii_strtod(const char *nptr, char **endptr);
 
 /**
  * @brief Converts a string to a uint64_t value.
@@ -296,7 +298,7 @@ CXXKIT_CORE_API double_t ascii_strtod(const char *nptr, char **endptr);
  * @param base      to be used for the conversion, 2..36 or 0
  * @return the uint64_t value or zero on error.
  */
-CXXKIT_CORE_API uint64_t ascii_strtoull(const char *nptr, char **endptr, unsigned int base);
+CXXKIT_TEXT_API uint64_t ascii_strtoull(const char *nptr, char **endptr, unsigned int base);
 
 /**
  * @brief Converts a string to a int64_t value.
@@ -323,7 +325,7 @@ CXXKIT_CORE_API uint64_t ascii_strtoull(const char *nptr, char **endptr, unsigne
  * @param base: to be used for the conversion, 2..36 or 0
  * @return the int64_t value or zero on error.
  */
-CXXKIT_CORE_API int64_t ascii_strtoll(const char *nptr, char **endptr, unsigned int base);
+CXXKIT_TEXT_API int64_t ascii_strtoll(const char *nptr, char **endptr, unsigned int base);
 
 /**
  * @brief Converts a double to a string, using the '.' as decimal point.
@@ -342,7 +344,7 @@ CXXKIT_CORE_API int64_t ascii_strtoll(const char *nptr, char **endptr, unsigned 
  * @param d         The double to convert
  * @return          The pointer to the buffer with the converted string.
  */
-CXXKIT_CORE_API char *ascii_formatd(char *buffer, int buf_len, const char *format, double_t d);
+CXXKIT_TEXT_API char *ascii_formatd(char *buffer, int buf_len, const char *format, double_t d);
 
 /**
  * @brief Converts a double to a string, using the '.' as decimal point.
@@ -385,7 +387,7 @@ static CXXKIT_FORCE_INLINE char *ascii_dtostr(char *buffer, int buf_len, double_
  * @param s2    string to compare with @a s1
  * @return 0    if the strings match, a negative value if @a s1 < @a s2, or a positive value if @a s1 > @a s2.
  */
-CXXKIT_CORE_API int ascii_strcasecmp(const char *s1, const char *s2);
+CXXKIT_TEXT_API int ascii_strcasecmp(const char *s1, const char *s2);
 
 /**
  * @brief Compare @a s1 and @a s2, ignoring the case of ASCII characters and any characters after the first @n in each
@@ -405,7 +407,7 @@ CXXKIT_CORE_API int ascii_strcasecmp(const char *s1, const char *s2);
  * @param n     number of characters to compare
  * @return 0 if the strings match, a negative value if @a s1 < @a s2, or a positive value if @a s1 > @a s2.
  */
-CXXKIT_CORE_API int ascii_strncasecmp(const char *s1, const char *s2, size_t n);
+CXXKIT_TEXT_API int ascii_strncasecmp(const char *s1, const char *s2, size_t n);
 
 /**
  * @brief Converts all upper case ASCII letters to lower case ASCII letters.
@@ -416,7 +418,7 @@ CXXKIT_CORE_API int ascii_strncasecmp(const char *s1, const char *s2, size_t n);
  * semantics that exactly match ascii_tolower().
  * (Note that this is unlike the old strlwr(), which modified the string in place.)
  */
-CXXKIT_CORE_API char *ascii_strlwr(const char *str, ssize_t len);
+CXXKIT_TEXT_API char *ascii_strlwr(const char *str, ssize_t len);
 
 /**
  * @brief Converts all lower case ASCII letters to upper case ASCII letters.
@@ -427,7 +429,7 @@ CXXKIT_CORE_API char *ascii_strlwr(const char *str, ssize_t len);
  * semantics that exactly match ascii_toupper().
  * (Note that this is unlike the old strupr(), which modified the string in place.)
  */
-CXXKIT_CORE_API char *ascii_strupr(const char *str, ssize_t len);
+CXXKIT_TEXT_API char *ascii_strupr(const char *str, ssize_t len);
 
 /**
  * @brief A convenience function for converting a string to a signed number.
@@ -459,7 +461,7 @@ CXXKIT_CORE_API char *ascii_strupr(const char *str, ssize_t len);
  * @param out_num: (out) (optional): a return location for a number
  * @return Return true if @a str was a number, otherwise false.
  */
-CXXKIT_CORE_API bool ascii_string_to_signed(const char *str,
+CXXKIT_TEXT_API bool ascii_string_to_signed(const char *str,
                                             unsigned int base,
                                             int64_t min,
                                             int64_t max,
@@ -491,7 +493,7 @@ CXXKIT_CORE_API bool ascii_string_to_signed(const char *str,
  * @param out_num: (out) (optional): a return location for a number
  * @return: Return true if @a str was a number, otherwise false.
  */
-CXXKIT_CORE_API bool ascii_string_to_unsigned(const char *str,
+CXXKIT_TEXT_API bool ascii_string_to_unsigned(const char *str,
                                               unsigned int base,
                                               uint64_t min,
                                               uint64_t max,

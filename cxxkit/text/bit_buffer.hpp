@@ -24,6 +24,8 @@
 
 #pragma once
 
+#include <cxxkit/text/text_global.hpp>
+
 #include <cxxkit/numerics/safe_conversions.hpp>
 #include <cxxkit/text/string_view.hpp>
 #include <cxxkit/containers/array_view.hpp>
@@ -37,7 +39,7 @@ CXXKIT_BEGIN_NAMESPACE
 // change the class state into 'failure state'. User of this class should verify
 // parsing by checking if class is in that 'failure state' by calling `Ok`.
 // That verification can be done once after multiple reads.
-class CXXKIT_CORE_API BitBufferReader
+class CXXKIT_TEXT_API BitBufferReader
 {
 public:
     explicit BitBufferReader(ArrayView<const uint8_t> bytes CXXKIT_ATTRIBUTE_LIFETIME_BOUND);
@@ -131,7 +133,7 @@ private:
 // reading APIs of BitstreamReader.
 // Sizes/counts specify bits/bytes, for clarity.
 // Byte order is assumed big-endian/network.
-class CXXKIT_CORE_API BitBufferWriter
+class CXXKIT_TEXT_API BitBufferWriter
 {
 public:
 

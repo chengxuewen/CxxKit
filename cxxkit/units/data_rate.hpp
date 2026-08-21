@@ -24,6 +24,8 @@
 
 #pragma once
 
+#include <cxxkit/units/units_global.hpp>
+
 #include <cxxkit/units/time_delta.hpp>
 #include <cxxkit/units/data_size.hpp>
 #include <cxxkit/units/frequency.hpp>
@@ -152,7 +154,7 @@ inline CXXKIT_CXX14_CONSTEXPR DataRate operator*(const Frequency frequency, cons
 
 namespace utils
 {
-CXXKIT_CORE_API std::string toString(DataRate value);
+CXXKIT_UNITS_API std::string toString(DataRate value);
 
 // template <typename Sink>
 // void stringify(Sink &sink, DataRate value)

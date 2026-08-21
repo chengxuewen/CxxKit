@@ -25,6 +25,8 @@
 
 #pragma once
 
+#include <cxxkit/text/text_global.hpp>
+
 #include <cxxkit/text/string_view.hpp>
 
 #include <cstddef>
@@ -34,7 +36,7 @@
 
 CXXKIT_BEGIN_NAMESPACE
 
-class CXXKIT_CORE_API Base64
+class CXXKIT_TEXT_API Base64
 {
 public:
     enum DecodeOption

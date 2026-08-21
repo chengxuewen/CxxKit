@@ -24,6 +24,8 @@
 
 #pragma once
 
+#include <cxxkit/thread/thread_global.hpp>
+
 #include <cxxkit/thread/thread_pool.hpp>
 #include <cxxkit/tools/logging.hpp>
 #include <cxxkit/tools/assert.hpp>
@@ -36,7 +38,7 @@
 #include <thread>
 #include <condition_variable>
 
-CXXKIT_DECLARE_LOGGER(CXXKIT_CORE_API, CXXKIT_THREAD_POOL_LOGGER)
+CXXKIT_DECLARE_LOGGER(CXXKIT_THREAD_API, CXXKIT_THREAD_POOL_LOGGER)
 
 CXXKIT_BEGIN_NAMESPACE
 
@@ -222,7 +224,7 @@ public:
     mutable std::condition_variable mDoneCondition;
 };
 
-class CXXKIT_CORE_API ThreadPoolPrivate
+class CXXKIT_THREAD_API ThreadPoolPrivate
 {
     friend class ThreadPoolTaskThread;
     CXXKIT_DEFINE_PPTR(ThreadPool)

@@ -24,6 +24,8 @@
 
 #pragma once
 
+#include <cxxkit/text/text_global.hpp>
+
 #include <cxxkit/text/string_view.hpp>
 
 #include <cstring>
@@ -31,7 +33,7 @@
 CXXKIT_BEGIN_NAMESPACE
 
 class StringPrivate;
-class CXXKIT_CORE_API String
+class CXXKIT_TEXT_API String
 {
 public:
     explicit String(StringPrivate *d = nullptr);

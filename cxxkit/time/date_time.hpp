@@ -24,13 +24,15 @@
 
 #pragma once
 
+#include <cxxkit/time/time_global.hpp>
+
 #include <cxxkit/base/global.hpp>
 #include <cxxkit/tools/checks.hpp>
 #include <cxxkit/text/string_view.hpp>
 
 CXXKIT_BEGIN_NAMESPACE
 
-struct CXXKIT_CORE_API ClockInterface
+struct CXXKIT_TIME_API ClockInterface
 {
     virtual ~ClockInterface() { }
     virtual int64_t TimeNanos() const = 0;
@@ -40,7 +42,7 @@ struct CXXKIT_CORE_API ClockInterface
     static ClockInterface *GetClockForTesting();
 };
 
-class CXXKIT_CORE_API DateTime
+class CXXKIT_TIME_API DateTime
 {
 public:
     struct LocalTime

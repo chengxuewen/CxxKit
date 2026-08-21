@@ -24,6 +24,8 @@
 
 #pragma once
 
+#include <cxxkit/thread/thread_global.hpp>
+
 #include <cxxkit/tools/checks.hpp>
 
 #include <string>
@@ -32,7 +34,7 @@ CXXKIT_BEGIN_NAMESPACE
 
 class TaskQueueBase;
 class ContextCheckerPrivate;
-class CXXKIT_CORE_API ContextChecker
+class CXXKIT_THREAD_API ContextChecker
 {
 public:
     enum class InitialState : bool

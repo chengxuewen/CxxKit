@@ -24,12 +24,14 @@
 
 #pragma once
 
+#include <cxxkit/tools/tools_global.hpp>
+
 #include <cxxkit/base/global.hpp>
 
 CXXKIT_BEGIN_NAMESPACE
 
 class IdRegistryPrivate;
-class CXXKIT_CORE_API IdRegistry
+class CXXKIT_TOOLS_API IdRegistry
 {
 public:
     IdRegistry();
