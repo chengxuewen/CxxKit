@@ -29,6 +29,7 @@
 #include <cxxkit/text/format.hpp>
 #include <cxxkit/text/string_utils.hpp>
 
+#include <cstring>
 #include <functional>
 #include <ostream>
 #include <sstream>
@@ -53,6 +54,18 @@ enum class LogLevel : int
 static constexpr int LogLevelNum = 7;
 
 class LoggerPrivate;
+
+// Header-only file-name basename (avoids linking tools->text for logging contexts).
+// Mirror of text::extractFileName, kept local so tools stays independent of text at link time.
+inline const char *extractFileName(const char *filePath)
+{
+    const char *slash = strrchr(filePath, '/');
+    const char *wslash = strrchr(filePath, '\\');
+    const char *base = filePath;
+    if (slash) base = slash + 1;
+    if (wslash && wslash > base - 1) base = wslash + 1;
+    return base;
+}
 
 class CXXKIT_TOOLS_API Logger
 {
@@ -301,7 +314,7 @@ public:
     {
         Streamer(Logger &target, LogLevel level, const char *filePath, const char *funcName, int line)
             : logger(target)
-            , context{level, filePath, utils::extractFileName(filePath), funcName, line}
+            , context{level, filePath, extractFileName(filePath), funcName, line}
         {
         }
 

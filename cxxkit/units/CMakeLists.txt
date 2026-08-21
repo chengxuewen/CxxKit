@@ -27,7 +27,7 @@ cxxkit_configure_library_begin(CxxKitUnits)
 
 cxxkit_add_library(cxxkit_units
     SOURCES data_rate.cpp data_size.cpp frequency.cpp time_delta.cpp timestamp.cpp
-    PUBLIC_LIBRARIES cxxkit::base cxxkit::numerics cxxkit::containers cxxkit::tools
+    PUBLIC_LIBRARIES cxxkit::base cxxkit::numerics cxxkit::containers
     EXPORT_NAME units
     FOLDER "CxxKit/libs")
 cxxkit_generate_pkg_config(cxxkit_units units)

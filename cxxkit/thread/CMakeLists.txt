@@ -45,9 +45,10 @@ else()
     list(APPEND CXXKIT_THREAD_SOURCES platform_thread_win.cpp)
 endif()
 
+cxxkit_find_package(Fmt PROVIDED_TARGETS CxxKitWrapFmt::WrapFmt)
 cxxkit_add_library(cxxkit_thread
     SOURCES ${CXXKIT_THREAD_SOURCES}
-    PUBLIC_LIBRARIES cxxkit::base cxxkit::functional cxxkit::kernel cxxkit::memory cxxkit::tools cxxkit::units cxxkit::time
+    PUBLIC_LIBRARIES cxxkit::base cxxkit::functional cxxkit::kernel cxxkit::memory cxxkit::tools cxxkit::units cxxkit::time CxxKitWrapFmt::WrapFmt
     EXPORT_NAME thread
     FOLDER "CxxKit/libs")
 cxxkit_generate_pkg_config(cxxkit_thread thread)

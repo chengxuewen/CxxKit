@@ -25,9 +25,10 @@ cmake_minimum_required(VERSION ${CXXKIT_MIN_NEW_POLICY_CMAKE_VERSION}...${CXXKIT
 
 cxxkit_configure_library_begin(CxxKitKernel)
 
+cxxkit_find_package(Fmt PROVIDED_TARGETS CxxKitWrapFmt::WrapFmt)
 cxxkit_add_library(cxxkit_kernel
     SOURCES application.cpp event.cpp event_loop.cpp object.cpp signals.cpp
-    PUBLIC_LIBRARIES cxxkit::base cxxkit::memory cxxkit::tools
+    PUBLIC_LIBRARIES cxxkit::base cxxkit::memory cxxkit::tools CxxKitWrapFmt::WrapFmt
     EXPORT_NAME kernel
     FOLDER "CxxKit/libs")
 cxxkit_generate_pkg_config(cxxkit_kernel kernel)

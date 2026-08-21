@@ -27,7 +27,7 @@ cxxkit_configure_library_begin(CxxKitTime)
 
 cxxkit_add_library(cxxkit_time
     SOURCES date_time.cpp elapsed_timer.cpp
-    PUBLIC_LIBRARIES cxxkit::base cxxkit::text cxxkit::tools cxxkit::units
+    PUBLIC_LIBRARIES cxxkit::base
     EXPORT_NAME time
     FOLDER "CxxKit/libs")
 cxxkit_generate_pkg_config(cxxkit_time time)
