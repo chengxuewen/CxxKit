@@ -141,3 +141,9 @@
 - **解法**: 要么全库真 C++11（逐处改），要么诚实承认 C++14 基线；本会话选前者（用户坚持 C++11）
 - **验证**: 全库 c++11 编译 0 error 0 variable-template warning
 - **教训**: 公共 INTERFACE 上的标准基线是"隐藏编译器"——会掩盖实际代码标准；C++11 严格性需用真实 `-std=c++11` 编译验证而非靠传播
+
+## PIT-23: DateTime steady↔system 转换 epoch 基准不匹配（round-trip 漂移 ~1e18ns）(2026-08-20)
+- **症状**: `systemTimeFromSteadyNSecs(steadyTimeFromSystemNSecs(nowSys))` round-trip 差 ~3.6e18 ns（steady 与 system clock epoch 基准不同）
+- **根因**: steady_clock 的 time_point(nanoseconds) 把纳秒当相对 steady epoch，与 system 的 Unix-epoch 映射错位（date_time.cpp:71-113）
+- **解法**: 待修（已知 issue, 测试已标记 KNOWN-ISSUE 不阻断）；正确映射需 steady 相对 boot 偏移 + system epoch 转换
+- **验证**: tst_datetime SystemSteadyConversions 标记 known-issue；补覆盖测试仍调用（走 coverage）不断言
