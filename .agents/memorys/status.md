@@ -20,7 +20,7 @@ cxxkit 是 OpenCTK（an open cpp toolkit）的成功重构版本 —— 精简�
 - [x] **Phase 1 完成**（commit `014e0ed`）：仓库骨架 + 8 子库 + 测试 + 安装
 - [x] **Phase 2 完成**（commit `dae9c45`）：13 子库 + 33 测试（353 用例）+ network 消费验证
 - [x] **基础设施完成**：CI（.github/workflows + scripts/check.sh）、pkg-config（13 个 .pc）、doxygen（Docs target）、examples（3 个）、BuildAll/BuildInstall target、FOLDER 归类、vcpkg 式三方依赖、默认 build/install 安装
-- [ ] OpenCTK 残留问题归档：network_config.hpp 死引用、tst_platform_thread POSIX 链接、36 个注释测试（含 inlined_vector absl 依赖）
+- [x] OpenCTK 残留问题归档：network_config.hpp 死引用、tst_platform_thread POSIX 链接、"36 个注释测试"（2026-08-20 评估：CxxKit 侧 41 个测试文件零注释；36 个是 OpenCTK 原仓未迁移文件，对应功能 json/xml/socket/http_server 不存在，无补全工作；inlined_vector 缺 absl test helper 明确不迁移）
 - [ ] media/imgui 续建路径（设计 B1，已延后）
 - [x] **2026-08-19 结构重构**：src/<sub>/ 合并入 cxxkit/<sub>/（49 cpp git mv，D14）；CMake 大小写统一（export/Config/.pc/doxygen GLOB，C7 落地）；text↔tools 循环依赖解除（PIT-5）；detail 私有头不再安装（PIT-3）；头文件进 target 源列表（D15，IDE 大纲可见）
 - [x] **2026-08-20 target-helper 统一（C10）**：14 子库 CMakeLists 迁移至 `cxxkit_add_library`（显式 STATIC 保现状 R20）+ examples 迁移至 `cxxkit_add_executable`（R22）+ `cxxkit_add_test`（<name>_check target）——注册全走 helper，`grep -rnE "^(add_library|add_executable)" cxxkit/ examples/` 为空
