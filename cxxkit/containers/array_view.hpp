@@ -291,6 +291,7 @@ public:
     // Indexing and iteration. These allow mutation even if the ArrayView is
     // const, because the ArrayView doesn't own the array. (To prevent mutation,
     // use a const element type.)
+    /// @brief Bounds-checked element access; DCHECKs idx < size() and data() != nullptr.
     T &operator[](size_t idx) const
     {
         CXXKIT_DCHECK_LT(idx, this->size());
@@ -306,22 +307,29 @@ public:
     std::reverse_iterator<const T *> crbegin() const { return utils::makeReverseIterator(this->cend()); }
     std::reverse_iterator<const T *> crend() const { return utils::makeReverseIterator(this->cbegin()); }
 
+    /// @brief Returns a subview starting at @p offset with at most @p size elements.
     ArrayView<T> subview(size_t offset, size_t size) const
     {
         return offset < this->size() ? ArrayView<T>(this->data() + offset, utils::mathMin(size, this->size() - offset))
                                      : ArrayView<T>();
     }
     ArrayView<T> subview(size_t offset) const { return subview(offset, this->size()); }
+    /// @brief Returns a subview from @p offset to the end of the view.
 };
 
 // Comparing two ArrayViews compares their (Pointer,size) pairs; it does *not*
 // dereference the pointers.
+/**
+ * @brief Compares two ArrayViews by (pointer, size) pair only.
+ * Does NOT dereference the pointers — checks identity of the underlying data.
+ */
 template <typename T, std::ptrdiff_t Size1, std::ptrdiff_t Size2>
 bool operator==(const ArrayView<T, Size1> &a, const ArrayView<T, Size2> &b)
 {
     return a.data() == b.data() && a.size() == b.size();
 }
 template <typename T, std::ptrdiff_t Size1, std::ptrdiff_t Size2>
+/** @brief Negated equality. Two ArrayViews are unequal iff their data() or size() differ. */
 bool operator!=(const ArrayView<T, Size1> &a, const ArrayView<T, Size2> &b)
 {
     return !(a == b);
@@ -337,6 +345,7 @@ static_assert(std::is_empty<ArrayView<int, 0>>::value, "");
 namespace utils
 {
 template <typename T>
+/// @brief Factory: creates an ArrayView from a raw pointer and size.
 inline ArrayView<T> makeArrayView(T *data, size_t size)
 {
     return ArrayView<T>(data, size);
@@ -347,6 +356,15 @@ inline ArrayView<T> makeArrayView(T *data, size_t size)
 // same size.
 // Template arguments order is (U, T, Size) to allow deduction of the template
 // arguments in client calls: reinterpret_array_view<target_type>(array_view).
+/**
+ * @brief Reinterpret-cast an ArrayView to another fundamental type of identical size and alignment.
+ * Requires both types to be fundamental (primitive) with matching sizeof/alignof.
+ * @tparam U Target type.
+ * @tparam T Source type.
+ * @tparam Size Compile-time size (shared between source and target views).
+ * @param view Source view.
+ * @return ArrayView<U, Size> over the same memory region.
+ */
 template <typename U, typename T, std::ptrdiff_t Size>
 inline ArrayView<U, Size> reinterpretArrayView(ArrayView<T, Size> view)
 {

@@ -99,6 +99,7 @@ stash
 
 # Runtime state
 # --------
+.superpowers
 .omo
 
 # Don't ignore files

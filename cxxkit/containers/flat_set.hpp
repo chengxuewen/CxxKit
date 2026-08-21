@@ -30,7 +30,15 @@
 
 CXXKIT_BEGIN_NAMESPACE
 
-/** @brief Sorted unique container backed by std::set (flat_set naming, tree storage). */
+/**
+ * @brief Sorted unique container backed by std::set.
+ *
+ * Tree-ordered set with flat_set naming for API consistency.
+ * Elements are always sorted and unique. Supports ordered iteration
+ * and logarithmic lookup/insertion/deletion.
+ *
+ * @tparam T Element type (must support < comparison).
+ */
 template <typename T>
 using FlatSet = std::set<T>;
 

@@ -38,10 +38,20 @@
 
 // Scoped zone: instruments the current scope, named `name` in the profiler UI.
 // Tracy v0.13+: named zones use ZoneScopedN (ZoneScopedS is the static-zone variant).
+/** @brief Start a named profiling zone for the current scope (no-op when profiling disabled).
+ * @param name Human-readable zone name shown in the Tracy UI.
+ * @see CXXKIT_PROFILE_FRAME, Tracy
+ * @note Emits `((void)0)` when CXXKIT_PROFILING_ENABLED is not defined (zero-cost).
+ */
 #    define CXXKIT_PROFILE_SCOPE(name) ZoneScopedN(name)
 // Marks the end of one frame in the profiler's frame timeline.
+/** @brief Mark the end of a logical frame in the profiler timeline (no-op when disabled).
+ * @see CXXKIT_PROFILE_SCOPE, Tracy
+ */
 #    define CXXKIT_PROFILE_FRAME() FrameMark
 #else
+// No-op variant when profiling is disabled
 #    define CXXKIT_PROFILE_SCOPE(name) ((void)0)
+// No-op variant when profiling is disabled
 #    define CXXKIT_PROFILE_FRAME() ((void)0)
 #endif
