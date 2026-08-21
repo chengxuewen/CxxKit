@@ -147,3 +147,15 @@ TEST(ElapsedTimerTest, MsecsTo)
 }
 
 CXXKIT_END_NAMESPACE
+
+// Regression for PIT-22/F2: restart() on a never-started timer must not overflow int64_t.
+// (mStart holds kInvalidData = INT64_MIN; subtracting it from the ns counter would overflow.)
+TEST(ElapsedTimerTest, RestartNeverStartedNoOverflow)
+{
+    cxxkit::ElapsedTimer timer; // default ctor leaves it never-started (kInvalidData)
+    // Under UBSan this used to be signed-overflow UB; now returns 0.
+    const int64_t r = timer.restart();
+    EXPECT_EQ(r, 0);
+    // After the first restart the timer is live: a subsequent short elapsed is >= 0.
+    EXPECT_GE(timer.elapsed(), 0);
+}
