@@ -173,3 +173,9 @@
 - **根因**: coverage.sh 按 `*.cpp.gcda` 收集——构建树演化后 gcov 产物覆盖范围变化（19-file 时 0% 文件的 .gcda 缺失/未生成），子集口径漏掉 0% 文件造成虚高
 - **解法**: 覆盖率必须报告 total files 数（29）+ 含 0% 文件；80% 门禁以全口径加权为准（C12/D21）
 - **验证**: `bash scripts/coverage.sh build-cov | grep "Line-weighted"` → `61.4% (1705 exec / 2775 total, 29 files)`
+
+## PIT-28: stringCompare 相等等价返回 false？（行为存疑，待确认语义）(2026-08-24)
+- **症状**: `utils::stringCompare("abc","abc",3,false)` 返回 false——**字节完全相等也 false**
+- **根因**: 实现只有 `if (c1 != c2 && ignoreCase)` 分支在 case-fold 后 diff==0 时 true；**c1==c2 走 else 直接 return false**（string_utils.cpp:83-110）——疑似逻辑写反（相等应继续循环）
+- **解法**: 未改库（语义待与上游 WebRTC 版对齐后定）；测试断言按当前行为锁定（PIT-28 标记注释）
+- **验证**: tst_string_utils StringCompare 断言 case-folded-equal=true / 完全相等=false（记录现状）
