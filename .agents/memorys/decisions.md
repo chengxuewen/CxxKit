@@ -87,3 +87,19 @@ cxxkit 采用目录 = 子库 = CMake target 三位一体，参考 boost 按需�
 ## D19: 测试质量底层（2026-08-20）
 
 sanitizer（ASAN/LSAN/UBSan）与 coverage 用**独立 build 目录**（build-asan / build-cov，守 C6）。**sanitizer 暴露真实 bug 的价值论证成立**：F1 平台线程泄漏、F2 ElapsedTimer 有符号溢出、F5 error.cpp FNV 溢出、context_checker use-after-free 均由 sanitizer 抓出并最小修复；F4 __forced_unwind 判定为良性（glibc，不改）。R31：coverage 门禁默认仅报表不阻断（环境 flaky 防御），`CXXKIT_COVERAGE_GATE=ON` 才强校验 ≥80%；R32：安全测试在 ASAN 下最有价值，无 ASAN 降级为正常断言；R33：flaky context_checker 用 ASAN + systematic-debugging 抓根因。R30：3rdparty 缓存复用优先。覆盖基线 ~41%（行加权 1761/4313；per-file 均值 ~63%）。详见 docs/superpowers/plans/2026-08-20-cxxkit-test-quality.md + SDD 台账
+
+## D20: TaskQueueThread 空队列短轮询换长睡（2026-08-24，PIT-26）
+- **决策**：popNextTask 空队列/大 sleepTime（>1000us）返回 1ms 短轮询，替代默认 PlusInfinity 睡满 wait 1s 上限
+- **理由**：谓词 wait_until 不缩短 deadline——notify 到达时 delayed 未到期则继续睡旧 deadline，3ms 任务迟到 1s（隔离 15/15 必失败）；1ms 轮询把通知/截止错位窗口缩到 1ms
+- **代价**：空队列 1000 次/s 唤醒（CPU 微开销，非忙等）；delayed 精确 sleepTime（<1000us）保持精确等待
+- **参考**：std::condition_variable 谓词 wait 惯用法 + 短轮询
+
+## D21: 覆盖率口径全量化（2026-08-24）
+- **决策**：覆盖率只认 scripts/coverage.sh 的全库 .cpp 加权口径（29 files 含 0%）；80.5% 历史数字（19-file 子集）作废
+- **理由**：gcda 收集范围随构建树演进而变，子集口径漏 0% 文件造成虚高；全口径暴露真实短板（11 个 0% 文件 ~850 行）
+- **影响**：80% 门禁需先补 0% 文件测试
+
+## D22: sanitizer 顶层传播保持（2026-08-24）
+- **决策**：CXXKIT_BUILD_SANITIZERS/COVERAGE 继续顶层 add_compile_options/add_link_options，不改 target_* 方式
+- **理由**：sanitizer 需全链接二进制裁一致（vendored 3rdparty 也带）；coverage 顶层虽让 3rdparty 带 --coverage（略慢）但 coverage.sh 已只统计库 .cpp；收益/风险比不值得改
+- **参考**：用户确认保持不变（2026-08-24）

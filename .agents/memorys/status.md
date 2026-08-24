@@ -76,12 +76,11 @@ cxxkit 是 OpenCTK（an open cpp toolkit）的成功重构版本 —— 精简�
 
 ## 待办
 
-1. media/imgui 续建路径（设计 B1，已延后）
-2. 剩余 36 个 OpenCTK 注释测试是否补全（需先补依赖头）
-3. clang-tidy 静态分析接入（CI 目前只有 format/build/test）
-4. doc-audit LOW 缺口：CONTRIBUTING.md / SECURITY.md / CHANGELOG / 平台兼容矩阵（发布前补）
-2. 剩余 36 个 OpenCTK 注释测试是否补全（需先补依赖头）
-3. clang-tidy 静态分析接入（CI 目前只有 format/build/test）
+1. **覆盖率补全（当前 61.4%，29 库 .cpp 全口径）**：11 个 0% 文件——assert.cpp(8L, 已有 tst_assert 但未覆盖库实现)/once_flag(2L)/task_queue_factory(7L)/race_checker(19L)/fake_clock(30L)/id_registry(37L)/shared_buffer(79L)/string_encode(86L)/base64(117L)/metrics(145L)/random(139L)，目标 ≥80%
+2. media/imgui 续建路径（设计 B1，已延后）
+3. clang-tidy warn-only 门禁→首跑后基线干净收紧为零告警（需 GitHub 侧 push 触发 CI；本机无 LLVM 工具链）
+4. Windows/arm64 验证（项目声明非首要）
+5. 剩余 36 个 OpenCTK 注释测试（已评估：对应功能不存在，N/A——见 PIT-24 前记录）
 
 ### 2026-08-19 崩溃库落地（D17 + vcpkg 基础设施）
 
@@ -94,8 +93,19 @@ cxxkit 是 OpenCTK（an open cpp toolkit）的成功重构版本 —— 精简�
 ### 2026-08-20 测试质量加固（D19：sanitizer/coverage/边界测试）
 
 - [x] **CXXKIT_BUILD_SANITIZERS**（ASAN/LSAN/UBSan）：独立 `build-asan/` 目录；LSAN 全绿用 `LSAN_OPTIONS=suppressions=scripts/lsan.supp`
-- [x] **CXXKIT_BUILD_COVERAGE** + `coverage` target：独立 `build-cov/`，产出 `build-cov/coverage/summary.txt`；库 .cpp 覆盖基线 **~41%（行加权 1761/4313；按文件均值法 ~63%）**
+- [x] **CXXKIT_BUILD_COVERAGE** + `coverage` target：独立 `build-cov/`，产出 `build-cov/coverage/summary.txt`；库 .cpp 覆盖 ~41% → 61.9%（补充 6 套件后曾报 80.5% = **19-file 子集口径**；2026-08-24 全量 29 库 .cpp gcda 口径修正为 **61.4%（1705/2775）**——含 11 个 0% 文件，80% 门禁须以全口径为准）
 - [x] **tst_boundary**：19 安全/边界/越界用例，普通 + ASAN 双环境全过 0 sanitizer 诊断
 - [x] **真实 bug 修复（sanitizer 暴露）**：F1 平台线程泄漏（恢复 deref + lsan.supp 抑制设计性单例）、F2 ElapsedTimer 有符号溢出、F3 测试 atomic 未初始化、F4 __forced_unwind 良性（glibc，不改）、F5 error.cpp FNV 溢出 → 无符号；另修 context_checker use-after-free（40/100 SEGFAULT → 100/100 稳定）
 - [x] **check.sh 7 步**：format → C++14 门禁 → namespace → build → 主 ctest → sanitizer(4/7, build-asan) → coverage(7/7, build-cov 若存在)
 - 验证：主 build 34/34（task_queue_thread 偶发 flaky，单跑过）；build-asan + lsan.supp 34/34 零诊断；crash=OFF（保守态）
+
+### 2026-08-24 doxygen 完善 + flaky 根治 + 文档/CI
+
+- [x] **doxygen 环境**：本机无 doxygen/sudo → 下载官方 1.9.8 tarball 到 `~/tools/`（免 sudo，兼容旧 glibc）；`Docs` target 首次真实运行成功（958 页 HTML / 21MB）
+- [x] **doxygen warning 清零**：30+ 历史遗留警告全修（status.hpp @param ×6、type_info @list、singleton/type_list 模板特化 @cond、thread_pool/task_queue 参数、ascii/string_utils link、elapsed_timer enum、README/Doxyfile）；残留仅无害 fmt 递归别名
+- [x] **注释补全**：9 个并行 doxygen 代理全灭（RPM 限流）→ 遗留损坏编辑 + 部分合法注释；逐文件 diff 纯注释审核后保留 ~25 文件注释（base/numerics/containers/functional/patterns/text/thread/kernel），还原 5 个破坏性编辑（PIT-25）
+- [x] **TaskQueueThread flaky 根治（PIT-26）**：空队列 sleepTime=PlusInfinity → 睡满 1s wait 上限 + notify 无法缩短 deadline → 延迟任务迟到 1s（隔离 15/15 必现）。改 1ms 短轮询 → 15/15 绿 + 全 40/40 + shared/ASAN 绿
+- [x] **semaphore flaky 修复**：MultiRelease/MultiAcquireRelease 固定 sleep_for(1ms) → startup 信号量 barrier（5 轮全量绿）
+- [x] **构建/CI/文档**：BuildAll/BuildInstall 顶层判断（PROJECT_SOURCE_DIR==CMAKE_SOURCE_DIR，octk）；clang-tidy warn-only 门禁 + .clang-tidy；CONTRIBUTING/SECURITY/CHANGELOG/platform-support 落盘 + docs 索引
+- [x] **测试 40 套件全绿**：main 40/40、shared 40/40、ASAN 40/40（零诊断）、coverage 61.4%（29 文件全口径，见待办 1）
+- 验证：覆盖率门禁须按 29 库 .cpp 全口径（含 0% 文件），80.5% 历史数字是 19-file 子集

@@ -167,3 +167,9 @@
 - **解法**: 空队列/大 sleepTime（us>1000）改 1ms 短轮询；delayed 精确 sleepTime 保持精确等待（task_queue_thread.cpp popNextTask）
 - **验证**: 隔离 15/15 绿（原 15/15 红）；全量 40/40 + shared/ASAN 绿；未用 IsZero（默认是 PlusInfinity 非 Zero）
 - **禁止**: CV wait 用固定长 deadline 而期望 notify 缩短它——谓词版 wait_until 不会改 deadline
+
+## PIT-27: 覆盖率口径虚高——80.5% 是 19-file 子集（2026-08-24）
+- **症状**: 补 6 测试套件后声称覆盖率 80.5% 达标；2026-08-24 全量 gcda 汇总显示仅 **61.4%（1705/2775, 29 文件）**——11 个 0% 文件（assert/once_flag/task_queue_factory/race_checker/fake_clock/id_registry/shared_buffer/string_encode/base64/metrics/random）从未被计入
+- **根因**: coverage.sh 按 `*.cpp.gcda` 收集——构建树演化后 gcov 产物覆盖范围变化（19-file 时 0% 文件的 .gcda 缺失/未生成），子集口径漏掉 0% 文件造成虚高
+- **解法**: 覆盖率必须报告 total files 数（29）+ 含 0% 文件；80% 门禁以全口径加权为准（C12/D21）
+- **验证**: `bash scripts/coverage.sh build-cov | grep "Line-weighted"` → `61.4% (1705 exec / 2775 total, 29 files)`
