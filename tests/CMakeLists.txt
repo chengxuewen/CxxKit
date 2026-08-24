@@ -215,6 +215,57 @@ cxxkit_add_test(cxxkit_tst_assert
     INCLUDE_DIRECTORIES ${PROJECT_SOURCE_DIR}
     LIBRARIES ${CXXKIT_TEST_LINK_LIBRARIES} ${CMAKE_THREAD_LIBS_INIT})
 
+cxxkit_add_test(cxxkit_tst_once_flag
+    SOURCES tst_once_flag.cpp
+    INCLUDE_DIRECTORIES ${PROJECT_SOURCE_DIR}
+    LIBRARIES ${CXXKIT_TEST_LINK_LIBRARIES} ${CMAKE_THREAD_LIBS_INIT})
+
+cxxkit_add_test(cxxkit_tst_task_queue_factory
+    SOURCES tst_task_queue_factory.cpp
+    INCLUDE_DIRECTORIES ${PROJECT_SOURCE_DIR}
+    LIBRARIES ${CXXKIT_TEST_LINK_LIBRARIES} ${CMAKE_THREAD_LIBS_INIT})
+
+cxxkit_add_test(cxxkit_tst_race_checker
+    SOURCES tst_race_checker.cpp
+    INCLUDE_DIRECTORIES ${PROJECT_SOURCE_DIR}
+    LIBRARIES ${CXXKIT_TEST_LINK_LIBRARIES} ${CMAKE_THREAD_LIBS_INIT})
+
+cxxkit_add_test(cxxkit_tst_fake_clock
+    SOURCES tst_fake_clock.cpp
+    INCLUDE_DIRECTORIES ${PROJECT_SOURCE_DIR}
+    LIBRARIES ${CXXKIT_TEST_LINK_LIBRARIES} ${CMAKE_THREAD_LIBS_INIT})
+
+cxxkit_add_test(cxxkit_tst_id_registry
+    SOURCES tst_id_registry.cpp
+    INCLUDE_DIRECTORIES ${PROJECT_SOURCE_DIR}
+    LIBRARIES ${CXXKIT_TEST_LINK_LIBRARIES} ${CMAKE_THREAD_LIBS_INIT})
+
+cxxkit_add_test(cxxkit_tst_shared_buffer
+    SOURCES tst_shared_buffer.cpp
+    INCLUDE_DIRECTORIES ${PROJECT_SOURCE_DIR}
+    LIBRARIES ${CXXKIT_TEST_LINK_LIBRARIES} ${CMAKE_THREAD_LIBS_INIT})
+
+cxxkit_add_test(cxxkit_tst_string_encode
+    SOURCES tst_string_encode.cpp
+    INCLUDE_DIRECTORIES ${PROJECT_SOURCE_DIR}
+    LIBRARIES ${CXXKIT_TEST_LINK_LIBRARIES} ${CMAKE_THREAD_LIBS_INIT})
+
+cxxkit_add_test(cxxkit_tst_base64
+    SOURCES tst_base64.cpp
+    INCLUDE_DIRECTORIES ${PROJECT_SOURCE_DIR}
+    LIBRARIES ${CXXKIT_TEST_LINK_LIBRARIES} ${CMAKE_THREAD_LIBS_INIT})
+
+cxxkit_add_test(cxxkit_tst_metrics
+    SOURCES tst_metrics.cpp
+    INCLUDE_DIRECTORIES ${PROJECT_SOURCE_DIR}
+    LIBRARIES ${CXXKIT_TEST_LINK_LIBRARIES} ${CMAKE_THREAD_LIBS_INIT})
+
+cxxkit_add_test(cxxkit_tst_random
+    SOURCES tst_random.cpp
+    INCLUDE_DIRECTORIES ${PROJECT_SOURCE_DIR}
+    LIBRARIES ${CXXKIT_TEST_LINK_LIBRARIES} ${CMAKE_THREAD_LIBS_INIT})
+
+
 if(CXXKIT_ENABLE_LIB_CRASH)
     # Standalone crash fixture: installs the handler and raises SIGSEGV in its own process.
     # Built without gtest; the parent tst_crash spawns it via fork+exec (never death tests —

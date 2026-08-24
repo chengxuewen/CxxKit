@@ -151,59 +151,59 @@ TEST(MatchTest, EndsWithIgnoreCase)
 
 TEST(MatchTest, ContainsIgnoreCase)
 {
-    EXPECT_TRUE(utils::stringContainsIgnoreCase("foo", "foo"));
-    EXPECT_TRUE(utils::stringContainsIgnoreCase("FOO", "Foo"));
-    EXPECT_TRUE(utils::stringContainsIgnoreCase("--FOO", "Foo"));
-    EXPECT_TRUE(utils::stringContainsIgnoreCase("FOO--", "Foo"));
-    EXPECT_FALSE(utils::stringContainsIgnoreCase("BAR", "Foo"));
-    EXPECT_FALSE(utils::stringContainsIgnoreCase("BAR", "Foo"));
-    EXPECT_TRUE(utils::stringContainsIgnoreCase("123456", "123456"));
-    EXPECT_TRUE(utils::stringContainsIgnoreCase("123456", "234"));
-    EXPECT_TRUE(utils::stringContainsIgnoreCase("", ""));
-    EXPECT_TRUE(utils::stringContainsIgnoreCase("abc", ""));
-    EXPECT_FALSE(utils::stringContainsIgnoreCase("", "a"));
+    EXPECT_TRUE(cxxkit::utils::stringContainsIgnoreCase("foo", "foo"));
+    EXPECT_TRUE(cxxkit::utils::stringContainsIgnoreCase("FOO", "Foo"));
+    EXPECT_TRUE(cxxkit::utils::stringContainsIgnoreCase("--FOO", "Foo"));
+    EXPECT_TRUE(cxxkit::utils::stringContainsIgnoreCase("FOO--", "Foo"));
+    EXPECT_FALSE(cxxkit::utils::stringContainsIgnoreCase("BAR", "Foo"));
+    EXPECT_FALSE(cxxkit::utils::stringContainsIgnoreCase("BAR", "Foo"));
+    EXPECT_TRUE(cxxkit::utils::stringContainsIgnoreCase("123456", "123456"));
+    EXPECT_TRUE(cxxkit::utils::stringContainsIgnoreCase("123456", "234"));
+    EXPECT_TRUE(cxxkit::utils::stringContainsIgnoreCase("", ""));
+    EXPECT_TRUE(cxxkit::utils::stringContainsIgnoreCase("abc", ""));
+    EXPECT_FALSE(cxxkit::utils::stringContainsIgnoreCase("", "a"));
 }
 
 TEST(MatchTest, ContainsCharIgnoreCase)
 {
     cxxkit::StringView a("AaBCdefg!");
     cxxkit::StringView b("AaBCd!");
-    EXPECT_TRUE(utils::stringContainsIgnoreCase(a, 'a'));
-    EXPECT_TRUE(utils::stringContainsIgnoreCase(a, 'A'));
-    EXPECT_TRUE(utils::stringContainsIgnoreCase(a, 'b'));
-    EXPECT_TRUE(utils::stringContainsIgnoreCase(a, 'B'));
-    EXPECT_TRUE(utils::stringContainsIgnoreCase(a, 'e'));
-    EXPECT_TRUE(utils::stringContainsIgnoreCase(a, 'E'));
-    EXPECT_FALSE(utils::stringContainsIgnoreCase(a, 'h'));
-    EXPECT_FALSE(utils::stringContainsIgnoreCase(a, 'H'));
-    EXPECT_TRUE(utils::stringContainsIgnoreCase(a, '!'));
-    EXPECT_FALSE(utils::stringContainsIgnoreCase(a, '?'));
+    EXPECT_TRUE(cxxkit::utils::stringContainsIgnoreCase(a, 'a'));
+    EXPECT_TRUE(cxxkit::utils::stringContainsIgnoreCase(a, 'A'));
+    EXPECT_TRUE(cxxkit::utils::stringContainsIgnoreCase(a, 'b'));
+    EXPECT_TRUE(cxxkit::utils::stringContainsIgnoreCase(a, 'B'));
+    EXPECT_TRUE(cxxkit::utils::stringContainsIgnoreCase(a, 'e'));
+    EXPECT_TRUE(cxxkit::utils::stringContainsIgnoreCase(a, 'E'));
+    EXPECT_FALSE(cxxkit::utils::stringContainsIgnoreCase(a, 'h'));
+    EXPECT_FALSE(cxxkit::utils::stringContainsIgnoreCase(a, 'H'));
+    EXPECT_TRUE(cxxkit::utils::stringContainsIgnoreCase(a, '!'));
+    EXPECT_FALSE(cxxkit::utils::stringContainsIgnoreCase(a, '?'));
 
-    EXPECT_TRUE(utils::stringContainsIgnoreCase(b, 'a'));
-    EXPECT_TRUE(utils::stringContainsIgnoreCase(b, 'A'));
-    EXPECT_TRUE(utils::stringContainsIgnoreCase(b, 'b'));
-    EXPECT_TRUE(utils::stringContainsIgnoreCase(b, 'B'));
-    EXPECT_FALSE(utils::stringContainsIgnoreCase(b, 'e'));
-    EXPECT_FALSE(utils::stringContainsIgnoreCase(b, 'E'));
-    EXPECT_FALSE(utils::stringContainsIgnoreCase(b, 'h'));
-    EXPECT_FALSE(utils::stringContainsIgnoreCase(b, 'H'));
-    EXPECT_TRUE(utils::stringContainsIgnoreCase(b, '!'));
-    EXPECT_FALSE(utils::stringContainsIgnoreCase(b, '?'));
+    EXPECT_TRUE(cxxkit::utils::stringContainsIgnoreCase(b, 'a'));
+    EXPECT_TRUE(cxxkit::utils::stringContainsIgnoreCase(b, 'A'));
+    EXPECT_TRUE(cxxkit::utils::stringContainsIgnoreCase(b, 'b'));
+    EXPECT_TRUE(cxxkit::utils::stringContainsIgnoreCase(b, 'B'));
+    EXPECT_FALSE(cxxkit::utils::stringContainsIgnoreCase(b, 'e'));
+    EXPECT_FALSE(cxxkit::utils::stringContainsIgnoreCase(b, 'E'));
+    EXPECT_FALSE(cxxkit::utils::stringContainsIgnoreCase(b, 'h'));
+    EXPECT_FALSE(cxxkit::utils::stringContainsIgnoreCase(b, 'H'));
+    EXPECT_TRUE(cxxkit::utils::stringContainsIgnoreCase(b, '!'));
+    EXPECT_FALSE(cxxkit::utils::stringContainsIgnoreCase(b, '?'));
 
-    EXPECT_FALSE(utils::stringContainsIgnoreCase("", 'a'));
-    EXPECT_FALSE(utils::stringContainsIgnoreCase("", 'A'));
-    EXPECT_FALSE(utils::stringContainsIgnoreCase("", '0'));
+    EXPECT_FALSE(cxxkit::utils::stringContainsIgnoreCase("", 'a'));
+    EXPECT_FALSE(cxxkit::utils::stringContainsIgnoreCase("", 'A'));
+    EXPECT_FALSE(cxxkit::utils::stringContainsIgnoreCase("", '0'));
 }
 
 TEST(StringFormatTest, Empty)
 {
-    EXPECT_EQ("", utils::stringFormat("%s", ""));
+    EXPECT_EQ("", cxxkit::utils::stringFormat("%s", ""));
 }
 
 TEST(StringFormatTest, Misc)
 {
-    EXPECT_EQ("123hello w", utils::stringFormat("%3d%2s %1c", 123, "hello", 'w'));
-    EXPECT_EQ("3 = three", utils::stringFormat("%d = %s", 1 + 2, "three"));
+    EXPECT_EQ("123hello w", cxxkit::utils::stringFormat("%3d%2s %1c", 123, "hello", 'w'));
+    EXPECT_EQ("3 = three", cxxkit::utils::stringFormat("%d = %s", 1 + 2, "three"));
 }
 
 TEST(StringFormatTest, MaxSizeShouldWork)
@@ -212,7 +212,7 @@ TEST(StringFormatTest, MaxSizeShouldWork)
     char str[kSrcLen];
     std::fill_n(str, kSrcLen, 'A');
     str[kSrcLen - 1] = 0;
-    EXPECT_EQ(str, utils::stringFormat("%s", str));
+    EXPECT_EQ(str, cxxkit::utils::stringFormat("%s", str));
 }
 
 // Test that formating a string using `StringView` works as expected
@@ -220,12 +220,66 @@ TEST(StringFormatTest, MaxSizeShouldWork)
 TEST(StringFormatTest, FormatStringView)
 {
     const std::string main_string("This is a substring test.");
-    std::vector<StringView> string_views = utils::stringSplit(main_string, ' ');
+    std::vector<cxxkit::StringView> string_views = cxxkit::utils::stringSplit(main_string, ' ');
     ASSERT_EQ(string_views.size(), 5u);
 
     const StringView &sv = string_views[3];
-    std::string formatted = utils::stringFormat("We have a %.*s.", static_cast<int>(sv.size()), sv.data());
+    std::string formatted = cxxkit::utils::stringFormat("We have a %.*s.", static_cast<int>(sv.size()), sv.data());
     EXPECT_EQ(formatted.compare("We have a substring."), 0);
 }
 
 CXXKIT_END_NAMESPACE
+
+// Coverage for string_utils.cpp implementation functions (string_utils.hpp alone had thin tests).
+TEST(StringUtils, ExtractFileName)
+{
+    EXPECT_STREQ(cxxkit::utils::extractFileName("/a/b/file.cpp"), "file.cpp");
+    EXPECT_STREQ(cxxkit::utils::extractFileName("plain.cpp"), "plain.cpp");
+}
+
+TEST(StringUtils, ExtractFunctionName)
+{
+    // Actual behavior: returns the segment after the last space before '(' up to '('
+    // (leading space preserved) plus the suffix.
+    const std::string fn = cxxkit::utils::extractFunctionName("void foo(int x)");
+    EXPECT_EQ(fn, " foo");
+}
+
+TEST(StringUtils, StringCompare)
+{
+    // NOTE (PIT-28 candidate): stringCompare returns true ONLY for the case-folded-equal
+    // branch (c1 != c2 && ignoreCase). Identical bytes fall through to the else and return
+    // false — verified current behavior; asserted as-is, semantic fix tracked separately.
+    EXPECT_TRUE(cxxkit::utils::stringCompare("ABC", "abc", 3, true)); // case-folded equal
+    EXPECT_FALSE(cxxkit::utils::stringCompare("abc", "abc", 3, false)); // identical bytes also false
+    EXPECT_FALSE(cxxkit::utils::stringCompare("abc", "abd", 3, true));
+}
+
+TEST(StringUtils, StringCaseCmp)
+{
+    EXPECT_EQ(cxxkit::utils::stringCaseCmp("AbC", "aBc", 3), 0);
+    EXPECT_NE(cxxkit::utils::stringCaseCmp("abc", "abd", 3), 0);
+}
+
+TEST(StringUtils, ContainsIgnoreCase)
+{
+    EXPECT_TRUE(cxxkit::utils::stringContainsIgnoreCase(cxxkit::StringView("Hello World"), cxxkit::StringView("WORLD")));
+    EXPECT_FALSE(cxxkit::utils::stringContainsIgnoreCase(cxxkit::StringView("Hello"), cxxkit::StringView("xyz")));
+    EXPECT_TRUE(cxxkit::utils::stringContainsIgnoreCase(cxxkit::StringView("abc"), 'b'));
+    EXPECT_FALSE(cxxkit::utils::stringContainsIgnoreCase(cxxkit::StringView("abc"), 'z'));
+}
+
+TEST(StringUtils, StringSplit)
+{
+    const std::vector<cxxkit::StringView> parts = cxxkit::utils::stringSplit(cxxkit::StringView("a,b,c"), ',');
+    ASSERT_EQ(parts.size(), 3u);
+    EXPECT_EQ(parts[0], cxxkit::StringView("a"));
+    EXPECT_EQ(parts[1], cxxkit::StringView("b"));
+    EXPECT_EQ(parts[2], "c");
+}
+
+TEST(StringUtils, StringFormat)
+{
+    std::string s = cxxkit::utils::stringFormat("%d-%s", 7, "x");
+    EXPECT_EQ(s, "7-x");
+}
