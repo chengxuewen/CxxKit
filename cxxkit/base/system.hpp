@@ -59,6 +59,9 @@
               - CXXKIT_OS_FREEBSD_KERNEL is always defined on FreeBSD, even if the userland is from GNU
 */
 
+/** @brief macOS (Darwin) defines: `CXXKIT_OS_DARWIN`, `CXXKIT_OS_MACOS` + UIKit siblings.
+ * @see CXXKIT_OS_IOS, CXXKIT_OS_WATCHOS, CXXKIT_OS_TVOS
+ */
 #if defined(__APPLE__) && (defined(__GNUC__) || defined(__xlC__) || defined(__xlc__))
 #    include <TargetConditionals.h>
 #    if defined(TARGET_OS_MAC) && TARGET_OS_MAC
@@ -88,20 +91,32 @@
 #    else
 #        error "cxxkit has not been ported to this Apple platform"
 #    endif
+/** @brief Android/Linux-family defines (both `CXXKIT_OS_ANDROID` and `CXXKIT_OS_LINUX` on Android).
+ * @see CXXKIT_OS_LINUX, CXXKIT_OS_WEBOS
+ */
 #elif defined(__WEBOS__)
 #    define CXXKIT_OS_WEBOS
 #    define CXXKIT_OS_LINUX
 #elif defined(__ANDROID__) || defined(ANDROID)
 #    define CXXKIT_OS_ANDROID
 #    define CXXKIT_OS_LINUX
+/** @brief Cygwin defines.
+ * @see CXXKIT_OS_CYGWIN
+ */
 #elif defined(__CYGWIN__)
 #    define CXXKIT_OS_CYGWIN
+/** @brief Windows family: `CXXKIT_OS_WIN32`, `CXXKIT_OS_WIN64`, `CXXKIT_OS_WINDOWS`.
+ * @see CXXKIT_OS_WIN
+ */
 #elif !defined(SAG_COM) && (!defined(WINAPI_FAMILY) || WINAPI_FAMILY == WINAPI_FAMILY_DESKTOP_APP) &&                  \
     (defined(WIN64) || defined(_WIN64) || defined(__WIN64__))
 #    define CXXKIT_OS_WIN32
 #    define CXXKIT_OS_WIN64
 #elif !defined(SAG_COM) && (defined(WIN32) || defined(_WIN32) || defined(__WIN32__) || defined(__NT__))
 #    define CXXKIT_OS_WIN32
+/** @brief Solaris / HP-UX / NaCl / WASM / Linux / *BSD defines.
+ * @see CXXKIT_OS_SOLARIS, CXXKIT_OS_HPUX, CXXKIT_OS_LINUX, CXXKIT_OS_FREEBSD
+ */
 #elif defined(__sun) || defined(sun)
 #    define CXXKIT_OS_SOLARIS
 #elif defined(hpux) || defined(__hpux)
@@ -124,6 +139,9 @@
 #elif defined(__OpenBSD__)
 #    define CXXKIT_OS_OPENBSD
 #    define CXXKIT_OS_BSD4
+/** @brief Interix / AIX / Lynx / Hurd / QNX / INTEGRITY / RTEMS / VxWorks / Haiku defines.
+ * @see CXXKIT_OS_AIX, CXXKIT_OS_QNX
+ */
 #elif defined(__INTERIX)
 #    define CXXKIT_OS_INTERIX
 #    define CXXKIT_OS_BSD4
@@ -143,12 +161,18 @@
 #    define CXXKIT_OS_VXWORKS
 #elif defined(__HAIKU__)
 #    define CXXKIT_OS_HAIKU
+/** @brief Mach kernel define (fallback when no Apple-family macro matched).
+ * @see CXXKIT_OS_DARWIN
+ */
 #elif defined(__MACH__)
 #    define CXXKIT_OS_MACH
 #else
 #    error "cxxkit has not been ported to this OS"
 #endif
 
+/** @brief Aggregates Windows defines (`CXXKIT_OS_WINDOWS`, `CXXKIT_OS_WIN`); sets `CXXKIT_NO_DATA_RELOCATION`.
+ * @see CXXKIT_OS_WIN32, CXXKIT_OS_WIN64
+ */
 #if defined(CXXKIT_OS_WIN32) || defined(CXXKIT_OS_WIN64)
 #    define CXXKIT_OS_WINDOWS
 #    define CXXKIT_OS_WIN
@@ -158,12 +182,18 @@
 #    define CXXKIT_NO_DATA_RELOCATION
 #endif
 
+/** @brief Generic UNIX define (set unless Windows).
+ * @see CXXKIT_OS_WIN
+ */
 #if defined(CXXKIT_OS_WIN)
 #    undef CXXKIT_OS_UNIX
 #elif !defined(CXXKIT_OS_UNIX)
 #    define CXXKIT_OS_UNIX
 #endif
 
+/** @brief macOS compatibility synonyms: `CXXKIT_OS_MAC`, `CXXKIT_OS_MAC32`, `CXXKIT_OS_MAC64`, `CXXKIT_OS_MACX`, `CXXKIT_OS_OSX`.
+ * @see CXXKIT_OS_DARWIN, CXXKIT_OS_MACOS
+ */
 // Compatibility synonyms
 #ifdef CXXKIT_OS_DARWIN
 #    define CXXKIT_OS_MAC
@@ -179,6 +209,9 @@
 #    define CXXKIT_OS_OSX
 #endif
 
+/** @brief macOS/iOS minimum-version macros: `__MAC_10_x`, `MAC_OS_X_VERSION_10_x`, `__IPHONE_10_x`.
+ * @see CXXKIT_OS_MACOS, CXXKIT_OS_IOS
+ */
 #ifdef CXXKIT_OS_DARWIN
 #    include <Availability.h>
 #    include <AvailabilityMacros.h>
@@ -250,6 +283,9 @@
 #    endif
 #endif
 
+/** @brief LSB base detection: defines `CXXKIT_LINUXBASE` when LSB >= 4.0.
+ * @see CXXKIT_OS_LINUX
+ */
 #ifdef __LSB_VERSION__
 #    if __LSB_VERSION__ < 40
 #        error "This version of the Linux Standard Base is unsupported"

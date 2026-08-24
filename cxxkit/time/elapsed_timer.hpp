@@ -49,7 +49,6 @@ class CXXKIT_TIME_API ElapsedTimer
 {
 public:
     /**
-     * @enum ElapsedTimer::ClockType
      * This enum contains the different clock types that ElapsedTimer may use.
      * ElapsedTimer will always use the same clock type in a particular machine, so this value will not
      * change during the lifetime of a program.

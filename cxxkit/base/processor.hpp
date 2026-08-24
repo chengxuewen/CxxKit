@@ -46,6 +46,9 @@
     and host architectures.
 */
 
+/** @brief Big-endian byte-order constant (numeric, for preprocessor comparison).
+ * @see CXXKIT_LITTLE_ENDIAN, CXXKIT_BYTE_ORDER
+ */
 /* Machine byte-order, reuse preprocessor provided macros when available */
 #if defined(__ORDER_BIG_ENDIAN__)
 #    define CXXKIT_BIG_ENDIAN __ORDER_BIG_ENDIAN__
@@ -53,6 +56,9 @@
 #    define CXXKIT_BIG_ENDIAN 4321
 #endif
 
+/** @brief Little-endian byte-order constant (numeric, for preprocessor comparison).
+ * @see CXXKIT_BIG_ENDIAN, CXXKIT_BYTE_ORDER
+ */
 #if defined(__ORDER_LITTLE_ENDIAN__)
 #    define CXXKIT_LITTLE_ENDIAN __ORDER_LITTLE_ENDIAN__
 #else
@@ -68,6 +74,9 @@
 // #  define CXXKIT_PROCESSOR_ALPHA
 // CXXKIT_BYTE_ORDER not defined, use endianness auto-detection
 
+/** @brief ARM (V4..V8) processor-family defines: `CXXKIT_PROCESSOR_ARM_*`.
+ * @see CXXKIT_PROCESSOR_WORDSIZE, CXXKIT_BYTE_ORDER
+ */
 /*
     ARM family, known revisions: V5, V6, V7, V8
 
@@ -147,6 +156,9 @@
 // #  define CXXKIT_PROCESSOR_BLACKFIN
 // #  define CXXKIT_BYTE_ORDER CXXKIT_LITTLE_ENDIAN
 
+/** @brief X86 family: `CXXKIT_PROCESSOR_X86_32`, `CXXKIT_PROCESSOR_X86_64`.
+ * @see CXXKIT_PROCESSOR_X86 (revision), CXXKIT_PROCESSOR_WORDSIZE
+ */
 /*
     X86 family, known variants: 32- and 64-bit
 
@@ -185,6 +197,9 @@
 #    define CXXKIT_BYTE_ORDER         CXXKIT_LITTLE_ENDIAN
 #    define CXXKIT_PROCESSOR_WORDSIZE 8
 
+/** @brief IA-64 (Itanium) family defines.
+ * @see CXXKIT_PROCESSOR_WORDSIZE, CXXKIT_BYTE_ORDER
+ */
 /*
     Itanium (IA-64) family, no revisions or variants
 
@@ -195,6 +210,9 @@
 #    define CXXKIT_PROCESSOR_WORDSIZE 8
 // CXXKIT_BYTE_ORDER not defined, use endianness auto-detection
 
+/** @brief MIPS family: `CXXKIT_PROCESSOR_MIPS` + revisions/variants.
+ * @see CXXKIT_PROCESSOR_WORDSIZE, CXXKIT_BYTE_ORDER
+ */
 /*
     MIPS family, known revisions: I, II, III, IV, 32, 64
 
@@ -232,6 +250,9 @@
 // CXXKIT_BYTE_ORDER not defined, use endianness auto-detection
 #    endif
 
+/** @brief PowerPC family (32- and 64-bit).
+ * @see CXXKIT_PROCESSOR_WORDSIZE, CXXKIT_BYTE_ORDER
+ */
 /*
     Power family, known variants: 32- and 64-bit
 
@@ -252,6 +273,9 @@
 #    endif
 // CXXKIT_BYTE_ORDER not defined, use endianness auto-detection
 
+/** @brief RISC-V family (32- and 64-bit).
+ * @see CXXKIT_PROCESSOR_WORDSIZE, CXXKIT_BYTE_ORDER
+ */
 /*
     RISC-V family, known variants: 32- and 64-bit
 
@@ -266,6 +290,9 @@
 #    endif
 #    define CXXKIT_BYTE_ORDER CXXKIT_LITTLE_ENDIAN
 
+/** @brief S390/S390X family defines (big-endian).
+ * @see CXXKIT_PROCESSOR_WORDSIZE, CXXKIT_BYTE_ORDER
+ */
 /*
     S390 family, known variant: S390X (64-bit)
 
@@ -290,6 +317,9 @@
 // #  endif
 // CXXKIT_BYTE_ORDER not defined, use endianness auto-detection
 
+/** @brief SPARC family (big-endian, V9 bi-endian).
+ * @see CXXKIT_PROCESSOR_WORDSIZE, CXXKIT_BYTE_ORDER
+ */
 /*
     SPARC family, optional revision: V9
 
@@ -306,6 +336,9 @@
 #    endif
 #    define CXXKIT_BYTE_ORDER CXXKIT_BIG_ENDIAN
 
+/** @brief WebAssembly processor-family defines (little-endian).
+ * @see CXXKIT_PROCESSOR_WORDSIZE, CXXKIT_BYTE_ORDER
+ */
 // -- Web Assembly --
 #elif defined(__EMSCRIPTEN__)
 #    define CXXKIT_PROCESSOR_WASM
@@ -321,6 +354,9 @@
   the __LITTLE_ENDIAN__ or __BIG_ENDIAN__ macros are not defined, then this
   code will fail to detect the target byte order.
 */
+/** @brief Fallback byte-order detection via __BYTE_ORDER__/__BIG_ENDIAN__/__LITTLE_ENDIAN__.
+ * @see CXXKIT_BIG_ENDIAN, CXXKIT_LITTLE_ENDIAN
+ */
 // Some processors support either endian format, try to detect which we are using.
 #if !defined(CXXKIT_BYTE_ORDER)
 #    if defined(__BYTE_ORDER__) && (__BYTE_ORDER__ == CXXKIT_BIG_ENDIAN || __BYTE_ORDER__ == CXXKIT_LITTLE_ENDIAN)
@@ -335,6 +371,9 @@
 #    endif
 #endif
 
+/** @brief Pointer size in bytes (4 or 8).
+ * @see CXXKIT_PROCESSOR_WORDSIZE
+ */
 /*
    Size of a pointer and the machine register size. We detect a 64-bit system by:
    * GCC and compatible compilers (Clang, ICC on OS X and Windows) always define
@@ -357,6 +396,9 @@
 #    define CXXKIT_POINTER_SIZE 4
 #endif
 
+/** @brief Machine word size in bytes (usually the register width; falls back to CXXKIT_POINTER_SIZE).
+ * @see CXXKIT_POINTER_SIZE
+ */
 /*
    Define CXXKIT_PROCESSOR_WORDSIZE to be the size of the machine's word (usually,
    the size of the register). On some architectures where a pointer could be

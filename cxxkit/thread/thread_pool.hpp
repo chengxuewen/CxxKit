@@ -162,9 +162,8 @@ public:
      * If no threads are available at the time of calling, then this function does nothing and returns @c false.
      * Otherwise, @a runnable is run immediately using one available thread and this function returns @c true.
      *
-     * @param task
-     * @param autoDelete
-     * @return
+     * @param task the task to run.
+     * @return true if a thread was reserved and ran the task.
      */
     bool tryStartNow(const Task::SharedPtr &task);
 

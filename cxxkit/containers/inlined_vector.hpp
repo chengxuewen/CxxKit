@@ -199,8 +199,8 @@ public:
     }
     /**
      * @brief Replaces the elements of the inlined vector with copies of the elements of `il`.
-     * @param list
-     * @return
+     * @param il the initializer list to copy elements from.
+     * @return a reference to this vector.
      */
     InlinedVector &operator=(std::initializer_list<value_type> il)
     {

@@ -153,6 +153,14 @@ CXXKIT_SAFECMP_MAKE_OP(GeOp, >=)
 #undef CXXKIT_SAFECMP_MAKE_OP
 } // namespace safe_cmp_impl
 
+/** @brief Safe cross-signed-ness comparison templates. Each overloads both the integral
+ * `IsIntLike` path (promotes through a common signed type via `LargerInt`) and the
+ * non-integral fallback (delegates to the underlying `Op`).
+ * @tparam T1 First operand type.
+ * @tparam T2 Second operand type.
+ * @param name the generated comparison function name.
+ * @return Result of the comparison.
+ */
 #define CXXKIT_SAFECMP_MAKE_FUN(name)                                                                                  \
     template <typename T1, typename T2>                                                                                \
     constexpr typename std::enable_if<IsIntLike<T1>::value && IsIntLike<T2>::value, bool>::type Safe##name(T1 a, T2 b) \

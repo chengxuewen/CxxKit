@@ -56,13 +56,11 @@ public:
 
     /**
      * @brief Copy constructor.
-     * @param other The Status object to copy from.
      */
     Status(const Status &) = default;
 
     /**
      * @brief Move constructor.
-     * @param other The Status object to move from.
      */
     Status(Status &&) = default;
 
@@ -150,14 +148,12 @@ public:
 
     /**
      * @brief Copy assignment operator.
-     * @param other The Status object to copy from.
      * @return A reference to this Status object.
      */
     Status &operator=(const Status &) = default;
 
     /**
      * @brief Move assignment operator.
-     * @param other The Status object to move from.
      * @return A reference to this Status object.
      */
     Status &operator=(Status &&) = default;

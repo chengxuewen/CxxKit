@@ -79,9 +79,7 @@ public:
  *
  * We use it because there may be some TypeInfo<T> specializations in user code that don't provide certain flags
  * that we added after Qt 5.0. They are:
- * @list
- *  @li isRelocatable: defaults to !isStatic
- * @endlist
+ * - isRelocatable: defaults to !isStatic
  *
  * DO NOT specialize this class elsewhere.
  * @tparam T

@@ -46,6 +46,11 @@ namespace detail
 } // namespace detail
 } // namespace unique_function
 
+/** @brief `cxxkit::UniqueFunction<T>` — move-only, type-erased callable alias of `fu2::unique_function<T>`.
+ * Supports any callable matching signature `T` (move-only, heap-allocated).
+ * @tparam T Callable signature, e.g. `void(int, float)`.
+ * @see fu2::unique_function, cxxkit::Invocable
+ */
 template <typename T>
 using UniqueFunction = fu2::unique_function<T>;
 

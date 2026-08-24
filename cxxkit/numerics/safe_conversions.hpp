@@ -98,6 +98,9 @@ struct StaticRangeCheck<Dst, Src, DST_UNSIGNED, SRC_SIGNED>
     static const DstRange value = OVERLAPS_RANGE;
 };
 
+/** @brief Numeric cast safety utilities (range-checked casts).
+ * @see RangeCheckResult, IsValueInRangeForNumericType, checked_cast, saturated_cast
+ */
 enum RangeCheckResult
 {
     TYPE_VALID = 0,     // Value can be represented by the destination type.
@@ -198,6 +201,12 @@ inline constexpr RangeCheckResult RangeCheck(Src value)
 }
 } // namespace detail
 
+/** @brief Returns true if `value` is representable by `Dst`.
+ * @tparam Dst Destination numeric type.
+ * @tparam Src Source numeric type.
+ * @param value Value to test.
+ * @return true if `value` fits in `Dst` without overflow/underflow.
+ */
 // Convenience function that returns true if the supplied value is in range
 // for the destination type.
 template <typename Dst, typename Src>
@@ -210,6 +219,13 @@ inline constexpr bool IsValueInRangeForNumericType(Src value)
 // numeric types, except that they [D]CHECK that the specified numeric
 // conversion will not overflow or underflow. NaN source will always trigger
 // the [D]CHECK.
+/** @brief Analogue of `static_cast<Dst>(value)` that CHECKs for overflow/underflow before casting.
+ * NaN source triggers the CHECK on floating-point destinations.
+ * @tparam Dst Destination numeric type.
+ * @tparam Src Source numeric type.
+ * @param value Source value.
+ * @return `value` cast to `Dst`, or aborts on out-of-range.
+ */
 template <typename Dst, typename Src>
 inline constexpr Dst checked_cast(Src value)
 {
@@ -226,6 +242,13 @@ inline constexpr Dst dchecked_cast(Src value)
 // saturated_cast<> is analogous to static_cast<> for numeric types, except
 // that the specified numeric conversion will saturate rather than overflow or
 // underflow. NaN assignment to an integral will trigger a RTC_CHECK condition.
+/** @brief Saturated analogue of `static_cast`: clamps to `Dst`'s min/max instead of overflowing.
+ * Floating-point destinations are returned directly (already saturating).
+ * @tparam Dst Destination numeric type.
+ * @tparam Src Source numeric type.
+ * @param value Source value.
+ * @return `value` clamped to `[numericMin<Dst>, numericMax<Dst>]`.
+ */
 template <typename Dst, typename Src>
 inline Dst saturated_cast(Src value)
 {

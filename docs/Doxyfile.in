@@ -1,7 +1,7 @@
 # cxxkit doxygen configuration (configured by CMake)
 PROJECT_NAME           = "@CXXKIT_PROJECT_NAME@"
 PROJECT_BRIEF          = "An open cross-platform cpp development toolkit"
-PROJECT_VERSION        = "@PROJECT_VERSION@"
+CXXKIT_PROJECT_VERSION = "@PROJECT_VERSION@"
 OUTPUT_DIRECTORY       = "@CXXKIT_DOC_OUTPUT_DIR@"
 OUTPUT_LANGUAGE        = English
 INPUT                  = @CXXKIT_DOXYGEN_INPUT@

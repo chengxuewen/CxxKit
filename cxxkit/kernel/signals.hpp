@@ -1357,7 +1357,7 @@ public:
      *         signal object, it does not cover thread safety of potentially
      *         shared state used in slot functions.
      *
-     * @param a... arguments to emit
+     * @param a arguments to emit
      */
     template <typename... U>
     void operator()(U &&...a) const

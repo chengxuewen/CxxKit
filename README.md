@@ -95,7 +95,7 @@ cmake -S . -B build -DCXXKIT_BUILD_DOCS=ON
 cmake --build build --target Docs   # outputs build/doc/html/
 ```
 
-See [docs/README.md](docs/README.md) for the full documentation index.
+See the file `docs/README.md` for the full documentation index.
 
 ## License
 

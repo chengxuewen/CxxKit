@@ -44,6 +44,10 @@
     Should be sorted most to least authoritative.
 */
 
+/** @brief Aggregates GNU compiler family detection macros: `CXXKIT_CC_GNU`, `CXXKIT_CC_GNU_CHECK_VERSION`.
+ * Mirrors compiler version detection for GCC/compatible compilers.
+ * @see CXXKIT_CC_GNU
+ */
 /*GNU*/
 #if defined(__GNUC__)
 #    define CXXKIT_CC_GNU (100 * __GNUC__ + __GNUC_MINOR__)
@@ -58,6 +62,10 @@
 #    define CXXKIT_CC_MINGW
 #endif
 
+/** @brief Windows compiler detection (MSVC):
+ * `CXXKIT_CC_MSVC`, `CXXKIT_CC_MSVC_NET`, `CXXKIT_MSVC_FULL_VER`.
+ * @see CXXKIT_CC_MSVC
+ */
 /*MSVC*/
 #if defined(_MSC_VER)
 // MSVC++  6.0  _MSC_VER == 1200   (Visual Studio 6.0)
@@ -129,6 +137,10 @@
 #    define CXXKIT_CC_EMSCRIPTEN
 #endif
 
+/** @brief C++ standard version detection:
+ * `CXXKIT_CC_CPLUSPLUS_VERSION` plus `CXXKIT_CC_CPP14_OR_GREATER` / `_17_OR_GREATER` / `_20_OR_GREATER` / `_23_OR_GREATER`.
+ * @see CXXKIT_CC_CPLUSPLUS_VERSION
+ */
 /***********************************************************************************************************************
     cxxkit compiler cplusplus std value macro define
 ***********************************************************************************************************************/
@@ -144,6 +156,10 @@
 #define CXXKIT_CC_CPP23_OR_GREATER (CXXKIT_CC_CPLUSPLUS_VERSION >= 202300L)
 
 
+/** @brief `CXXKIT_CC_HAS_*` feature-detection macro family:
+ * `HAS_FEATURE`, `HAS_BUILTIN`, `HAS_EXTENSION`, `HAS_ATTRIBUTE`, `HAS_INCLUDE`, `HAS_CPP_ATTRIBUTE`.
+ * @see CXXKIT_CC_HAS_FEATURE
+ */
 /***********************************************************************************************************************
     cxxkit compiler cxx feature macro define
 ***********************************************************************************************************************/

@@ -32,6 +32,10 @@
 
 #include <stdarg.h>
 
+/** @brief Compiler symbol-visibility control macros (GNU/Clang `visibility` vs MSVC `dllexport`/`dllimport`).
+ * `CXXKIT_DECLARE_EXPORT` / `_IMPORT` / `_HIDDEN` set per-compiler.
+ * @see CXXKIT_DECLARE_EXPORT, CXXKIT_DECLARE_IMPORT, CXXKIT_DECLARE_HIDDEN
+ */
 /***********************************************************************************************************************
  * compiler dll visibility macro declare
 ***********************************************************************************************************************/
@@ -59,6 +63,11 @@
 #    define CXXKIT_DECLARE_HIDDEN
 #endif
 
+/** @brief Build-target API visibility selector: resolves to `CXXKIT_DECLARE_EXPORT` when `CXXKIT_BUILD_SHARED` is on
+ * and `CXXKIT_BUILDING_CORE_LIB` is set; to `CXXKIT_DECLARE_IMPORT` when importing from a shared build;
+ * to an empty macro in static builds. `CXXKIT_CORE_HIDDEN` maps to `_HIDDEN` (or empty in static).
+ * @see CXXKIT_CORE_API, CXXKIT_CORE_HIDDEN
+ */
 /***********************************************************************************************************************
  * compiler specific cmds for export and import code to DLL and declare namespace
 ***********************************************************************************************************************/

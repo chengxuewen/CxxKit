@@ -46,7 +46,7 @@
  *
  *  Note: The order of parameters in these functions is designed to mimic the
  *  order an equivalent member function would exhibit;
- *  e.g. `s.Contains(x)` ==> `absl::stringContains(s, x).
+ *  e.g. `s.Contains(x)` ==> `stringContains(s, x)`.
  */
 
 CXXKIT_BEGIN_NAMESPACE
@@ -69,9 +69,10 @@ std::string pointerToString(T *ptr)
 CXXKIT_TEXT_API const char *extractFileName(const char *filePath);
 
 /**
- * @brief
- * @param function
- * @return
+ * @brief Extracts the function name from a function signature string.
+ * @param function the signature/name string.
+ * @param suffix optional suffix to strip (e.g. parameter list).
+ * @return the extracted function name.
  */
 CXXKIT_TEXT_API std::string extractFunctionName(const char *function, const char *suffix = "");
 

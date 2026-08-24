@@ -168,9 +168,10 @@ public:
          */
         static SharedPtr createDetachedInactive();
         /**
-         * Same as `CreateDetached()` except the initial state of the returned flag will be `!alive()`.
-         * @param attachedQueue
-         * @return
+         * Same as `createDetached()` except the initial state of the returned flag will be `!alive()`.
+         * @param alive initial liveness state (inverted by the flag).
+         * @param attachedQueue the queue that owns the flag.
+         * @return the new flag.
          */
         static SharedPtr createAttachedToTaskQueue(bool alive, Nonnull<TaskQueueBase *> attachedQueue);
         ~SafetyFlag();

@@ -33,6 +33,9 @@
 /***********************************************************************************************************************
  * version macro
 ***********************************************************************************************************************/
+/** @brief Version number macros: `CXXKIT_VERSION` and `CXXKIT_VERSION_CHECK(major, minor, patch)`.
+ * @see CXXKIT_VERSION_MAJOR, CXXKIT_VERSION_MINOR, CXXKIT_VERSION_PATCH
+ */
 // CXXKIT_VERSION is (major << 16) + (minor << 8) + patch.
 #define CXXKIT_VERSION CXXKIT_VERSION_CHECK(CXXKIT_VERSION_MAJOR, CXXKIT_VERSION_MINOR, CXXKIT_VERSION_PATCH)
 // can be used like #if (CXXKIT_VERSION >= CXXKIT_VERSION_CHECK(0, 3, 1))
@@ -45,6 +48,9 @@
 #define CXXKIT_NAMESPACE               cxxkit
 #define CXXKIT_PREPEND_NAMESPACE(name) ::CXXKIT_NAMESPACE::name
 #define CXXKIT_USE_NAMESPACE           using namespace ::CXXKIT_NAMESPACE;
+/** @brief Namespace macros: `CXXKIT_BEGIN_NAMESPACE` / `CXXKIT_END_NAMESPACE` and friends.
+ * @see CXXKIT_NAMESPACE, CXXKIT_PREPEND_NAMESPACE, CXXKIT_FORWARD_DECLARE_CLASS
+ */
 #define CXXKIT_BEGIN_NAMESPACE                                                                                         \
     CXXKIT_WARNING_PUSH CXXKIT_WARNING_DISABLE_MSVC(4251) namespace CXXKIT_NAMESPACE                                   \
     {
@@ -79,6 +85,11 @@ namespace CXXKIT_NAMESPACE
 /***********************************************************************************************************************
  * compiler cxx11 feature macro declare
 ***********************************************************************************************************************/
+/** @brief C++ feature-ladder macros: `CXXKIT_NULLPTR`, `CXXKIT_CONSTEXPR`, `CXXKIT_CXX14_CONSTEXPR`,
+ * `CXXKIT_CXX17_CONSTEXPR`, `CXXKIT_OVERRIDE`, `CXXKIT_FINAL`, `CXXKIT_NOEXCEPT`, `CXXKIT_ALIGN`, `CXXKIT_ALIGNOF`,
+ * `CXXKIT_EQ_DEFAULT`, `CXXKIT_EQ_DELETE`.
+ * @see cxxkit::base::compiler.hpp (CXXKIT_CC_FEATURE_*)
+ */
 #if CXXKIT_CC_FEATURE_NULLPTR
 #    define CXXKIT_NULLPTR nullptr
 #else
@@ -163,6 +174,8 @@ namespace CXXKIT_NAMESPACE
 #endif
 
 
+/** @brief Copy/move inhibition macros: `CXXKIT_DECLARE_DISABLE_COPY`, `CXXKIT_DECLARE_DISABLE_MOVE`, `CXXKIT_DISABLE_COPY_MOVE`.
+ */
 /***********************************************************************************************************************
   * disable copy move macro declare
 ***********************************************************************************************************************/
@@ -183,6 +196,9 @@ namespace CXXKIT_NAMESPACE
     CXXKIT_DECLARE_DISABLE_MOVE(Class)
 
 
+/** @brief Static-constant macros: `CXXKIT_STATIC_CONSTANT_NUMBER`, `CXXKIT_STATIC_CONSTANT_STRING`.
+ * @see CXXKIT_STATIC_CONSTANT_NUMBER
+ */
 /***********************************************************************************************************************
   * static variable macro
 ***********************************************************************************************************************/
@@ -201,6 +217,10 @@ namespace CXXKIT_NAMESPACE
 #define CXXKIT_STATIC_CONSTANT_STRING(name, string) static constexpr char name[] = string;
 
 
+/** @brief Private-implementation (d-pointer) macros: `CXXKIT_DEFINE_DPTR`, `CXXKIT_DECLARE_PRIVATE`, `CXXKIT_D`,
+ * plus p-pointer mirrors `CXXKIT_DEFINE_PPTR`, `CXXKIT_DECLARE_PUBLIC`, `CXXKIT_P`.
+ * @see CXXKIT_CAST_IGNORE_ALIGN, CXXKIT_DECLARE_PRIVATE_D, CXXKIT_DECLARE_PUBLIC_P
+ */
 /***********************************************************************************************************************
  * class private implementation macro
 ***********************************************************************************************************************/
@@ -280,6 +300,8 @@ CXXKIT_END_NAMESPACE
 #define CXXKIT_P(Class) Class *const p = pFunc()
 
 
+/** @brief Force-inline / no-inline / used attribute macros: `CXXKIT_FORCE_INLINE`, `CXXKIT_NO_INLINE`, `CXXKIT_USED`.
+ */
 /***********************************************************************************************************************
  * cxxkit force inline macro declare
 ***********************************************************************************************************************/
@@ -302,6 +324,8 @@ CXXKIT_END_NAMESPACE
 #endif
 
 
+/** @brief Noreturn annotation macro: `CXXKIT_NORETURN`.
+ */
 /***********************************************************************************************************************
  * noreturn macro declare, annotate a function that will not return control flow to the caller.
 ***********************************************************************************************************************/
@@ -314,6 +338,8 @@ CXXKIT_END_NAMESPACE
 #endif
 
 
+/** @brief Path slash macro: `CXXKIT_PATH_SLASH` (platform-specific).
+ */
 /***********************************************************************************************************************
  * provide a path slash macro
 ***********************************************************************************************************************/
@@ -324,6 +350,8 @@ CXXKIT_END_NAMESPACE
 #endif
 
 
+/** @brief 4CC / 8CC codec identifier macros: `CXXKIT_FOURCC`, `CXXKIT_EIGHTCC`.
+ */
 /***********************************************************************************************************************
  * number cc macro
 ***********************************************************************************************************************/
@@ -337,6 +365,8 @@ CXXKIT_END_NAMESPACE
      (static_cast<uint64_t>(c7) << 48) | (static_cast<uint64_t>(c8) << 56)) /* NOLINT */
 
 
+/** @brief Exceptions-enabled detection macro: `CXXKIT_HAS_EXCEPTIONS` (0 or 1).
+ */
 /***********************************************************************************************************************
  * set exceptions flag macro
 ***********************************************************************************************************************/
@@ -347,6 +377,9 @@ CXXKIT_END_NAMESPACE
 #endif
 
 
+/** @brief Source-location macros: `CXXKIT_STRFUNC`, `CXXKIT_STRFILE`, `CXXKIT_STRFILENAME`, `CXXKIT_STRFILELINE`,
+ * `CXXKIT_STRFILELINE_W`, `CXXKIT_PATH_NAME`.
+ */
 /***********************************************************************************************************************
  * provide source location macro
 ***********************************************************************************************************************/
@@ -376,6 +409,8 @@ CXXKIT_END_NAMESPACE
 #define CXXKIT_STRFILELINE_W "(" CXXKIT_STRFILENAME ":" CXXKIT_PP_STRINGIFY(__LINE__) ")"
 
 
+/** @brief Deprecation macros: `CXXKIT_DEPRECATED`, `CXXKIT_DEPRECATED_X(text)`.
+ */
 /***********************************************************************************************************************
  * deprecated macro
 ***********************************************************************************************************************/
@@ -397,6 +432,9 @@ CXXKIT_END_NAMESPACE
 #endif
 
 
+/** @brief Utility macros: `CXXKIT_UNUSED`, `CXXKIT_FOREVER`, `CXXKIT_PRAGMA`, `CXXKIT_STRINGIFY`, `CXXKIT_ZERO_INIT`,
+ * `CXXKIT_ARRAY_SIZE`.
+ */
 /***********************************************************************************************************************
  * utils macro
 ***********************************************************************************************************************/
@@ -434,6 +472,9 @@ auto cxxkitArraySizeHelper(const T (&array)[N]) -> char (&)[N];
 #define CXXKIT_ARRAY_SIZE(array) (sizeof(cxxkitArraySizeHelper(array)))
 
 
+/** @brief DLL export/import for static variables: `CXXKIT_EXTERN_VAR`.
+ * @see CXXKIT_BUILD_SHARED, CXXKIT_BUILD_CORE_LIB
+ */
 /***********************************************************************************************************************
  * var exported in windows dlls macro define
 ***********************************************************************************************************************/
@@ -452,6 +493,8 @@ auto cxxkitArraySizeHelper(const T (&array)[N]) -> char (&)[N];
 #endif /* !CXXKIT_OS_WIN32 */
 
 
+/** @brief Path/line limit macros: `CXXKIT_PATH_MAX`, `CXXKIT_LINE_MAX`.
+ */
 /***********************************************************************************************************************
  * limits macro
 ***********************************************************************************************************************/
@@ -468,6 +511,8 @@ auto cxxkitArraySizeHelper(const T (&array)[N]) -> char (&)[N];
 #endif
 
 
+/** @brief RTTI detection macro: `CXXKIT_RTTI_ENABLED` (0 or 1).
+ */
 /***********************************************************************************************************************
  * rtti macro
 ***********************************************************************************************************************/
@@ -478,6 +523,9 @@ auto cxxkitArraySizeHelper(const T (&array)[N]) -> char (&)[N];
 #endif
 
 
+/** @brief Explicit template instantiation export macros: `CXXKIT_EXPORT_TEMPLATE_DECLARE`, `CXXKIT_EXPORT_TEMPLATE_DEFINE`.
+ * Handles MSVC dllexport-at-definition requirement.
+ */
 /***********************************************************************************************************************
  * export template macro define
 ***********************************************************************************************************************/
@@ -508,7 +556,7 @@ auto cxxkitArraySizeHelper(const T (&array)[N]) -> char (&)[N];
  * rather non-compliant and requires special care to make it work.
  *
  * Issue 1.
- *      #define F(x)
+ *      \#define F(x)
  *      F()
  *
  * MSVC emits warning C4003 ("not enough actual parameters for macro 'F'), even though it's a valid macro invocation.
@@ -623,6 +671,9 @@ CXXKIT_EXPORT_TEMPLATE_TEST(DEFAULT, __declspec(dllimport));
 #undef CXXKIT_EXPORT_TEMPLATE_TEST_MSVC_HACK_MSVC_HACK
 
 
+/** @brief Compiler feature-detection macros: `CXXKIT_CC_HAS_FEATURE`, `CXXKIT_CC_HAS_BUILTIN`, `CXXKIT_CC_HAS_EXTENSION`,
+ * `CXXKIT_CC_HAS_ATTRIBUTE`, `CXXKIT_CC_HAS_INCLUDE`, `CXXKIT_CC_HAS_CPP_ATTRIBUTE`.
+ */
 /***********************************************************************************************************************
  * has feature macro define
 ***********************************************************************************************************************/
@@ -718,6 +769,8 @@ CXXKIT_EXPORT_TEMPLATE_TEST(DEFAULT, __declspec(dllimport));
 #endif
 
 
+/** @brief `CXXKIT_CONST_INIT`: guarantees static/thread-local variables have constant initializers.
+ */
 /***********************************************************************************************************************
  * CONSTRUCTORS DESTRUCTOR macro
 ***********************************************************************************************************************/
@@ -831,6 +884,9 @@ CXXKIT_EXPORT_TEMPLATE_TEST(DEFAULT, __declspec(dllimport));
 #endif // #if defined(__cplusplus)
 
 
+/** @brief Constructor/destructor callback macros: `CXXKIT_CONSTRUCTOR_FUNCTION`, `CXXKIT_DESTRUCTOR_FUNCTION`.
+ * Portable across GCC/Clang/MSVC/SunPRO.
+ */
 /***********************************************************************************************************************
  * likely unlikely macro define
  * Enables the compiler to prioritize compilation using static analysis for likely paths within a boolean branch.
@@ -856,6 +912,8 @@ CXXKIT_EXPORT_TEMPLATE_TEST(DEFAULT, __declspec(dllimport));
 #    define CXXKIT_UNLIKELY(expr) (expr)
 #endif
 
+/** @brief Branch-likelihood hints: `CXXKIT_LIKELY`, `CXXKIT_UNLIKELY` (fall back to identity on unsupported compilers).
+ */
 
 /***********************************************************************************************************************
  * `CXXKIT_INTERNAL_IMMEDIATE_ABORT()` aborts the program in the fastest possible way, with no attempt at logging.
@@ -869,6 +927,8 @@ CXXKIT_EXPORT_TEMPLATE_TEST(DEFAULT, __declspec(dllimport));
 #endif
 
 
+/** @brief `CXXKIT_INTERNAL_IMMEDIATE_ABORT()`: trap/abort (no logging). Used internally.
+ */
 /***********************************************************************************************************************
  * `CXXKIT_INTERNAL_UNREACHABLE()` is the platform specific directive to indicate that a statement is unreachable,
  * and to allow the compiler to optimize accordingly. Clients should use `ABSL_UNREACHABLE()`, which is defined below.
@@ -886,9 +946,15 @@ CXXKIT_EXPORT_TEMPLATE_TEST(DEFAULT, __declspec(dllimport));
 #endif
 
 
+/** @brief `CXXKIT_INTERNAL_UNREACHABLE()`: marks code as unreachable for compiler optimization.
+ * Public wrapper is `CXXKIT_CHECK_NOTREACHED`.
+ */
 /***********************************************************************************************************************
  * attribute macro define
 ***********************************************************************************************************************/
+/** @brief Attribute family: `CXXKIT_ATTRIBUTE`, `CXXKIT_MAYBE_UNUSED`, plus lock/pure/format-family attributes.
+ * @see CXXKIT_ATTRIBUTE_PURE, CXXKIT_ATTRIBUTE_FORMAT_PRINTF, CXXKIT_ATTRIBUTE_GUARDED_BY
+ */
 #if defined(__clang__) && (!defined(SWIG))
 #    define CXXKIT_ATTRIBUTE(x) __attribute__((x))
 #else
@@ -933,8 +999,8 @@ CXXKIT_EXPORT_TEMPLATE_TEST(DEFAULT, __declspec(dllimport));
 #endif
 
 /**
- * @param format_idx: the index of the argument corresponding to the format string (the arguments are numbered from 1)
- * @param arg_idx: the index of the first of the format arguments, or 0 if there are no format arguments
+ * @param A the index of the argument corresponding to the format string (1-based)
+ * @param B the index of the first of the format arguments, or 0 if there are none
  * This is used for declaring functions which take a variable number of arguments, with the same syntax as `printf()`.
  * It allows the compiler to type-check the arguments passed to the function.
  * Place the attribute after the function declaration, just before the semicolon.

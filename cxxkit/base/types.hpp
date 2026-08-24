@@ -40,6 +40,9 @@
 
 CXXKIT_BEGIN_NAMESPACE
 
+/** @brief Integer type aliases: `int8_t`..`int64_t`, `uint8_t`..`uint64_t` (from std).
+ * @see float_t, double_t
+ */
 using std::int8_t;
 using std::int16_t;
 using std::int32_t;
@@ -50,9 +53,15 @@ using std::uint16_t;
 using std::uint32_t;
 using std::uint64_t;
 
+/** @brief Floating-point type aliases: `float_t`, `double_t`.
+ * @see int8_t, uint64_t
+ */
 using float_t = float;
 using double_t = double;
 
+/** @brief Pointer-size aliases: `size_t`, `ptrdiff_t`, `uintptr_t`, `intptr_t`, `ssize_t`.
+ * @see CXXKIT_SIZEOF_SIZE_T, CXXKIT_SIZEOF_SSIZE_T
+ */
 using std::size_t;
 using std::ptrdiff_t;
 using uintptr_t = size_t;
@@ -67,6 +76,9 @@ using ssize_t = ssize_t;
 #    define CXXKIT_SIZEOF_SSIZE_T CXXKIT_SIZEOF_SIZE_T
 #endif
 
+/** @brief Convenience integer aliases: `byte_t`, `uchar_t`, `ushort_t`, `uint_t`, `ulong_t`, `ulonglong_t`.
+ * @see int8_t, uint64_t
+ */
 using byte_t = uint8_t;
 using uchar_t = unsigned char;
 using ushort_t = unsigned short;
@@ -74,24 +86,41 @@ using uint_t = unsigned int;
 using ulong_t = unsigned long;
 using ulonglong_t = unsigned long long;
 
+/** @brief Opaque handle/pointer aliases: `handle_t`, `pointer_t`, `const_pointer_t` (all `void*`-like).
+ * @see handle_t
+ */
 using handle_t = void *;
 using pointer_t = void *;
 using const_pointer_t = const void *;
 
+/** @brief Binary buffer aliases: `Binary`, `TSBinary` (timestamped), `BinarySharedPtr`.
+ * @see makeBinary
+ */
 using Binary = std::vector<byte_t>;
 using TSBinary = std::pair<int64_t, Binary>;
 using BinarySharedPtr = std::shared_ptr<Binary>;
 
+/** @brief Copy a vector of any trivial type @p T into a `Binary` byte buffer.
+ * @tparam T Trivially copyable element type.
+ * @param data Source vector.
+ * @return `Binary` with same byte content as @p data.
+ */
 template <typename T>
 Binary makeBinary(const std::vector<T> &data)
 {
     return {reinterpret_cast<const byte_t *>(data.data()), reinterpret_cast<const byte_t *>(data.data()) + data.size()};
 }
 
+/** @brief Sentinel/none tag type (empty struct used to mark "no value").
+ * @see cxxkit::tools::optional
+ */
 struct None
 {
 };
 
+/** @brief Integer literal helper: `CXXKIT_INT64_C(123)` / `CXXKIT_UINT64_C(123)`.
+ * @see int64_t, uint64_t
+ */
 /***********************************************************************************************************************
  * Integer conversion macro define
 ***********************************************************************************************************************/
@@ -108,6 +137,10 @@ struct None
 #    endif
 #endif
 
+/** @brief printf/scanf format macros for fixed-width integer types:
+ * `CXXKIT_INT16_FORMAT`, `CXXKIT_UINT64_FORMAT`, `CXXKIT_SIZE_FORMAT`, `CXXKIT_INTPTR_FORMAT`, etc.
+ * @see CXXKIT_INT64_C
+ */
 /***********************************************************************************************************************
  * type format define
 ***********************************************************************************************************************/

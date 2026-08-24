@@ -82,6 +82,13 @@ template <typename T1, typename T2>
 using DivideRoundResultType = typename DivideRoundResult<T1, T2>::Type;
 } // namespace detail
 
+/** @brief Round-ceiling integer division: `(a + b - 1) / b` for non-negative `a`, positive `b`.
+ * @tparam Dividend Integer dividend type (>= 0).
+ * @tparam Divisor Integer divisor type (> 0).
+ * @param dividend Dividend.
+ * @param divisor Divisor (must be > 0).
+ * @return `dividend / divisor` rounded up to the nearest integer.
+ */
 template <typename Dividend, typename Divisor>
 // inline detail::DivideRoundResultType<Dividend, Divisor> CXXKIT_CXX14_CONSTEXPR
 inline auto CXXKIT_CXX14_CONSTEXPR DivideRoundUp(Dividend dividend, Divisor divisor) -> decltype(dividend / divisor)
@@ -96,6 +103,13 @@ inline auto CXXKIT_CXX14_CONSTEXPR DivideRoundUp(Dividend dividend, Divisor divi
     return quotient + (remainder > 0 ? 1 : 0);
 }
 
+/** @brief Round-half-up integer division.
+ * @tparam Dividend Integer dividend type (may be negative).
+ * @tparam Divisor Integer divisor type (> 0).
+ * @param dividend Dividend.
+ * @param divisor Divisor (must be > 0).
+ * @return `dividend / divisor` rounded to the nearest integer (ties round away from zero).
+ */
 template <typename Dividend, typename Divisor>
 // inline detail::DivideRoundResultType<Dividend, Divisor> CXXKIT_CXX14_CONSTEXPR
 inline auto CXXKIT_CXX14_CONSTEXPR DivideRoundToNearest(Dividend dividend, Divisor divisor)

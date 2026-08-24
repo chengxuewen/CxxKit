@@ -123,12 +123,16 @@ private:
 template <typename T>
 using ManualSingleton = Singleton<T, true>;
 
+//! @cond INTERNAL
+
 template <typename T>
 std::once_flag Singleton<T, true>::mOnceFlag;
 template <typename T>
 std::atomic<T *> Singleton<T, true>::mInstance = nullptr;
 template <typename T>
 std::unique_ptr<T> Singleton<T, true>::mScoped = nullptr;
+
+//! @endcond
 
 CXXKIT_END_NAMESPACE
 

@@ -32,7 +32,11 @@
 CXXKIT_BEGIN_NAMESPACE;
 
 using moodycamel::ReaderWriterQueue;
+
+/** @brief Lock-free SPSC bounded queue (moodycamel::ReaderWriterQueue). Bounded by capacity; try_enqueue returns false when full. See vendor docs for try_dequeue/dequeue/pop/consume API. */
 using moodycamel::BlockingReaderWriterQueue;
+/** @brief Lock-free SPSC bounded queue with blocking read (moodycamel::BlockingReaderWriterQueue). Blocks on dequeue when empty; try_dequeue remains non-blocking. */
 using moodycamel::BlockingReaderWriterCircularBuffer;
+/** @brief Lock-free SPSC bounded ring buffer (moodycamel::BlockingReaderWriterCircularBuffer). Fixed-capacity circular buffer; blocking consume API for bounded producer/consumer pipelines. */
 
 CXXKIT_END_NAMESPACE

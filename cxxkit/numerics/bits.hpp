@@ -74,6 +74,10 @@
 #    define CXXKIT__BITS_HAS_CONSTEXPR_CTZ 0
 #endif
 
+/** @brief Bit-manipulation primitives (`cxxkit::utils`).
+ * All functions require unsigned `T` with a power-of-2 bit-width; `constexpr` when compiler intrinsics support it.
+ * @see Rotations: `rotl`/`rotr`, popcount: `popcount`, leading/trailing zero counts, `has_single_bit`/`bit_width`/`bit_floor`/`bit_ceil`
+ */
 CXXKIT_BEGIN_NAMESPACE
 
 namespace utils
@@ -373,6 +377,12 @@ BitCeilNonPowerOf2(T x)
 }
 } // namespace detail
 
+/** @brief Rotate `x` left by `s` bits. `T` must be unsigned with a power-of-2 size.
+ * @tparam T Unsigned integer type.
+ * @param x Value to rotate.
+ * @param s Rotation amount (any signed int; negative wraps right).
+ * @return Rotated value.
+ */
 #if !(defined(__cpp_lib_bitops) && __cpp_lib_bitops >= 201907L)
 // rotating
 template <class T>
@@ -383,6 +393,12 @@ CXXKIT_ATTRIBUTE_MUST_USE_RESULT constexpr typename std::enable_if<std::is_unsig
     return detail::RotateLeft(x, s);
 }
 
+/** @brief Rotate `x` right by `s` bits. `T` must be unsigned with a power-of-2 size.
+ * @tparam T Unsigned integer type.
+ * @param x Value to rotate.
+ * @param s Rotation amount.
+ * @return Rotated value.
+ */
 template <class T>
 CXXKIT_ATTRIBUTE_MUST_USE_RESULT constexpr typename std::enable_if<std::is_unsigned<T>::value, T>::type rotr(
     T x,
@@ -396,6 +412,11 @@ CXXKIT_ATTRIBUTE_MUST_USE_RESULT constexpr typename std::enable_if<std::is_unsig
 // While these functions are typically constexpr, on some platforms, they may
 // not be marked as constexpr due to constraints of the compiler/available
 // intrinsics.
+/** @brief Count leading zero bits of `x`. `T` must be unsigned, <= 64 bits.
+ * @tparam T Unsigned integer type.
+ * @param x Value.
+ * @return Leading zero count (equals `T::digits` when `x == 0`).
+ */
 template <class T>
 CXXKIT__BITS_CONSTEXPR_CLZ inline typename std::enable_if<std::is_unsigned<T>::value, int>::type countl_zero(
     T x) noexcept
@@ -403,6 +424,11 @@ CXXKIT__BITS_CONSTEXPR_CLZ inline typename std::enable_if<std::is_unsigned<T>::v
     return detail::CountLeadingZeroes(x);
 }
 
+/** @brief Count leading one bits of `x` (alias of `countl_zero(~x)`).
+ * @tparam T Unsigned integer type.
+ * @param x Value.
+ * @return Leading one count.
+ */
 template <class T>
 CXXKIT__BITS_CONSTEXPR_CLZ inline typename std::enable_if<std::is_unsigned<T>::value, int>::type countl_one(
     T x) noexcept
@@ -411,6 +437,11 @@ CXXKIT__BITS_CONSTEXPR_CLZ inline typename std::enable_if<std::is_unsigned<T>::v
     return countl_zero(static_cast<T>(~x));
 }
 
+/** @brief Count trailing zero bits of `x`.
+ * @tparam T Unsigned integer type.
+ * @param x Value.
+ * @return Trailing zero count (equals `T::digits` when `x == 0`).
+ */
 template <class T>
 CXXKIT__BITS_CONSTEXPR_CTZ inline typename std::enable_if<std::is_unsigned<T>::value, int>::type countr_zero(
     T x) noexcept
@@ -418,6 +449,11 @@ CXXKIT__BITS_CONSTEXPR_CTZ inline typename std::enable_if<std::is_unsigned<T>::v
     return detail::CountTrailingZeroes(x);
 }
 
+/** @brief Count trailing one bits of `x` (alias of `countr_zero(~x)`).
+ * @tparam T Unsigned integer type.
+ * @param x Value.
+ * @return Trailing one count.
+ */
 template <class T>
 CXXKIT__BITS_CONSTEXPR_CTZ inline typename std::enable_if<std::is_unsigned<T>::value, int>::type countr_one(
     T x) noexcept
@@ -426,6 +462,11 @@ CXXKIT__BITS_CONSTEXPR_CTZ inline typename std::enable_if<std::is_unsigned<T>::v
     return countr_zero(static_cast<T>(~x));
 }
 
+/** @brief Popcount (number of set bits) of `x`. `T` must be unsigned, <= 64 bits.
+ * @tparam T Unsigned integer type.
+ * @param x Value.
+ * @return Number of set bits.
+ */
 template <class T>
 CXXKIT__BITS_CONSTEXPR_POPCOUNT inline typename std::enable_if<std::is_unsigned<T>::value, int>::type popcount(
     T x) noexcept
@@ -445,12 +486,22 @@ using std::rotr;
 #endif
 
 #if !(defined(__cpp_lib_int_pow2) && __cpp_lib_int_pow2 >= 202002L)
+/** @brief True iff `x` has exactly one bit set (i.e. `x` is a power of two).
+ * @tparam T Unsigned integer type.
+ * @param x Value.
+ * @return `true` if `x != 0 && (x & (x-1)) == 0`.
+ */
 // Returns: true if x is an integral power of two; false otherwise.
 template <class T>
 constexpr inline typename std::enable_if<std::is_unsigned<T>::value, bool>::type has_single_bit(T x) noexcept
 {
     return x != 0 && (x & (x - 1)) == 0;
 }
+/** @brief `bit_width(x)`: smallest integer `k` such that `(1<<k) > x`; equals 0 when `x == 0`.
+ * @tparam T Unsigned integer type.
+ * @param x Value.
+ * @return Bit width.
+ */
 
 // Returns: If x == 0, 0; otherwise one plus the base-2 logarithm of x, with any
 // fractional part discarded.
@@ -459,6 +510,11 @@ CXXKIT__BITS_CONSTEXPR_CLZ inline typename std::enable_if<std::is_unsigned<T>::v
 {
     return std::numeric_limits<T>::digits - static_cast<unsigned int>(countl_zero(x));
 }
+/** @brief `bit_floor(x)`: largest power of two <= `x`; 0 when `x == 0`.
+ * @tparam T Unsigned integer type.
+ * @param x Value.
+ * @return Largest power of two <= `x`.
+ */
 
 // Returns: If x == 0, 0; otherwise the maximal value y such that
 // has_single_bit(y) is true and y <= x.
@@ -467,6 +523,11 @@ CXXKIT__BITS_CONSTEXPR_CLZ inline typename std::enable_if<std::is_unsigned<T>::v
 {
     return x == 0 ? 0 : T{1} << (bit_width(x) - 1);
 }
+/** @brief `bit_ceil(x)`: smallest power of two >= `x`. Precondition: result must be representable as `T`.
+ * @tparam T Unsigned integer type.
+ * @param x Value.
+ * @return Smallest power of two >= `x`.
+ */
 
 // Returns: N, where N is the smallest power of 2 greater than or equal to x.
 //

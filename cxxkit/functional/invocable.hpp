@@ -28,6 +28,11 @@
 
 CXXKIT_BEGIN_NAMESPACE
 
+/** @brief `cxxkit::Invocable<T>` — type alias for `cxxkit::UniqueFunction<T>`
+ * (move-only, type-erased callable). Kept as a compatibility synonym.
+ * @tparam T Callable signature, e.g. `void(int, float)`.
+ * @see cxxkit::UniqueFunction, fu2::unique_function
+ */
 template <typename T>
 using Invocable = UniqueFunction<T>;
 

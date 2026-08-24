@@ -30,6 +30,7 @@
 
 CXXKIT_BEGIN_NAMESPACE
 
+/** @brief Key-value pair used by VectorMap. */
 template <typename K, typename V>
 class Pair
 {
@@ -38,12 +39,27 @@ public:
     V value;
 };
 
+/** @brief Identity functor used as default key/value converter in VectorMap. */
 template <typename T>
 class Identity
 {
     T operator()(const T &x) { return x; }
 };
 
+/**
+ * @brief Contiguous key-value map stored in a flat Vector.
+ *
+ * Stores (K, V) pairs in a contiguous vector; lookup is O(n) via a
+ * user-supplied comparison function. Supports conversion functors for
+ * heterogeneous map construction. NOT a replacement for std::map —
+ * use when you need flat contiguous storage (cache-friendly iteration
+ * and zero-copy serialization).
+ *
+ * @tparam K Key type.
+ * @tparam V Value type.
+ *
+ * @see FlatSet, Vector
+ */
 template <typename K, typename V>
 class VectorMap
 {

@@ -33,6 +33,7 @@ namespace detail
 template <typename T, typename... Ts>
 struct TypeListMaxSizeImpl;
 
+//! @cond INTERNAL  // template specialisations (implementation detail)
 template <typename T>
 struct TypeListMaxSizeImpl<T>
 {
@@ -116,5 +117,7 @@ struct TypeList
 };
 template <typename... Args>
 using type_list = TypeList<Args...>;
+
+//! @endcond
 
 CXXKIT_END_NAMESPACE

@@ -185,7 +185,7 @@ static CXXKIT_FORCE_INLINE bool ascii_isascii(unsigned char c)
  * all non-ASCII characters unchanged, even if they are lower case
  * letters in a particular character set. Also unlike the standard
  * library function, this takes and returns a char, not an int, so
- * don't call it on %EOF but no need to worry about casting to #unsigned char
+ * don't call it on %EOF but no need to worry about casting to unsigned char
  * before passing a possibly non-ASCII character in.
  *
  * @param c any character
@@ -204,7 +204,7 @@ static CXXKIT_FORCE_INLINE char ascii_tolower(unsigned char c)
  * all non-ASCII characters unchanged, even if they are upper case
  * letters in a particular character set. Also unlike the standard
  * library function, this takes and returns a char, not an int, so
- * don't call it on %EOF but no need to worry about casting to #unsigned char
+ * don't call it on %EOF but no need to worry about casting to unsigned char
  * before passing a possibly non-ASCII character in.
  *
  * @param c any character

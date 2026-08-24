@@ -324,6 +324,15 @@ template <typename R = safe_minmax_impl::DefaultType,
               typename safe_minmax_impl::ClampType<typename safe_minmax_impl::UnderlyingType<T>::type,
                                                    typename safe_minmax_impl::UnderlyingType<L>::type,
                                                    typename safe_minmax_impl::UnderlyingType<H>::type>::type>::type>
+/** @brief Type-safe clamp to closed interval [min, max].
+ * @tparam R Optional return type.
+ * @tparam T Value type; L, H lower/upper bound types.
+ * @param x Value to clamp.
+ * @param min Lower bound.
+ * @param max Upper bound.
+ * @return @p x clamped to [@p min, @p max].
+ * @note Requires all three args to be either all integral or all floating-point.
+ */
 R2 SafeClamp(T x, L min, H max)
 {
     static_assert(IsIntLike<H>::value || std::is_floating_point<H>::value,
