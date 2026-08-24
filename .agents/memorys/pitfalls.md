@@ -160,3 +160,10 @@
 - **解法**: 注释-only 改动**必须逐个文件 diff 验证纯注释**（脚本 grep 非注释行）+ **提交前全量编译 + ctest + doxygen 重跑**三重验证；代理产出默认不信任，逐文件 checkout 审查；文档编辑禁用并行代理（串行 + 每批验证）
 - **验证**: 1df894a 提交前：全量 build 0 error + 40/40 ctest + doxygen 致命 warning 清零 + 28 文件逐个 diff 纯注释审核
 - **禁止**: 注释批量提交前跳过编译验证；`git add -A` 对含代理改动的树直接全量 stage
+
+## PIT-26: TaskQueueThread 空队列睡 1s + notify 无法缩短 deadline（延迟任务迟到 1s）(2026-08-24)
+- **症状**: TaskQueueThreadTest.PostDelayedTask 隔离跑 15/15 必失败（1s cv 超时），全量偶发；3ms delayed 任务在 ~1s 后才执行
+- **根因**: 空队列时 popNextTask sleepTime=TimeDelta 默认值 PlusInfinity → worker 睡满 wait 上限 1s；期间 postDelayedTask 的 notify 到达但**谓词 wait 不缩短 deadline**（delayed 未到期谓词 false 继续睡旧 deadline）→ 任务迟到 1s
+- **解法**: 空队列/大 sleepTime（us>1000）改 1ms 短轮询；delayed 精确 sleepTime 保持精确等待（task_queue_thread.cpp popNextTask）
+- **验证**: 隔离 15/15 绿（原 15/15 红）；全量 40/40 + shared/ASAN 绿；未用 IsZero（默认是 PlusInfinity 非 Zero）
+- **禁止**: CV wait 用固定长 deadline 而期望 notify 缩短它——谓词版 wait_until 不会改 deadline
