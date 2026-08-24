@@ -153,3 +153,10 @@
 - **根因**: a) StringPrivate::mBuffer[48] 无 NSDMI 初始化；b) 封装把 strlwr/strupr（strndup 新分配）结果直接赋给 std::string，op=/隐式构造只拷贝不释放
 - **解法**: a) `char mBuffer[kBufferSize]{};`；b) 4 个封装改 in-place/本地转换（零分配，同时避开 strlwr NUL 截断坑）
 - **验证**: 三形态全绿 40/40；ASAN/LSAN 零诊断；tst_ascii/tst_string 单测 15/10 全过
+
+## PIT-25: 并行写作代理破坏公共头 + 提交前未编译验证（2026-08-20）
+- **症状**: 9 个并行 doxygen 代理全灭（RPM 限流/stale timeout），留下损坏编辑——吞函数签名（ascii.hpp 4 个 ascii_string_* 签名行消失）、游离注释块（status.hpp @endcode 逃逸为代码）、删宏定义（source_location.hpp）、改 target 名（CMakeLists Docs→BuildDocs）、移动代码（utility.hpp）。且我 3472885 提交了损坏 ascii.hpp（当时只验了 ctest 旧 binary 没验编译）
+- **根因**: a) 并行写作代理各自独立 edit 无协调，撞 API 限流后部分写入残留；b) `git add -A cxxkit/` 把未验证文件全 staged；c) 提交前用 ctest（旧 binary）冒充编译验证
+- **解法**: 注释-only 改动**必须逐个文件 diff 验证纯注释**（脚本 grep 非注释行）+ **提交前全量编译 + ctest + doxygen 重跑**三重验证；代理产出默认不信任，逐文件 checkout 审查；文档编辑禁用并行代理（串行 + 每批验证）
+- **验证**: 1df894a 提交前：全量 build 0 error + 40/40 ctest + doxygen 致命 warning 清零 + 28 文件逐个 diff 纯注释审核
+- **禁止**: 注释批量提交前跳过编译验证；`git add -A` 对含代理改动的树直接全量 stage
