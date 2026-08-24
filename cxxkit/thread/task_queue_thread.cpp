@@ -187,8 +187,9 @@ void TaskQueueThread::postDelayedTask(const Task::SharedPtr &task,
 {
     CXXKIT_D(TaskQueueThread);
     RecursiveMutex::Lock lock(d->mMutex);
-    d->mDelayedTasks.insert({++d->mTaskIdCounter, DateTime::steadyTimeUSecs() + delay.us(), std::move(task)});
-    d->mTaskReadyCondition.notify_one();
+    const auto ts = DateTime::steadyTimeUSecs() + delay.us();
+    d->mDelayedTasks.insert({++d->mTaskIdCounter, ts, std::move(task)});
+        d->mTaskReadyCondition.notify_one();
     CXXKIT_LOGGING_TRACE(CXXKIT_TASK_QUEUE_LOGGER(), "TaskQueueThread: postDelayedTask");
 }
 
@@ -196,7 +197,7 @@ TaskQueueThread::NextTask TaskQueueThread::popNextTask()
 {
     CXXKIT_D(TaskQueueThread);
     CXXKIT_LOGGING_TRACE(CXXKIT_TASK_QUEUE_LOGGER(), "TaskQueueThread::popNextTask()");
-    NextTask result;
+        NextTask result;
     const int64_t tickUSecs = DateTime::steadyTimeUSecs();
     RecursiveMutex::Lock lock(d->mMutex);
     if (d->mQuit)
@@ -222,7 +223,7 @@ TaskQueueThread::NextTask TaskQueueThread::popNextTask()
                 }
             }
 
-            result.runTask = std::move(delayedTask->task);
+                        result.runTask = std::move(delayedTask->task);
             d->mDelayedTasks.erase(delayedTask);
             return result;
         }
@@ -235,6 +236,18 @@ TaskQueueThread::NextTask TaskQueueThread::popNextTask()
         auto pendingTask = d->mPendingTasks.begin();
         result.runTask = std::move(pendingTask->task);
         d->mPendingTasks.erase(pendingTask);
+    }
+
+    if (!result.runTask && result.sleepTime.us() > 1000)
+    {
+        // Nothing due soon, and the empty-queue default sleepTime is PlusInfinity: waiting on it
+        // would sleep a full second (the wait cap) even after a post/postDelayedTask notify that
+        // arrived while this thread was already waiting with an earlier deadline (predicate wait
+        // does not shorten a deadline). A 1ms short-poll bounds that window far inside any real
+        // delay deadline (fixes intermittent TaskQueueThreadTest.PostDelayedTask 1s timeouts:
+        // the 3ms task was being run 1s late). Delayed tasks with a precise sleepTime < 1ms keep
+        // their exact wait.
+        result.sleepTime = TimeDelta::Millis(1);
     }
 
     return result;
@@ -269,9 +282,20 @@ void TaskQueueThread::processTasks()
         CXXKIT_LOGGING_TRACE(CXXKIT_TASK_QUEUE_LOGGER(),
                              "TaskQueueThread::processTasks() wait {} us",
                              nextTask.sleepTime.us());
-        const auto deadline = std::chrono::steady_clock::now() +
+                const auto deadline = std::chrono::steady_clock::now() +
                               std::chrono::microseconds(std::min(nextTask.sleepTime.us(), (int64_t)1000000LL));
-        d->mTaskReadyCondition.wait_until(lock, deadline);
+        // Predicate wait: re-checks the queues under the lock after any wakeup. This is the
+        // standard condition_variable idiom and closes a real lost-wakeup window: init() only
+        // waits for the worker thread to *start* (started.release happens before processTasks),
+        // so a post/postDelayedTask notify_one racing ahead of this thread's first wait is
+        // dropped; the thread then slept a full 1s on an empty-queue sleepTime (mDelayTasks
+        // empty => default TimeDelta => min(...,1s) cap) and delayed tasks missed their window
+        // (observed: TaskQueueThreadTest.PostDelayedTask 1s timeout, intermittent).
+        d->mTaskReadyCondition.wait_until(lock, deadline, [d] {
+            return d->mQuit || !d->mPendingTasks.empty() ||
+                   (!d->mDelayedTasks.empty() &&
+                    d->mDelayedTasks.begin()->timestamp <= DateTime::steadyTimeUSecs());
+        });
         lock.unlock();
     }
     CXXKIT_LOGGING_TRACE(CXXKIT_TASK_QUEUE_LOGGER(), "TaskQueueThread::processTasks() break loop");
