@@ -193,7 +193,7 @@ endif()
 # output (no lcov/gcovr needed). Generates a plain textual report in <build>/coverage/.
 #-----------------------------------------------------------------------------------------------------------------------
 if(CXXKIT_BUILD_COVERAGE)
-    add_custom_target(coverage
+    add_custom_target(BuildCoverage
         COMMAND ${CMAKE_CTEST_COMMAND} --test-dir ${CMAKE_CURRENT_BINARY_DIR} --output-on-failure || true
         COMMAND ${CMAKE_COMMAND} -E env bash "${PROJECT_SOURCE_DIR}/scripts/coverage.sh" "${CMAKE_CURRENT_BINARY_DIR}"
         WORKING_DIRECTORY ${CMAKE_CURRENT_BINARY_DIR}
@@ -261,15 +261,20 @@ endif()
 
 
 #-----------------------------------------------------------------------------------------------------------------------
-# Custom build targets (octk-style): BuildAll rebuilds, BuildInstall builds + installs
+# Custom build targets (octk-style "top-level only"): BuildAll rebuilds, BuildInstall builds + installs
+# Defined only when CxxKit is the top-level project (standalone build). When consumed via
+# add_subdirectory (as a 3rdparty submodule of a parent project), these convenience targets are
+# skipped so they can't collide with same-named targets owned by the parent. (octk convention)
 #-----------------------------------------------------------------------------------------------------------------------
-add_custom_target(BuildAll
-    COMMAND ${CMAKE_COMMAND} --build ./ --parallel ${CXXKIT_NUMBER_OF_ASYNC_JOBS} --config ${CMAKE_BUILD_TYPE}
-    WORKING_DIRECTORY "${CMAKE_CURRENT_BINARY_DIR}")
-add_custom_target(BuildInstall
-    COMMAND ${CMAKE_COMMAND} --build ./ --parallel ${CXXKIT_NUMBER_OF_ASYNC_JOBS} --config ${CMAKE_BUILD_TYPE}
-    COMMAND ${CMAKE_COMMAND} --install ./
-    WORKING_DIRECTORY "${CMAKE_CURRENT_BINARY_DIR}")
+if(PROJECT_SOURCE_DIR STREQUAL CMAKE_SOURCE_DIR)
+    add_custom_target(BuildAll
+        COMMAND ${CMAKE_COMMAND} --build ./ --parallel ${CXXKIT_NUMBER_OF_ASYNC_JOBS} --config ${CMAKE_BUILD_TYPE}
+        WORKING_DIRECTORY "${CMAKE_CURRENT_BINARY_DIR}")
+    add_custom_target(BuildInstall
+        COMMAND ${CMAKE_COMMAND} --build ./ --parallel ${CXXKIT_NUMBER_OF_ASYNC_JOBS} --config ${CMAKE_BUILD_TYPE}
+        COMMAND ${CMAKE_COMMAND} --install ./
+        WORKING_DIRECTORY "${CMAKE_CURRENT_BINARY_DIR}")
+endif()
 
 
 #-----------------------------------------------------------------------------------------------------------------------
