@@ -91,19 +91,17 @@ bool stringCompare(const char *s1, const char *s2, size_t len, bool ignoreCase)
         unsigned char c2 = us2[i];
         // If bytes are the same, they will be the same when converted to lower.
         // So we only need to convert if bytes are not equal.
-        if (c1 != c2 && ignoreCase)
+        if (c1 != c2)
         {
-            c1 = c1 >= 'A' && c1 <= 'Z' ? c1 - 'A' + 'a' : c1;
-            c2 = c2 >= 'A' && c2 <= 'Z' ? c2 - 'A' + 'a' : c2;
-            const int diff = int{c1} - int{c2};
-            if (diff != 0)
+            if (ignoreCase)
+            {
+                c1 = c1 >= 'A' && c1 <= 'Z' ? c1 - 'A' + 'a' : c1;
+                c2 = c2 >= 'A' && c2 <= 'Z' ? c2 - 'A' + 'a' : c2;
+            }
+            if (c1 != c2)
             {
                 return false;
             }
-        }
-        else
-        {
-            return false;
         }
     }
     return true;

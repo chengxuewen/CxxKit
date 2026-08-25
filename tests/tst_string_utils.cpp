@@ -247,12 +247,11 @@ TEST(StringUtils, ExtractFunctionName)
 
 TEST(StringUtils, StringCompare)
 {
-    // NOTE (PIT-28 candidate): stringCompare returns true ONLY for the case-folded-equal
-    // branch (c1 != c2 && ignoreCase). Identical bytes fall through to the else and return
-    // false — verified current behavior; asserted as-is, semantic fix tracked separately.
-    EXPECT_TRUE(cxxkit::utils::stringCompare("ABC", "abc", 3, true)); // case-folded equal
-    EXPECT_FALSE(cxxkit::utils::stringCompare("abc", "abc", 3, false)); // identical bytes also false
-    EXPECT_FALSE(cxxkit::utils::stringCompare("abc", "abd", 3, true));
+    // PIT-28 fixed: identical bytes now compare equal; case-folded equal also true.
+    EXPECT_TRUE(cxxkit::utils::stringCompare("abc", "abc", 3, false));
+    EXPECT_TRUE(cxxkit::utils::stringCompare("ABC", "abc", 3, true));
+    EXPECT_FALSE(cxxkit::utils::stringCompare("abc", "abd", 3, false));
+    EXPECT_FALSE(cxxkit::utils::stringCompare("ABC", "abd", 3, true));
 }
 
 TEST(StringUtils, StringCaseCmp)
