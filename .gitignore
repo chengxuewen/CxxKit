@@ -96,6 +96,7 @@ install
 refsrc
 nodejs
 stash
+.refinfo
 
 # Runtime state
 # --------

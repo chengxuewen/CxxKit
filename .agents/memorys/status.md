@@ -76,7 +76,7 @@ cxxkit 是 OpenCTK（an open cpp toolkit）的成功重构版本 —— 精简�
 
 ## 待办
 
-1. **覆盖率补全（当前 61.4%，29 库 .cpp 全口径）**：11 个 0% 文件——assert.cpp(8L, 已有 tst_assert 但未覆盖库实现)/once_flag(2L)/task_queue_factory(7L)/race_checker(19L)/fake_clock(30L)/id_registry(37L)/shared_buffer(79L)/string_encode(86L)/base64(117L)/metrics(145L)/random(139L)，目标 ≥80%
+1. ~~覆盖率补全~~ **已完成**（61.4% → 80.0%，11 个 0% 文件已补测：tst_once_flag/tst_task_queue_factory/tst_race_checker/tst_fake_clock/tst_id_registry/tst_shared_buffer/tst_string_encode/tst_base64/tst_metrics/tst_random + string_utils/random 扩展。29-file 全口径 80% 门禁达标。后续优化可补未覆盖分支（ascii 63%、metrics 65%、platform 71%）到更高水位。
 2. media/imgui 续建路径（设计 B1，已延后）
 3. clang-tidy warn-only 门禁→首跑后基线干净收紧为零告警（需 GitHub 侧 push 触发 CI；本机无 LLVM 工具链）
 4. Windows/arm64 验证（项目声明非首要）
@@ -109,3 +109,9 @@ cxxkit 是 OpenCTK（an open cpp toolkit）的成功重构版本 —— 精简�
 - [x] **构建/CI/文档**：BuildAll/BuildInstall 顶层判断（PROJECT_SOURCE_DIR==CMAKE_SOURCE_DIR，octk）；clang-tidy warn-only 门禁 + .clang-tidy；CONTRIBUTING/SECURITY/CHANGELOG/platform-support 落盘 + docs 索引
 - [x] **测试 40 套件全绿**：main 40/40、shared 40/40、ASAN 40/40（零诊断）、coverage 61.4%（29 文件全口径，见待办 1）
 - 验证：覆盖率门禁须按 29 库 .cpp 全口径（含 0% 文件），80.5% 历史数字是 19-file 子集
+
+- [x] **PIT-28 stringCompare 逻辑修复**（`3f21081`）：实现把 `stringCaseCmp` 折叠逻辑写反——相等字节也 return false（调用方为零，低风险）。已修 + 断言更新
+- [x] **覆盖率 80% 门禁达标**（`993d305`）：10 个新测试套件（once_flag/task_queue_factory/race_checker/fake_clock/id_registry/shared_buffer/string_encode/base64/metrics/random）+ string_utils/random 扩展。全量 50 套件 50/50 全绿，build-cov 29-file 口径 80.0%（2220/2775）
+- [x] **CI coverage 门禁**（`9bca39f`）：Linux job 加 build-cov coverage 步骤（warn-only，独立目录），report 29-file 全口径 aggregate——填补 CI 无覆盖率监控的缺口
+- [x] **edit-safety sed 规则**（`7abf176`）：sed -i 全局替换前 grep 验证匹配数量——tst_string_utils utils:: 替换误伤的教训
+- [x] **测试 50 套件全绿**：main 50/50、shared 40+/40+、ASAN 50/50（零诊断），coverage 80.0% 门禁达标

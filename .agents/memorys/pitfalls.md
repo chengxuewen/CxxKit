@@ -174,8 +174,8 @@
 - **解法**: 覆盖率必须报告 total files 数（29）+ 含 0% 文件；80% 门禁以全口径加权为准（C12/D21）
 - **验证**: `bash scripts/coverage.sh build-cov | grep "Line-weighted"` → `61.4% (1705 exec / 2775 total, 29 files)`
 
-## PIT-28: stringCompare 相等等价返回 false？（行为存疑，待确认语义）(2026-08-24)
+## PIT-28: stringCompare 相等串返回 false——已修（2026-08-24）
 - **症状**: `utils::stringCompare("abc","abc",3,false)` 返回 false——**字节完全相等也 false**
-- **根因**: 实现只有 `if (c1 != c2 && ignoreCase)` 分支在 case-fold 后 diff==0 时 true；**c1==c2 走 else 直接 return false**（string_utils.cpp:83-110）——疑似逻辑写反（相等应继续循环）
-- **解法**: 未改库（语义待与上游 WebRTC 版对齐后定）；测试断言按当前行为锁定（PIT-28 标记注释）
-- **验证**: tst_string_utils StringCompare 断言 case-folded-equal=true / 完全相等=false（记录现状）
+- **根因**: 实现把 `stringCaseCmp` 的折叠逻辑写错——`if (c1 != c2 && ignoreCase) ... else return false`，相等字节走 else 直接 false；调用方为零（仅测试，WebRTC 上游的对比函数不在此路径），低风险修复
+- **解法**: 已修（`3f21081`）——相等继续循环、不等按 ignoreCase 折叠后比较（string_utils.cpp:83-110）；tst_string_utils 断言正确语义
+- **验证**: `stringCompare("abc","abc",3,false)` = true（完全相等）；`"ABC","abc"` + ignoreCase = true；50/50 全过
