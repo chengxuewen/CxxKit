@@ -32,7 +32,9 @@ set(CXXKIT_MEDIA_SOURCES
     video_frame.cpp
     framerate_controller.cpp
     video_frame_buffer_pool.cpp
-    webrtc_libyuv.cpp)
+    webrtc_libyuv.cpp
+    frame_generator.cpp
+    frame_generator_capturer.cpp)
 
 cxxkit_find_package(Libyuv PROVIDED_TARGETS CxxKitWrapLibyuv::WrapLibyuv)
 cxxkit_add_library(cxxkit_media
