@@ -69,6 +69,21 @@ cxxkit_add_test(cxxkit_tst_media_video_frame_buffer
     INCLUDE_DIRECTORIES ${PROJECT_SOURCE_DIR}
     LIBRARIES ${CXXKIT_TEST_LINK_LIBRARIES} cxxkit::media ${CMAKE_THREAD_LIBS_INIT})
 
+cxxkit_add_test(cxxkit_tst_media_framerate_controller
+    SOURCES tst_media_framerate_controller.cpp
+    INCLUDE_DIRECTORIES ${PROJECT_SOURCE_DIR}
+    LIBRARIES ${CXXKIT_TEST_LINK_LIBRARIES} cxxkit::media ${CMAKE_THREAD_LIBS_INIT})
+
+cxxkit_add_test(cxxkit_tst_media_video_frame
+    SOURCES tst_media_video_frame.cpp
+    INCLUDE_DIRECTORIES ${PROJECT_SOURCE_DIR}
+    LIBRARIES ${CXXKIT_TEST_LINK_LIBRARIES} cxxkit::media ${CMAKE_THREAD_LIBS_INIT})
+
+cxxkit_add_test(cxxkit_tst_media_i420_buffer
+    SOURCES tst_media_i420_buffer.cpp
+    INCLUDE_DIRECTORIES ${PROJECT_SOURCE_DIR}
+    LIBRARIES ${CXXKIT_TEST_LINK_LIBRARIES} cxxkit::media ${CMAKE_THREAD_LIBS_INIT})
+
 # tst_inlined_vector.cpp deferred to Phase 2 (depends on absl test_instance_tracker, not vendored in OpenCTK either)
 
 cxxkit_add_test(cxxkit_tst_divide_round
