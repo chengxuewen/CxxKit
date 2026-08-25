@@ -215,6 +215,7 @@ add_subdirectory(cxxkit/thread)
 add_subdirectory(cxxkit/time)
 add_subdirectory(cxxkit/text)
 add_subdirectory(cxxkit/tools)
+add_subdirectory(cxxkit/media)
 add_subdirectory(cxxkit/profiling)
 
 #-----------------------------------------------------------------------------------------------------------------------
