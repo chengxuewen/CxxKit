@@ -271,6 +271,11 @@ cxxkit_add_test(cxxkit_tst_status_or
     INCLUDE_DIRECTORIES ${PROJECT_SOURCE_DIR}
     LIBRARIES ${CXXKIT_TEST_LINK_LIBRARIES} ${CMAKE_THREAD_LIBS_INIT})
 
+cxxkit_add_test(cxxkit_tst_pending_task_safety_flag
+    SOURCES tst_pending_task_safety_flag.cpp
+    INCLUDE_DIRECTORIES ${PROJECT_SOURCE_DIR}
+    LIBRARIES ${CXXKIT_TEST_LINK_LIBRARIES} ${CMAKE_THREAD_LIBS_INIT})
+
 cxxkit_add_test(cxxkit_tst_metrics
     SOURCES tst_metrics.cpp
     INCLUDE_DIRECTORIES ${PROJECT_SOURCE_DIR}
