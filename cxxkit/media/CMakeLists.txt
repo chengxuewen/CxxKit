@@ -30,12 +30,13 @@ set(CXXKIT_MEDIA_SOURCES
     hdr_metadata.cpp
     i420_buffer.cpp
     video_frame.cpp
-    framerate_controller.cpp)
+    framerate_controller.cpp
+    video_frame_buffer_pool.cpp)
 
 cxxkit_find_package(Libyuv PROVIDED_TARGETS CxxKitWrapLibyuv::WrapLibyuv)
 cxxkit_add_library(cxxkit_media
     SOURCES ${CXXKIT_MEDIA_SOURCES}
-    PUBLIC_LIBRARIES cxxkit::base cxxkit::tools CxxKitWrapLibyuv::WrapLibyuv
+    PUBLIC_LIBRARIES cxxkit::base cxxkit::thread cxxkit::tools CxxKitWrapLibyuv::WrapLibyuv
     EXPORT_NAME media
     FOLDER "CxxKit/libs")
 cxxkit_generate_pkg_config(cxxkit_media media)
