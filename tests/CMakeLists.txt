@@ -48,6 +48,17 @@ cxxkit_add_test(cxxkit_tst_array_view
     INCLUDE_DIRECTORIES ${PROJECT_SOURCE_DIR}
     LIBRARIES ${CXXKIT_TEST_LINK_LIBRARIES} ${CMAKE_THREAD_LIBS_INIT})
 
+cxxkit_add_test(cxxkit_tst_flat_hash_map
+    SOURCES tst_flat_hash_map.cpp
+    INCLUDE_DIRECTORIES ${PROJECT_SOURCE_DIR}
+    LIBRARIES ${CXXKIT_TEST_LINK_LIBRARIES} ${CMAKE_THREAD_LIBS_INIT})
+
+cxxkit_add_test(cxxkit_tst_flat_hash_set
+    SOURCES tst_flat_hash_set.cpp
+    INCLUDE_DIRECTORIES ${PROJECT_SOURCE_DIR}
+    LIBRARIES ${CXXKIT_TEST_LINK_LIBRARIES} ${CMAKE_THREAD_LIBS_INIT})
+
+
 # tst_inlined_vector.cpp deferred to Phase 2 (depends on absl test_instance_tracker, not vendored in OpenCTK either)
 
 cxxkit_add_test(cxxkit_tst_divide_round
@@ -252,6 +263,11 @@ cxxkit_add_test(cxxkit_tst_string_encode
 
 cxxkit_add_test(cxxkit_tst_base64
     SOURCES tst_base64.cpp
+    INCLUDE_DIRECTORIES ${PROJECT_SOURCE_DIR}
+    LIBRARIES ${CXXKIT_TEST_LINK_LIBRARIES} ${CMAKE_THREAD_LIBS_INIT})
+
+cxxkit_add_test(cxxkit_tst_status_or
+    SOURCES tst_status_or.cpp
     INCLUDE_DIRECTORIES ${PROJECT_SOURCE_DIR}
     LIBRARIES ${CXXKIT_TEST_LINK_LIBRARIES} ${CMAKE_THREAD_LIBS_INIT})
 
