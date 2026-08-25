@@ -6,6 +6,7 @@
  */
 
 #include <cxxkit/media/i420_buffer.hpp>
+#include <vector>
 #include <cxxkit/media/video_frame.hpp>
 #include <cxxkit/media/webrtc_libyuv.hpp>
 
@@ -88,3 +89,39 @@ TEST(WebRtcLibyuv, SSIMSameFrame) {
 }
 
 }  // namespace
+// SampleSize 全分支覆盖：NV12/UYVY/RGB24/RGB565 + ARGB（已有）
+TEST(WebRtcLibyuv, ConvertFromI420AllFormats) {
+    auto src = cxxkit::I420Buffer::Create(4, 4);
+    src->SetBlack();
+    auto frame = cxxkit::VideoFrame::Builder()
+                     .set_video_frame_buffer(src)
+                     .set_timestamp_us(1000)
+                     .build();
+    const cxxkit::VideoType formats[] = {
+        cxxkit::VideoType::kNV12, cxxkit::VideoType::kUYVY,
+        cxxkit::VideoType::kRGB24, cxxkit::VideoType::kRGB565,
+    };
+    for (const auto fmt : formats) {
+        // CalcBufferSize 对 RGB565 返回 0（video_types 未口径）；此处用 4*4*2 兜底
+        const size_t size = fmt == cxxkit::VideoType::kRGB565
+                                ? 4u * 4 * 2
+                                : cxxkit::CalcBufferSize(fmt, 4, 4);
+        ASSERT_GT(size, 0u) << "format size unknown";
+        std::vector<uint8_t> dst(size);
+        const int ret = cxxkit::ConvertFromI420(frame, fmt, 4, 4, dst.data());
+        EXPECT_EQ(ret, 0) << "ConvertFromI420 failed for " << static_cast<int>(fmt);
+    }
+}
+
+// 不同内容帧 → PSNR 有限值（非完美）
+TEST(WebRtcLibyuv, PsnrDifferentFrames) {
+    auto a = cxxkit::I420Buffer::Create(16, 16);
+    auto b = cxxkit::I420Buffer::Create(16, 16);
+    for (int i = 0; i < 16 * 16; ++i) {
+        a->MutableDataY()[i] = static_cast<uint8_t>(i);
+        b->MutableDataY()[i] = static_cast<uint8_t>(i + 100);
+    }
+    const double psnr = cxxkit::I420Psnr(*a, *b);
+    EXPECT_GT(psnr, 0.0);
+    EXPECT_LT(psnr, cxxkit::kPerfectPSNR);  // 有损 → 低于完美值
+}
