@@ -141,3 +141,7 @@ cxxkit 是 OpenCTK（an open cpp toolkit）的成功重构版本 —— 精简�
 - 验证：**63/63 tests pass**（+8 media 套件）；tst_mutex 偶发 flaky 单跑过
 - [x] **覆盖率 80.3% 门禁达标**（`a98798a`/`ee3c643`）：扩展 color_space/webrtc_libyuv 测试；修复 hdr_metadata.cpp 空壳（3 个构造声明未定义 → link error，移植缺陷）——color_space.cpp 28.8%→85.6%，全口径 39 files 80.3%（2764/3440）
 - 备注：libyuv 是唯一新增第三方依赖；media 链接 cxxkit::base/tools/thread + WrapLibyuv
+
+- [x] **media 安装功能修复**（`cf9e1e9`）：media CMakeLists 补 install(TARGETS)+install(DIRECTORY)+install_public_wrap_headers(Libyuv)；CxxKitPkgConfigHelpers 补 -lyuv 映射；**cxxkitConfig 导出 stub 链接缺陷修复**——libyuv/spdlog/fmt 空 stub 无链接库导致消费方缺 -lyuv/-lspdlog/-lfmt（C11 消费验证暴露的既有缺陷），stub 补 INTERFACE_LINK_LIBRARIES 指向安装树 .a
+- 验证：/tmp 消费方 find_package(cxxkit COMPONENTS media) + I420Buffer + ScaleVideoFrameBuffer 构建/链接/运行全通；link.txt 含 yuv+spdlog+fmt；**find_dependency(fmt/spdlog) 与 stub 双轨并存，stub 负责真链接**
+- 备注：消费方需 C++14（function2 vendored 头依赖 C++14 语法，thread 引入）
