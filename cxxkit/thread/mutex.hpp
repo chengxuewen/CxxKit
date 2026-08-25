@@ -30,6 +30,7 @@
 #include <mutex>
 #include <shared_mutex>
 #include <condition_variable>
+#include <pthread.h>
 
 CXXKIT_BEGIN_NAMESPACE
 
@@ -57,6 +58,66 @@ public:
     using Base::Base;
     RecursiveMutex() = default;
     ~RecursiveMutex() = default;
+};
+
+/// @brief RAII lock guard for Mutex (constructs lock, destructs unlock).
+class MutexLock
+{
+public:
+    explicit MutexLock(Mutex &mutex) : mMutex(mutex) { mMutex.lock(); }
+    ~MutexLock() { mMutex.unlock(); }
+
+    MutexLock(const MutexLock &) = delete;
+    MutexLock &operator=(const MutexLock &) = delete;
+
+private:
+    Mutex &mMutex;
+};
+
+/// @brief Reader-writer lock using pthread_rwlock.
+class RWLock
+{
+public:
+    RWLock() { pthread_rwlock_init(&mRwlock, nullptr); }
+    ~RWLock() { pthread_rwlock_destroy(&mRwlock); }
+
+    RWLock(const RWLock &) = delete;
+    RWLock &operator=(const RWLock &) = delete;
+
+    void read_lock() { pthread_rwlock_rdlock(&mRwlock); }
+    void write_lock() { pthread_rwlock_wrlock(&mRwlock); }
+    void unlock() { pthread_rwlock_unlock(&mRwlock); }
+
+private:
+    pthread_rwlock_t mRwlock;
+};
+
+/// @brief RAII read lock guard for RWLock.
+class ReadLock
+{
+public:
+    explicit ReadLock(RWLock &rw) : mRw(rw) { mRw.read_lock(); }
+    ~ReadLock() { mRw.unlock(); }
+
+    ReadLock(const ReadLock &) = delete;
+    ReadLock &operator=(const ReadLock &) = delete;
+
+private:
+    RWLock &mRw;
+};
+
+/// @brief RAII write lock guard for RWLock.
+class WriteLock
+{
+public:
+    explicit WriteLock(RWLock &rw) : mRw(rw) { mRw.write_lock(); }
+    ~WriteLock() { mRw.unlock(); }
+
+    WriteLock(const WriteLock &) = delete;
+    WriteLock &operator=(const WriteLock &) = delete;
+
+private:
+    RWLock &mRw;
 };
 
 CXXKIT_END_NAMESPACE
