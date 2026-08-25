@@ -27,7 +27,8 @@ cxxkit_configure_library_begin(CxxKitMedia)
 
 set(CXXKIT_MEDIA_SOURCES
     color_space.cpp
-    hdr_metadata.cpp)
+    hdr_metadata.cpp
+    i420_buffer.cpp)
 
 cxxkit_find_package(Libyuv PROVIDED_TARGETS CxxKitWrapLibyuv::WrapLibyuv)
 cxxkit_add_library(cxxkit_media
