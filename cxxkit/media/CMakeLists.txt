@@ -31,7 +31,8 @@ set(CXXKIT_MEDIA_SOURCES
     i420_buffer.cpp
     video_frame.cpp
     framerate_controller.cpp
-    video_frame_buffer_pool.cpp)
+    video_frame_buffer_pool.cpp
+    webrtc_libyuv.cpp)
 
 cxxkit_find_package(Libyuv PROVIDED_TARGETS CxxKitWrapLibyuv::WrapLibyuv)
 cxxkit_add_library(cxxkit_media
