@@ -96,3 +96,5 @@ add_library(cxxkit_xxx ${_cxxkit_headers} xxx.cpp)   # header-only 用 add_libra
 - **C13（2026-08-24，PIT-25）**：注释/文档-only 批量更改纪律：逐文件 diff 验证纯注释（`grep 非注释行 = 0`）+ 提交前三重验证（全量编译 0 error + ctest 全绿 + doxygen 重跑致命 warning 清零）；**禁并行代理写公共头**（RPM 限流 + edit 吞行/删宏/改 target）；**禁 `git add -A`** 对含代理改动树（逐文件 add）
 - **C14（2026-08-24，PIT-26）**：condition_variable wait 用固定长 deadline 时**不可指望 notify 缩短它**——谓词版 `wait_until(lock, deadline, pred)` 不改 deadline。空队列/未知间隔等待用**短轮询（1ms）+ 谓词重查**，不睡长上限。检查：task_queue_thread.cpp popNextTask 空队列分支 `sleepTime.us() > 1000 → Millis(1)`
 - **C15（2026-08-24）**：BuildAll/BuildInstall 等 convenience target 必须包 `if(PROJECT_SOURCE_DIR STREQUAL CMAKE_SOURCE_DIR)`（octk 惯例，PROJECT_IS_TOP_LEVEL 需 3.21+ 不用）——被父项目 add_subdirectory 时跳过防同名冲突
+
+- **C16（2026-08-25）**：外部库移植纪律——从 abseil/webrtc 移植代码时：① 库代码保持 C++11（降级 auto 返回/if constexpr/泛型 lambda/_t/_v）；② 统一 `cxxkit::` 命名空间 + `#pragma once`；③ 简化实现（禁 SIMD/自定义 allocator/异常安全等重依赖）；④ 适配现有 API（如 StatusOr 用 `isOk()` 而非 abseil `ok()`）；⑤ 每个移植功能配套 gtest 测试 + 许可横幅 + doxygen 注释。检查：新头 `grep -c "pragma once"` 应为 1

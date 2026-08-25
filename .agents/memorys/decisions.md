@@ -103,3 +103,13 @@ sanitizer（ASAN/LSAN/UBSan）与 coverage 用**独立 build 目录**（build-as
 - **决策**：CXXKIT_BUILD_SANITIZERS/COVERAGE 继续顶层 add_compile_options/add_link_options，不改 target_* 方式
 - **理由**：sanitizer 需全链接二进制裁一致（vendored 3rdparty 也带）；coverage 顶层虽让 3rdparty 带 --coverage（略慢）但 coverage.sh 已只统计库 .cpp；收益/风险比不值得改
 - **参考**：用户确认保持不变（2026-08-24）
+
+## D23: abseil/webrtc 移植候选决策（2026-08-25 用户交互式逐项讨论）
+- **决策**：18 个候选逐项讨论——6 项移植（flat_hash_map/set、ArrayView 扩展、StatusOr、Mutex RAII、PendingTaskSafetyFlag、Barrier），11 项排除（scoped_refptr/SwapQueue/WeakPtr/absl::Mutex/Notification/BlockingCounter/SequenceChecker/FixedArray/Cleanup/AlwaysValidPointer/StrCat），1 项捆绑（Hash 框架随 flat_hash_map 后续增强）
+- **理由**：排除项均有 std 替代（shared_ptr/promise-future/atomic+cv/lock_guard）或与现有功能重叠（ContextChecker/scope_guard/InlinedVector/moodycamel 队列/fmtlib）；保留项填补真实缺口且移植成本低（header-only 或小配对）
+- **参考**：docs/portability-analysis.md（8 轮 question 交互式逐项确认）
+
+## D24: 决策讨论选项带推荐标注（2026-08-25，用户偏好）
+- **决策**: question 工具列选项时，有推荐项则第一项标注"(推荐)"；用户对照推荐决策，不确定项会问"你的推荐？"
+- **理由**: 用户 3 次（FixedArray/Hash/AlwaysValidPointer）要求先给推荐——平行选项无导向性，交互效率低
+- **参考**: 2026-08-25 移植候选交互式讨论（18 项逐项）

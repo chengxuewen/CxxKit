@@ -12,6 +12,9 @@
 |---|---|---|
 | Refactor design spec | [superpowers/specs/2026-08-18-cxxkit-refactor-design.md](superpowers/specs/2026-08-18-cxxkit-refactor-design.md) | abseil-style layout, namespace, 3rdparty wrap system, cmake helpers migration list, review findings (H1/H2/M1-M4) |
 | Phase 1 plan | [superpowers/plans/2026-08-18-cxxkit-phase1-skeleton-sublibs.md](superpowers/plans/2026-08-18-cxxkit-phase1-skeleton-sublibs.md) | skeleton, helpers, header-only sublibraries, tests, install |
+| Crash sublib plan | [superpowers/plans/2026-08-19-cxxkit-crash-sublib.md](superpowers/plans/2026-08-19-cxxkit-crash-sublib.md) | breakpad + backward-cpp crash handler, vcpkg export .7z cache |
+| abseil/webrtc porting plan | [superpowers/plans/2026-08-25-abseil-webrtc-porting.md](superpowers/plans/2026-08-25-abseil-webrtc-porting.md) | Swiss Table, ArrayView, StatusOr, Mutex, SafetyFlag, Barrier — 6 porting candidates |
+| abseil/webrtc analysis | [portability-analysis.md](portability-analysis.md) | gap analysis, 18 candidates evaluated, 6 selected (interactive discussion) |
 | Project memory | [.agents/memorys/](../.agents/memorys/) | status (phases), conventions (C1-C6), decisions (D1-D10), pitfalls |
 | Dev rules | [.agents/rules/](../.agents/rules/) | common + cpp coding/review/testing/security rules |
 | Platform support | [platform-support.md](platform-support.md) | OS/toolchain & sublibrary compatibility matrix |

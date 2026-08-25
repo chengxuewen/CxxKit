@@ -179,3 +179,23 @@
 - **根因**: 实现把 `stringCaseCmp` 的折叠逻辑写错——`if (c1 != c2 && ignoreCase) ... else return false`，相等字节走 else 直接 false；调用方为零（仅测试，WebRTC 上游的对比函数不在此路径），低风险修复
 - **解法**: 已修（`3f21081`）——相等继续循环、不等按 ignoreCase 折叠后比较（string_utils.cpp:83-110）；tst_string_utils 断言正确语义
 - **验证**: `stringCompare("abc","abc",3,false)` = true（完全相等）；`"ABC","abc"` + ignoreCase = true；50/50 全过
+
+## PIT-29: Swiss Table 移植 const-correctness 问题（2026-08-25）
+- **症状**: flat_hash_map 编译报 `binding reference of type 'value_type&' to 'const value_type' discards qualifiers`
+- **根因**: iterator 存储 `const raw_hash_set*` 但 operator*/operator-> 返回非 const 引用/指针
+- **解法**: iterator 存储 `raw_hash_set*`（非 const）+ 新增 `slot_at_mut()` 非 const 访问方法
+- **验证**: 55/55 tests pass
+
+## PIT-30: 实施计划假设现有 API——3 处适配（2026-08-25）
+- **症状**: porting plan 写完后 subagent 执行时发现 3 处 API 假设错误：① StatusOr 测试用 `cxxkit::StatusCode::kNotFound` 但无此枚举（实际 Status 用 `isOk()`/`errorMessage()`）；② Mutex 用 `std::shared_mutex` 但库 target 是 C++11（改为 pthread_rwlock_t）；③ SafeTask lambda 用转发引用捕获（move-only callable 会编译失败，改值拷贝）
+- **根因**: 写 plan 时凭 abseil API 记忆假设 CxxKit 有对应类型，未读目标文件核对
+- **解法**: 写 plan 前 grep 目标头核对现有 API 签名；跨库移植项（Status/StatusCode/Result）先读 `tools/status.hpp` 确认实际接口再写测试代码
+- **验证**: 55/55 tests pass；以后写 plan 涉及现有类时先 `grep -n "class\|isOk\|ok()" cxxkit/tools/status.hpp`
+- **禁止**: 凭上游库 API 记忆直接写 plan 测试代码——假设的 API 名在 CxxKit 中可能不存在
+
+## PIT-31: 后台 subagent 并行写共享工作树——构建失败可能是他人半成品（2026-08-25）
+- **症状**: Task 1 构建 flat_hash_map 时见到 `cxxkit/thread/mutex.hpp` 的 `mMutex 未声明` error——实为后台 subagent 正在写的 Task 4 半成品中间态
+- **根因**: lead 与后台 subagent 并行编辑同一仓库；共享 build 目录的增量构建结果与 lead 的 Task 无关
+- **解法**: 后台代理运行期间，构建 error 先 `git diff <file>` 确认是否为他人改动；只修自己文件的 error；subagent 完成后重新全量构建确认
+- **验证**: subagent 完成后 `cmake --build build` 0 error（半成品被 subagent 自己修复）
+- **禁止**: 对非自己改动的文件报错做修复编辑——会与 subagent 冲突（双写同一文件）

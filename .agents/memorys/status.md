@@ -115,3 +115,14 @@ cxxkit 是 OpenCTK（an open cpp toolkit）的成功重构版本 —— 精简�
 - [x] **CI coverage 门禁**（`9bca39f`）：Linux job 加 build-cov coverage 步骤（warn-only，独立目录），report 29-file 全口径 aggregate——填补 CI 无覆盖率监控的缺口
 - [x] **edit-safety sed 规则**（`7abf176`）：sed -i 全局替换前 grep 验证匹配数量——tst_string_utils utils:: 替换误伤的教训
 - [x] **测试 50 套件全绿**：main 50/50、shared 40+/40+、ASAN 50/50（零诊断），coverage 80.0% 门禁达标
+
+### 2026-08-25 abseil/webrtc 移植（6 项功能）
+
+- [x] **Task 1: flat_hash_map / flat_hash_set (Swiss Table)**（`f97d0a3`）：从 abseil-cpp 20220623.2 移植，简化实现（C++11，无 SIMD，无自定义 allocator）。3 新文件 921 行，30 tests。
+- [x] **Task 2: ArrayView 扩展**（`36e8071`）：添加 `at()` 边界检查、`MakeArrayView`/`MakeConstArrayView` 工厂函数。+44 行，7 tests。
+- [x] **Task 3: StatusOr<T>**（`1d04a4d`）：新增 `tools/status_or.hpp`，持有 Status 或 T 的期望值类型。192 行，9 tests。
+- [x] **Task 4: Mutex / RWLock RAII 守卫**（`56d46ee`）：添加 `MutexLock`、`RWLock`、`ReadLock`、`WriteLock`（pthread 实现）。+61 行，6 tests。
+- [x] **Task 5: PendingTaskSafetyFlag**（`39d4ba2`）：新增 `thread/pending_task_safety_flag.hpp`，防异步回调 use-after-free。94 行，7 tests。
+- [x] **Task 6: Barrier (P1)**（`6099332`）：新增 `thread/barrier.hpp`，N 线程同步屏障（C++11 实现）。116 行，3 tests。
+- [x] **文档补全**：许可横幅 + doxygen 注释（`afbacb6`）
+- 验证：55/55 tests pass，coverage 80.0%（29 files 全口径）
