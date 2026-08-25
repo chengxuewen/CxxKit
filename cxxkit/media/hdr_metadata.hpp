@@ -22,8 +22,7 @@
 **
 ***********************************************************************************************************************/
 
-#ifndef CXXKIT_MEDIA_HDR_METADATA_HPP
-#define CXXKIT_MEDIA_HDR_METADATA_HPP
+#pragma once
 
 #include <cxxkit/media/media_global.hpp>
 
@@ -126,4 +125,3 @@ struct CXXKIT_MEDIA_API HdrMetadata
 };
 }  // namespace cxxkit
 
-#endif // CXXKIT_MEDIA_HDR_METADATA_HPP

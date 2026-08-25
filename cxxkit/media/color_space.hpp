@@ -22,8 +22,7 @@
 **
 ***********************************************************************************************************************/
 
-#ifndef CXXKIT_MEDIA_COLOR_SPACE_HPP
-#define CXXKIT_MEDIA_COLOR_SPACE_HPP
+#pragma once
 
 #include <cxxkit/media/media_global.hpp>
 #include <cxxkit/media/hdr_metadata.hpp>
@@ -192,4 +191,3 @@ private:
 
 }  // namespace cxxkit
 
-#endif // CXXKIT_MEDIA_COLOR_SPACE_HPP
