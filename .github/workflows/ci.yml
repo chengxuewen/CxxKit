@@ -58,3 +58,13 @@ jobs:
 
       - name: Test
         run: ctest --test-dir build --output-on-failure
+
+      - name: Coverage (Linux only, warn-only gate)
+        if: runner.os == 'Linux'
+        run: |
+          cmake -S . -B build-cov -G Ninja -DCXXKIT_BUILD_COVERAGE=ON -DCXXKIT_BUILD_TESTS=ON
+          cmake --build build-cov --parallel 2
+          ctest --test-dir build-cov --output-on-failure
+          bash scripts/coverage.sh build-cov 2>&1 | grep "Line-weighted"
+          # Warn-only: report aggregate without failing. Tighten to ≥80% once baseline is stable.
+          exit 0
