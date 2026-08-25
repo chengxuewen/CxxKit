@@ -126,3 +126,17 @@ cxxkit 是 OpenCTK（an open cpp toolkit）的成功重构版本 —— 精简�
 - [x] **Task 6: Barrier (P1)**（`6099332`）：新增 `thread/barrier.hpp`，N 线程同步屏障（C++11 实现）。116 行，3 tests。
 - [x] **文档补全**：许可横幅 + doxygen 注释（`afbacb6`）
 - 验证：55/55 tests pass，coverage 80.0%（29 files 全口径）
+
+### 2026-08-25 media 子库移植（第 16 子库）
+
+- [x] **Task 1: libyuv vendored**（`bca08da`）：复用 OpenCTK FindWrapLibyuv + libyuv.7z（BSD-3, SVN 1916），CxxKit 命名空间适配
+- [x] **Task 2: media 骨架**（`9eb9925`）：media_global、VideoType（CalcBufferSize inline 单归属 M6）、VideoRotation、ColorSpace（PrimaryID 访问器 API）、HdrMetadata
+- [x] **Task 3: VideoFrameBuffer 接口家族**（`c72d5e0`）：header-only，test double（NativeI420Buffer 不依赖 Task 4，B1）；GetDataY/StrideY webrtc 命名规范（M2）
+- [x] **Task 4: I420Buffer**（`b5e2ef9`）：SharedRefPtr 重构（M3）、libyuv 后端（I420Copy/Rotate/Scale）
+- [x] **Task 5: VideoFrame 裁剪版**（`afc98d6`）：砍 RTP 字段，Builder + UpdateRect
+- [x] **Task 6: VideoFrameBufferPool**（`0b9b383`）：I420-only（M4），list + HasOneRef 回池
+- [x] **Task 7: webrtc_libyuv 转换层**（`ea4a101`）：CalcBufferSize 复用 video_types（M6）、I420Psnr/Ssim 命名（M2）
+- [x] **Task 8: FramerateController**（`d9aa89e`）：OpenCTK ShouldDropFrame API
+- [x] **Task 9: FrameGenerator + Capturer**（`77a6d49`）：M5 自包含裁剪（无 VideoTrackSource/broadcaster），同步 GenerateOneFrame（无线程，ponytail 注释）
+- 验证：**63/63 tests pass**（+8 media 套件）；tst_mutex 偶发 flaky 单跑过
+- 备注：libyuv 是唯一新增第三方依赖；media 链接 cxxkit::base/tools/thread + WrapLibyuv
