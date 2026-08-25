@@ -32,6 +32,8 @@
 
 #include <array>
 #include <algorithm>
+#include <stdexcept>
+#include <initializer_list>
 
 CXXKIT_BEGIN_NAMESPACE
 
@@ -315,7 +317,28 @@ public:
     }
     ArrayView<T> subview(size_t offset) const { return subview(offset, this->size()); }
     /// @brief Returns a subview from @p offset to the end of the view.
+
+    /// @brief Bounds-checked element access; throws std::out_of_range if idx >= size().
+    T &at(size_t idx)
+    {
+        if (idx >= this->size())
+        {
+            throw std::out_of_range("ArrayView::at");
+        }
+        return this->data()[idx];
+    }
+
+    /// @brief Bounds-checked element access (const); throws std::out_of_range if idx >= size().
+    const T &at(size_t idx) const
+    {
+        if (idx >= this->size())
+        {
+            throw std::out_of_range("ArrayView::at");
+        }
+        return this->data()[idx];
+    }
 };
+
 
 // Comparing two ArrayViews compares their (Pointer,size) pairs; it does *not*
 // dereference the pointers.
@@ -377,5 +400,26 @@ inline ArrayView<U, Size> reinterpretArrayView(ArrayView<T, Size> view)
     return ArrayView<U, Size>(reinterpret_cast<U *>(view.data()), view.size());
 }
 } // namespace utils
+
+/// @brief Factory: creates a mutable ArrayView from a raw pointer and size.
+template <typename T>
+inline ArrayView<T> MakeArrayView(T *data, size_t size)
+{
+    return ArrayView<T>(data, size);
+}
+
+/// @brief Factory: creates a const ArrayView from a raw pointer and size.
+template <typename T>
+inline ArrayView<const T> MakeConstArrayView(const T *data, size_t size)
+{
+    return ArrayView<const T>(data, size);
+}
+
+/// @brief Factory: creates a const ArrayView from an initializer_list.
+template <typename T>
+inline ArrayView<const T> MakeConstArrayView(std::initializer_list<T> il)
+{
+    return ArrayView<const T>(il.begin(), il.size());
+}
 
 CXXKIT_END_NAMESPACE

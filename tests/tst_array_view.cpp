@@ -668,3 +668,71 @@ TEST(ArrayViewTest, TestReinterpretCastVariableSize)
     EXPECT_EQ(uint8_av[1], 2);
     EXPECT_EQ(uint8_av[2], 3);
 }
+
+// === ArrayView extension tests (Task 2: mutable access + factory functions) ===
+
+TEST(ArrayViewExtension, MutableAccess)
+{
+    int arr[] = {1, 2, 3, 4, 5};
+    cxxkit::ArrayView<int> view(arr, 5);
+    EXPECT_EQ(view[0], 1);
+    view[0] = 10;
+    EXPECT_EQ(arr[0], 10);
+}
+
+TEST(ArrayViewExtension, MakeArrayView)
+{
+    int arr[] = {1, 2, 3};
+    auto view = cxxkit::MakeArrayView(arr, 3);
+    EXPECT_EQ(view.size(), 3u);
+    EXPECT_EQ(view[1], 2);
+}
+
+TEST(ArrayViewExtension, MakeConstArrayView)
+{
+    const int arr[] = {1, 2, 3};
+    auto view = cxxkit::MakeConstArrayView(arr, 3);
+    EXPECT_EQ(view.size(), 3u);
+    EXPECT_EQ(view[1], 2);
+}
+
+TEST(ArrayViewExtension, AtBoundsCheck)
+{
+    int arr[] = {1, 2, 3};
+    cxxkit::ArrayView<int> view(arr, 3);
+    EXPECT_EQ(view.at(0), 1);
+    EXPECT_THROW(view.at(3), std::out_of_range);
+}
+
+TEST(ArrayViewExtension, AtBoundsCheckConst)
+{
+    const int arr[] = {10, 20, 30};
+    cxxkit::ArrayView<const int> view(arr, 3);
+    EXPECT_EQ(view.at(2), 30);
+    EXPECT_THROW(view.at(5), std::out_of_range);
+}
+
+TEST(ArrayViewExtension, AtMutatesThroughView)
+{
+    int arr[] = {1, 2, 3};
+    cxxkit::ArrayView<int> view(arr, 3);
+    view.at(1) = 99;
+    EXPECT_EQ(arr[1], 99);
+}
+
+TEST(ArrayViewExtension, FromVector)
+{
+    std::vector<int> vec = {1, 2, 3, 4};
+    cxxkit::ArrayView<int> view(vec);
+    EXPECT_EQ(view.size(), 4u);
+    view[0] = 10;
+    EXPECT_EQ(vec[0], 10);
+}
+
+TEST(ArrayViewExtension, MakeConstArrayViewFromInitializerList)
+{
+    auto view = cxxkit::MakeConstArrayView({1, 2, 3});
+    EXPECT_EQ(view.size(), 3u);
+    EXPECT_EQ(view[0], 1);
+    EXPECT_EQ(view[2], 3);
+}
