@@ -44,3 +44,15 @@ cxxkit_add_library(cxxkit_media
     FOLDER "CxxKit/libs")
 cxxkit_generate_pkg_config(cxxkit_media media)
 cxxkit_configure_library_end(CxxKitMedia)
+
+cxxkit_install_public_wrap_headers(cxxkit_media
+    WRAPS
+    CxxKitWrapLibyuv::WrapLibyuv|libyuv
+)
+
+if(CXXKIT_BUILD_INSTALL)
+    install(TARGETS cxxkit_media EXPORT cxxkitTargets)
+    install(DIRECTORY ${PROJECT_SOURCE_DIR}/cxxkit/media/
+        DESTINATION include/cxxkit/media
+        FILES_MATCHING PATTERN "*.hpp")
+endif()

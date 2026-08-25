@@ -48,6 +48,24 @@ foreach(_stub_spec IN ITEMS
     endif()
 endforeach()
 
+# libyuv/spdlog/fmt ship static libs but no find_dependency target wired to the
+# exported wrap stubs — point the stubs at the installed static libs so exported
+# cxxkit targets (tools/thread/media) link transitive deps (M3: static libs ship).
+foreach(_wrap_spec IN ITEMS
+        "CxxKitWrapLibyuv::WrapLibyuv|libyuv.a;"
+        "CxxKitWrapSpdlog::WrapSpdlog|libspdlogd.a;"
+        "CxxKitWrapFmt::WrapFmt|libfmt.a;")
+    string(REPLACE "|" ";" _wrap_parts ${_wrap_spec})
+    list(GET _wrap_parts 0 _wrap_target)
+    list(GET _wrap_parts 1 _wrap_lib)
+    if(NOT TARGET "${_wrap_target}")
+        add_library("${_wrap_target}" INTERFACE IMPORTED)
+    endif()
+    if(EXISTS "${PACKAGE_PREFIX_DIR}/lib/${_wrap_lib}")
+        set_property(TARGET "${_wrap_target}" PROPERTY INTERFACE_LINK_LIBRARIES "${PACKAGE_PREFIX_DIR}/lib/${_wrap_lib}")
+    endif()
+endforeach()
+
 include("${CMAKE_CURRENT_LIST_DIR}/cxxkitTargets.cmake")
 
 # Component support: each component maps to an exported target (cxxkit::<comp>)
