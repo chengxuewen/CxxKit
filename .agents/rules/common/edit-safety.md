@@ -136,3 +136,19 @@ base 曾 `target_compile_features(cxxkit_base INTERFACE cxx_std_14)` 传播给�
 grep -rnE "std::[a-z_]+_t<|if constexpr|\[\][^)]*\(auto|0b[01]'[, ]" cxxkit/ --include="*.hpp" --include="*.cpp" || true
 ```
 （`_v` 变量模板、`_t` 别名、泛型 lambda、数字分隔符全禁）
+
+### `sed -i` 替换前必须验证匹配数量——防止全局替换误伤
+
+`sed -i 's/old/new/g'` 对文件全量匹配替换，不区分上下文。若文件中已有 `cxxkit::old` 而模式是 `old` → 替换成 `cxxkit::cxxkit::old`（PIT-25 同类教训，本次会话 tst_string_utils 的 `utils::` → `cxxkit::` 替换误伤已有前缀）。
+
+**正确姿势**：
+```bash
+# 1. 先 grep 预览匹配数（目标<3 处才用 sed，否则用 python）
+grep -c "old_pattern" file
+# 2. 替换后 grep 验证无双重前缀/异常
+grep -c "cxxkit::cxxkit::" file   # 应为 0
+```
+
+**大面积替换一律用 python 脚本**（字符串 replace 精确匹配），不用 `sed -i` 全局正则。
+
+检查：`grep -rn "cxxkit::cxxkit\|utils::utils" cxxkit/ tests/` 应为 0（双重前缀）。
