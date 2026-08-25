@@ -22,4 +22,12 @@
 **
 ***********************************************************************************************************************/
 
-// #include "hdr_metadata.hpp"
+#include <cxxkit/media/hdr_metadata.hpp>
+
+namespace cxxkit {
+
+HdrMasteringMetadata::Chromaticity::Chromaticity() = default;
+HdrMasteringMetadata::HdrMasteringMetadata() = default;
+HdrMetadata::HdrMetadata() = default;
+
+}  // namespace cxxkit
