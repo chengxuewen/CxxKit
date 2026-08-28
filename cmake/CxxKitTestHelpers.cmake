@@ -38,6 +38,13 @@ function(cxxkit_add_test name)
     if(NOT "${arg_LIBRARIES}" STREQUAL "")
         target_link_libraries(${name} PRIVATE ${arg_LIBRARIES})
     endif()
+    # Vendored gtest headers must win over any system/pixi gtest (version must match vendored libs,
+    # e.g. pixi's gtest 1.17 headers + vendored 1.12 libs = MakeAndRegisterTestInfo ABI mismatch).
+    # Non-SYSTEM emits -I, which GCC searches ahead of ALL -isystem dirs (pixi include arrives as
+    # -isystem via directory/INTERFACE propagation), regardless of command-line position.
+    if(TARGET CxxKitWrapGTest::WrapGTest AND CxxKitWrapGTest_INSTALL_DIR)
+        target_include_directories(${name} BEFORE PRIVATE "${CxxKitWrapGTest_INSTALL_DIR}/include")
+    endif()
     # tests follow the main standard (CXXKIT_FEATURE_CXX_STANDARD); C++11 floor enforced by the C++14-gate in check.sh
     set_target_properties(${name} PROPERTIES
         CXX_STANDARD ${CXXKIT_FEATURE_CXX_STANDARD}

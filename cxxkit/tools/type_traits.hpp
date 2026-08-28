@@ -89,6 +89,7 @@ using is_nullptr_t = std::is_same<T, std::nullptr_t>;
 * like cxx17 std::is_void_v
 ***********************************************************************************************************************/
 #if CXXKIT_CC_CPP17_OR_GREATER
+using std::is_void;
 using std::is_void_v;
 #else
 template <typename T>
@@ -103,6 +104,7 @@ constexpr bool is_void_v = std::is_void<T>::value;
 * like cxx17 std::is_same_v
 ***********************************************************************************************************************/
 #if CXXKIT_CC_CPP17_OR_GREATER
+using std::is_same;
 using std::is_same_v;
 #else
 template <typename T, typename U>
@@ -117,6 +119,7 @@ constexpr bool is_same_v = std::is_same<T, U>::value;
 * like cxx17 std::is_trivially_copyable_v std::is_trivially_destructible
 ***********************************************************************************************************************/
 #if CXXKIT_CC_CPP17_OR_GREATER
+using std::is_trivially_copyable;
 using std::is_trivially_copyable_v;
 using std::is_trivially_destructible;
 using std::is_trivially_destructible_v;
@@ -161,6 +164,7 @@ constexpr bool is_relocatable_v = is_relocatable<T>::value;
  * like cxx17 std::is_convertible_v
 ***********************************************************************************************************************/
 #if CXXKIT_CC_CPP17_OR_GREATER
+using std::is_convertible;
 using std::is_convertible_v;
 #else
 template <typename F, typename T>
@@ -175,6 +179,7 @@ constexpr bool is_convertible_v = std::is_convertible<F, T>::value;
  * like cxx17 std::is_function_v
 ***********************************************************************************************************************/
 #if CXXKIT_CC_CPP17_OR_GREATER
+using std::is_function;
 using std::is_function_v;
 #else
 template <typename T>
@@ -189,6 +194,7 @@ constexpr bool is_function_v = std::is_function<T>::value;
  * like cxx17 std::is_pointer_v
 ***********************************************************************************************************************/
 #if CXXKIT_CC_CPP17_OR_GREATER
+using std::is_pointer;
 using std::is_pointer_v;
 #else
 template <typename T>
@@ -203,6 +209,7 @@ constexpr bool is_pointer_v = std::is_pointer<T>::value;
  * like cxx17 std::is_base_of_v
 ***********************************************************************************************************************/
 #if CXXKIT_CC_CPP17_OR_GREATER
+using std::is_base_of;
 using std::is_base_of_v;
 #else
 template <typename B, typename D>
@@ -217,6 +224,7 @@ constexpr bool is_base_of_v = std::is_base_of<B, D>::value;
  * like cxx17 std::is_member_function_pointer_v
 ***********************************************************************************************************************/
 #if CXXKIT_CC_CPP17_OR_GREATER
+using std::is_member_function_pointer;
 using std::is_member_function_pointer_v;
 #else
 template <typename T>
