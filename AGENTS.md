@@ -68,7 +68,7 @@ cxxkit/
 - **D12**：默认装 `build/install/`；自定义 target `BuildAll`/`BuildInstall`/`Docs`
 - **D13**：文档三层：doxygen（Docs target）+ README + docs/ 索引
 - **D5**：media/imgui 留在 OpenCTK，不迁移
-- 头部守卫**不统一**：base/*.hpp 用 `#ifndef _CXXKIT_X_HPP`（旧），其余 60 头用 `#pragma once`（新）——新头照 `#pragma once`
+- 头部守卫**全部 `#pragma once`**（2026-08-28 实测全库 0 个 ifndef include-guard；base/*.hpp 的 ifndef 是 CXXKIT_CC_FEATURE_* 特性宏守卫，非 include guard）——新头照 `#pragma once`
 
 ## ANTI-PATTERNS (THIS PROJECT)
 
@@ -87,6 +87,8 @@ cxxkit/
 - Pimpl 惯例：`CXXKIT_DEFINE_DPTR(Class)` → `std::unique_ptr<Class##Private> mDPtr`，配 `detail/xxx_p.hpp`
 - 特性宏阶梯：`CXXKIT_CC_FEATURE_*` → `CXXKIT_CXX{11,14,17,20,23}_CONSTEXPR` 空降级链
 - 断言双轨：`CXXKIT_CHECK(_OP)`（fatal 流式）+ `CXXKIT_DCHECK` 家族（debug-only）
+- 命名规范（2026-08-28 全库统一）：函数/局部变量 `snake_case`（post_task）；封装类成员 `mPascalCase`（mSize）；POD 聚合字段纯 snake；枚举值/常量/static `kPascalCase`；语义前缀：getter 无前缀 / is_has_should_can_ / set_ / to_ 拥有转换 / as_ 视图 / make_ 工厂；std-镜像容器类名（flat_hash_map）与 trait structs（is_pointer）保持小写/snake；移植代码标识符同 PR 迁规范（C16⑥）
+- 已知命名例外：`UpdateRect::Union`（union 是 C++ 关键字）；libyuv 上游 C API（libyuv::I420Copy）；枚举 4 离群族（base64 DO_*/logging 严重级/safe_conversions TYPE_*/once_flag State，改名 = API break）
 - 聚合头 `base/global.hpp`：core_config + compiler + system + macros + types
 - 导出宏按库：`<sub>_global.hpp` 定义，`CXXKIT_BUILD_SHARED` + `CXXKIT_BUILDING_*_LIB` 切 EXPORT/IMPORT
 - 全局聚合头 global.hpp 是唯一 include 中枢
