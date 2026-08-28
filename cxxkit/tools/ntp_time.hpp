@@ -86,7 +86,7 @@ namespace utils
 {
 // Converts `int64_t` milliseconds to Q32.32-formatted fixed-point seconds.
 // Performs clamping if the result overflows or underflows.
-inline int64_t Int64MsToQ32x32(int64_t milliseconds)
+inline int64_t int64_ms_to_q32x32(int64_t milliseconds)
 {
     // TODO(bugs.webrtc.org/10893): Change to use `rtc::saturated_cast` once the
     // bug has been fixed.
@@ -111,7 +111,7 @@ inline int64_t Int64MsToQ32x32(int64_t milliseconds)
 
 // Converts `int64_t` milliseconds to UQ32.32-formatted fixed-point seconds.
 // Performs clamping if the result overflows or underflows.
-inline uint64_t Int64MsToUQ32x32(int64_t milliseconds)
+inline uint64_t int64_ms_to_uq32x32(int64_t milliseconds)
 {
     // TODO(bugs.webrtc.org/10893): Change to use `rtc::saturated_cast` once the
     // bug has been fixed.

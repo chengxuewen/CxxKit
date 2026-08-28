@@ -110,7 +110,7 @@ CXXKIT_ATTRIBUTE_MUST_USE_RESULT CXXKIT_FORCE_INLINE constexpr T rotate_left(T x
            static_cast<T>(x >> ((-s) & (std::numeric_limits<T>::digits - 1)));
 }
 
-CXXKIT_FORCE_INLINE CXXKIT__BITS_CONSTEXPR_POPCOUNT int Popcount32(uint32_t x) noexcept
+CXXKIT_FORCE_INLINE CXXKIT__BITS_CONSTEXPR_POPCOUNT int popcount32(uint32_t x) noexcept
 {
 #if CXXKIT__BITS_HAS_BUILTIN_OR_GCC(__builtin_popcount)
     static_assert(sizeof(unsigned int) == sizeof(x), "__builtin_popcount does not take 32-bit arg");
@@ -122,7 +122,7 @@ CXXKIT_FORCE_INLINE CXXKIT__BITS_CONSTEXPR_POPCOUNT int Popcount32(uint32_t x) n
 #endif
 }
 
-CXXKIT_FORCE_INLINE CXXKIT__BITS_CONSTEXPR_POPCOUNT int Popcount64(uint64_t x) noexcept
+CXXKIT_FORCE_INLINE CXXKIT__BITS_CONSTEXPR_POPCOUNT int popcount64(uint64_t x) noexcept
 {
 #if CXXKIT__BITS_HAS_BUILTIN_OR_GCC(__builtin_popcountll)
     static_assert(sizeof(unsigned long long) == sizeof(x), // NOLINT(runtime/int)
@@ -141,7 +141,7 @@ CXXKIT_FORCE_INLINE CXXKIT__BITS_CONSTEXPR_POPCOUNT int popcount(T x) noexcept
     static_assert(std::is_unsigned<T>::value, "T must be unsigned");
     static_assert(is_power_of2(std::numeric_limits<T>::digits), "T must have a power-of-2 size");
     static_assert(sizeof(x) <= sizeof(uint64_t), "T is too large");
-    return sizeof(x) <= sizeof(uint32_t) ? Popcount32(x) : Popcount64(x);
+    return sizeof(x) <= sizeof(uint32_t) ? popcount32(x) : popcount64(x);
 }
 
 CXXKIT_FORCE_INLINE CXXKIT__BITS_CONSTEXPR_CLZ int count_leading_zeroes32(uint32_t x)
