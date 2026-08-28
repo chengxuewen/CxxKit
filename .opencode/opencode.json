@@ -1,8 +1,13 @@
 {
   "$schema": "https://opencode.ai/config.json",
   "model": "new-api/deepseek-v4-pro",
-  "compaction": { "auto": true, "tail_turns": 15 },
-  "enabled_providers": ["new-api"],
+  "compaction": {
+    "auto": true,
+    "tail_turns": 15
+  },
+  "enabled_providers": [
+    "new-api"
+  ],
   "plugin": [
     "superpowers@git+https://github.com/obra/superpowers.git",
     "@dietrichgebert/ponytail",
@@ -34,12 +39,21 @@
     "local-codegraph": {
       "type": "local",
       "enabled": true,
-      "command": ["node", ".opencode/init-mcp-codegraph.mjs"]
+      "command": [
+        "pixi",
+        "run",
+        "node",
+        ".opencode/init-mcp-codegraph.mjs"
+      ]
     },
     "local-github": {
       "type": "local",
       "enabled": true,
-      "command": ["npx", "-y", "@modelcontextprotocol/server-github"],
+      "command": [
+        "npx",
+        "-y",
+        "@modelcontextprotocol/server-github"
+      ],
       "env": {
         "GITHUB_PERSONAL_ACCESS_TOKEN": "${GITHUB_TOKEN}"
       }
@@ -47,16 +61,44 @@
   },
   "lsp": {
     "clangd": {
-      "command": ["node", ".opencode/init-lsp-wrap.mjs", "clangd"],
-      "extensions": ["cpp", "hpp", "cc", "hh", "cxx", "h", "c"]
+      "command": [
+        "node",
+        ".opencode/init-lsp-wrap.mjs",
+        "clangd"
+      ],
+      "extensions": [
+        "cpp",
+        "hpp",
+        "cc",
+        "hh",
+        "cxx",
+        "h",
+        "c"
+      ]
     },
     "bash-language-server": {
-      "command": ["node", ".opencode/init-lsp-wrap.mjs", "bash-language-server", "start"],
-      "extensions": ["sh", "bash"]
+      "command": [
+        "node",
+        ".opencode/init-lsp-wrap.mjs",
+        "bash-language-server",
+        "start"
+      ],
+      "extensions": [
+        "sh",
+        "bash"
+      ]
     },
     "remark-language-server": {
-      "command": ["node", ".opencode/init-lsp-wrap.mjs", "remark-language-server", "--stdio"],
-      "extensions": ["md", "markdown"]
+      "command": [
+        "node",
+        ".opencode/init-lsp-wrap.mjs",
+        "remark-language-server",
+        "--stdio"
+      ],
+      "extensions": [
+        "md",
+        "markdown"
+      ]
     }
   }
 }

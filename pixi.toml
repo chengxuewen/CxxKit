@@ -1,0 +1,13 @@
+[workspace]
+name = "CxxKit"
+channels = ["conda-forge"]
+platforms = ["osx-64", "linux-64", "linux-aarch64"]
+version = "0.1.0"
+
+# Node.js 仅服务于 opencode 工具链（CodeGraph MCP server 启动器），
+# 与 C++ 构建体系（CMake）无关——构建仍走 C1/CMake 唯一路径。
+[tasks]
+# opencode 注册的 local-codegraph 通过 `pixi run node ...` 使用本环境。
+
+[dependencies]
+nodejs = ">=22.22.0,<23.0"

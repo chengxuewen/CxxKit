@@ -106,4 +106,5 @@ stash
 # Don't ignore files
 # --------
 !.vscode/settings.json
-!.omo/omo.jsonc
+!.omo/omo.jsonc.pixi/
+pixi.lock
