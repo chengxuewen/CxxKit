@@ -153,3 +153,9 @@ cxxkit 是 OpenCTK（an open cpp toolkit）的成功重构版本 —— 精简�
 - [x] **测试 target 跟随主标准**（原硬编码 11）；Library/ExecutableHelpers 已有 CXX_EXTENSIONS OFF（团队报告误报，实际已存在）
 - 已知语义：INPUT_ 经 -D 传入后残留 CMakeCache 持续 FORCE（GUI 编辑被覆盖，OpenCTK 同款，清 CMakeCache 解除）
 - 验证：default=11 / -DINPUT_=14 / 非法 13→FATAL 三态 + 构建 + 63/63 tests；决策记录 decisions.md D25（`30592d5`）
+
+### 2026-08-28 遗留改动验证落地（`908ad8f`）
+
+- [x] **type_traits C++17 class 形式导入补全**：C++17 分支原只导入 `_v` 变量模板，`cxxkit::traits::is_void<T>`/`is_same<T,U>`（class 形式）编译失败——补 `using std::is_void; using std::is_same;`（其余 trait 均已双形式导入，这两个是漏网）。A/B stash 验证：修复前 static_assert 失败，修复后通过
+- [x] **vendored gtest include 优先级**：TestHelpers 用 BEFORE PRIVATE 前置 vendored gtest 头目录（-I 优先于 -isystem，防 pixi gtest 1.17 头 + vendored 1.12 库 MakeAndRegisterTestInfo ABI 不匹配）
+- 验证：全量构建 0 error + 63/63 ctest 全绿（95.65s）
