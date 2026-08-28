@@ -59,23 +59,23 @@ CXXKIT_TEXT_API size_t tokenize(StringView source, char delimiter, std::vector<s
 CXXKIT_TEXT_API bool tokenize_first(StringView source, char delimiter, std::string *token, std::string *rest);
 
 template <typename T, typename std::enable_if<std::is_integral<T>::value>::type * = nullptr>
-std::string toString(T value)
+std::string to_string(T value)
 {
     // return {absl::StrCat(value)}; //TODO
     return std::is_same<T, bool>::value ? (value ? "true" : "false") : std::to_string(value);
 }
 template <typename T, typename std::enable_if<std::is_convertible<T, const char *>::value>::type * = nullptr>
-std::string toString(T value)
+std::string to_string(T value)
 {
     return {value};
 }
 template <typename T, typename std::enable_if<std::is_same<T, std::string>::value>::type * = nullptr>
-std::string toString(T value)
+std::string to_string(T value)
 {
     return value;
 }
 template <typename T, typename std::enable_if<std::is_floating_point<T>::value>::type * = nullptr>
-std::string toString(T value)
+std::string to_string(T value)
 {
     char buf[32];
     long double ld = value;
@@ -87,7 +87,7 @@ std::string toString(T value)
 template <typename T,
           typename std::enable_if<std::is_pointer<T>::value && !std::is_convertible<T, const char *>::value>::type * =
               nullptr>
-std::string toString(T p)
+std::string to_string(T p)
 {
     char buf[32];
     const int len = std::snprintf(&buf[0], utils::size(buf), "%p", p);
@@ -100,7 +100,7 @@ template <typename T,
 static bool FromString(StringView s, T *t)
 {
     CXXKIT_DCHECK(t);
-    Optional<T> result = stringToNumber<T>(s);
+    Optional<T> result = string_to_number<T>(s);
 
     if (result)
     {

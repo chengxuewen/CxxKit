@@ -65,7 +65,7 @@ int main()
     CXXKIT_WARNING() << cxxkit::StringView("CXXKIT_WARNING StringView");
 
     std::cout << "log all!" << std::endl;
-    CXXKIT_LOGGER().switchLevel(cxxkit::LogLevel::Trace);
+    CXXKIT_LOGGER().switch_level(cxxkit::LogLevel::Trace);
     CXXKIT_TRACE("CXXKIT_TRACE");
     CXXKIT_TRACE() << "stream CXXKIT_TRACE";
     CXXKIT_DEBUG("CXXKIT_DEBUG");

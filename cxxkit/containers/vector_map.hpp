@@ -68,14 +68,14 @@ class VectorMap
     Vector<Item> mData;
 
     template <typename K2, typename KC, typename V2, typename VC>
-    static Item *to_array(const std::map<K2, V2> &m, KC convertKey, VC convertValue)
+    static Item *to_array(const std::map<K2, V2> &m, KC convert_key, VC convert_value)
     {
         Item *data = new Item[m.size()];
         Item *dp = data;
         for (typename std::map<K2, V2>::const_iterator it = m.begin(); it != m.end(); ++it)
         {
-            dp->key = convertKey(it->first);
-            dp->value = convertValue(it->second);
+            dp->key = convert_key(it->first);
+            dp->value = convert_value(it->second);
             ++dp;
         }
         return data;
@@ -101,8 +101,8 @@ public:
     }
 
     template <typename K2, typename KC, typename V2, typename VC>
-    VectorMap(const std::map<K2, V2> &m, KC convertKey = Identity<K>(), VC convertValue = Identity<V>())
-        : mData(to_array(m, convertKey, convertValue), m.size())
+    VectorMap(const std::map<K2, V2> &m, KC convert_key = Identity<K>(), VC convert_value = Identity<V>())
+        : mData(to_array(m, convert_key, convert_value), m.size())
     {
     }
 
@@ -131,19 +131,19 @@ public:
         for (size_t i = 0; i < mData.size(); ++i)
         {
             const Item *dp = mData.data() + i;
-            map[convertKey(dp->key)] = convertValue(dp->value);
+            map[convert_key(dp->key)] = convert_value(dp->value);
         }
         return map;
     }
 
     template <typename K2, typename KC, typename V2, typename VC>
-    std::map<K2, V2> std_map(KC convertKey, VC convertValue) const
+    std::map<K2, V2> std_map(KC convert_key, VC convert_value) const
     {
         std::map<K2, V2> m;
         for (size_t i = 0; i < mData.size(); ++i)
         {
             const Item *dp = mData.data() + i;
-            m[convertKey(dp->key)] = convertValue(dp->value);
+            m[convert_key(dp->key)] = convert_value(dp->value);
         }
         return m;
     }

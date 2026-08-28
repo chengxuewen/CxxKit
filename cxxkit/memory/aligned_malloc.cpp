@@ -40,7 +40,7 @@
 CXXKIT_BEGIN_NAMESPACE
 namespace utils
 {
-uintptr_t getRightAlign(uintptr_t start_pos, size_t alignment)
+uintptr_t get_right_align(uintptr_t start_pos, size_t alignment)
 {
     // The pointer should be aligned with `alignment` bytes. The - 1 guarantees
     // that it is aligned towards the closest higher (right) address.
@@ -48,7 +48,7 @@ uintptr_t getRightAlign(uintptr_t start_pos, size_t alignment)
 }
 
 // Alignment must be an integer power of two.
-bool validAlignment(size_t alignment)
+bool valid_alignment(size_t alignment)
 {
     if (!alignment)
     {
@@ -57,27 +57,27 @@ bool validAlignment(size_t alignment)
     return (alignment & (alignment - 1)) == 0;
 }
 
-void *getRightAlign(const void *pointer, size_t alignment)
+void *get_right_align(const void *pointer, size_t alignment)
 {
     if (!pointer)
     {
         return NULL;
     }
-    if (!validAlignment(alignment))
+    if (!valid_alignment(alignment))
     {
         return NULL;
     }
     uintptr_t start_pos = reinterpret_cast<uintptr_t>(pointer);
-    return reinterpret_cast<void *>(getRightAlign(start_pos, alignment));
+    return reinterpret_cast<void *>(get_right_align(start_pos, alignment));
 }
 
-void *alignedMalloc(size_t size, size_t alignment)
+void *aligned_malloc(size_t size, size_t alignment)
 {
     if (size == 0)
     {
         return NULL;
     }
-    if (!validAlignment(alignment))
+    if (!valid_alignment(alignment))
     {
         return NULL;
     }
@@ -87,13 +87,13 @@ void *alignedMalloc(size_t size, size_t alignment)
     // A pointer to the start of the memory must be stored so that it can be
     // retreived for deletion, ergo the sizeof(uintptr_t).
     void *memory_pointer = malloc(size + sizeof(uintptr_t) + alignment - 1);
-    CXXKIT_ASSERT_X(memory_pointer, "alignedMalloc()", "Couldn't allocate memory in alignedMalloc");
+    CXXKIT_ASSERT_X(memory_pointer, "aligned_malloc()", "Couldn't allocate memory in aligned_malloc");
 
     // Aligning after the sizeof(uintptr_t) bytes will leave room for the header
     // in the same memory block.
     uintptr_t align_start_pos = reinterpret_cast<uintptr_t>(memory_pointer);
     align_start_pos += sizeof(uintptr_t);
-    uintptr_t aligned_pos = getRightAlign(align_start_pos, alignment);
+    uintptr_t aligned_pos = get_right_align(align_start_pos, alignment);
     void *aligned_pointer = reinterpret_cast<void *>(aligned_pos);
 
     // Store the address to the beginning of the memory just before the aligned
@@ -106,7 +106,7 @@ void *alignedMalloc(size_t size, size_t alignment)
     return aligned_pointer;
 }
 
-void alignedFree(void *mem_block)
+void aligned_free(void *mem_block)
 {
     if (mem_block == NULL)
     {

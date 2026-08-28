@@ -50,22 +50,22 @@ public:
     constexpr T height() const noexcept { return mHeight; }
 
     // 设置器
-    constexpr void setWidth(T width) noexcept { mWidth = width; }
-    constexpr void setHeight(T height) noexcept { mHeight = height; }
+    constexpr void set_width(T width) noexcept { mWidth = width; }
+    constexpr void set_height(T height) noexcept { mHeight = height; }
 
     void transpose() noexcept { std::swap(mWidth, mHeight); }
     [[nodiscard]] constexpr SizeBase transposed() const noexcept { return SizeBase(mHeight, mWidth); }
 
     // 辅助方法
     constexpr T area() const noexcept { return mWidth * mHeight; }
-    constexpr T pixelCount() const noexcept { return mWidth * mHeight; }
+    constexpr T pixel_count() const noexcept { return mWidth * mHeight; }
 
-    constexpr bool isNull() const noexcept { return mWidth == 0 && mHeight == 0; }
-    constexpr bool isValid() const noexcept { return mWidth > T() && mHeight > T(); }
-    constexpr bool isEmpty() const noexcept { return mWidth <= T() || mHeight <= T(); }
+    constexpr bool is_null() const noexcept { return mWidth == 0 && mHeight == 0; }
+    constexpr bool is_valid() const noexcept { return mWidth > T() && mHeight > T(); }
+    constexpr bool is_empty() const noexcept { return mWidth <= T() || mHeight <= T(); }
 
     // 转换为标准库的 pair
-    constexpr std::pair<T, T> toPair() const noexcept { return std::make_pair(mWidth, mHeight); }
+    constexpr std::pair<T, T> to_pair() const noexcept { return std::make_pair(mWidth, mHeight); }
 
     // 比较运算符
     friend constexpr bool operator==(const SizeBase &lhs, const SizeBase &rhs) noexcept

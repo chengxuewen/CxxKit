@@ -153,12 +153,12 @@ private:
     static constexpr bool kOneSided = true;
 };
 
-CXXKIT_UNITS_API std::string toString(Timestamp value);
+CXXKIT_UNITS_API std::string to_string(Timestamp value);
 
 template <typename Sink>
 void AbslStringify(Sink &sink, Timestamp value)
 {
-    sink.Append(toString(value));
+    sink.Append(to_string(value));
 }
 
 CXXKIT_END_NAMESPACE

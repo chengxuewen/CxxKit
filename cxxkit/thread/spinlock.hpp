@@ -38,17 +38,17 @@ public:
     {
     public:
         Locker(SpinLock &lock)
-            : spinLock(lock)
+            : spin_lock(lock)
         {
-            spinLock.lock();
+            spin_lock.lock();
         }
-        virtual ~Locker() { spinLock.unlock(); }
-        virtual void relock() { spinLock.lock(); }
-        virtual void unlock() { spinLock.unlock(); }
-        virtual bool isLocked() { return spinLock.isLocked(); }
+        virtual ~Locker() { spin_lock.unlock(); }
+        virtual void relock() { spin_lock.lock(); }
+        virtual void unlock() { spin_lock.unlock(); }
+        virtual bool is_locked() { return spin_lock.is_locked(); }
 
     private:
-        SpinLock &spinLock;
+        SpinLock &spin_lock;
         CXXKIT_DISABLE_COPY_MOVE(Locker)
     };
 
@@ -85,7 +85,7 @@ public:
         mFlag.notify_one();
 #endif
     }
-    bool isLocked() const { return mFlag.load(std::memory_order_relaxed); }
+    bool is_locked() const { return mFlag.load(std::memory_order_relaxed); }
 
 private:
     std::atomic<bool> mFlag{false};

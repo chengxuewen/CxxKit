@@ -35,40 +35,40 @@ TEST(IdRegistry, RequestRegisterUnregister)
 {
     IdRegistry registry;
 
-    const int64_t id1 = registry.requestId();
-    const int64_t id2 = registry.requestId();
+    const int64_t id1 = registry.request_id();
+    const int64_t id2 = registry.request_id();
     EXPECT_NE(id1, id2);
-    EXPECT_EQ(registry.registeredIdCount(), 2);
+    EXPECT_EQ(registry.registered_id_count(), 2);
 
-    EXPECT_TRUE(registry.isIdRegistered(id1));
-    EXPECT_TRUE(registry.isIdRegistered(id2));
+    EXPECT_TRUE(registry.is_id_registered(id1));
+    EXPECT_TRUE(registry.is_id_registered(id2));
 
-    registry.unregisterId(id1);
-    EXPECT_FALSE(registry.isIdRegistered(id1));
-    EXPECT_EQ(registry.registeredIdCount(), 1);
+    registry.unregister_id(id1);
+    EXPECT_FALSE(registry.is_id_registered(id1));
+    EXPECT_EQ(registry.registered_id_count(), 1);
 
     // Unregistering an unknown id is a no-op.
-    registry.unregisterId(99999);
-    EXPECT_EQ(registry.registeredIdCount(), 1);
+    registry.unregister_id(99999);
+    EXPECT_EQ(registry.registered_id_count(), 1);
 }
 
 TEST(IdRegistry, RegisterExplicitAndReuse)
 {
     IdRegistry registry;
-    registry.registerId(42);
-    EXPECT_TRUE(registry.isIdRegistered(42));
-    EXPECT_FALSE(registry.isIdRegistered(43));
+    registry.register_id(42);
+    EXPECT_TRUE(registry.is_id_registered(42));
+    EXPECT_FALSE(registry.is_id_registered(43));
 
-    // requestId must not hand out an explicitly registered id.
-    const int64_t got = registry.requestId();
+    // request_id must not hand out an explicitly registered id.
+    const int64_t got = registry.request_id();
     EXPECT_NE(got, 42);
 
     // After release, the id becomes available again.
-    registry.unregisterId(42);
+    registry.unregister_id(42);
     std::vector<int64_t> seen;
     for (int i = 0; i < 64; ++i)
     {
-        const int64_t id = registry.requestId();
+        const int64_t id = registry.request_id();
         if (std::find(seen.begin(), seen.end(), id) == seen.end())
         {
             seen.push_back(id);

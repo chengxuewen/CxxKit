@@ -126,55 +126,55 @@ public:
 
     StringBuilder &operator<<(int i)
     {
-        mString += utils::toString(i);
+        mString += utils::to_string(i);
         return *this;
     }
 
     StringBuilder &operator<<(unsigned i)
     {
-        mString += utils::toString(i);
+        mString += utils::to_string(i);
         return *this;
     }
 
     StringBuilder &operator<<(long i)
     { // NOLINT
-        mString += utils::toString(i);
+        mString += utils::to_string(i);
         return *this;
     }
 
     StringBuilder &operator<<(long long i)
     { // NOLINT
-        mString += utils::toString(i);
+        mString += utils::to_string(i);
         return *this;
     }
 
     StringBuilder &operator<<(unsigned long i)
     { // NOLINT
-        mString += utils::toString(i);
+        mString += utils::to_string(i);
         return *this;
     }
 
     StringBuilder &operator<<(unsigned long long i)
     { // NOLINT
-        mString += utils::toString(i);
+        mString += utils::to_string(i);
         return *this;
     }
 
     StringBuilder &operator<<(float f)
     {
-        mString += utils::toString(f);
+        mString += utils::to_string(f);
         return *this;
     }
 
     StringBuilder &operator<<(double f)
     {
-        mString += utils::toString(f);
+        mString += utils::to_string(f);
         return *this;
     }
 
     StringBuilder &operator<<(long double f)
     {
-        mString += utils::toString(f);
+        mString += utils::to_string(f);
         return *this;
     }
 

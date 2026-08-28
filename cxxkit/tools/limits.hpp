@@ -75,33 +75,33 @@ CXXKIT_STATIC_CONSTANT_NUMBER(kULongLongMax, std::numeric_limits<ulonglong_t>::m
 namespace utils
 {
 template <typename T>
-static constexpr T numericMin() noexcept
+static constexpr T numeric_min() noexcept
 {
     return std::numeric_limits<T>::min();
 }
 template <typename T>
-static constexpr T mathMin(const T &left, const T &right) noexcept
+static constexpr T math_min(const T &left, const T &right) noexcept
 {
     return std::min<T>(left, right);
 }
 template <typename T, typename P>
-static constexpr T mathMin(const T &left, const T &right, P pred) noexcept
+static constexpr T math_min(const T &left, const T &right, P pred) noexcept
 {
     return std::min<T, P>(left, right, pred);
 }
 
 template <typename T>
-static constexpr T numericMax() noexcept
+static constexpr T numeric_max() noexcept
 {
     return std::numeric_limits<T>::max();
 }
 template <typename T>
-static constexpr T mathMax(const T &left, const T &right) noexcept
+static constexpr T math_max(const T &left, const T &right) noexcept
 {
     return std::max<T>(left, right);
 }
 template <typename T, typename P>
-static constexpr T mathMax(const T &left, const T &right, P pred) noexcept
+static constexpr T math_max(const T &left, const T &right, P pred) noexcept
 {
     return std::max<T, P>(left, right, pred);
 }

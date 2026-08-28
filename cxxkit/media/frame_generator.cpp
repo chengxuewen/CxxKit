@@ -56,7 +56,7 @@ public:
     {
         if (mCurrentDisplayCount == 0)
         {
-            generateNewFrame();
+            generate_new_frame();
         }
         if (++mCurrentDisplayCount >= mFrameDisplayCount)
         {
@@ -69,7 +69,7 @@ public:
     int height() const override { return mHeight; }
 
 private:
-    void generateNewFrame()
+    void generate_new_frame()
     {
         // The squares should have a varying order of magnitude in order to
         // simulate variation in the slides' complexity.

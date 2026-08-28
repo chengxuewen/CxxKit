@@ -59,7 +59,7 @@ ContextCheckerPrivate::ContextCheckerPrivate(ContextChecker *p, bool attached, T
     : mPPtr(p)
 #if CXXKIT_DCHECK_IS_ON
     , mAttached(attached)
-    , mValidThreadId(PlatformThread::currentThreadId())
+    , mValidThreadId(PlatformThread::current_thread_id())
     , mValidQueue(attachedTaskQueue ? attachedTaskQueue : TaskQueueBase::current())
 #endif
 {
@@ -83,12 +83,12 @@ ContextChecker::~ContextChecker()
 {
 }
 
-std::string ContextChecker::expectationToString(const ContextChecker *checker)
+std::string ContextChecker::expectation_to_string(const ContextChecker *checker)
 {
 #if CXXKIT_DCHECK_IS_ON
-    auto d = checker->dFunc();
+    auto d = checker->d_func();
     const TaskQueueBase *const currentQueue = TaskQueueBase::current();
-    const auto currentThread = PlatformThread::currentThreadId();
+    const auto current_thread = PlatformThread::current_thread_id();
     std::lock_guard<std::mutex> lock(d->mMutex);
     if (!d->mAttached)
     {
@@ -110,14 +110,14 @@ std::string ContextChecker::expectationToString(const ContextChecker *checker)
                   d->mValidQueue,
                   d->mValidThreadId,
                   currentQueue,
-                  currentThread);
+                  current_thread);
     std::stringstream message;
     message << msgbuf;
     if ((d->mValidQueue || currentQueue) && d->mValidQueue != currentQueue)
     {
         message << "TaskQueue doesn't match\n";
     }
-    else if (d->mValidThreadId != currentThread)
+    else if (d->mValidThreadId != current_thread)
     {
         message << "Threads don't match\n";
     }
@@ -127,18 +127,18 @@ std::string ContextChecker::expectationToString(const ContextChecker *checker)
 #endif
 }
 
-bool ContextChecker::isCurrent() const
+bool ContextChecker::is_current() const
 {
 #if CXXKIT_DCHECK_IS_ON
     CXXKIT_D(const ContextChecker);
     const TaskQueueBase *const currentQueue = TaskQueueBase::current();
-    const auto currentThread = PlatformThread::currentThreadId();
+    const auto current_thread = PlatformThread::current_thread_id();
     std::lock_guard<std::mutex> lock(d->mMutex);
     if (!d->mAttached)
     {
         // Previously detached.
         d->mAttached = true;
-        d->mValidThreadId = currentThread;
+        d->mValidThreadId = current_thread;
         d->mValidQueue = currentQueue;
         return true;
     }
@@ -146,7 +146,7 @@ bool ContextChecker::isCurrent() const
     {
         return d->mValidQueue == currentQueue;
     }
-    return d->mValidThreadId == currentThread;
+    return d->mValidThreadId == current_thread;
 #endif
     return true;
 }
@@ -157,7 +157,7 @@ void ContextChecker::detach()
     CXXKIT_D(ContextChecker);
     std::lock_guard<std::mutex> lock(d->mMutex);
     d->mAttached = false;
-// We don't need to touch the other members here, they will be reset on the next call to isCurrent().
+// We don't need to touch the other members here, they will be reset on the next call to is_current().
 #endif
 }
 

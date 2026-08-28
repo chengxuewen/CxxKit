@@ -141,18 +141,18 @@ public:
         }
     }
 
-    virtual ~Vector() { this->destroyAll(); }
+    virtual ~Vector() { this->destroy_all(); }
 
     Vector<T> &operator=(const Vector<T> &o)
     {
         if (mSize < o.mSize)
         {
-            this->destroyAll();
+            this->destroy_all();
             mArray = new T[o.mSize];
         }
         else if (o.mSize == 0 && mSize != 0)
         {
-            this->destroyAll();
+            this->destroy_all();
         }
         mSize = o.mSize;
         for (size_t i = 0; i < o.mSize; ++i)
@@ -171,7 +171,7 @@ public:
     {
         if (mSize != 0)
         {
-            this->destroyAll();
+            this->destroy_all();
         }
         mSize = mr.mReference.mSize;
         mArray = mr.mReference.mArray;
@@ -210,12 +210,12 @@ public:
     const T &operator[](size_t i) const { return mArray[i]; }
 
     /// @brief Destroys all elements and resets size to zero.
-    void clear() { this->destroyAll(); }
+    void clear() { this->destroy_all(); }
 
 protected:
     void destroy(T *rt) { reinterpret_cast<const T *>(rt)->~T(); }
 
-    void destroyAll()
+    void destroy_all()
     {
         for (size_t i = 0; i < mSize; ++i)
         {

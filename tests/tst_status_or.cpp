@@ -39,7 +39,7 @@ TEST(StatusOr, ErrorStatus)
 {
     cxxkit::StatusOr<int> sor = cxxkit::Status("not found");
     EXPECT_FALSE(sor.ok());
-    EXPECT_EQ(sor.status().errorMessage(), "not found");
+    EXPECT_EQ(sor.status().error_message(), "not found");
 }
 
 TEST(StatusOr, ValueOr)
@@ -103,5 +103,5 @@ TEST(StatusOr, CopyConstructError)
     cxxkit::StatusOr<int> a = cxxkit::Status("original error");
     cxxkit::StatusOr<int> b = a;
     EXPECT_FALSE(b.ok());
-    EXPECT_EQ(b.status().errorMessage(), "original error");
+    EXPECT_EQ(b.status().error_message(), "original error");
 }

@@ -41,7 +41,7 @@ public:
     {
     }
 
-    void addRef() const override { ref_count_.incRef(); }
+    void add_ref() const override { ref_count_.inc_ref(); }
     cxxkit::RefCountReleaseStatus Release() const override
     {
         if (ref_count_.DecRef() == cxxkit::RefCountReleaseStatus::kDroppedLastRef) {

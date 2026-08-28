@@ -43,10 +43,10 @@ class CrashHandlerPrivate;
  *  - Single instance per process (C++11 function-local static, thread-safe). install() refuses a second
  *    installation (atomic guard) — coexistence with QExt::Breakpad in the same process is NOT supported:
  *    crash ON ⇒ QExt::Breakpad OFF.
- *  - Config-then-install: setDumpPath()/setStackTraceOnCrash()/setCallback() are only valid BEFORE
+ *  - Config-then-install: set_dump_path()/set_stack_trace_on_crash()/set_callback() are only valid BEFORE
  *    install(); calling them after install triggers CXXKIT_CHECK.
  *  - The dump callback runs on breakpad's dedicated handler thread (NOT in signal context). Default
- *    behavior is fast-return; setStackTraceOnCrash(true) additionally prints the CRASHED thread's
+ *    behavior is fast-return; set_stack_trace_on_crash(true) additionally prints the CRASHED thread's
  *    stack (load_from ucontext) to stderr — best-effort, backward-cpp is not async-signal-safe.
  *  - v1 has NO upload: dump files stay on disk for offline symbolication (minidump_stackwalk).
  */
@@ -62,7 +62,7 @@ public:
     ~CrashHandler();
 
     /** True once install() succeeded and the handler is armed. */
-    bool isHandlerInstalled() const;
+    bool is_handler_installed() const;
 
     /** Arms the breakpad handler. Returns false (and keeps the process untouched) if already installed. */
     bool install();
@@ -71,26 +71,26 @@ public:
     void uninstall();
 
     /** Sets the minidump output directory. Must be called before install(). */
-    bool setDumpPath(const char *path);
+    bool set_dump_path(const char *path);
 
     /**
      * Enables printing the crashed thread's stack to stderr from the dump callback (default: off).
      * Best-effort only: backward-cpp is not async-signal-safe; on macOS the crashed-thread ucontext
      * is not available and the trace is skipped.
      */
-    bool setStackTraceOnCrash(bool enable);
+    bool set_stack_trace_on_crash(bool enable);
 
     /** Sets a user callback invoked after the minidump is written. Must be called before install(). */
-    bool setCallback(CrashCallback callback, void *context);
+    bool set_callback(CrashCallback callback, void *context);
 
     /** Manually writes a minidump (non-crash path, e.g. a user fatal hook). No handler install required. */
-    bool writeMinidump();
+    bool write_minidump();
 
     /** Lists *.dmp files in the dump path. */
-    std::vector<std::string> dumpFileList() const;
+    std::vector<std::string> dump_file_list() const;
 
     /** Deletes *.dmp files in the dump path. */
-    void clearDumps();
+    void clear_dumps();
 
     CXXKIT_DECLARE_PRIVATE(CrashHandler)
     CXXKIT_DISABLE_COPY_MOVE(CrashHandler)

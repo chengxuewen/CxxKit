@@ -65,8 +65,8 @@ public:
     void add(const T &element) { mContainers.push_back(std::move(element)); }
     const std::vector<T> &data() const { return mContainers; }
 
-    bool isEncoded() const { return mEncode; }
-    void setEncoded(bool encode) { mEncode = encode; }
+    bool is_encoded() const { return mEncode; }
+    void set_encoded(bool encode) { mEncode = encode; }
 
     // const std::string GetContent(const CurlHolder &) const;
 
@@ -274,9 +274,9 @@ public:
             : name(p_name)
             , value(p_value)
             , domain(p_domain)
-            , isIncludingSubdomains(p_isIncludingSubdomains)
+            , is_including_subdomains(p_isIncludingSubdomains)
             , path(p_path)
-            , isHttpsOnly(p_isHttpsOnly)
+            , is_https_only(p_isHttpsOnly)
             , expires(p_expires)
         {
         }
@@ -284,9 +284,9 @@ public:
         StringView name;
         StringView value;
         StringView domain;
-        bool isIncludingSubdomains;
+        bool is_including_subdomains;
         StringView path;
-        bool isHttpsOnly;
+        bool is_https_only;
         std::chrono::system_clock::time_point expires;
     };
 
@@ -294,15 +294,15 @@ public:
     Cookie(const Initializer &initializer);
     virtual ~Cookie();
 
-    bool isIncludingSubdomains() const;
-    bool isHttpsOnly() const;
+    bool is_including_subdomains() const;
+    bool is_https_only() const;
 
-    std::chrono::system_clock::time_point getExpires() const;
-    std::string getExpiresString() const;
-    std::string getDomain() const;
-    std::string getValue() const;
-    std::string getPath() const;
-    std::string getName() const;
+    std::chrono::system_clock::time_point get_expires() const;
+    std::string get_expires_string() const;
+    std::string get_domain() const;
+    std::string get_value() const;
+    std::string get_path() const;
+    std::string get_name() const;
 
 protected:
     friend class Session;
@@ -349,7 +349,7 @@ public:
     explicit Response();
     virtual ~Response();
 
-    long statusCode() const;
+    long status_code() const;
     Cookies cookies() const;
     std::string text() const;
     std::string reason() const;
@@ -381,8 +381,8 @@ public:
     Authentication(StringView username, StringView password, Mode auth_mode);
     virtual ~Authentication() noexcept;
 
-    const char *authString() const noexcept;
-    Mode authMode() const noexcept;
+    const char *auth_string() const noexcept;
+    Mode auth_mode() const noexcept;
 
 protected:
     friend class Session;
@@ -403,28 +403,28 @@ public:
     explicit Session();
     virtual ~Session();
 
-    void setUrl(const Url &url);
-    void setParameters(const Parameters &parameters);
-    void setHeader(const Header &header);
-    void updateHeader(const Header &header);
-    void setTimeout(const Timeout &timeout);
-    void setConnectTimeout(const ConnectTimeout &timeout);
-    void setAuth(const Authentication &auth);
-    void setBody(const Body &body);
-    void setBearer(const Bearer &bearer);
-    void setPayload(const Payload &payload);
-    void setCookies(const Cookies &cookies);
+    void set_url(const Url &url);
+    void set_parameters(const Parameters &parameters);
+    void set_header(const Header &header);
+    void update_header(const Header &header);
+    void set_timeout(const Timeout &timeout);
+    void set_connect_timeout(const ConnectTimeout &timeout);
+    void set_auth(const Authentication &auth);
+    void set_body(const Body &body);
+    void set_bearer(const Bearer &bearer);
+    void set_payload(const Payload &payload);
+    void set_cookies(const Cookies &cookies);
 
-    void setOption(const Url &url) { this->setUrl(url); }
-    void setOption(const Parameters &parameters) { this->setParameters(parameters); }
-    void setOption(const Header &header) { this->setHeader(header); }
-    void setOption(const Timeout &timeout) { this->setTimeout(timeout); }
-    void setOption(const ConnectTimeout &timeout) { this->setConnectTimeout(timeout); }
-    void setOption(const Authentication &auth) { this->setAuth(auth); }
-    void setOption(const Body &body) { this->setBody(body); }
-    void setOption(const Bearer &bearer) { this->setBearer(bearer); }
-    void setOption(const Payload &payload) { this->setPayload(payload); }
-    void setOption(const Cookies &cookies) { this->setCookies(cookies); }
+    void set_option(const Url &url) { this->set_url(url); }
+    void set_option(const Parameters &parameters) { this->set_parameters(parameters); }
+    void set_option(const Header &header) { this->set_header(header); }
+    void set_option(const Timeout &timeout) { this->set_timeout(timeout); }
+    void set_option(const ConnectTimeout &timeout) { this->set_connect_timeout(timeout); }
+    void set_option(const Authentication &auth) { this->set_auth(auth); }
+    void set_option(const Body &body) { this->set_body(body); }
+    void set_option(const Bearer &bearer) { this->set_bearer(bearer); }
+    void set_option(const Payload &payload) { this->set_payload(payload); }
+    void set_option(const Cookies &cookies) { this->set_cookies(cookies); }
 
     Response::SharedPtr get();
     Response::SharedPtr put();
@@ -443,14 +443,14 @@ namespace detail
 template <bool processed_header, typename CurrentType>
 void set_option_internal(Session &session, CurrentType &&current_option)
 {
-    session.setOption(std::forward<CurrentType>(current_option));
+    session.set_option(std::forward<CurrentType>(current_option));
 }
 
 template <>
 inline void set_option_internal<true, Header>(Session &session, Header &&current_option)
 {
     // Header option was already provided -> Update previous header
-    session.updateHeader(std::forward<Header>(current_option));
+    session.update_header(std::forward<Header>(current_option));
 }
 
 template <bool processed_header, typename CurrentType, typename... Ts>
@@ -477,7 +477,7 @@ void set_option(Session &session, Ts &&...ts)
 template <class Fn, class... Args>
 auto async(Fn &&fn, Args &&...args) -> std::future<decltype(fn(args...))>
 {
-    return ThreadPool::defaultInstance()->start(std::forward<Fn>(fn), std::forward<Args>(args)...);
+    return ThreadPool::default_instance()->start(std::forward<Fn>(fn), std::forward<Args>(args)...);
 }
 } // namespace detail
 
@@ -502,7 +502,7 @@ Response::SharedPtr Get(Ts &&...ts)
  * @return
  */
 template <typename... Ts>
-AsyncResponse asyncGet(Ts... ts)
+AsyncResponse async_get(Ts... ts)
 {
     return detail::async([](Ts... ts_inner) { return get(std::move(ts_inner)...); }, std::move(ts)...);
 }
@@ -528,7 +528,7 @@ Response::SharedPtr put(Ts &&...ts)
  * @return
  */
 template <typename... Ts>
-AsyncResponse asyncPut(Ts... ts)
+AsyncResponse async_put(Ts... ts)
 {
     return detail::async([](Ts... ts_inner) { return put(std::move(ts_inner)...); }, std::move(ts)...);
 }
@@ -554,7 +554,7 @@ Response::SharedPtr post(Ts &&...ts)
  * @return
  */
 template <typename... Ts>
-AsyncResponse asyncPost(Ts... ts)
+AsyncResponse async_post(Ts... ts)
 {
     return detail::async([](Ts... ts_inner) { return post(std::move(ts_inner)...); }, std::move(ts)...);
 }
@@ -597,7 +597,7 @@ Response::SharedPtr download(std::ofstream &file, Ts &&...ts)
  * @return
  */
 template <typename... Ts>
-AsyncResponse asyncDownload(std::string local_path, Ts... ts)
+AsyncResponse async_download(std::string local_path, Ts... ts)
 {
     return std::async(
         std::launch::async,

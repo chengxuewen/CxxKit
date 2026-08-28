@@ -85,24 +85,24 @@ TaskQueueBase::SafetyFlag::SharedPtr TaskQueueBase::SafetyFlag::create()
     return SharedPtr(new SafetyFlag(true));
 }
 
-TaskQueueBase::SafetyFlag::SharedPtr TaskQueueBase::SafetyFlag::createDetached()
+TaskQueueBase::SafetyFlag::SharedPtr TaskQueueBase::SafetyFlag::create_detached()
 {
     auto flag = SharedPtr(new SafetyFlag(true));
-    flag->dFunc()->mContextChecker.detach();
+    flag->d_func()->mContextChecker.detach();
     return flag;
 }
 
-TaskQueueBase::SafetyFlag::SharedPtr TaskQueueBase::SafetyFlag::createAttachedToTaskQueue(
+TaskQueueBase::SafetyFlag::SharedPtr TaskQueueBase::SafetyFlag::create_attached_to_task_queue(
     bool alive,
     Nonnull<TaskQueueBase *> attachedQueue)
 {
     return SharedPtr(new SafetyFlag(alive, attachedQueue));
 }
 
-TaskQueueBase::SafetyFlag::SharedPtr TaskQueueBase::SafetyFlag::createDetachedInactive()
+TaskQueueBase::SafetyFlag::SharedPtr TaskQueueBase::SafetyFlag::create_detached_inactive()
 {
     auto flag = SharedPtr(new SafetyFlag(false));
-    flag->dFunc()->mContextChecker.detach();
+    flag->d_func()->mContextChecker.detach();
     return flag;
 }
 
@@ -110,29 +110,29 @@ TaskQueueBase::SafetyFlag::~SafetyFlag()
 {
 }
 
-bool TaskQueueBase::SafetyFlag::isAlive() const
+bool TaskQueueBase::SafetyFlag::is_alive() const
 {
     CXXKIT_D(const SafetyFlag);
     return d->mAlive.load(std::memory_order_acquire);
 }
 
-void TaskQueueBase::SafetyFlag::setNotAlive()
+void TaskQueueBase::SafetyFlag::set_not_alive()
 {
     CXXKIT_D(SafetyFlag);
     d->mAlive.store(false, std::memory_order_release);
 }
-void TaskQueueBase::SafetyFlag::setAlive()
+void TaskQueueBase::SafetyFlag::set_alive()
 {
     CXXKIT_D(SafetyFlag);
     d->mAlive.store(true, std::memory_order_release);
 }
 
-Task::SharedPtr TaskQueueBase::createSafeTask(const SafetyFlag::SharedPtr &flag, Task *task, bool autoDelete)
+Task::SharedPtr TaskQueueBase::create_safe_task(const SafetyFlag::SharedPtr &flag, Task *task, bool autoDelete)
 {
     return Task::create(std::move(Task::UniqueFunc(
         [=]() mutable
         {
-            if (flag->isAlive())
+            if (flag->is_alive())
             {
                 task->run();
             }
@@ -143,13 +143,13 @@ Task::SharedPtr TaskQueueBase::createSafeTask(const SafetyFlag::SharedPtr &flag,
         })));
 }
 
-Task::SharedPtr TaskQueueBase::createSafeTask(const SafetyFlag::SharedPtr &flag, UniqueFunction<void() &&> function)
+Task::SharedPtr TaskQueueBase::create_safe_task(const SafetyFlag::SharedPtr &flag, UniqueFunction<void() &&> function)
 {
-    auto movefunction = utils::makeMoveWrapper(std::move(function));
+    auto movefunction = utils::make_move_wrapper(std::move(function));
     return Task::create(std::move(Task::UniqueFunc(
         [flag, movefunction]() mutable
         {
-            if (flag->isAlive())
+            if (flag->is_alive())
             {
                 movefunction.move()();
             }
@@ -172,20 +172,20 @@ TaskQueueBase *TaskQueueBase::current()
     return detail::currentTaskQueue;
 }
 
-void TaskQueueBase::sendTask(const Task::SharedPtr &task, const SourceLocation &location)
+void TaskQueueBase::send_task(const Task::SharedPtr &task, const SourceLocation &location)
 {
-    if (this->isCurrent())
+    if (this->is_current())
     {
         task->run();
         return;
     }
 
     Semaphore semaphore;
-    auto cleanup = utils::makeScopeGuard([&semaphore] { semaphore.release(); });
-    this->postTask([task, cleanup = std::move(cleanup)] { task->run(); });
-    if (!semaphore.tryAcquire(1, TimeDelta::Seconds(10).ms()))
+    auto cleanup = utils::make_scope_guard([&semaphore] { semaphore.release(); });
+    this->post_task([task, cleanup = std::move(cleanup)] { task->run(); });
+    if (!semaphore.try_acquire(1, TimeDelta::Seconds(10).ms()))
     {
-        CXXKIT_WARNING("TaskQueueBase::sendTask: timeout waiting 10s for task to complete");
+        CXXKIT_WARNING("TaskQueueBase::send_task: timeout waiting 10s for task to complete");
         semaphore.acquire();
     }
 }

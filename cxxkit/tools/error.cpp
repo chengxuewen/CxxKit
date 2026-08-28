@@ -35,21 +35,21 @@ struct DomainData
     std::string name;
     std::string description;
 };
-static SpinLock &idDomainDatasMapSpinLock()
+static SpinLock &id_domain_datas_map_spin_lock()
 {
-    static SpinLock spinLock;
-    return spinLock;
+    static SpinLock spin_lock;
+    return spin_lock;
 }
-static std::map<ErrorId, DomainData> *idDomainDatasMap()
+static std::map<ErrorId, DomainData> *id_domain_datas_map()
 {
     static std::map<ErrorId, DomainData> map;
     return &map;
 }
-static bool isIdRegistered(ErrorId id)
+static bool is_id_registered(ErrorId id)
 {
-    SpinLock::Locker locker(idDomainDatasMapSpinLock());
-    auto idDomainDatasMap = detail::idDomainDatasMap();
-    return idDomainDatasMap->find(id) != idDomainDatasMap->end();
+    SpinLock::Locker locker(id_domain_datas_map_spin_lock());
+    auto id_domain_datas_map = detail::id_domain_datas_map();
+    return id_domain_datas_map->find(id) != id_domain_datas_map->end();
 }
 static ErrorId fnv1aHash(StringView name)
 {
@@ -65,11 +65,11 @@ static ErrorId fnv1aHash(StringView name)
 }
 } // namespace detail
 
-ErrorId Error::Domain::Registry::registerDomain(StringView type, StringView name, StringView description)
+ErrorId Error::Domain::Registry::register_domain(StringView type, StringView name, StringView description)
 {
-    SpinLock::Locker locker(detail::idDomainDatasMapSpinLock());
+    SpinLock::Locker locker(detail::id_domain_datas_map_spin_lock());
     auto id = detail::fnv1aHash(type);
-    auto map = detail::idDomainDatasMap();
+    auto map = detail::id_domain_datas_map();
     int retryCount = 0;
     const int maxRetries = 5;
     while (map->find(id) != map->end() && retryCount < maxRetries)
@@ -90,12 +90,12 @@ ErrorId Error::Domain::Registry::registerDomain(StringView type, StringView name
 }
 
 Error::Domain::Domain(ErrorId id)
-    : mId(detail::isIdRegistered(id) ? id : kInvalidId)
+    : mId(detail::is_id_registered(id) ? id : kInvalidId)
 {
-    SpinLock::Locker locker(detail::idDomainDatasMapSpinLock());
-    auto idDomainDatasMap = detail::idDomainDatasMap();
-    const auto iter = idDomainDatasMap->find(mId);
-    if (iter != idDomainDatasMap->end())
+    SpinLock::Locker locker(detail::id_domain_datas_map_spin_lock());
+    auto id_domain_datas_map = detail::id_domain_datas_map();
+    const auto iter = id_domain_datas_map->find(mId);
+    if (iter != id_domain_datas_map->end())
     {
         mType = iter->second.type;
         mName = iter->second.name;
@@ -132,7 +132,7 @@ Error::Error(const Domain &domain, ErrorId code, StringView message, const Share
 }
 
 Error::Error(StringView message, const SharedDataPtr &cause)
-    : mDomain(invalidDomain())
+    : mDomain(invalid_domain())
     , mCode(kInvalidId)
     , mMessage(message)
     , mCause(cause)
@@ -140,7 +140,7 @@ Error::Error(StringView message, const SharedDataPtr &cause)
 }
 
 Error::Error(const char *message, const SharedDataPtr &cause)
-    : mDomain(invalidDomain())
+    : mDomain(invalid_domain())
     , mCode(kInvalidId)
     , mMessage(message)
     , mCause(cause)
@@ -159,7 +159,7 @@ Error::~Error()
 {
 }
 
-const Error::Domain &invalidDomain()
+const Error::Domain &invalid_domain()
 {
     static const Error::Domain domain;
     return domain;

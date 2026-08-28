@@ -43,17 +43,17 @@ public:
     virtual ~Object();
 
     Object *parent() const;
-    void setParent(Object *parent);
+    void set_parent(Object *parent);
 
     const Children &children() const;
 
     virtual bool event(Event *event);
-    virtual bool eventFilter(Object *watched, Event *event);
+    virtual bool event_filter(Object *watched, Event *event);
 
 protected:
-    virtual void timerEvent(TimerEvent *event);
-    virtual void childEvent(ChildEvent *event);
-    virtual void customEvent(Event *event);
+    virtual void timer_event(TimerEvent *event);
+    virtual void child_event(ChildEvent *event);
+    virtual void custom_event(Event *event);
 
 protected:
     CXXKIT_DEFINE_DPTR(Object)

@@ -69,22 +69,22 @@ public:
      *    {
      *    ....
      *        SharedRefPtr<PendingTaskSafetyFlag> flag = safety_flag;
-     *        task_queue->postTask(
+     *        task_queue->post_task(
      *        [flag = std::move(flag), this] {
      *          // Now running on the main thread.
-     *          if (!flag->isAlive())
+     *          if (!flag->is_alive())
      *          {
      *              return;
      *          }
      *          MyMethod();
      *        });
      *    ....
-     *      ~ExampleClass() { safety_flag->setNotAlive(); }
+     *      ~ExampleClass() { safety_flag->set_not_alive(); }
      *      SafetyFlag::SharedPtr safety_flag = SafetyFlag::create();
      *    }
      *
      * SafeTask makes this check automatic:
-     *    task_queue->postTask(SafeTask(safety_flag, [this] { MyMethod(); }));
+     *    task_queue->post_task(SafeTask(safety_flag, [this] { MyMethod(); }));
      */
     class SafetyFlagPrivate;
     class CXXKIT_THREAD_API SafetyFlag final
@@ -103,8 +103,8 @@ public:
          * The ScopedTaskSafety makes using PendingTaskSafetyFlag very simple. It does automatic PTSF creation and
          * signalling of destruction when the ScopedTaskSafety instance goes out of scope.
          * Example usage:
-         *  my_task_queue->postTask(SafeTask(scoped_task_safety.flag(),
-         *     my_task_queue->postTask(SafeTask(scoped_task_safety.flag(),
+         *  my_task_queue->post_task(SafeTask(scoped_task_safety.flag(),
+         *     my_task_queue->post_task(SafeTask(scoped_task_safety.flag(),
          *        [this] {
          *             // task goes here
          *        }
@@ -120,7 +120,7 @@ public:
                 : mFlag(flag)
             {
             }
-            ~Scoped() { mFlag->setNotAlive(); }
+            ~Scoped() { mFlag->set_not_alive(); }
 
             // Returns a new reference to the safety flag.
             SharedPtr flag() const { return mFlag; }
@@ -128,7 +128,7 @@ public:
             // Marks the current flag as not-alive and attaches to a new one.
             void reset(const SharedPtr &newFlag = SafetyFlag::create())
             {
-                mFlag->setNotAlive();
+                mFlag->set_not_alive();
                 mFlag = newFlag;
             }
 
@@ -143,13 +143,13 @@ public:
         {
         public:
             ScopedDetached() = default;
-            ~ScopedDetached() { mFlag->setNotAlive(); }
+            ~ScopedDetached() { mFlag->set_not_alive(); }
 
             // Returns a new reference to the safety flag.
             SharedPtr flag() const { return mFlag; }
 
         private:
-            SharedPtr mFlag = SafetyFlag::createDetached();
+            SharedPtr mFlag = SafetyFlag::create_detached();
         };
 
         /**
@@ -161,23 +161,23 @@ public:
          * Creates a flag, but with its SequenceChecker explicitly initialized for a given task queue and
          * the `alive()` flag specified.
          */
-        static SharedPtr createDetached();
+        static SharedPtr create_detached();
         /**
          * Same as `CreateDetached()` except the initial state of the returned flag will be `!alive()`.
          * @return
          */
-        static SharedPtr createDetachedInactive();
+        static SharedPtr create_detached_inactive();
         /**
-         * Same as `createDetached()` except the initial state of the returned flag will be `!alive()`.
+         * Same as `create_detached()` except the initial state of the returned flag will be `!alive()`.
          * @param alive initial liveness state (inverted by the flag).
          * @param attachedQueue the queue that owns the flag.
          * @return the new flag.
          */
-        static SharedPtr createAttachedToTaskQueue(bool alive, Nonnull<TaskQueueBase *> attachedQueue);
+        static SharedPtr create_attached_to_task_queue(bool alive, Nonnull<TaskQueueBase *> attachedQueue);
         ~SafetyFlag();
 
-        bool isAlive() const;
-        void setNotAlive();
+        bool is_alive() const;
+        void set_not_alive();
         /**
          * The SetAlive method is intended to support Start/Stop/Restart usecases.
          * When a class has called SetNotAlive on a flag used for posted tasks, and decides it wants to post new
@@ -191,67 +191,67 @@ public:
          *    on the flag pointer itself. Some synchronization is required between the thread overwriting the flag
          *    pointer, and the threads that want to post tasks and therefore read that same pointer.
          */
-        void setAlive();
+        void set_alive();
     };
-    static Task::SharedPtr createSafeTask(const SafetyFlag::SharedPtr &flag, Task *task, bool autoDelete);
-    static Task::SharedPtr createSafeTask(const SafetyFlag::SharedPtr &flag, UniqueFunction<void() &&> function);
+    static Task::SharedPtr create_safe_task(const SafetyFlag::SharedPtr &flag, Task *task, bool autoDelete);
+    static Task::SharedPtr create_safe_task(const SafetyFlag::SharedPtr &flag, UniqueFunction<void() &&> function);
 
     virtual ~TaskQueueBase() = default;
 
     virtual void destroy() = 0;
-    virtual bool cancelTask(const Task *task) = 0;
+    virtual bool cancel_task(const Task *task) = 0;
 
-    void sendTask(Task *task, bool autoDelete, const SourceLocation &location = SourceLocation::current())
+    void send_task(Task *task, bool autoDelete, const SourceLocation &location = SourceLocation::current())
     {
-        this->sendTask(Task::makeShared(task, autoDelete), location);
+        this->send_task(Task::make_shared(task, autoDelete), location);
     }
-    void sendTask(UniqueFunction<void() &&> function, const SourceLocation &location = SourceLocation::current())
+    void send_task(UniqueFunction<void() &&> function, const SourceLocation &location = SourceLocation::current())
     {
-        this->sendTask(Task::create(std::move(function)), location);
+        this->send_task(Task::create(std::move(function)), location);
     }
-    void sendTask(const Task::SharedPtr &task, const SourceLocation &location = SourceLocation::current());
+    void send_task(const Task::SharedPtr &task, const SourceLocation &location = SourceLocation::current());
 
 
     template <typename Functor,
               typename ReturnT = traits::invoke_result_t<Functor>,
               typename = typename std::enable_if<!traits::is_void<ReturnT>::value>::type>
-    ReturnT sendTask(Functor &&functor, const SourceLocation &location = SourceLocation::current())
+    ReturnT send_task(Functor &&functor, const SourceLocation &location = SourceLocation::current())
     {
         ReturnT result;
-        this->sendTask([&] { result = std::forward<Functor>(functor)(); }, location);
+        this->send_task([&] { result = std::forward<Functor>(functor)(); }, location);
         return result;
     }
 
-    void postTask(Task *task, bool autoDelete, const SourceLocation &location = SourceLocation::current())
+    void post_task(Task *task, bool autoDelete, const SourceLocation &location = SourceLocation::current())
     {
-        this->postTask(Task::makeShared(task, autoDelete), location);
+        this->post_task(Task::make_shared(task, autoDelete), location);
     }
-    void postTask(UniqueFunction<void() &&> function, const SourceLocation &location = SourceLocation::current())
+    void post_task(UniqueFunction<void() &&> function, const SourceLocation &location = SourceLocation::current())
     {
-        this->postTask(Task::create(std::move(function)), location);
+        this->post_task(Task::create(std::move(function)), location);
     }
-    virtual void postTask(const Task::SharedPtr &task, const SourceLocation &location = SourceLocation::current()) = 0;
+    virtual void post_task(const Task::SharedPtr &task, const SourceLocation &location = SourceLocation::current()) = 0;
 
 
-    void postDelayedTask(Task *task,
+    void post_delayed_task(Task *task,
                          bool autoDelete,
                          const TimeDelta &delay,
                          const SourceLocation &location = SourceLocation::current())
     {
-        this->postDelayedTask(Task::makeShared(task, autoDelete), delay, location);
+        this->post_delayed_task(Task::make_shared(task, autoDelete), delay, location);
     }
-    void postDelayedTask(UniqueFunction<void() &&> function,
+    void post_delayed_task(UniqueFunction<void() &&> function,
                          const TimeDelta &delay,
                          const SourceLocation &location = SourceLocation::current())
     {
-        this->postDelayedTask(Task::create(std::move(function)), delay, location);
+        this->post_delayed_task(Task::create(std::move(function)), delay, location);
     }
-    virtual void postDelayedTask(const Task::SharedPtr &task,
+    virtual void post_delayed_task(const Task::SharedPtr &task,
                                  const TimeDelta &delay,
                                  const SourceLocation &location = SourceLocation::current()) = 0;
 
 
-    bool isCurrent() const { return this->current() == this; }
+    bool is_current() const { return this->current() == this; }
 
     static TaskQueueBase *current();
 };

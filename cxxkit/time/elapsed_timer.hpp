@@ -67,30 +67,30 @@ public:
 
     /**
      * Constructs an invalid ElapsedTimer. A timer becomes valid once it has been started.
-     * @sa isValid(), start()
+     * @sa is_valid(), start()
      */
     CXXKIT_CONSTEXPR ElapsedTimer() { }
     virtual ~ElapsedTimer();
 
     /**
      * @return Returns the clock type that this ElapsedTimer implementation uses.
-     * @sa isMonotonic()
+     * @sa is_monotonic()
      */
-    static ClockType clockType() noexcept;
+    static ClockType clock_type() noexcept;
 
     /**
     * @return Returns \c true if this is a monotonic clock, false otherwise.
     * See the information on the different clock types to understand which ones are monotonic.
      */
-    static bool isMonotonic() noexcept;
+    static bool is_monotonic() noexcept;
 
     /**
      * @brief Invalidates this ElapsedTimer object.
      *
-     * An invalid object can be checked with isValid(). Calculations of timer elapsed since invalid data
+     * An invalid object can be checked with is_valid(). Calculations of timer elapsed since invalid data
      * are undefined and will likely produce bizarre results.
      *
-     * @sa isValid(), start(), restart()
+     * @sa is_valid(), start(), restart()
      */
     void invalidate() noexcept { mStart = mStop = kInvalidData; }
 
@@ -104,12 +104,12 @@ public:
      * The following example illustrates how to use this function to calibrate a parameter to a slow operation
      * (for example, an iteration count) so that this operation takes at least 250 milliseconds:
      *
-     * @sa start(), invalidate(), elapsed(), isValid()
+     * @sa start(), invalidate(), elapsed(), is_valid()
      */
     int64_t restart() noexcept;
 
     /**
-     * Starts this timer. Once started, a timer value can be checked with elapsed() or msecsSinceReference().
+     * Starts this timer. Once started, a timer value can be checked with elapsed() or msecs_since_reference().
      * Normally, a timer is started just before a lengthy operation.
      *
      * Also, starting a timer makes it valid again.
@@ -124,16 +124,16 @@ public:
      *
      * On platforms that do not provide nanosecond resolution, the value returned will be the best estimate available.
      *
-     * @sa start(), restart(), hasExpired(), invalidate()
+     * @sa start(), restart(), has_expired(), invalidate()
      */
-    int64_t nsecsElapsed() const noexcept;
+    int64_t nsecs_elapsed() const noexcept;
 
     /**
      * @return Returns the number of milliseconds since this ElapsedTimer was last started.
      *
      * Calling this function on a ElapsedTimer that is invalid results in undefined behavior.
      *
-     * @sa start(), restart(), hasExpired(), isValid(), invalidate()
+     * @sa start(), restart(), has_expired(), is_valid(), invalidate()
      */
     int64_t elapsed() const noexcept;
 
@@ -144,9 +144,9 @@ public:
      *
      * The return value is undefined if this object or @a other were invalidated.
      *
-     * @sa secsTo(), elapsed()
+     * @sa secs_to(), elapsed()
      */
-    int64_t msecsTo(const ElapsedTimer &other) const noexcept;
+    int64_t msecs_to(const ElapsedTimer &other) const noexcept;
 
     /**
      * @return Returns the number of seconds between this ElapsedTimer and @a other.
@@ -155,9 +155,9 @@ public:
      *
      * Calling this function on or with a ElapsedTimer that is invalid results in undefined behavior.
      *
-     * @sa msecsTo(), elapsed()
+     * @sa msecs_to(), elapsed()
      */
-    int64_t secsTo(const ElapsedTimer &other) const noexcept;
+    int64_t secs_to(const ElapsedTimer &other) const noexcept;
 
     /**
      * @return Returns the number of milliseconds between last time this ElapsedTimer object was started
@@ -170,14 +170,14 @@ public:
      * On Linux, Windows and Apple platforms, this value is usually the time since the system boot, though
      * it usually does not include the time the system has spent in sleep states.
      *
-     * @sa clockType(), elapsed()
+     * @sa clock_type(), elapsed()
      */
-    int64_t msecsSinceReference() const noexcept;
+    int64_t msecs_since_reference() const noexcept;
 
     /**
      * @return Returns false if the timer has never been started or invalidated by a call to invalidate().
      */
-    bool isValid() const noexcept { return mStart != kInvalidData && mStop != kInvalidData; }
+    bool is_valid() const noexcept { return mStart != kInvalidData && mStop != kInvalidData; }
     /**
      * @brief Returns true if this ElapsedTimer has already expired by @a timeout milliseconds
      * (that is, more than @a timeout milliseconds have elapsed).
@@ -187,7 +187,7 @@ public:
      *
      * @sa elapsed(), DeadlineTimer
      */
-    bool hasExpired(int64_t timeout) const noexcept { return uint64_t(this->elapsed()) > uint64_t(timeout); }
+    bool has_expired(int64_t timeout) const noexcept { return uint64_t(this->elapsed()) > uint64_t(timeout); }
 
     /**
      * @brief Returns true if this object and @a other contain the same time.

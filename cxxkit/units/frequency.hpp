@@ -109,12 +109,12 @@ inline constexpr double operator*(TimeDelta time_delta, Frequency frequency)
     return frequency * time_delta;
 }
 
-CXXKIT_UNITS_API std::string toString(Frequency value);
+CXXKIT_UNITS_API std::string to_string(Frequency value);
 
 template <typename Sink>
 void AbslStringify(Sink &sink, Frequency value)
 {
-    sink.Append(toString(value));
+    sink.Append(to_string(value));
 }
 CXXKIT_END_NAMESPACE
 

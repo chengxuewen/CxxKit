@@ -83,8 +83,8 @@ public:
 #if CXXKIT_FEATURE_USE_BOOST_BACKEND
 
 #else
-    static cpr::AuthMode toCpr(Authentication::Mode mode);
-    static Authentication::Mode fromCpr(cpr::AuthMode mode);
+    static cpr::AuthMode to_cpr(Authentication::Mode mode);
+    static Authentication::Mode from_cpr(cpr::AuthMode mode);
     cpr::Authentication mAuthentication{"", "", cpr::AuthMode::BASIC};
 #endif
 

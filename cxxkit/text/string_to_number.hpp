@@ -39,7 +39,7 @@ CXXKIT_BEGIN_NAMESPACE
 // are disabled in WebRTC.
 //
 // Integers are parsed using:
-//   Optional<int-type> stringToNumber(StringView str,
+//   Optional<int-type> string_to_number(StringView str,
 //                                           int base = 10);
 //
 // These functions parse a value from the beginning of a string into one of the
@@ -157,14 +157,14 @@ template Optional<long double> ParseFloatingPoint(StringView str);
 } // namespace detail
 
 template <typename T>
-typename std::enable_if<std::is_integral<T>::value && std::is_signed<T>::value, Optional<T>>::type stringToNumber(
+typename std::enable_if<std::is_integral<T>::value && std::is_signed<T>::value, Optional<T>>::type string_to_number(
     StringView str,
     int base = 10)
 {
     using detail::signed_type;
     static_assert(std::numeric_limits<T>::max() <= std::numeric_limits<signed_type>::max() &&
                       std::numeric_limits<T>::lowest() >= std::numeric_limits<signed_type>::lowest(),
-                  "stringToNumber only supports signed integers as large as long long int");
+                  "string_to_number only supports signed integers as large as long long int");
     Optional<signed_type> value = detail::ParseSigned(str, base);
     if (value && *value >= std::numeric_limits<T>::lowest() && *value <= std::numeric_limits<T>::max())
     {
@@ -174,13 +174,13 @@ typename std::enable_if<std::is_integral<T>::value && std::is_signed<T>::value, 
 }
 
 template <typename T>
-typename std::enable_if<std::is_integral<T>::value && std::is_unsigned<T>::value, Optional<T>>::type stringToNumber(
+typename std::enable_if<std::is_integral<T>::value && std::is_unsigned<T>::value, Optional<T>>::type string_to_number(
     StringView str,
     int base = 10)
 {
     using detail::unsigned_type;
     static_assert(std::numeric_limits<T>::max() <= std::numeric_limits<unsigned_type>::max(),
-                  "stringToNumber only supports unsigned integers as large as "
+                  "string_to_number only supports unsigned integers as large as "
                   "unsigned long long int");
     Optional<unsigned_type> value = detail::ParseUnsigned(str, base);
     if (value && *value <= std::numeric_limits<T>::max())
@@ -191,11 +191,11 @@ typename std::enable_if<std::is_integral<T>::value && std::is_unsigned<T>::value
 }
 
 template <typename T>
-typename std::enable_if<std::is_floating_point<T>::value, Optional<T>>::type stringToNumber(StringView str,
+typename std::enable_if<std::is_floating_point<T>::value, Optional<T>>::type string_to_number(StringView str,
                                                                                             int /* base */ = 10)
 {
     static_assert(std::numeric_limits<T>::max() <= std::numeric_limits<long double>::max(),
-                  "stringToNumber only supports floating-point numbers as large "
+                  "string_to_number only supports floating-point numbers as large "
                   "as long double");
     return detail::ParseFloatingPoint<T>(str);
 }

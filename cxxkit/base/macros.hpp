@@ -226,17 +226,17 @@ namespace CXXKIT_NAMESPACE
 ***********************************************************************************************************************/
 CXXKIT_BEGIN_NAMESPACE
 template <typename T>
-inline T *getPointerHelper(T *ptr)
+inline T *get_pointer_helper(T *ptr)
 {
     return ptr;
 }
 template <typename Wrapper>
-static inline typename Wrapper::pointer getPointerHelper(const Wrapper &p)
+static inline typename Wrapper::pointer get_pointer_helper(const Wrapper &p)
 {
     return p.get();
 }
 template <typename Wrapper>
-static inline typename Wrapper::Pointer getPointerHelper(const Wrapper &p)
+static inline typename Wrapper::Pointer get_pointer_helper(const Wrapper &p)
 {
     return p.data();
 }
@@ -251,53 +251,53 @@ CXXKIT_END_NAMESPACE
 #define CXXKIT_DEFINE_DPTR(Class) std::unique_ptr<Class##Private> mDPtr;
 
 #define CXXKIT_DECLARE_PRIVATE(Class)                                                                                  \
-    inline Class##Private *dFunc()                                                                                     \
+    inline Class##Private *d_func()                                                                                     \
     {                                                                                                                  \
-        CXXKIT_CAST_IGNORE_ALIGN(return reinterpret_cast<Class##Private *>(cxxkit::getPointerHelper(mDPtr));)          \
+        CXXKIT_CAST_IGNORE_ALIGN(return reinterpret_cast<Class##Private *>(cxxkit::get_pointer_helper(mDPtr));)          \
     }                                                                                                                  \
-    inline const Class##Private *dFunc() const                                                                         \
+    inline const Class##Private *d_func() const                                                                         \
     {                                                                                                                  \
-        CXXKIT_CAST_IGNORE_ALIGN(return reinterpret_cast<const Class##Private *>(cxxkit::getPointerHelper(mDPtr));)    \
+        CXXKIT_CAST_IGNORE_ALIGN(return reinterpret_cast<const Class##Private *>(cxxkit::get_pointer_helper(mDPtr));)    \
     }                                                                                                                  \
     friend class Class##Private;
 
 #define CXXKIT_DECLARE_PRIVATE_D(DPtr, Class)                                                                          \
-    inline Class##Private *dFunc()                                                                                     \
+    inline Class##Private *d_func()                                                                                     \
     {                                                                                                                  \
-        CXXKIT_CAST_IGNORE_ALIGN(return reinterpret_cast<Class##Private *>(cxxkit::getPointerHelper(DPtr));)           \
+        CXXKIT_CAST_IGNORE_ALIGN(return reinterpret_cast<Class##Private *>(cxxkit::get_pointer_helper(DPtr));)           \
     }                                                                                                                  \
-    inline const Class##Private *dFunc() const                                                                         \
+    inline const Class##Private *d_func() const                                                                         \
     {                                                                                                                  \
-        CXXKIT_CAST_IGNORE_ALIGN(return reinterpret_cast<const Class##Private *>(cxxkit::getPointerHelper(DPtr));)     \
+        CXXKIT_CAST_IGNORE_ALIGN(return reinterpret_cast<const Class##Private *>(cxxkit::get_pointer_helper(DPtr));)     \
     }                                                                                                                  \
     friend class Class##Private;
 
 #define CXXKIT_DEFINE_PPTR(Class) Class *const mPPtr;
 
 #define CXXKIT_DECLARE_PUBLIC(Class)                                                                                   \
-    inline Class *pFunc()                                                                                              \
+    inline Class *p_func()                                                                                              \
     {                                                                                                                  \
         return static_cast<Class *>(mPPtr);                                                                            \
     }                                                                                                                  \
-    inline const Class *pFunc() const                                                                                  \
+    inline const Class *p_func() const                                                                                  \
     {                                                                                                                  \
         return static_cast<const Class *>(mPPtr);                                                                      \
     }                                                                                                                  \
     friend class Class;
 
 #define CXXKIT_DECLARE_PUBLIC_P(PPtr, Class)                                                                           \
-    inline Class *pFunc()                                                                                              \
+    inline Class *p_func()                                                                                              \
     {                                                                                                                  \
         return static_cast<Class *>(PPtr);                                                                             \
     }                                                                                                                  \
-    inline const Class *pFunc() const                                                                                  \
+    inline const Class *p_func() const                                                                                  \
     {                                                                                                                  \
         return static_cast<const Class *>(PPtr);                                                                       \
     }                                                                                                                  \
     friend class Class;
 
-#define CXXKIT_D(Class) Class##Private *const d = dFunc()
-#define CXXKIT_P(Class) Class *const p = pFunc()
+#define CXXKIT_D(Class) Class##Private *const d = d_func()
+#define CXXKIT_P(Class) Class *const p = p_func()
 
 
 /** @brief Force-inline / no-inline / used attribute macros: `CXXKIT_FORCE_INLINE`, `CXXKIT_NO_INLINE`, `CXXKIT_USED`.
@@ -462,14 +462,14 @@ CXXKIT_END_NAMESPACE
 // Note: this internal template function declaration is used by ABSL_ARRAYSIZE.
 // The function doesn't need a definition, as we only use its type.
 template <typename T, size_t N>
-auto cxxkitArraySizeHelper(const T (&array)[N]) -> char (&)[N];
+auto cxxkit_array_size_helper(const T (&array)[N]) -> char (&)[N];
 
 /**
  * @brief Returns the number of elements in an array as a compile-time constant,
  * which can be used in defining new arrays.
  * If you use this macro on a pointer by mistake, you will get a compile-time error.
  */
-#define CXXKIT_ARRAY_SIZE(array) (sizeof(cxxkitArraySizeHelper(array)))
+#define CXXKIT_ARRAY_SIZE(array) (sizeof(cxxkit_array_size_helper(array)))
 
 
 /** @brief DLL export/import for static variables: `CXXKIT_EXTERN_VAR`.

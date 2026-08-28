@@ -60,18 +60,18 @@ IdRegistry::~IdRegistry()
 {
 }
 
-int64_t IdRegistry::registeredIdCount() const
+int64_t IdRegistry::registered_id_count() const
 {
     CXXKIT_D(const IdRegistry);
     return d->mUsedIds.size();
 }
-bool IdRegistry::isIdRegistered(int64_t id) const
+bool IdRegistry::is_id_registered(int64_t id) const
 {
     CXXKIT_D(const IdRegistry);
     return d->mUsedIds.find(id) != d->mUsedIds.cend();
 }
 
-int64_t IdRegistry::requestId()
+int64_t IdRegistry::request_id()
 {
     CXXKIT_D(IdRegistry);
     int64_t id = d->mFreeIds.empty() ? ++d->mCounter : *d->mFreeIds.erase(d->mFreeIds.begin());
@@ -79,11 +79,11 @@ int64_t IdRegistry::requestId()
     {
         id = ++d->mCounter;
     }
-    this->registerId(id);
+    this->register_id(id);
     return id;
 }
 
-void IdRegistry::registerId(int64_t id)
+void IdRegistry::register_id(int64_t id)
 {
     CXXKIT_D(IdRegistry);
     if (d->mFreeIds.find(id) != d->mFreeIds.end())
@@ -96,7 +96,7 @@ void IdRegistry::registerId(int64_t id)
     }
 }
 
-void IdRegistry::unregisterId(int64_t id)
+void IdRegistry::unregister_id(int64_t id)
 {
     CXXKIT_D(IdRegistry);
     if (d->mFreeIds.find(id) == d->mFreeIds.end())

@@ -41,10 +41,10 @@ public:
     class CXXKIT_ATTRIBUTE_SCOPED_LOCKABLE Scope
     {
     public:
-        explicit Scope(const RaceChecker *raceChecker) CXXKIT_ATTRIBUTE_EXCLUSIVE_LOCK_FUNCTION(raceChecker);
+        explicit Scope(const RaceChecker *race_checker) CXXKIT_ATTRIBUTE_EXCLUSIVE_LOCK_FUNCTION(race_checker);
         ~Scope() CXXKIT_ATTRIBUTE_UNLOCK_FUNCTION();
 
-        bool isDetected() const;
+        bool is_detected() const;
 
 #if CXXKIT_DCHECK_IS_ON
     private:
@@ -69,11 +69,11 @@ private:
 CXXKIT_END_NAMESPACE
 
 #define CXXKIT_CHECK_RUNS_SERIALIZED_IMPL(x, suffix)                                                                   \
-    cxxkit::RaceChecker::Scope raceChecker##suffix(x);                                                                 \
-    CXXKIT_CHECK(!raceChecker##suffix.isDetected())
+    cxxkit::RaceChecker::Scope race_checker##suffix(x);                                                                 \
+    CXXKIT_CHECK(!race_checker##suffix.is_detected())
 
 #define CXXKIT_CHECK_RUNS_SERIALIZED_NEXT(x, suffix) CXXKIT_CHECK_RUNS_SERIALIZED_IMPL(x, suffix)
 
-#define CXXKIT_DCHECK_RUNS_SERIALIZED(x) cxxkit::RaceChecker::Scope raceChecker(x)
+#define CXXKIT_DCHECK_RUNS_SERIALIZED(x) cxxkit::RaceChecker::Scope race_checker(x)
 
 #define CXXKIT_CHECK_RUNS_SERIALIZED(x) CXXKIT_CHECK_RUNS_SERIALIZED_NEXT(x, __LINE__)

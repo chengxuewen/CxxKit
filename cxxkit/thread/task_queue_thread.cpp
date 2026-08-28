@@ -93,9 +93,9 @@ void TaskQueueThreadPrivate::init()
         [this, &started]()
         {
             CXXKIT_LOGGING_TRACE(CXXKIT_TASK_QUEUE_LOGGER(), "TaskQueueThreadPrivate: thread started");
-            TaskQueueThread::CurrentSetter currentSetter(mPPtr);
+            TaskQueueThread::CurrentSetter current_setter(mPPtr);
             started.release();
-            mPPtr->processTasks();
+            mPPtr->process_tasks();
             CXXKIT_LOGGING_TRACE(CXXKIT_TASK_QUEUE_LOGGER(), "TaskQueueThreadPrivate: thread finished");
         });
     started.acquire();
@@ -108,12 +108,12 @@ TaskQueueThread::TaskQueueThread()
     mDPtr->init();
 }
 
-TaskQueueThread::SharedPtr TaskQueueThread::makeShared()
+TaskQueueThread::SharedPtr TaskQueueThread::make_shared()
 {
     return SharedPtr(new TaskQueueThread, [](TaskQueueThread *thread) { thread->destroy(); });
 }
 
-TaskQueueThread::UniquePtr TaskQueueThread::makeUnique()
+TaskQueueThread::UniquePtr TaskQueueThread::make_unique()
 {
     return UniquePtr(new TaskQueueThread);
 }
@@ -126,7 +126,7 @@ void TaskQueueThread::destroy()
 {
     CXXKIT_D(TaskQueueThread);
     CXXKIT_LOGGING_TRACE(CXXKIT_TASK_QUEUE_LOGGER(), "TaskQueueThread::destroy()");
-    CXXKIT_ASSERT(!this->isCurrent());
+    CXXKIT_ASSERT(!this->is_current());
     {
         RecursiveMutex::Lock lock(d->mMutex);
         d->mQuit = true;
@@ -141,7 +141,7 @@ void TaskQueueThread::destroy()
     delete this;
 }
 
-bool TaskQueueThread::cancelTask(const Task *task)
+bool TaskQueueThread::cancel_task(const Task *task)
 {
     CXXKIT_D(TaskQueueThread);
     RecursiveMutex::Lock lock(d->mMutex);
@@ -173,7 +173,7 @@ bool TaskQueueThread::cancelTask(const Task *task)
     return canceled;
 }
 
-void TaskQueueThread::postTask(const Task::SharedPtr &task, const SourceLocation &location)
+void TaskQueueThread::post_task(const Task::SharedPtr &task, const SourceLocation &location)
 {
     CXXKIT_D(TaskQueueThread);
     RecursiveMutex::Lock lock(d->mMutex);
@@ -181,24 +181,24 @@ void TaskQueueThread::postTask(const Task::SharedPtr &task, const SourceLocation
     d->mTaskReadyCondition.notify_one();
 }
 
-void TaskQueueThread::postDelayedTask(const Task::SharedPtr &task,
+void TaskQueueThread::post_delayed_task(const Task::SharedPtr &task,
                                       const TimeDelta &delay,
                                       const SourceLocation &location)
 {
     CXXKIT_D(TaskQueueThread);
     RecursiveMutex::Lock lock(d->mMutex);
-    const auto ts = DateTime::steadyTimeUSecs() + delay.us();
+    const auto ts = DateTime::steady_time_u_secs() + delay.us();
     d->mDelayedTasks.insert({++d->mTaskIdCounter, ts, std::move(task)});
         d->mTaskReadyCondition.notify_one();
-    CXXKIT_LOGGING_TRACE(CXXKIT_TASK_QUEUE_LOGGER(), "TaskQueueThread: postDelayedTask");
+    CXXKIT_LOGGING_TRACE(CXXKIT_TASK_QUEUE_LOGGER(), "TaskQueueThread: post_delayed_task");
 }
 
-TaskQueueThread::NextTask TaskQueueThread::popNextTask()
+TaskQueueThread::NextTask TaskQueueThread::pop_next_task()
 {
     CXXKIT_D(TaskQueueThread);
-    CXXKIT_LOGGING_TRACE(CXXKIT_TASK_QUEUE_LOGGER(), "TaskQueueThread::popNextTask()");
+    CXXKIT_LOGGING_TRACE(CXXKIT_TASK_QUEUE_LOGGER(), "TaskQueueThread::pop_next_task()");
         NextTask result;
-    const int64_t tickUSecs = DateTime::steadyTimeUSecs();
+    const int64_t tickUSecs = DateTime::steady_time_u_secs();
     RecursiveMutex::Lock lock(d->mMutex);
     if (d->mQuit)
     {
@@ -241,7 +241,7 @@ TaskQueueThread::NextTask TaskQueueThread::popNextTask()
     if (!result.runTask && result.sleepTime.us() > 1000)
     {
         // Nothing due soon, and the empty-queue default sleepTime is PlusInfinity: waiting on it
-        // would sleep a full second (the wait cap) even after a post/postDelayedTask notify that
+        // would sleep a full second (the wait cap) even after a post/post_delayed_task notify that
         // arrived while this thread was already waiting with an earlier deadline (predicate wait
         // does not shorten a deadline). A 1ms short-poll bounds that window far inside any real
         // delay deadline (fixes intermittent TaskQueueThreadTest.PostDelayedTask 1s timeouts:
@@ -253,15 +253,15 @@ TaskQueueThread::NextTask TaskQueueThread::popNextTask()
     return result;
 }
 
-void TaskQueueThread::processTasks()
+void TaskQueueThread::process_tasks()
 {
     CXXKIT_D(TaskQueueThread);
     RecursiveMutex::UniqueLock lock(d->mMutex);
     lock.unlock();
     while (true)
     {
-        CXXKIT_LOGGING_TRACE(CXXKIT_TASK_QUEUE_LOGGER(), "TaskQueueThread::processTasks() loop");
-        const auto nextTask = this->popNextTask();
+        CXXKIT_LOGGING_TRACE(CXXKIT_TASK_QUEUE_LOGGER(), "TaskQueueThread::process_tasks() loop");
+        const auto nextTask = this->pop_next_task();
         if (nextTask.finalTask)
         {
             break;
@@ -270,7 +270,7 @@ void TaskQueueThread::processTasks()
         if (nextTask.runTask)
         {
             CXXKIT_LOGGING_TRACE(CXXKIT_TASK_QUEUE_LOGGER(),
-                                 "TaskQueueThread::processTasks() runTask:{}",
+                                 "TaskQueueThread::process_tasks() runTask:{}",
                                  utils::fmt::ptr(nextTask.runTask.get()));
             // process entry immediately then try again
             nextTask.runTask->run();
@@ -280,29 +280,29 @@ void TaskQueueThread::processTasks()
 
         lock.lock();
         CXXKIT_LOGGING_TRACE(CXXKIT_TASK_QUEUE_LOGGER(),
-                             "TaskQueueThread::processTasks() wait {} us",
+                             "TaskQueueThread::process_tasks() wait {} us",
                              nextTask.sleepTime.us());
                 const auto deadline = std::chrono::steady_clock::now() +
                               std::chrono::microseconds(std::min(nextTask.sleepTime.us(), (int64_t)1000000LL));
         // Predicate wait: re-checks the queues under the lock after any wakeup. This is the
         // standard condition_variable idiom and closes a real lost-wakeup window: init() only
-        // waits for the worker thread to *start* (started.release happens before processTasks),
-        // so a post/postDelayedTask notify_one racing ahead of this thread's first wait is
+        // waits for the worker thread to *start* (started.release happens before process_tasks),
+        // so a post/post_delayed_task notify_one racing ahead of this thread's first wait is
         // dropped; the thread then slept a full 1s on an empty-queue sleepTime (mDelayTasks
         // empty => default TimeDelta => min(...,1s) cap) and delayed tasks missed their window
         // (observed: TaskQueueThreadTest.PostDelayedTask 1s timeout, intermittent).
         d->mTaskReadyCondition.wait_until(lock, deadline, [d] {
             return d->mQuit || !d->mPendingTasks.empty() ||
                    (!d->mDelayedTasks.empty() &&
-                    d->mDelayedTasks.begin()->timestamp <= DateTime::steadyTimeUSecs());
+                    d->mDelayedTasks.begin()->timestamp <= DateTime::steady_time_u_secs());
         });
         lock.unlock();
     }
-    CXXKIT_LOGGING_TRACE(CXXKIT_TASK_QUEUE_LOGGER(), "TaskQueueThread::processTasks() break loop");
+    CXXKIT_LOGGING_TRACE(CXXKIT_TASK_QUEUE_LOGGER(), "TaskQueueThread::process_tasks() break loop");
     lock.lock();
     // Ensure remaining deleted tasks are destroyed with Current() set up to this task queue.
     d->mPendingTasks.clear();
-    CXXKIT_LOGGING_TRACE(CXXKIT_TASK_QUEUE_LOGGER(), "TaskQueueThread::processTasks() done");
+    CXXKIT_LOGGING_TRACE(CXXKIT_TASK_QUEUE_LOGGER(), "TaskQueueThread::process_tasks() done");
 }
 
 CXXKIT_END_NAMESPACE

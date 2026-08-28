@@ -49,7 +49,7 @@ namespace detail
 namespace tls
 {
 static DWORD currentThreadDataTLSIndex = TLS_OUT_OF_INDEXES;
-void createTLS()
+void create_tls()
 {
     if (TLS_OUT_OF_INDEXES == currentThreadDataTLSIndex)
     {
@@ -61,7 +61,7 @@ void createTLS()
         }
     }
 }
-static void freeTLS()
+static void free_tls()
 {
     if (TLS_OUT_OF_INDEXES != currentThreadDataTLSIndex)
     {
@@ -69,18 +69,18 @@ static void freeTLS()
         currentThreadDataTLSIndex = TLS_OUT_OF_INDEXES;
     }
 }
-CXXKIT_DESTRUCTOR_FUNCTION(freeTLS)
+CXXKIT_DESTRUCTOR_FUNCTION(free_tls)
 } // namespace tls
 // Utility functions for getting, setting and clearing thread specific data.
-static PlatformThreadData *getThreadData()
+static PlatformThreadData *get_thread_data()
 {
     return reinterpret_cast<PlatformThreadData *>(TlsGetValue(tls::currentThreadDataTLSIndex));
 }
-static void setThreadData(PlatformThreadData *data)
+static void set_thread_data(PlatformThreadData *data)
 {
     TlsSetValue(tls::currentThreadDataTLSIndex, data);
 }
-static void clearThreadData()
+static void clear_thread_data()
 {
     TlsSetValue(tls::currentThreadDataTLSIndex, 0);
 }
@@ -105,7 +105,7 @@ static void finish(void *arg, bool lockAnyway = true) noexcept
     {
         lock.unlock();
     }
-    threadPrivate->onFinished();
+    threadPrivate->on_finished();
     //QCoreApplication::sendPostedEvents(0, QEvent::DeferredDelete);
     //QThreadStorageData::finish(tls_data);
     if (lockAnyway)
@@ -126,7 +126,7 @@ static void finish(void *arg, bool lockAnyway = true) noexcept
     threadPrivate->mFinished = true;
     threadPrivate->mInterruptionRequested = false;
 
-    threadData->threadId.store(0);
+    threadData->thread_id.store(0);
     threadPrivate->mThreadHandle = 0;
 
     threadPrivate->mInFinish = false;
@@ -138,21 +138,21 @@ static unsigned int __stdcall start(void *arg) noexcept
     auto thread = PlatformThreadPrivate::get(threadPrivate);
     auto threadData = threadPrivate->mData;
 
-    tls::createTLS();
-    setThreadData(threadData);
-    threadData->threadId.store(PlatformThread::currentThreadId());
+    tls::create_tls();
+    set_thread_data(threadData);
+    threadData->thread_id.store(PlatformThread::current_thread_id());
 
-    PlatformThreadPrivate::setTerminationEnabled(false);
+    PlatformThreadPrivate::set_termination_enabled(false);
     {
         {
             PlatformThreadPrivate::ThreadMutex::UniqueLock lock(threadPrivate->mMutex);
             threadData->quitNow = threadPrivate->mExited;
         }
         // data->ensureEventDispatcher();
-        PlatformThread::setCurrentThreadName(threadPrivate->mName.c_str());
-        threadPrivate->onStarted();
+        PlatformThread::set_current_thread_name(threadPrivate->mName.c_str());
+        threadPrivate->on_started();
     }
-    PlatformThreadPrivate::setTerminationEnabled(true);
+    PlatformThreadPrivate::set_termination_enabled(true);
 
     threadPrivate->run();
     finish(arg);
@@ -169,7 +169,7 @@ static HANDLE adoptedThreadWakeup = 0;
     When this happens it derefs the QThreadData for the adopted thread
     to make sure it gets cleaned up properly.
 */
-DWORD WINAPI adoptedThreadWatcherFunction(LPVOID)
+DWORD WINAPI adopted_thread_watcher_function(LPVOID)
 {
     CXXKIT_FOREVER
     {
@@ -234,7 +234,7 @@ DWORD WINAPI adoptedThreadWatcherFunction(LPVOID)
         lock.lock();
         PlatformThreadData *data = PlatformThreadData::current(adoptedPlatformThreads.at(platformThreadIndex));
         lock.unlock();
-        if (data->isAdopted)
+        if (data->is_adopted)
         {
             PlatformThread *thread = data->thread.load();
             CXXKIT_ASSERT(thread);
@@ -251,7 +251,7 @@ DWORD WINAPI adoptedThreadWatcherFunction(LPVOID)
         adoptedPlatformThreads.erase(adoptedPlatformThreads.begin() + platformThreadIndex);
     }
 
-    PlatformThreadData *threadData = getThreadData();
+    PlatformThreadData *threadData = get_thread_data();
     if (threadData)
     {
         threadData->deref();
@@ -263,7 +263,7 @@ DWORD WINAPI adoptedThreadWatcherFunction(LPVOID)
  * Adds an adopted thread to the list of threads that Qt watches to make sure the thread data is properly cleaned up.
  * This function starts the watcher thread if necessary.
 */
-static void watchAdopted(const HANDLE adoptedThreadHandle, PlatformThread *platformThread)
+static void watch_adopted(const HANDLE adoptedThreadHandle, PlatformThread *platformThread)
 {
     std::lock_guard<std::mutex> lock(adoptedThreadWatcherMutex);
     if (GetCurrentThreadId() == adoptedThreadWatcherId)
@@ -288,7 +288,7 @@ static void watchAdopted(const HANDLE adoptedThreadHandle, PlatformThread *platf
             adoptedThreadHandles.insert(adoptedThreadHandles.begin(), adoptedThreadWakeup);
         }
 
-        CloseHandle(CreateThread(0, 0, adoptedThreadWatcherFunction, 0, 0, &adoptedThreadWatcherId));
+        CloseHandle(CreateThread(0, 0, adopted_thread_watcher_function, 0, 0, &adoptedThreadWatcherId));
     }
     else
     {
@@ -300,26 +300,26 @@ static void watchAdopted(const HANDLE adoptedThreadHandle, PlatformThread *platf
 
 PlatformThreadData *PlatformThreadData::current(bool createIfNecessary)
 {
-    detail::tls::createTLS();
-    auto *threadData = detail::getThreadData();
+    detail::tls::create_tls();
+    auto *threadData = detail::get_thread_data();
     if (!threadData && createIfNecessary)
     {
         threadData = new PlatformThreadData;
-        detail::setThreadData(threadData);
+        detail::set_thread_data(threadData);
         CXXKIT_TRY
         {
             threadData->thread = new AdoptedPlatformThread(threadData);
         }
         CXXKIT_CATCH(...)
         {
-            detail::clearThreadData();
+            detail::clear_thread_data();
             threadData->deref();
             threadData = nullptr;
             CXXKIT_RETHROW;
         }
-        threadData->isAdopted = true;
-        threadData->threadId.store(PlatformThread::currentThreadId());
-        // if (!CoreApplicationPrivate::theMainThread.loadAcquire())
+        threadData->is_adopted = true;
+        threadData->thread_id.store(PlatformThread::current_thread_id());
+        // if (!CoreApplicationPrivate::theMainThread.load_acquire())
         // CoreApplicationPrivate::theMainThread.storeRelease(data->thread.loadRelaxed());
 
         HANDLE realHandle = INVALID_HANDLE_VALUE;
@@ -330,17 +330,17 @@ PlatformThreadData *PlatformThreadData::current(bool createIfNecessary)
                         0,
                         FALSE,
                         DUPLICATE_SAME_ACCESS);
-        detail::thread::watchAdopted(realHandle, threadData->thread.load());
+        detail::thread::watch_adopted(realHandle, threadData->thread.load());
     }
     return threadData;
 }
 
-void PlatformThreadData::clearCurrent()
+void PlatformThreadData::clear_current()
 {
-    detail::clearThreadData();
+    detail::clear_thread_data();
 }
 
-void PlatformThreadPrivate::setPriority(Priority priority)
+void PlatformThreadPrivate::set_priority(Priority priority)
 {
     int prio;
     mPriority = priority;
@@ -391,7 +391,7 @@ void PlatformThreadPrivate::setPriority(Priority priority)
 
     if (!SetThreadPriority(mThreadHandle, prio))
     {
-        CXXKIT_WARNING("PlatformThread::setPriority: Failed to set thread priority");
+        CXXKIT_WARNING("PlatformThread::set_priority: Failed to set thread priority");
     }
 }
 
@@ -428,7 +428,7 @@ bool PlatformThreadPrivate::start(Priority priority)
                                  CREATE_SUSPENDED,
                                  reinterpret_cast<LPDWORD>(&id));
 #    endif // CXXKIT_OS_WINRT
-    mData->threadId.store(id);
+    mData->thread_id.store(id);
 
     if (!mThreadHandle)
     {
@@ -504,7 +504,7 @@ Status PlatformThreadPrivate::terminate()
         return "Termination Disabled";
     }
 
-    // Calling ExitThread() in setTerminationEnabled is all we can do on WinRT
+    // Calling ExitThread() in set_termination_enabled is all we can do on WinRT
 #    ifndef CXXKIT_OS_WINRT
     TerminateThread(mThreadHandle, 0);
 #    endif
@@ -512,7 +512,7 @@ Status PlatformThreadPrivate::terminate()
     return Status::ok;
 }
 
-void PlatformThread::setCurrentThreadName(const StringView name)
+void PlatformThread::set_current_thread_name(const StringView name)
 {
     struct
     {
@@ -531,7 +531,7 @@ void PlatformThread::setCurrentThreadName(const StringView name)
     }
 }
 
-int PlatformThread::idealConcurrencyThreadCount() noexcept
+int PlatformThread::ideal_concurrency_thread_count() noexcept
 {
     SYSTEM_INFO sysinfo;
 #    ifndef CXXKIT_OS_WINRT
@@ -542,20 +542,20 @@ int PlatformThread::idealConcurrencyThreadCount() noexcept
     return sysinfo.dwNumberOfProcessors;
 }
 
-PlatformThread::Id PlatformThread::currentThreadId() noexcept
+PlatformThread::Id PlatformThread::current_thread_id() noexcept
 {
     return GetCurrentThreadId();
 }
 
-void PlatformThread::setTerminationEnabled(bool enabled)
+void PlatformThread::set_termination_enabled(bool enabled)
 {
-    auto thread = PlatformThread::currentThread();
+    auto thread = PlatformThread::current_thread();
     CXXKIT_ASSERT_X(thread != nullptr,
-                    "PlatformThread::setTerminationEnabled()",
+                    "PlatformThread::set_termination_enabled()",
                     "Current thread was not started with PlatformThread.");
     CXXKIT_UNUSED(thread)
 
-    auto d = thread->dFunc();
+    auto d = thread->d_func();
     ThreadMutex::UniqueLock lock(d->mMutex);
     d->mTerminationEnabled = enabled;
     if (enabled && d->mTerminatePending)
@@ -572,8 +572,8 @@ void PlatformThread::setTerminationEnabled(bool enabled)
 
 void AdoptedPlatformThread::init()
 {
-    this->dFunc()->mData->threadId.store(GetCurrentThreadId());
-    this->dFunc()->mThreadHandle = GetCurrentThread();
+    this->d_func()->mData->thread_id.store(GetCurrentThreadId());
+    this->d_func()->mThreadHandle = GetCurrentThread();
 }
 
 CXXKIT_END_NAMESPACE

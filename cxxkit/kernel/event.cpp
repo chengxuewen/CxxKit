@@ -57,9 +57,9 @@ Event &Event::operator=(const Event &other)
     return *this;
 }
 
-TimerEvent::TimerEvent(int timerId)
+TimerEvent::TimerEvent(int timer_id)
     : Event(Type::kTimer)
-    , mTimerId(timerId)
+    , mTimerId(timer_id)
 {
 }
 

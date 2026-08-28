@@ -51,7 +51,7 @@ public:
     {
     }
 
-    void addRef() const override { mRefCount.incRef(); }
+    void add_ref() const override { mRefCount.inc_ref(); }
 
     RefCountReleaseStatus Release() const override
     {
@@ -92,7 +92,7 @@ public:
     FinalRefCountedObject(const FinalRefCountedObject &) = delete;
     FinalRefCountedObject &operator=(const FinalRefCountedObject &) = delete;
 
-    void addRef() const { mRefCount.incRef(); }
+    void add_ref() const { mRefCount.inc_ref(); }
     RefCountReleaseStatus Release() const
     {
         const auto status = mRefCount.DecRef();
@@ -115,13 +115,13 @@ namespace utils
 
 namespace detail
 {
-// Determines if the given class has addRef and Release methods.
+// Determines if the given class has add_ref and Release methods.
 template <typename T>
 class HasaddRefAndRelease
 {
 private:
     template <typename C,
-              decltype(std::declval<C>().addRef()) * = nullptr,
+              decltype(std::declval<C>().add_ref()) * = nullptr,
               decltype(std::declval<C>().Release()) * = nullptr>
     static int Test(int);
     template <typename>
@@ -139,19 +139,19 @@ public:
 // `FinalRefCountedObject` depending on whether the to-be-shared class is
 // derived from the RefCountInterface interface or not (respectively).
 
-// `makeRefCounted`:
+// `make_ref_counted`:
 //
 // Use this when you want to construct a reference counted object of type T and
 // get a `SharedRefPtr<>` back. Example:
 //
-//   auto p = makeRefCounted<Foo>("bar", 123);
+//   auto p = make_ref_counted<Foo>("bar", 123);
 //
 // For a class that inherits from RefCountInterface, this is equivalent to:
 //
 //   auto p = SharedRefPtr<Foo>(new RefCountedObject<Foo>("bar", 123));
 //
 // If the class does not inherit from RefCountInterface, but does have
-// addRef/Release methods (so a T* is convertible to rtc::SharedRefPtr), this
+// add_ref/Release methods (so a T* is convertible to rtc::SharedRefPtr), this
 // is equivalent to just
 //
 //   auto p = SharedRefPtr<Foo>(new Foo("bar", 123));
@@ -161,7 +161,7 @@ public:
 //   auto p = SharedRefPtr<FinalRefCountedObject<Foo>>(
 //       new FinalRefCountedObject<Foo>("bar", 123));
 //
-// In these cases, `makeRefCounted` reduces the amount of boilerplate code but
+// In these cases, `make_ref_counted` reduces the amount of boilerplate code but
 // also helps with the most commonly intended usage of RefCountedObject whereby
 // methods for reference counting, are virtual and designed to satisfy the need
 // of an interface. When such a need does not exist, it is more efficient to use
@@ -170,7 +170,7 @@ public:
 // Note that in some cases, using RefCountedObject directly may still be what's
 // needed.
 
-// `makeRefCounted` for abstract classes that are convertible to
+// `make_ref_counted` for abstract classes that are convertible to
 // RefCountInterface. The is_abstract requirement rejects classes that inherit
 // both RefCountInterface and RefCounted object, which is a a discouraged
 // pattern, and would result in double inheritance of RefCountedObject if this
@@ -179,31 +179,31 @@ template <typename T,
           typename... Args,
           typename std::enable_if<std::is_convertible<T *, RefCountInterface *>::value && std::is_abstract<T>::value,
                                   T>::type * = nullptr>
-Nonnull<SharedRefPtr<T>> makeRefCounted(Args &&...args)
+Nonnull<SharedRefPtr<T>> make_ref_counted(Args &&...args)
 {
     return SharedRefPtr<T>(new RefCountedObject<T>(std::forward<Args>(args)...));
 }
 
-// `makeRefCounted` for complete classes that are not convertible to
+// `make_ref_counted` for complete classes that are not convertible to
 // RefCountInterface and already carry a ref count.
 template <typename T,
           typename... Args,
           typename std::enable_if<!std::is_convertible<T *, RefCountInterface *>::value &&
                                       detail::HasaddRefAndRelease<T>::value,
                                   T>::type * = nullptr>
-Nonnull<SharedRefPtr<T>> makeRefCounted(Args &&...args)
+Nonnull<SharedRefPtr<T>> make_ref_counted(Args &&...args)
 {
     return SharedRefPtr<T>(new T(std::forward<Args>(args)...));
 }
 
-// `makeRefCounted` for complete classes that are not convertible to
+// `make_ref_counted` for complete classes that are not convertible to
 // RefCountInterface and have no ref count of their own.
 template <typename T,
           typename... Args,
           typename std::enable_if<!std::is_convertible<T *, RefCountInterface *>::value &&
                                       !detail::HasaddRefAndRelease<T>::value,
                                   T>::type * = nullptr>
-Nonnull<SharedRefPtr<FinalRefCountedObject<T>>> makeRefCounted(Args &&...args)
+Nonnull<SharedRefPtr<FinalRefCountedObject<T>>> make_ref_counted(Args &&...args)
 {
     return SharedRefPtr<FinalRefCountedObject<T>>(new FinalRefCountedObject<T>(std::forward<Args>(args)...));
 }

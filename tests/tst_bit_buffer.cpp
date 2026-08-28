@@ -362,12 +362,12 @@ TEST(BitBufferReaderTest, NoGolombOverread)
     const uint8_t bytes[] = {0x00, 0xFF, 0xFF};
     // Make sure the bit buffer correctly enforces byte length on golomb reads.
     // If it didn't, the above buffer would be valid at 3 bytes.
-    BitBufferReader reader1(utils::makeArrayView(bytes, 1));
+    BitBufferReader reader1(utils::make_array_view(bytes, 1));
     // When parse fails, `ReadExponentialGolomb` may return any number.
     reader1.ReadExponentialGolomb();
     EXPECT_FALSE(reader1.Ok());
 
-    BitBufferReader reader2(utils::makeArrayView(bytes, 2));
+    BitBufferReader reader2(utils::make_array_view(bytes, 2));
     reader2.ReadExponentialGolomb();
     EXPECT_FALSE(reader2.Ok());
 
@@ -551,7 +551,7 @@ TEST(BitBufferWriterTest, SymmetricReadWrite)
     // That should be all that fits in the buffer.
     EXPECT_FALSE(buffer.WriteBits(1, 1));
 
-    BitBufferReader reader(utils::makeArrayView(bytes, 4));
+    BitBufferReader reader(utils::make_array_view(bytes, 4));
     EXPECT_EQ(reader.ReadBits(3), 0x2u);
     EXPECT_EQ(reader.ReadBits(2), 0x1u);
     EXPECT_EQ(reader.ReadBits(7), 0x53u);

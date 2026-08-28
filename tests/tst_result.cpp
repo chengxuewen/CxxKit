@@ -48,7 +48,7 @@ public:
     using Error::Domain::Domain;
     TestDomain() = default;
 
-    StringView codeString(ErrorId code) const override
+    StringView code_string(ErrorId code) const override
     {
         switch (code)
         {
@@ -66,9 +66,9 @@ TEST(ResultTest, DefaultConstructor)
 {
     Result<int> result;
     EXPECT_FALSE(result.ok());
-    EXPECT_FALSE(result.isOk());
+    EXPECT_FALSE(result.is_ok());
     EXPECT_FALSE(result.success());
-    EXPECT_FALSE(result.isSuccess());
+    EXPECT_FALSE(result.is_success());
     EXPECT_FALSE(static_cast<bool>(result));
     EXPECT_EQ(result.error(), nullptr);
 }
@@ -200,17 +200,17 @@ TEST(ResultTest, SuccessFailureChecking)
     EXPECT_TRUE(successResult.ok());
     EXPECT_FALSE(failureResult.ok());
 
-    // Test isOk() methods
-    EXPECT_TRUE(successResult.isOk());
-    EXPECT_FALSE(failureResult.isOk());
+    // Test is_ok() methods
+    EXPECT_TRUE(successResult.is_ok());
+    EXPECT_FALSE(failureResult.is_ok());
 
     // Test success() methods
     EXPECT_TRUE(successResult.success());
     EXPECT_FALSE(failureResult.success());
 
-    // Test isSuccess() methods
-    EXPECT_TRUE(successResult.isSuccess());
-    EXPECT_FALSE(failureResult.isSuccess());
+    // Test is_success() methods
+    EXPECT_TRUE(successResult.is_success());
+    EXPECT_FALSE(failureResult.is_success());
 
     // Test bool conversion
     EXPECT_TRUE(static_cast<bool>(successResult));
@@ -232,12 +232,12 @@ TEST(ResultTest, ValueAccess)
     Result<int> result1(42);
     EXPECT_EQ(result1.value(), 42);
 
-    // Test valueOr()
+    // Test value_or()
     Result<int> result2(Error::create("Error"));
-    EXPECT_EQ(result2.valueOr(99), 99);
-    EXPECT_EQ(result1.valueOr(99), 42);
+    EXPECT_EQ(result2.value_or(99), 99);
+    EXPECT_EQ(result1.value_or(99), 42);
 
-    // Test valueOrElse()
+    // Test value_or_else()
     int counter = 0;
     auto defaultFunc = [&counter]()
     {
@@ -245,9 +245,9 @@ TEST(ResultTest, ValueAccess)
         return 100;
     };
 
-    EXPECT_EQ(result2.valueOrElse(defaultFunc), 100);
+    EXPECT_EQ(result2.value_or_else(defaultFunc), 100);
     EXPECT_EQ(counter, 1);
-    EXPECT_EQ(result1.valueOrElse(defaultFunc), 42);
+    EXPECT_EQ(result1.value_or_else(defaultFunc), 42);
     EXPECT_EQ(counter, 1); // defaultFunc should not be called
 
     // Test value() const
@@ -273,15 +273,15 @@ TEST(ResultTest, ErrorAccess)
     const Result<int> constResult = result;
     EXPECT_NE(constResult.error(), nullptr);
 
-    // Test errorString()
-    std::string errorStr = result.errorString();
+    // Test error_string()
+    std::string errorStr = result.error_string();
     EXPECT_FALSE(errorStr.empty());
     std::cout << errorStr << std::endl;
     EXPECT_NE(errorStr.find("Test error 1"), std::string::npos) << errorStr;
 
-    // Test errorString() on success
+    // Test error_string() on success
     Result<int> successResult(42);
-    EXPECT_TRUE(successResult.errorString().empty());
+    EXPECT_TRUE(successResult.error_string().empty());
 }
 
 // Test swap operations

@@ -58,10 +58,10 @@ public:
     {
     }
     MOCK_METHOD(void, destroy, (), (override));
-    MOCK_METHOD(bool, cancelTask, (const Task *), (override));
-    MOCK_METHOD(void, postTask, (const Task::SharedPtr &, const SourceLocation &), (override));
+    MOCK_METHOD(bool, cancel_task, (const Task *), (override));
+    MOCK_METHOD(void, post_task, (const Task::SharedPtr &, const SourceLocation &), (override));
     MOCK_METHOD(void,
-                postDelayedTask,
+                post_delayed_task,
                 (const Task::SharedPtr &, const TimeDelta &, const SourceLocation &),
                 (override));
 
@@ -79,15 +79,15 @@ public:
     }
 
     void destroy() override { }
-    bool cancelTask(const Task *) override { return false; }
+    bool cancel_task(const Task *) override { return false; }
 
-    void postTask(const Task::SharedPtr &task, const SourceLocation & /*location*/) override
+    void post_task(const Task::SharedPtr &task, const SourceLocation & /*location*/) override
     {
         mLastTask = std::move(task);
         mLastDelay = TimeDelta::Zero();
     }
 
-    void postDelayedTask(const Task::SharedPtr &task,
+    void post_delayed_task(const Task::SharedPtr &task,
                          const TimeDelta &delay,
                          const SourceLocation & /*location*/) override
     {
@@ -250,7 +250,7 @@ TEST(RepeatingTaskTest, ClockIntegration)
     SimulatedClock clock(Timestamp::Zero());
 
     NiceMock<MockTaskQueue> task_queue;
-    ON_CALL(task_queue, postDelayedTask)
+    ON_CALL(task_queue, post_delayed_task)
         .WillByDefault(
             [&](const Task::SharedPtr &task, TimeDelta delay, const SourceLocation &)
             {
@@ -259,7 +259,7 @@ TEST(RepeatingTaskTest, ClockIntegration)
             });
 
     expected_delay = TimeDelta::Millis(100);
-    RepeatingTaskHandle handle = RepeatingTaskHandle::delayedStart(
+    RepeatingTaskHandle handle = RepeatingTaskHandle::delayed_start(
         &task_queue,
         TimeDelta::Millis(100),
         [&clock]()
@@ -284,10 +284,10 @@ TEST(RepeatingTaskTest, CanBeStoppedAfterTaskQueueDeletedTheRepeatingTask)
     Task::SharedPtr repeating_task;
 
     MockTaskQueue task_queue;
-    EXPECT_CALL(task_queue, postDelayedTask)
+    EXPECT_CALL(task_queue, post_delayed_task)
         .WillOnce(WithArg<0>([&](Task::SharedPtr task) { repeating_task = std::move(task); }));
 
-    RepeatingTaskHandle handle = RepeatingTaskHandle::delayedStart(&task_queue,
+    RepeatingTaskHandle handle = RepeatingTaskHandle::delayed_start(&task_queue,
                                                                    TimeDelta::Millis(100),
                                                                    [] { return TimeDelta::Millis(100); });
 

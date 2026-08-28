@@ -86,7 +86,7 @@ PlatformThread::PlatformThread(PlatformThreadPrivate *d)
     : mDPtr(d)
 {
     mDPtr->mData->thread.store(this);
-    this->setName("PlatformThread", this);
+    this->set_name("PlatformThread", this);
 }
 
 PlatformThread::~PlatformThread()
@@ -99,14 +99,14 @@ PlatformThread::~PlatformThread()
         this->wait();
         lock.lock();
     }
-    if (d->mRunning && !d->mFinished && !d->mData->isAdopted)
+    if (d->mRunning && !d->mFinished && !d->mData->is_adopted)
     {
         CXXKIT_FATAL("PlatformThread: Destroyed while thread is still running");
         d->mData->thread.store(nullptr);
     }
 }
 
-bool PlatformThread::isInterruptionRequested() const
+bool PlatformThread::is_interruption_requested() const
 {
     CXXKIT_D(const PlatformThread);
     // fast path: check that the flag is not set:
@@ -119,7 +119,7 @@ bool PlatformThread::isInterruptionRequested() const
     return d->mRunning && !d->mFinished && !d->mInFinish;
 }
 
-Status PlatformThread::requestInterruption()
+Status PlatformThread::request_interruption()
 {
     CXXKIT_D(PlatformThread);
     ThreadMutex::Lock lock(d->mMutex);
@@ -138,7 +138,7 @@ std::string PlatformThread::name() const
     return d->mName;
 }
 
-Status PlatformThread::setName(const StringView name, const void *obj)
+Status PlatformThread::set_name(const StringView name, const void *obj)
 {
     CXXKIT_D(PlatformThread);
     ThreadMutex::Lock lock(d->mMutex);
@@ -165,7 +165,7 @@ PlatformThread::Priority PlatformThread::priority() const
     return d->mPriority;
 }
 
-Status PlatformThread::setPriority(Priority priority)
+Status PlatformThread::set_priority(Priority priority)
 {
     if (priority == Priority::kInherit)
     {
@@ -177,18 +177,18 @@ Status PlatformThread::setPriority(Priority priority)
     {
         return "Cannot set priority, thread is not running";
     }
-    d->setPriority(priority);
+    d->set_priority(priority);
     return Status::ok;
 }
 
-uint_t PlatformThread::stackSize() const
+uint_t PlatformThread::stack_size() const
 {
     CXXKIT_D(const PlatformThread);
     ThreadMutex::Lock lock(d->mMutex);
     return d->mStackSize;
 }
 
-Status PlatformThread::setStackSize(uint_t stackSize)
+Status PlatformThread::set_stack_size(uint_t stack_size)
 {
     CXXKIT_D(PlatformThread);
     ThreadMutex::Lock lock(d->mMutex);
@@ -196,26 +196,26 @@ Status PlatformThread::setStackSize(uint_t stackSize)
     {
         return "cannot change stack size while the thread is running";
     }
-    d->mStackSize = stackSize;
+    d->mStackSize = stack_size;
     return Status::ok;
 }
 
-bool PlatformThread::isFinished() const
+bool PlatformThread::is_finished() const
 {
     CXXKIT_D(const PlatformThread);
     return d->mFinished.load(std::memory_order_relaxed);
 }
 
-bool PlatformThread::isRunning() const
+bool PlatformThread::is_running() const
 {
     CXXKIT_D(const PlatformThread);
     return d->mRunning.load(std::memory_order_relaxed) && !d->mInFinish.load(std::memory_order_relaxed);
 }
 
-bool PlatformThread::isAdopted() const
+bool PlatformThread::is_adopted() const
 {
     CXXKIT_D(const PlatformThread);
-    return d->mData->isAdopted;
+    return d->mData->is_adopted;
 }
 
 // PlatformThread::Handle PlatformThread::threadHandle() const
@@ -224,10 +224,10 @@ bool PlatformThread::isAdopted() const
 //     return d->mData->threadHandle.load();
 // }
 
-PlatformThread::Id PlatformThread::threadId() const
+PlatformThread::Id PlatformThread::thread_id() const
 {
     CXXKIT_D(const PlatformThread);
-    return d->mData->threadId.load();
+    return d->mData->thread_id.load();
 }
 
 int PlatformThread::retval() const
@@ -272,7 +272,7 @@ Status PlatformThread::terminate()
 {
     CXXKIT_D(PlatformThread);
     ThreadMutex::Lock lock(d->mMutex);
-    if (!this->isRunning())
+    if (!this->is_running())
     {
         return "Thread not running";
     }
@@ -282,7 +282,7 @@ Status PlatformThread::terminate()
 bool PlatformThread::wait(unsigned int msecs)
 {
     CXXKIT_D(PlatformThread);
-    if (this->threadId() == PlatformThread::currentThreadId())
+    if (this->thread_id() == PlatformThread::current_thread_id())
     {
         CXXKIT_WARNING("PlatformThread::wait: Thread tried to wait on itself");
         return false;
@@ -311,7 +311,7 @@ bool PlatformThread::wait(unsigned int msecs)
     return true;
 }
 
-PlatformThread *PlatformThread::currentThread() noexcept
+PlatformThread *PlatformThread::current_thread() noexcept
 {
     return PlatformThreadData::current()->thread.load();
 }

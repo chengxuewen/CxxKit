@@ -107,12 +107,12 @@ private:
 
 namespace utils
 {
-CXXKIT_UNITS_API std::string toString(TimeDelta value);
+CXXKIT_UNITS_API std::string to_string(TimeDelta value);
 
 // template <typename Sink>
 // void stringify(Sink &sink, TimeDelta value)
 // {
-//     sink.Append(toString(value));
+//     sink.Append(to_string(value));
 // }
 } // namespace utils
 

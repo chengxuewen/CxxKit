@@ -38,12 +38,12 @@ class PlatformThreadData
 
     ~PlatformThreadData()
     {
-        if (CXXKIT_UNLIKELY(mRefCounter.loadAcquire() != 0))
+        if (CXXKIT_UNLIKELY(mRefCounter.load_acquire() != 0))
         {
             CXXKIT_FATAL("Attempting to call destruct while ref count is not 0.");
         }
 
-        PlatformThreadData::clearCurrent();
+        PlatformThreadData::clear_current();
         thread.store(nullptr);
     }
 
@@ -57,16 +57,16 @@ public:
     static PlatformThreadData *current(PlatformThreadPrivate *thread);
     static PlatformThreadData *current(bool createIfNecessary = true); // impl
     static PlatformThreadData *current(PlatformThread *thread);
-    static void clearCurrent(); // impl
+    static void clear_current(); // impl
 
     void ref()
     {
         mRefCounter.ref();
-        CXXKIT_ASSERT(mRefCounter.loadAcquire() != 0);
+        CXXKIT_ASSERT(mRefCounter.load_acquire() != 0);
     }
     void deref()
     {
-        if (CXXKIT_UNLIKELY(mRefCounter.loadAcquire() == 0))
+        if (CXXKIT_UNLIKELY(mRefCounter.load_acquire() == 0))
         {
             CXXKIT_FATAL("Attempting to call deref while ref count is 0.");
         }
@@ -79,13 +79,13 @@ public:
 
     bool canWait{true};
     bool quitNow{false};
-    bool isAdopted{false};
+    bool is_adopted{false};
 
     int loopLevel{0};
     int scopeLevel{0};
 
     std::vector<void *> tls;
-    std::atomic<PlatformThread::Id> threadId{0};
+    std::atomic<PlatformThread::Id> thread_id{0};
     std::atomic<PlatformThread *> thread{nullptr};
 };
 
@@ -98,16 +98,16 @@ public:
     PlatformThreadPrivate(PlatformThread *p, PlatformThreadData *data = nullptr);
     virtual ~PlatformThreadPrivate();
 
-    static void setTerminationEnabled(bool enabled = true) { PlatformThread::setTerminationEnabled(enabled); }
-    static PlatformThreadPrivate *get(PlatformThread *p) { return p->dFunc(); }
-    static PlatformThread *get(PlatformThreadPrivate *d) { return d->pFunc(); }
+    static void set_termination_enabled(bool enabled = true) { PlatformThread::set_termination_enabled(enabled); }
+    static PlatformThreadPrivate *get(PlatformThread *p) { return p->d_func(); }
+    static PlatformThread *get(PlatformThreadPrivate *d) { return d->p_func(); }
 
-    void setPriority(Priority priority); // impl
+    void set_priority(Priority priority); // impl
     bool start(Priority priority);       // impl
     Status terminate();                  // impl
 
-    void onFinished() { mPPtr->onFinished(); }
-    void onStarted() { mPPtr->onStarted(); }
+    void on_finished() { mPPtr->on_finished(); }
+    void on_started() { mPPtr->on_started(); }
     void run() { mPPtr->run(); }
 
     mutable ThreadMutex mMutex;
@@ -147,8 +147,8 @@ public:
         : PlatformThread(new PlatformThreadPrivate(this, data))
     {
         // thread should be running and not finished for the lifetime of the application
-        this->dFunc()->mRunning = true;
-        this->dFunc()->mFinished = false;
+        this->d_func()->mRunning = true;
+        this->d_func()->mFinished = false;
         this->init();
     }
     ~AdoptedPlatformThread() override { CXXKIT_TRACE("~AdoptedPlatformThread = %p\n", (void *)this); }

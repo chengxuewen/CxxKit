@@ -59,7 +59,7 @@ I420Buffer::I420Buffer(int width, int height, int stride_y, int stride_u, int st
     , mStrideU(stride_u)
     , mStrideV(stride_v)
     , mData(static_cast<uint8_t*>(
-          utils::alignedMalloc(I420DataSize(height, stride_y, stride_u, stride_v), kBufferAlignment)))
+          utils::aligned_malloc(I420DataSize(height, stride_y, stride_u, stride_v), kBufferAlignment)))
 {
     CXXKIT_DCHECK_GT(width, 0);
     CXXKIT_DCHECK_GT(height, 0);

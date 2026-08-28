@@ -45,30 +45,30 @@ public:
         // Placement-new into a character buffer is used for eager destruction when
         // the cleanup is invoked or cancelled. To ensure this optimizes well, the
         // behavior is implemented locally instead of using an absl::optional.
-        ::new (this->getCallbackBuffer()) Callback(std::move(callback));
+        ::new (this->get_callback_buffer()) Callback(std::move(callback));
         mCallbackEngaged = true;
     }
     ScopeGuardStorage(ScopeGuardStorage &&other)
     {
-        CXXKIT_HARDENING_ASSERT(other.isCallbackEngaged());
-        ::new (this->getCallbackBuffer()) Callback(std::move(other.getCallback()));
+        CXXKIT_HARDENING_ASSERT(other.is_callback_engaged());
+        ::new (this->get_callback_buffer()) Callback(std::move(other.get_callback()));
         mCallbackEngaged = true;
-        other.destroyCallback();
+        other.destroy_callback();
     }
 
     ScopeGuardStorage(const ScopeGuardStorage &other) = delete;
     ScopeGuardStorage &operator=(ScopeGuardStorage &&other) = delete;
     ScopeGuardStorage &operator=(const ScopeGuardStorage &other) = delete;
 
-    void destroyCallback()
+    void destroy_callback()
     {
         mCallbackEngaged = false;
-        this->getCallback().~Callback();
+        this->get_callback().~Callback();
     }
-    bool isCallbackEngaged() const { return mCallbackEngaged; }
-    void *getCallbackBuffer() { return static_cast<void *>(+mCallbackBuffer); }
-    Callback &getCallback() { return *reinterpret_cast<Callback *>(this->getCallbackBuffer()); }
-    void invokeCallback() CXXKIT_ATTRIBUTE_NO_THREAD_SAFETY_ANALYSIS { std::move(this->getCallback())(); }
+    bool is_callback_engaged() const { return mCallbackEngaged; }
+    void *get_callback_buffer() { return static_cast<void *>(+mCallbackBuffer); }
+    Callback &get_callback() { return *reinterpret_cast<Callback *>(this->get_callback_buffer()); }
+    void invoke_callback() CXXKIT_ATTRIBUTE_NO_THREAD_SAFETY_ANALYSIS { std::move(this->get_callback())(); }
 
 private:
     bool mCallbackEngaged;
@@ -90,23 +90,23 @@ public:
 
     ~ScopeGuard() noexcept
     {
-        if (mStorage.isCallbackEngaged())
+        if (mStorage.is_callback_engaged())
         {
-            mStorage.invokeCallback();
-            mStorage.destroyCallback();
+            mStorage.invoke_callback();
+            mStorage.destroy_callback();
         }
     }
 
     void invoke() &&
     {
-        CXXKIT_HARDENING_ASSERT(mStorage.isCallbackEngaged());
-        mStorage.invokeCallback();
-        mStorage.destroyCallback();
+        CXXKIT_HARDENING_ASSERT(mStorage.is_callback_engaged());
+        mStorage.invoke_callback();
+        mStorage.destroy_callback();
     }
     void cancel() && noexcept
     {
-        CXXKIT_HARDENING_ASSERT(mStorage.isCallbackEngaged());
-        mStorage.destroyCallback();
+        CXXKIT_HARDENING_ASSERT(mStorage.is_callback_engaged());
+        mStorage.destroy_callback();
     }
 
 private:
@@ -122,12 +122,12 @@ ScopeGuard(F (&)()) -> ScopeGuard<F (*)()>;
 namespace utils
 {
 template <typename F>
-[[nodiscard]] ScopeGuard<F> makeScopeGuard(F f)
+[[nodiscard]] ScopeGuard<F> make_scope_guard(F f)
 {
     return {std::move(f)};
 }
 template <typename FC, typename F>
-[[nodiscard]] ScopeGuard<F> makeScopeGuard(const FC &fc, F f)
+[[nodiscard]] ScopeGuard<F> make_scope_guard(const FC &fc, F f)
 {
     fc();
     return {std::move(f)};

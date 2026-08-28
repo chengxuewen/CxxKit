@@ -31,7 +31,7 @@ CXXKIT_BEGIN_NAMESPACE
 
 namespace utils
 {
-std::string toString(DataRate value)
+std::string to_string(DataRate value)
 {
     char buf[64];
     std::stringstream ss;

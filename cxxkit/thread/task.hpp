@@ -46,11 +46,11 @@ public:
 
     static SharedPtr create(Func function);
     static SharedPtr create(UniqueFunc function);
-    static SharedPtr makeShared(Task *task, bool autoDelete = false);
+    static SharedPtr make_shared(Task *task, bool autoDelete = false);
     template <typename T, typename... Args>
-    static SharedPtr makeShared(Args &&...args)
+    static SharedPtr make_shared(Args &&...args)
     {
-        return makeShared(new T(std::forward<Args>(args)...), true);
+        return make_shared(new T(std::forward<Args>(args)...), true);
     }
 };
 

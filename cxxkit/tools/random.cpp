@@ -116,7 +116,7 @@ namespace
 {
 namespace detail
 {
-int stdSecureRandom(uint8_t *buf, size_t len)
+int std_secure_random(uint8_t *buf, size_t len)
 {
     std::random_device rd;
     //TODO:del
@@ -139,7 +139,7 @@ public:
     bool Generate(void *buf, size_t len) override
     {
         // return (RAND_bytes(reinterpret_cast<unsigned char *>(buf), len) > 0);
-        return (detail::stdSecureRandom(reinterpret_cast<unsigned char *>(buf), len) > 0);
+        return (detail::std_secure_random(reinterpret_cast<unsigned char *>(buf), len) > 0);
     }
 };
 

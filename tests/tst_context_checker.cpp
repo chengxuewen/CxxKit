@@ -73,7 +73,7 @@ void RunOnDifferentThread(FunctionView<void()> run)
             thread_has_run.release();
         });
 
-    EXPECT_TRUE(thread_has_run.tryAcquire(1, 1000));
+    EXPECT_TRUE(thread_has_run.try_acquire(1, 1000));
     thread.join();
 }
 } // namespace
@@ -81,7 +81,7 @@ void RunOnDifferentThread(FunctionView<void()> run)
 TEST(ContextCheckerTest, CallsAllowedOnSameThread)
 {
     ContextChecker contextChecker;
-    EXPECT_TRUE(contextChecker.isCurrent());
+    EXPECT_TRUE(contextChecker.is_current());
 }
 
 TEST(ContextCheckerTest, DestructorAllowedOnDifferentThread)
@@ -99,27 +99,27 @@ TEST(ContextCheckerTest, Detach)
 {
     ContextChecker contextChecker;
     contextChecker.detach();
-    RunOnDifferentThread([&] { EXPECT_TRUE(contextChecker.isCurrent()); });
+    RunOnDifferentThread([&] { EXPECT_TRUE(contextChecker.is_current()); });
 }
 
 TEST(ContextCheckerTest, DetachFromThreadAndUseOnTaskQueue)
 {
     ContextChecker contextChecker;
     contextChecker.detach();
-    auto queue = TaskQueueThread::makeShared();
-    queue->postTask([&] { EXPECT_TRUE(contextChecker.isCurrent()); });
+    auto queue = TaskQueueThread::make_shared();
+    queue->post_task([&] { EXPECT_TRUE(contextChecker.is_current()); });
 }
 
 TEST(ContextCheckerTest, InitializeForDifferentTaskQueue)
 {
-    auto queue = TaskQueueThread::makeShared();
+    auto queue = TaskQueueThread::make_shared();
     ContextChecker contextChecker(queue.get());
-    EXPECT_EQ(contextChecker.isCurrent(), !CXXKIT_DCHECK_IS_ON);
+    EXPECT_EQ(contextChecker.is_current(), !CXXKIT_DCHECK_IS_ON);
     Semaphore blocker;
-    queue->postTask(
+    queue->post_task(
         [&]
         {
-            EXPECT_TRUE(contextChecker.isCurrent());
+            EXPECT_TRUE(contextChecker.is_current());
             blocker.release();
         });
     blocker.acquire();
@@ -127,20 +127,20 @@ TEST(ContextCheckerTest, InitializeForDifferentTaskQueue)
 
 TEST(ContextCheckerTest, DetachFromTaskQueueAndUseOnThread)
 {
-    auto queue = TaskQueueThread::makeShared();
-    queue->postTask(
+    auto queue = TaskQueueThread::make_shared();
+    queue->post_task(
         []
         {
             ContextChecker contextChecker;
             contextChecker.detach();
-            RunOnDifferentThread([&] { EXPECT_TRUE(contextChecker.isCurrent()); });
+            RunOnDifferentThread([&] { EXPECT_TRUE(contextChecker.is_current()); });
         });
 }
 
 TEST(ContextCheckerTest, MethodNotAllowedOnDifferentThreadInDebug)
 {
     ContextChecker contextChecker;
-    RunOnDifferentThread([&] { EXPECT_EQ(contextChecker.isCurrent(), !CXXKIT_DCHECK_IS_ON); });
+    RunOnDifferentThread([&] { EXPECT_EQ(contextChecker.is_current(), !CXXKIT_DCHECK_IS_ON); });
 }
 
 #if CXXKIT_DCHECK_IS_ON
@@ -150,11 +150,11 @@ TEST(ContextCheckerTest, OnlyCurrentOnOneThread)
     RunOnDifferentThread(
         [&]
         {
-            EXPECT_TRUE(contextChecker.isCurrent());
+            EXPECT_TRUE(contextChecker.is_current());
             // Spawn a new thread from within the first one to guarantee that we have
             // two concurrently active threads (and that there's no chance of the
             // thread ref being reused).
-            RunOnDifferentThread([&] { EXPECT_FALSE(contextChecker.isCurrent()); });
+            RunOnDifferentThread([&] { EXPECT_FALSE(contextChecker.is_current()); });
         });
 }
 #endif
@@ -162,8 +162,8 @@ TEST(ContextCheckerTest, OnlyCurrentOnOneThread)
 TEST(ContextCheckerTest, MethodNotAllowedOnDifferentTaskQueueInDebug)
 {
     ContextChecker contextChecker;
-    auto queue = TaskQueueThread::makeShared();
-    queue->postTask([&] { EXPECT_EQ(contextChecker.isCurrent(), !CXXKIT_DCHECK_IS_ON); });
+    auto queue = TaskQueueThread::make_shared();
+    queue->post_task([&] { EXPECT_EQ(contextChecker.is_current(), !CXXKIT_DCHECK_IS_ON); });
 }
 
 TEST(ContextCheckerTest, DetachFromTaskQueueInDebug)
@@ -171,51 +171,51 @@ TEST(ContextCheckerTest, DetachFromTaskQueueInDebug)
     ContextChecker contextChecker;
     contextChecker.detach();
 
-    auto queue1 = TaskQueueThread::makeShared();
-    queue1->postTask([&] { EXPECT_TRUE(contextChecker.isCurrent()); });
+    auto queue1 = TaskQueueThread::make_shared();
+    queue1->post_task([&] { EXPECT_TRUE(contextChecker.is_current()); });
 
-    // isCurrent should return false in debug builds after moving to another task queue.
-    auto queue2 = TaskQueueThread::makeShared();
-    queue2->postTask([&] { EXPECT_EQ(contextChecker.isCurrent(), !CXXKIT_DCHECK_IS_ON); });
+    // is_current should return false in debug builds after moving to another task queue.
+    auto queue2 = TaskQueueThread::make_shared();
+    queue2->post_task([&] { EXPECT_EQ(contextChecker.is_current(), !CXXKIT_DCHECK_IS_ON); });
 }
 
 TEST(ContextCheckerTest, ExpectationToString)
 {
-    auto queue1 = TaskQueueThread::makeShared();
+    auto queue1 = TaskQueueThread::make_shared();
     ContextChecker contextChecker(ContextChecker::InitialState::kDetached);
 
     Semaphore blocker;
-    queue1->postTask(
+    queue1->post_task(
         [&blocker, &contextChecker]()
         {
-            (void)contextChecker.isCurrent();
+            (void)contextChecker.is_current();
             blocker.release();
         });
     blocker.acquire();
 
 #if CXXKIT_DCHECK_IS_ON
-    EXPECT_THAT(ContextChecker::expectationToString(&contextChecker), HasSubstr("# Expected: TaskQueue:"));
+    EXPECT_THAT(ContextChecker::expectation_to_string(&contextChecker), HasSubstr("# Expected: TaskQueue:"));
 #else
-    GTEST_ASSERT_EQ(ContextChecker::expectationToString(&contextChecker), "");
+    GTEST_ASSERT_EQ(ContextChecker::expectation_to_string(&contextChecker), "");
 #endif
 }
 
 TEST(ContextCheckerTest, Initiallydetached)
 {
-    auto queue1 = TaskQueueThread::makeShared();
+    auto queue1 = TaskQueueThread::make_shared();
     ContextChecker contextChecker(ContextChecker::InitialState::kDetached);
 
     Semaphore blocker;
-    queue1->postTask(
+    queue1->post_task(
         [&blocker, &contextChecker]()
         {
-            EXPECT_TRUE(contextChecker.isCurrent());
+            EXPECT_TRUE(contextChecker.is_current());
             blocker.release();
         });
     blocker.acquire();
 
 #if CXXKIT_DCHECK_IS_ON
-    EXPECT_FALSE(contextChecker.isCurrent());
+    EXPECT_FALSE(contextChecker.is_current());
 #endif
 }
 
@@ -249,8 +249,8 @@ void TestAnnotationsOnWrongQueue()
 {
     Semaphore blocker;
     TestAnnotations annotations;
-    auto queue = TaskQueueThread::makeShared();
-    queue->postTask(
+    auto queue = TaskQueueThread::make_shared();
+    queue->post_task(
         [&]
         {
             annotations.ModifyTestVar();

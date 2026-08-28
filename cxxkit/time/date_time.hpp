@@ -88,50 +88,50 @@ public:
     CXXKIT_STATIC_CONSTANT_NUMBER(kNSecsPerDay, int64_t(kNSecsPerHour *kHoursPerDay))
 
     /* system_clock CLOCK_REALTIME for log/datetime */
-    static int64_t systemTimeSecs();
-    static int64_t systemTimeMSecs();
-    static int64_t systemTimeUSecs();
-    static int64_t systemTimeNSecs();
-    static int64_t systemTimeFromSteadyNSecs(int64_t nsecs);
+    static int64_t system_time_secs();
+    static int64_t system_time_m_secs();
+    static int64_t system_time_u_secs();
+    static int64_t system_time_n_secs();
+    static int64_t system_time_from_steady_n_secs(int64_t nsecs);
 
     /* steady_clock CLOCK_MONOTONIC for wait/hrtime */
-    static int64_t steadyTimeSecs();
-    static int64_t steadyTimeMSecs();
-    static int64_t steadyTimeUSecs();
-    static int64_t steadyTimeNSecs();
-    static int64_t steadyTimeFromSystemNSecs(int64_t nsecs);
+    static int64_t steady_time_secs();
+    static int64_t steady_time_m_secs();
+    static int64_t steady_time_u_secs();
+    static int64_t steady_time_n_secs();
+    static int64_t steady_time_from_system_n_secs(int64_t nsecs);
 
-    static LocalTime localTimeFromSystemTimeSecs(int64_t secs = -1);
-    static LocalTime localTimeFromSystemTimeMSecs(int64_t msecs = -1);
-    static std::string localTimeStringFromSystemTimeSecs(int64_t secs = -1);
-    static std::string localTimeStringFromSystemTimeMSecs(int64_t msecs = -1);
+    static LocalTime local_time_from_system_time_secs(int64_t secs = -1);
+    static LocalTime local_time_from_system_time_m_secs(int64_t msecs = -1);
+    static std::string local_time_string_from_system_time_secs(int64_t secs = -1);
+    static std::string local_time_string_from_system_time_m_secs(int64_t msecs = -1);
 
-    static LocalTime localTimeFromSteadyTimeSecs(int64_t secs = -1)
+    static LocalTime local_time_from_steady_time_secs(int64_t secs = -1)
     {
-        secs = secs > 0 ? secs : steadyTimeSecs();
-        return localTimeFromSystemTimeSecs(systemTimeFromSteadyNSecs(secs * kNSecsPerSec) / kNSecsPerSec);
+        secs = secs > 0 ? secs : steady_time_secs();
+        return local_time_from_system_time_secs(system_time_from_steady_n_secs(secs * kNSecsPerSec) / kNSecsPerSec);
     }
-    static LocalTime localTimeFromSteadyTimeMSecs(int64_t msecs = -1)
+    static LocalTime local_time_from_steady_time_m_secs(int64_t msecs = -1)
     {
-        msecs = msecs > 0 ? msecs : steadyTimeMSecs();
-        return localTimeFromSystemTimeMSecs(systemTimeFromSteadyNSecs(msecs * kNSecsPerMSec) / kNSecsPerMSec);
+        msecs = msecs > 0 ? msecs : steady_time_m_secs();
+        return local_time_from_system_time_m_secs(system_time_from_steady_n_secs(msecs * kNSecsPerMSec) / kNSecsPerMSec);
     }
-    static CXXKIT_FORCE_INLINE std::string localTimeStringFromSteadyTimeSecs(int64_t secs = -1)
+    static CXXKIT_FORCE_INLINE std::string local_time_string_from_steady_time_secs(int64_t secs = -1)
     {
-        secs = secs > 0 ? secs : steadyTimeSecs();
-        return localTimeStringFromSystemTimeSecs(systemTimeFromSteadyNSecs(secs * kNSecsPerSec) / kNSecsPerSec);
+        secs = secs > 0 ? secs : steady_time_secs();
+        return local_time_string_from_system_time_secs(system_time_from_steady_n_secs(secs * kNSecsPerSec) / kNSecsPerSec);
     }
-    static CXXKIT_FORCE_INLINE std::string localTimeStringFromSteadyTimeMSecs(int64_t msecs = -1)
+    static CXXKIT_FORCE_INLINE std::string local_time_string_from_steady_time_m_secs(int64_t msecs = -1)
     {
-        msecs = msecs > 0 ? msecs : steadyTimeMSecs();
-        return localTimeStringFromSystemTimeMSecs(systemTimeFromSteadyNSecs(msecs * kNSecsPerMSec) / kNSecsPerMSec);
+        msecs = msecs > 0 ? msecs : steady_time_m_secs();
+        return local_time_string_from_system_time_m_secs(system_time_from_steady_n_secs(msecs * kNSecsPerMSec) / kNSecsPerMSec);
     }
-    static CXXKIT_FORCE_INLINE std::string localTimeString() { return localTimeStringFromSteadyTimeMSecs(); }
+    static CXXKIT_FORCE_INLINE std::string local_time_string() { return local_time_string_from_steady_time_m_secs(); }
 
     static CXXKIT_FORCE_INLINE int64_t TimeUTCNanos()
     {
         auto clock = ClockInterface::GetClockForTesting();
-        return clock ? clock->TimeNanos() : systemTimeNSecs();
+        return clock ? clock->TimeNanos() : system_time_n_secs();
     }
     static CXXKIT_FORCE_INLINE int64_t TimeUTCMicros() { return TimeUTCNanos() / kNSecsPerUSec; }
     static CXXKIT_FORCE_INLINE int64_t TimeUTCMillis() { return TimeUTCNanos() / kNSecsPerMSec; }
@@ -139,7 +139,7 @@ public:
     static CXXKIT_FORCE_INLINE int64_t TimeNanos()
     {
         auto clock = ClockInterface::GetClockForTesting();
-        return clock ? clock->TimeNanos() : steadyTimeNSecs();
+        return clock ? clock->TimeNanos() : steady_time_n_secs();
     }
     static CXXKIT_FORCE_INLINE int64_t TimeMicros() { return TimeNanos() / kNSecsPerUSec; }
     static CXXKIT_FORCE_INLINE int64_t TimeMillis() { return TimeNanos() / kNSecsPerMSec; }
@@ -154,20 +154,20 @@ public:
     static CXXKIT_FORCE_INLINE int64_t TimeUntil(int64_t later) { return later - TimeMillis(); }
     static CXXKIT_FORCE_INLINE uint32_t Time32() { return static_cast<uint32_t>(TimeNanos() / kNSecsPerMSec); }
 
-    static CXXKIT_FORCE_INLINE int64_t timeAfterMSecs(int64_t elapsed)
+    static CXXKIT_FORCE_INLINE int64_t time_after_m_secs(int64_t elapsed)
     {
         CXXKIT_DCHECK_GE(elapsed, 0);
-        return DateTime::steadyTimeMSecs() + elapsed;
+        return DateTime::steady_time_m_secs() + elapsed;
     }
-    static CXXKIT_FORCE_INLINE int64_t timeSinceMSecs(int64_t earlier)
+    static CXXKIT_FORCE_INLINE int64_t time_since_m_secs(int64_t earlier)
     {
         CXXKIT_DCHECK_GE(earlier, 0);
-        return DateTime::steadyTimeMSecs() - earlier;
+        return DateTime::steady_time_m_secs() - earlier;
     }
-    static CXXKIT_FORCE_INLINE int64_t timeUntilMSecs(int64_t later)
+    static CXXKIT_FORCE_INLINE int64_t time_until_m_secs(int64_t later)
     {
         CXXKIT_DCHECK_GE(later, 0);
-        return later - DateTime::steadyTimeMSecs();
+        return later - DateTime::steady_time_m_secs();
     }
 
     static int64_t TmToSeconds(const tm &tm);

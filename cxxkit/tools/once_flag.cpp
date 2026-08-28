@@ -28,12 +28,12 @@ CXXKIT_BEGIN_NAMESPACE
 
 namespace detail
 {
-thread_local OnceFlag localOnceFlag;
+thread_local OnceFlag local_once_flag;
 } // namespace detail
 
-OnceFlag *OnceFlag::localOnceFlag()
+OnceFlag *OnceFlag::local_once_flag()
 {
-    return &detail::localOnceFlag;
+    return &detail::local_once_flag;
 }
 
 CXXKIT_END_NAMESPACE

@@ -171,18 +171,18 @@ public:
         , mManager(manager)
     {
     }
-    ~ThreadPoolTaskThread() override { this->exitWait(); }
+    ~ThreadPoolTaskThread() override { this->exit_wait(); }
 
     void init(const StringView name, const WeakPtr &weakThis);
 
     void wake();
-    void wakeAll();
+    void wake_all();
 
     void start();
-    void exitWait();
+    void exit_wait();
 
     Task::SharedPtr task() { return mTask; }
-    void setTask(const Task::SharedPtr &task)
+    void set_task(const Task::SharedPtr &task)
     {
         CXXKIT_ASSERT(nullptr == mTask.get());
         mTask = task;
@@ -190,7 +190,7 @@ public:
 
 protected:
     void run();
-    void registerThreadInactive();
+    void register_thread_inactive();
 
 private:
     std::string mName;
@@ -236,16 +236,16 @@ public:
     explicit ThreadPoolPrivate(ThreadPool *p);
     virtual ~ThreadPoolPrivate();
 
-    ThreadPoolTaskThread::SharedPtr findThread(ThreadPoolTaskThread *thread);
-    void enqueueTask(const Task::SharedPtr &task, Priority priority);
-    void startThread(const Task::SharedPtr &task);
-    bool tryStart(const Task::SharedPtr &task);
-    void tryToStartMoreThreads();
+    ThreadPoolTaskThread::SharedPtr find_thread(ThreadPoolTaskThread *thread);
+    void enqueue_task(const Task::SharedPtr &task, Priority priority);
+    void start_thread(const Task::SharedPtr &task);
+    bool try_start(const Task::SharedPtr &task);
+    void try_to_start_more_threads();
 
-    bool isTooManyThreadsActive() const;
-    int activeThreadCount() const;
+    bool is_too_many_threads_active() const;
+    int active_thread_count() const;
 
-    bool isDone() const;
+    bool is_done() const;
     void reset();
 
     mutable std::mutex mMutex;
@@ -263,7 +263,7 @@ public:
     int mExpiryTimeout = 30000;
     int mActiveThreadCount = 0;
     int mReservedThreadCount = 0;
-    int mMaxThreadCount = ThreadPool::idealThreadCount();
+    int mMaxThreadCount = ThreadPool::ideal_thread_count();
 };
 
 CXXKIT_END_NAMESPACE

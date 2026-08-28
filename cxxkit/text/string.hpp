@@ -85,7 +85,7 @@ public:
     size_t size() const;
     size_t length() const { return this->size(); }
 
-    bool isDynamic() const;
+    bool is_dynamic() const;
 
     const char *c_str() const;
     const char *c_string() const { return this->c_str(); }

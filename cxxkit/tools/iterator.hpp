@@ -37,7 +37,7 @@ namespace utils
   * like cxx14/17 std::make_reverse_iterator
 ***********************************************************************************************************************/
 template <typename Iterator>
-std::reverse_iterator<Iterator> makeReverseIterator(Iterator it)
+std::reverse_iterator<Iterator> make_reverse_iterator(Iterator it)
 {
     return std::reverse_iterator<Iterator>(it);
 }

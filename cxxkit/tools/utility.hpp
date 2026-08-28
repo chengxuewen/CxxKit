@@ -34,13 +34,13 @@ namespace utils
 ***********************************************************************************************************************/
 // this adds const to non-const objects (like std::as_const)
 template <typename T>
-constexpr typename std::add_const<T>::type &asConst(T &t) noexcept
+constexpr typename std::add_const<T>::type &as_const(T &t) noexcept
 {
     return t;
 }
 // prevent rvalue arguments:
 template <typename T>
-void asConst(const T &&) = delete;
+void as_const(const T &&) = delete;
 
 /***********************************************************************************************************************
   * like cxx14 std::exchange
@@ -75,7 +75,7 @@ struct identity
   * like cxx23 std::to_underlying
 ***********************************************************************************************************************/
 template <typename Enum>
-constexpr typename std::underlying_type<Enum>::type toUnderlying(Enum e) noexcept
+constexpr typename std::underlying_type<Enum>::type to_underlying(Enum e) noexcept
 {
     return static_cast<typename std::underlying_type<Enum>::type>(e);
 }
@@ -134,11 +134,11 @@ public:
 private:
     mutable T mValue;
 };
-/// Make a MoveWrapper from the argument. Because the name "makeMoveWrapper"
+/// Make a MoveWrapper from the argument. Because the name "make_move_wrapper"
 /// is already quite transparent in its intent, this will work for lvalues as
 /// if you had wrapped them in std::move.
 template <typename T, typename T0 = typename std::remove_reference<T>::type>
-MoveWrapper<T0> makeMoveWrapper(T &&t)
+MoveWrapper<T0> make_move_wrapper(T &&t)
 {
     return MoveWrapper<T0>(std::forward<T0>(t));
 }

@@ -47,7 +47,7 @@ public:
                                      Clock *clock = Clock::GetRealTimeClock(),
                                      const SourceLocation &location = SourceLocation::current());
 
-    static RepeatingTaskHandle delayedStart(TaskQueueBase *taskQueue,
+    static RepeatingTaskHandle delayed_start(TaskQueueBase *taskQueue,
                                             TimeDelta firstDelay,
                                             UniqueFunction<TimeDelta()> closure,
                                             Clock *clock = Clock::GetRealTimeClock(),
@@ -65,7 +65,7 @@ public:
      * Can only be called from the TaskQueueBase where the task is running.
      * @return True if the task is running.
      */
-    bool isRunning() const;
+    bool is_running() const;
 
 protected:
     CXXKIT_DECLARE_DISABLE_COPY(RepeatingTaskHandle)

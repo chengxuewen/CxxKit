@@ -143,10 +143,10 @@ struct RangeCheckImpl<Dst, Src, DST_SIGNED, SRC_SIGNED, OVERLAPS_RANGE>
     {
         typedef std::numeric_limits<Dst> DstLimits;
         return DstLimits::is_iec559
-                   ? BASE_NUMERIC_RANGE_CHECK_RESULT(value <= static_cast<Src>(utils::numericMax<Dst>()),
-                                                     value >= static_cast<Src>(utils::numericMax<Dst>() * -1))
-                   : BASE_NUMERIC_RANGE_CHECK_RESULT(value <= static_cast<Src>(utils::numericMax<Dst>()),
-                                                     value >= static_cast<Src>(utils::numericMin<Dst>()));
+                   ? BASE_NUMERIC_RANGE_CHECK_RESULT(value <= static_cast<Src>(utils::numeric_max<Dst>()),
+                                                     value >= static_cast<Src>(utils::numeric_max<Dst>() * -1))
+                   : BASE_NUMERIC_RANGE_CHECK_RESULT(value <= static_cast<Src>(utils::numeric_max<Dst>()),
+                                                     value >= static_cast<Src>(utils::numeric_min<Dst>()));
     }
 };
 
@@ -156,7 +156,7 @@ struct RangeCheckImpl<Dst, Src, DST_UNSIGNED, SRC_UNSIGNED, OVERLAPS_RANGE>
 {
     static constexpr RangeCheckResult Check(Src value)
     {
-        return BASE_NUMERIC_RANGE_CHECK_RESULT(value <= static_cast<Src>(utils::numericMax<Dst>()), true);
+        return BASE_NUMERIC_RANGE_CHECK_RESULT(value <= static_cast<Src>(utils::numeric_max<Dst>()), true);
     }
 };
 
@@ -168,7 +168,7 @@ struct RangeCheckImpl<Dst, Src, DST_SIGNED, SRC_UNSIGNED, OVERLAPS_RANGE>
     {
         return sizeof(Dst) > sizeof(Src)
                    ? TYPE_VALID
-                   : BASE_NUMERIC_RANGE_CHECK_RESULT(value <= static_cast<Src>(utils::numericMax<Dst>()), true);
+                   : BASE_NUMERIC_RANGE_CHECK_RESULT(value <= static_cast<Src>(utils::numeric_max<Dst>()), true);
     }
 };
 
@@ -187,7 +187,7 @@ struct RangeCheckImpl<Dst, Src, DST_UNSIGNED, SRC_SIGNED, OVERLAPS_RANGE>
     {
         return (DstMaxExponent() >= SrcMaxExponent())
                    ? BASE_NUMERIC_RANGE_CHECK_RESULT(true, value >= static_cast<Src>(0))
-                   : BASE_NUMERIC_RANGE_CHECK_RESULT(value <= static_cast<Src>(utils::numericMax<Dst>()),
+                   : BASE_NUMERIC_RANGE_CHECK_RESULT(value <= static_cast<Src>(utils::numeric_max<Dst>()),
                                                      value >= static_cast<Src>(0));
     }
 };
@@ -247,7 +247,7 @@ inline constexpr Dst dchecked_cast(Src value)
  * @tparam Dst Destination numeric type.
  * @tparam Src Source numeric type.
  * @param value Source value.
- * @return `value` clamped to `[numericMin<Dst>, numericMax<Dst>]`.
+ * @return `value` clamped to `[numeric_min<Dst>, numeric_max<Dst>]`.
  */
 template <typename Dst, typename Src>
 inline Dst saturated_cast(Src value)
@@ -261,9 +261,9 @@ inline Dst saturated_cast(Src value)
     switch (detail::RangeCheck<Dst>(value))
     {
         case detail::TYPE_VALID: return static_cast<Dst>(value);
-        case detail::TYPE_UNDERFLOW: return utils::numericMin<Dst>();
+        case detail::TYPE_UNDERFLOW: return utils::numeric_min<Dst>();
         case detail::TYPE_OVERFLOW:
-            return utils::numericMax<Dst>();
+            return utils::numeric_max<Dst>();
             // Should fail only on attempting to assign NaN to a saturated integer.
         case detail::TYPE_INVALID: CXXKIT_CHECK_NOTREACHED();
     }

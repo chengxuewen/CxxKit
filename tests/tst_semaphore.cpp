@@ -63,7 +63,7 @@ public:
         }
     }
 
-    bool isFinished() const { return mFinished.load(); }
+    bool is_finished() const { return mFinished.load(); }
 
     CXXKIT_STATIC_CONSTANT_NUMBER(kWaitForeverMSecs, std::numeric_limits<unsigned long>::max())
     bool wait(unsigned long msecs = kWaitForeverMSecs)
@@ -332,66 +332,66 @@ TEST(PerformanceTest, TryAcquire)
 
     semaphore.release();
     ASSERT_EQ(semaphore.available(), 1);
-    ASSERT_TRUE(!semaphore.tryAcquire(2));
-    ASSERT_TRUE(!semaphore.tryAcquire(2, 0));
+    ASSERT_TRUE(!semaphore.try_acquire(2));
+    ASSERT_TRUE(!semaphore.try_acquire(2, 0));
     ASSERT_EQ(semaphore.available(), 1);
 
     semaphore.release();
     ASSERT_EQ(semaphore.available(), 2);
-    ASSERT_TRUE(!semaphore.tryAcquire(3));
-    ASSERT_TRUE(!semaphore.tryAcquire(3, 0));
+    ASSERT_TRUE(!semaphore.try_acquire(3));
+    ASSERT_TRUE(!semaphore.try_acquire(3, 0));
     ASSERT_EQ(semaphore.available(), 2);
 
     semaphore.release(10);
     ASSERT_EQ(semaphore.available(), 12);
-    ASSERT_TRUE(!semaphore.tryAcquire(100));
-    ASSERT_TRUE(!semaphore.tryAcquire(100, 0));
+    ASSERT_TRUE(!semaphore.try_acquire(100));
+    ASSERT_TRUE(!semaphore.try_acquire(100, 0));
     ASSERT_EQ(semaphore.available(), 12);
 
     semaphore.release(10);
     ASSERT_EQ(semaphore.available(), 22);
-    ASSERT_TRUE(!semaphore.tryAcquire(100));
-    ASSERT_TRUE(!semaphore.tryAcquire(100, 0));
+    ASSERT_TRUE(!semaphore.try_acquire(100));
+    ASSERT_TRUE(!semaphore.try_acquire(100, 0));
     ASSERT_EQ(semaphore.available(), 22);
 
-    ASSERT_TRUE(semaphore.tryAcquire());
+    ASSERT_TRUE(semaphore.try_acquire());
     ASSERT_EQ(semaphore.available(), 21);
 
-    ASSERT_TRUE(semaphore.tryAcquire());
+    ASSERT_TRUE(semaphore.try_acquire());
     ASSERT_EQ(semaphore.available(), 20);
 
     semaphore.release(2);
-    ASSERT_TRUE(semaphore.tryAcquire(1, 0));
+    ASSERT_TRUE(semaphore.try_acquire(1, 0));
     ASSERT_EQ(semaphore.available(), 21);
 
-    ASSERT_TRUE(semaphore.tryAcquire(1, 0));
+    ASSERT_TRUE(semaphore.try_acquire(1, 0));
     ASSERT_EQ(semaphore.available(), 20);
 
-    ASSERT_TRUE(semaphore.tryAcquire(10));
+    ASSERT_TRUE(semaphore.try_acquire(10));
     ASSERT_EQ(semaphore.available(), 10);
 
     semaphore.release(10);
-    ASSERT_TRUE(semaphore.tryAcquire(10, 0));
+    ASSERT_TRUE(semaphore.try_acquire(10, 0));
     ASSERT_EQ(semaphore.available(), 10);
 
-    ASSERT_TRUE(semaphore.tryAcquire(10));
+    ASSERT_TRUE(semaphore.try_acquire(10));
     ASSERT_EQ(semaphore.available(), 0);
 
     // should not be able to acquire more
-    ASSERT_TRUE(!semaphore.tryAcquire());
-    ASSERT_TRUE(!semaphore.tryAcquire(1, 0));
+    ASSERT_TRUE(!semaphore.try_acquire());
+    ASSERT_TRUE(!semaphore.try_acquire(1, 0));
     ASSERT_EQ(semaphore.available(), 0);
 
-    ASSERT_TRUE(!semaphore.tryAcquire());
-    ASSERT_TRUE(!semaphore.tryAcquire(1, 0));
+    ASSERT_TRUE(!semaphore.try_acquire());
+    ASSERT_TRUE(!semaphore.try_acquire(1, 0));
     ASSERT_EQ(semaphore.available(), 0);
 
-    ASSERT_TRUE(!semaphore.tryAcquire(10));
-    ASSERT_TRUE(!semaphore.tryAcquire(10, 0));
+    ASSERT_TRUE(!semaphore.try_acquire(10));
+    ASSERT_TRUE(!semaphore.try_acquire(10, 0));
     ASSERT_EQ(semaphore.available(), 0);
 
-    ASSERT_TRUE(!semaphore.tryAcquire(10));
-    ASSERT_TRUE(!semaphore.tryAcquire(10, 0));
+    ASSERT_TRUE(!semaphore.try_acquire(10));
+    ASSERT_TRUE(!semaphore.try_acquire(10, 0));
     ASSERT_EQ(semaphore.available(), 0);
 }
 
@@ -422,69 +422,69 @@ TEST(PerformanceTest, TryAcquireWithTimeout)
         semaphore.release();
         ASSERT_EQ(semaphore.available(), 1);
         time.start();
-        ASSERT_TRUE(!semaphore.tryAcquire(2, timeout));
+        ASSERT_TRUE(!semaphore.try_acquire(2, timeout));
         FUZZYCOMPARE(time.elapsed(), timeout);
         ASSERT_EQ(semaphore.available(), 1);
 
         semaphore.release();
         ASSERT_EQ(semaphore.available(), 2);
         time.start();
-        ASSERT_TRUE(!semaphore.tryAcquire(3, timeout));
+        ASSERT_TRUE(!semaphore.try_acquire(3, timeout));
         FUZZYCOMPARE(time.elapsed(), timeout);
         ASSERT_EQ(semaphore.available(), 2);
 
         semaphore.release(10);
         ASSERT_EQ(semaphore.available(), 12);
         time.start();
-        ASSERT_TRUE(!semaphore.tryAcquire(100, timeout));
+        ASSERT_TRUE(!semaphore.try_acquire(100, timeout));
         FUZZYCOMPARE(time.elapsed(), timeout);
         ASSERT_EQ(semaphore.available(), 12);
 
         semaphore.release(10);
         ASSERT_EQ(semaphore.available(), 22);
         time.start();
-        ASSERT_TRUE(!semaphore.tryAcquire(100, timeout));
+        ASSERT_TRUE(!semaphore.try_acquire(100, timeout));
         FUZZYCOMPARE(time.elapsed(), timeout);
         ASSERT_EQ(semaphore.available(), 22);
 
         time.start();
-        ASSERT_TRUE(semaphore.tryAcquire(1, timeout));
+        ASSERT_TRUE(semaphore.try_acquire(1, timeout));
         FUZZYCOMPARE(time.elapsed(), 0);
         ASSERT_EQ(semaphore.available(), 21);
 
         time.start();
-        ASSERT_TRUE(semaphore.tryAcquire(1, timeout));
+        ASSERT_TRUE(semaphore.try_acquire(1, timeout));
         FUZZYCOMPARE(time.elapsed(), 0);
         ASSERT_EQ(semaphore.available(), 20);
 
         time.start();
-        ASSERT_TRUE(semaphore.tryAcquire(10, timeout));
+        ASSERT_TRUE(semaphore.try_acquire(10, timeout));
         FUZZYCOMPARE(time.elapsed(), 0);
         ASSERT_EQ(semaphore.available(), 10);
 
         time.start();
-        ASSERT_TRUE(semaphore.tryAcquire(10, timeout));
+        ASSERT_TRUE(semaphore.try_acquire(10, timeout));
         FUZZYCOMPARE(time.elapsed(), 0);
         ASSERT_EQ(semaphore.available(), 0);
 
         // should not be able to acquire more
         time.start();
-        ASSERT_TRUE(!semaphore.tryAcquire(1, timeout));
+        ASSERT_TRUE(!semaphore.try_acquire(1, timeout));
         FUZZYCOMPARE(time.elapsed(), timeout);
         ASSERT_EQ(semaphore.available(), 0);
 
         time.start();
-        ASSERT_TRUE(!semaphore.tryAcquire(1, timeout));
+        ASSERT_TRUE(!semaphore.try_acquire(1, timeout));
         FUZZYCOMPARE(time.elapsed(), timeout);
         ASSERT_EQ(semaphore.available(), 0);
 
         time.start();
-        ASSERT_TRUE(!semaphore.tryAcquire(10, timeout));
+        ASSERT_TRUE(!semaphore.try_acquire(10, timeout));
         FUZZYCOMPARE(time.elapsed(), timeout);
         ASSERT_EQ(semaphore.available(), 0);
 
         time.start();
-        ASSERT_TRUE(!semaphore.tryAcquire(10, timeout));
+        ASSERT_TRUE(!semaphore.try_acquire(10, timeout));
         FUZZYCOMPARE(time.elapsed(), timeout);
         ASSERT_EQ(semaphore.available(), 0);
 
@@ -506,7 +506,7 @@ TEST(PerformanceTest, TryAcquireWithTimeoutStarvation)
             startup.release();
             while (true)
             {
-                if (!semaphore->tryAcquire(amountToConsume, timeout))
+                if (!semaphore->try_acquire(amountToConsume, timeout))
                 {
                     break;
                 }
@@ -529,10 +529,10 @@ TEST(PerformanceTest, TryAcquireWithTimeoutStarvation)
 
     // try to consume more than the thread we started is, and provide a longer
     // timeout... we should timeout, not wait indefinitely
-    ASSERT_TRUE(!semaphore.tryAcquire(consumer.amountToConsume * 2, consumer.timeout * 2));
+    ASSERT_TRUE(!semaphore.try_acquire(consumer.amountToConsume * 2, consumer.timeout * 2));
 
     // the consumer should still be running
-    ASSERT_TRUE(!consumer.isFinished());
+    ASSERT_TRUE(!consumer.is_finished());
 
     // acquire, and wait for smallConsumer to timeout
     semaphore.acquire();
@@ -562,14 +562,14 @@ TEST(PerformanceTest, TryAcquireWithTimeoutForever)
 
         // sanity check it works if we can immediately acquire
         t.sem.release(11);
-        ASSERT_TRUE(t.sem.tryAcquire(1, timeout));
-        ASSERT_TRUE(t.sem.tryAcquire(10, timeout));
+        ASSERT_TRUE(t.sem.try_acquire(1, timeout));
+        ASSERT_TRUE(t.sem.try_acquire(10, timeout));
 
         // verify that we do wait for at least WaitTime if we can't acquire immediately
         ElapsedTimer timer;
         timer.start();
         t.start();
-        ASSERT_TRUE(t.sem.tryAcquire(1, timeout));
+        ASSERT_TRUE(t.sem.try_acquire(1, timeout));
         ASSERT_TRUE(timer.elapsed() >= WaitTime);
 
         ASSERT_TRUE(t.wait());
@@ -610,7 +610,7 @@ void Producer::run()
 {
     for (int i = 0; i < DataSize; ++i)
     {
-        ASSERT_TRUE(freeSpace.tryAcquire(1, Timeout));
+        ASSERT_TRUE(freeSpace.try_acquire(1, Timeout));
         buffer[i % BufferSize] = alphabet[i % AlphabetSize];
         usedSpace.release();
     }
@@ -618,7 +618,7 @@ void Producer::run()
     {
         if ((i % ProducerChunkSize) == 0)
         {
-            ASSERT_TRUE(freeSpace.tryAcquire(ProducerChunkSize, Timeout));
+            ASSERT_TRUE(freeSpace.try_acquire(ProducerChunkSize, Timeout));
         }
         buffer[i % BufferSize] = alphabet[i % AlphabetSize];
         if ((i % ProducerChunkSize) == (ProducerChunkSize - 1))

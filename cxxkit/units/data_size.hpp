@@ -68,12 +68,12 @@ private:
 
 namespace utils
 {
-CXXKIT_UNITS_API std::string toString(DataSize value);
+CXXKIT_UNITS_API std::string to_string(DataSize value);
 
 // template <typename Sink>
 // void stringify(Sink &sink, DataSize value)
 // {
-//     sink.Append(toString(value));
+//     sink.Append(to_string(value));
 // }
 } // namespace utils
 

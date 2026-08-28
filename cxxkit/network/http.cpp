@@ -52,9 +52,9 @@ Cookie::Cookie(const Initializer &initializer)
     mDPtr->mCookie = utils::make_optional(cpr::Cookie(initializer.name.data(),
                                                       initializer.value.data(),
                                                       initializer.domain.data(),
-                                                      initializer.isIncludingSubdomains,
+                                                      initializer.is_including_subdomains,
                                                       initializer.path.data(),
-                                                      initializer.isHttpsOnly,
+                                                      initializer.is_https_only,
                                                       initializer.expires));
 #endif
 }
@@ -63,7 +63,7 @@ Cookie::~Cookie()
 {
 }
 
-bool Cookie::isIncludingSubdomains() const
+bool Cookie::is_including_subdomains() const
 {
     CXXKIT_D(const Cookie);
 #if CXXKIT_FEATURE_USE_BOOST_BACKEND
@@ -73,7 +73,7 @@ bool Cookie::isIncludingSubdomains() const
 #endif
 }
 
-bool Cookie::isHttpsOnly() const
+bool Cookie::is_https_only() const
 {
     CXXKIT_D(const Cookie);
 #if CXXKIT_FEATURE_USE_BOOST_BACKEND
@@ -83,7 +83,7 @@ bool Cookie::isHttpsOnly() const
 #endif
 }
 
-std::chrono::system_clock::time_point Cookie::getExpires() const
+std::chrono::system_clock::time_point Cookie::get_expires() const
 {
     CXXKIT_D(const Cookie);
 #if CXXKIT_FEATURE_USE_BOOST_BACKEND
@@ -93,7 +93,7 @@ std::chrono::system_clock::time_point Cookie::getExpires() const
 #endif
 }
 
-std::string Cookie::getExpiresString() const
+std::string Cookie::get_expires_string() const
 {
     CXXKIT_D(const Cookie);
 #if CXXKIT_FEATURE_USE_BOOST_BACKEND
@@ -103,7 +103,7 @@ std::string Cookie::getExpiresString() const
 #endif
 }
 
-std::string Cookie::getDomain() const
+std::string Cookie::get_domain() const
 {
     CXXKIT_D(const Cookie);
 #if CXXKIT_FEATURE_USE_BOOST_BACKEND
@@ -113,7 +113,7 @@ std::string Cookie::getDomain() const
 #endif
 }
 
-std::string Cookie::getValue() const
+std::string Cookie::get_value() const
 {
     CXXKIT_D(const Cookie);
 #if CXXKIT_FEATURE_USE_BOOST_BACKEND
@@ -123,7 +123,7 @@ std::string Cookie::getValue() const
 #endif
 }
 
-std::string Cookie::getPath() const
+std::string Cookie::get_path() const
 {
     CXXKIT_D(const Cookie);
 #if CXXKIT_FEATURE_USE_BOOST_BACKEND
@@ -133,7 +133,7 @@ std::string Cookie::getPath() const
 #endif
 }
 
-std::string Cookie::getName() const
+std::string Cookie::get_name() const
 {
     CXXKIT_D(const Cookie);
 #if CXXKIT_FEATURE_USE_BOOST_BACKEND
@@ -161,7 +161,7 @@ Response::~Response()
 {
 }
 
-long Response::statusCode() const
+long Response::status_code() const
 {
     CXXKIT_D(const Response);
 #if CXXKIT_FEATURE_USE_BOOST_BACKEND
@@ -236,7 +236,7 @@ AuthenticationPrivate::~AuthenticationPrivate()
 #if CXXKIT_FEATURE_USE_BOOST_BACKEND
 
 #else
-cpr::AuthMode AuthenticationPrivate::toCpr(Authentication::Mode mode)
+cpr::AuthMode AuthenticationPrivate::to_cpr(Authentication::Mode mode)
 {
     switch (mode)
     {
@@ -248,7 +248,7 @@ cpr::AuthMode AuthenticationPrivate::toCpr(Authentication::Mode mode)
     return cpr::AuthMode::BASIC;
 }
 
-Authentication::Mode AuthenticationPrivate::fromCpr(cpr::AuthMode mode)
+Authentication::Mode AuthenticationPrivate::from_cpr(cpr::AuthMode mode)
 {
     switch (mode)
     {
@@ -273,7 +273,7 @@ Authentication::Authentication(StringView username, StringView password, Mode au
 
 #else
     mDPtr->mAuthentication = std::move(
-        cpr::Authentication{username.data(), password.data(), AuthenticationPrivate::toCpr(auth_mode)});
+        cpr::Authentication{username.data(), password.data(), AuthenticationPrivate::to_cpr(auth_mode)});
 #endif
 }
 
@@ -281,7 +281,7 @@ Authentication::~Authentication() noexcept
 {
 }
 
-const char *Authentication::authString() const noexcept
+const char *Authentication::auth_string() const noexcept
 {
     CXXKIT_D(const Authentication);
 #if CXXKIT_FEATURE_USE_BOOST_BACKEND
@@ -291,13 +291,13 @@ const char *Authentication::authString() const noexcept
 #endif
 }
 
-Authentication::Mode Authentication::authMode() const noexcept
+Authentication::Mode Authentication::auth_mode() const noexcept
 {
     CXXKIT_D(const Authentication);
 #if CXXKIT_FEATURE_USE_BOOST_BACKEND
 
 #else
-    return AuthenticationPrivate::fromCpr(d->mAuthentication.GetAuthMode());
+    return AuthenticationPrivate::from_cpr(d->mAuthentication.GetAuthMode());
 #endif
     return Mode::kBASIC;
 }
@@ -320,7 +320,7 @@ Session::~Session()
 {
 }
 
-void Session::setUrl(const Url &url)
+void Session::set_url(const Url &url)
 {
     CXXKIT_D(Session);
 #if CXXKIT_FEATURE_USE_BOOST_BACKEND
@@ -330,7 +330,7 @@ void Session::setUrl(const Url &url)
 #endif
 }
 
-void Session::setParameters(const Parameters &parameters)
+void Session::set_parameters(const Parameters &parameters)
 {
     CXXKIT_D(Session);
 #if CXXKIT_FEATURE_USE_BOOST_BACKEND
@@ -345,7 +345,7 @@ void Session::setParameters(const Parameters &parameters)
 #endif
 }
 
-void Session::setHeader(const Header &header)
+void Session::set_header(const Header &header)
 {
     CXXKIT_D(Session);
 #if CXXKIT_FEATURE_USE_BOOST_BACKEND
@@ -355,7 +355,7 @@ void Session::setHeader(const Header &header)
 #endif
 }
 
-void Session::updateHeader(const Header &header)
+void Session::update_header(const Header &header)
 {
     CXXKIT_D(Session);
 #if CXXKIT_FEATURE_USE_BOOST_BACKEND
@@ -365,7 +365,7 @@ void Session::updateHeader(const Header &header)
 #endif
 }
 
-void Session::setTimeout(const Timeout &timeout)
+void Session::set_timeout(const Timeout &timeout)
 {
     CXXKIT_D(Session);
 #if CXXKIT_FEATURE_USE_BOOST_BACKEND
@@ -375,7 +375,7 @@ void Session::setTimeout(const Timeout &timeout)
 #endif
 }
 
-void Session::setConnectTimeout(const ConnectTimeout &timeout)
+void Session::set_connect_timeout(const ConnectTimeout &timeout)
 {
     CXXKIT_D(Session);
 #if CXXKIT_FEATURE_USE_BOOST_BACKEND
@@ -385,17 +385,17 @@ void Session::setConnectTimeout(const ConnectTimeout &timeout)
 #endif
 }
 
-void Session::setAuth(const Authentication &auth)
+void Session::set_auth(const Authentication &auth)
 {
     CXXKIT_D(Session);
 #if CXXKIT_FEATURE_USE_BOOST_BACKEND
 
 #else
-    d->mSession.SetAuth(auth.dFunc()->mAuthentication);
+    d->mSession.SetAuth(auth.d_func()->mAuthentication);
 #endif
 }
 
-void Session::setBody(const Body &body)
+void Session::set_body(const Body &body)
 {
     CXXKIT_D(Session);
 #if CXXKIT_FEATURE_USE_BOOST_BACKEND
@@ -405,7 +405,7 @@ void Session::setBody(const Body &body)
 #endif
 }
 
-void Session::setBearer(const Bearer &bearer)
+void Session::set_bearer(const Bearer &bearer)
 {
     CXXKIT_D(Session);
 #if CXXKIT_FEATURE_USE_BOOST_BACKEND
@@ -415,7 +415,7 @@ void Session::setBearer(const Bearer &bearer)
 #endif
 }
 
-void Session::setPayload(const Payload &payload)
+void Session::set_payload(const Payload &payload)
 {
     CXXKIT_D(Session);
 #if CXXKIT_FEATURE_USE_BOOST_BACKEND
@@ -430,7 +430,7 @@ void Session::setPayload(const Payload &payload)
 #endif
 }
 
-void Session::setCookies(const Cookies &cookies)
+void Session::set_cookies(const Cookies &cookies)
 {
     CXXKIT_D(Session);
 #if CXXKIT_FEATURE_USE_BOOST_BACKEND
@@ -439,13 +439,13 @@ void Session::setCookies(const Cookies &cookies)
     cpr::Cookies cprCookies{};
     for (const auto &item : cookies.data())
     {
-        cprCookies.push_back({item->getName(),
-                              item->getValue(),
-                              item->getDomain(),
-                              item->isIncludingSubdomains(),
-                              item->getPath(),
-                              item->isHttpsOnly(),
-                              item->getExpires()});
+        cprCookies.push_back({item->get_name(),
+                              item->get_value(),
+                              item->get_domain(),
+                              item->is_including_subdomains(),
+                              item->get_path(),
+                              item->is_https_only(),
+                              item->get_expires()});
     }
     d->mSession.SetCookies(std::move(cprCookies));
 #endif
@@ -458,7 +458,7 @@ Response::SharedPtr Session::get()
 #if CXXKIT_FEATURE_USE_BOOST_BACKEND
 
 #else
-    response->dFunc()->mResponse = std::move(d->mSession.Get());
+    response->d_func()->mResponse = std::move(d->mSession.Get());
 #endif
     return response;
 }
@@ -470,7 +470,7 @@ Response::SharedPtr Session::put()
 #if CXXKIT_FEATURE_USE_BOOST_BACKEND
 
 #else
-    response->dFunc()->mResponse = std::move(d->mSession.Put());
+    response->d_func()->mResponse = std::move(d->mSession.Put());
 #endif
     return response;
 }
@@ -482,7 +482,7 @@ Response::SharedPtr Session::post()
 #if CXXKIT_FEATURE_USE_BOOST_BACKEND
 
 #else
-    response->dFunc()->mResponse = std::move(d->mSession.Post());
+    response->d_func()->mResponse = std::move(d->mSession.Post());
 #endif
     return response;
 }
@@ -494,7 +494,7 @@ Response::SharedPtr Session::download(std::ofstream &file)
 #if CXXKIT_FEATURE_USE_BOOST_BACKEND
 
 #else
-    response->dFunc()->mResponse = std::move(d->mSession.Download(file));
+    response->d_func()->mResponse = std::move(d->mSession.Download(file));
 #endif
     return response;
 }
@@ -506,7 +506,7 @@ Response::SharedPtr Session::download(const WriteCallback &write)
 #if CXXKIT_FEATURE_USE_BOOST_BACKEND
 
 #else
-    response->dFunc()->mResponse = std::move(d->mSession.Download({write.callback, write.userdata}));
+    response->d_func()->mResponse = std::move(d->mSession.Download({write.callback, write.userdata}));
 #endif
     return response;
 }

@@ -83,7 +83,7 @@ RepeatingTaskClosure::~RepeatingTaskClosure()
 void RepeatingTaskClosure::operator()() &&
 {
     // CXXKIT_DCHECK_RUN_ON(mTaskQueue);
-    if (!mAliveFlag->isAlive())
+    if (!mAliveFlag->is_alive())
     {
         CXXKIT_LOGGING_TRACE(CXXKIT_TASK_QUEUE_LOGGER(),
                              "RepeatingTaskClosure::operator() not Alive:{}",
@@ -97,7 +97,7 @@ void RepeatingTaskClosure::operator()() &&
 
     // A delay of +infinity means that the task should not be run again.
     // Alternatively, the closure might have stopped this task.
-    if (delay.IsPlusInfinity() || !mAliveFlag->isAlive())
+    if (delay.IsPlusInfinity() || !mAliveFlag->is_alive())
     {
         CXXKIT_LOGGING_TRACE(CXXKIT_TASK_QUEUE_LOGGER(),
                              "RepeatingTaskHandle::operator() not be run again {}",
@@ -110,7 +110,7 @@ void RepeatingTaskClosure::operator()() &&
     delay -= lost_time;
     delay = std::max(delay, TimeDelta::Zero());
 
-    mTaskQueue->postDelayedTask(std::move(*this), delay, mLocation);
+    mTaskQueue->post_delayed_task(std::move(*this), delay, mLocation);
 }
 } // namespace detail
 
@@ -126,7 +126,7 @@ RepeatingTaskHandle RepeatingTaskHandle::start(TaskQueueBase *taskQueue,
                                                Clock *clock,
                                                const SourceLocation &location)
 {
-    auto aliveFlag = TaskQueueBase::SafetyFlag::createDetached();
+    auto aliveFlag = TaskQueueBase::SafetyFlag::create_detached();
     // detail::RepeatingTaskHandleDTraceProbeStart();
     auto function = detail::RepeatingTaskClosure(taskQueue,
                                                  TimeDelta::Zero(),
@@ -134,22 +134,22 @@ RepeatingTaskHandle RepeatingTaskHandle::start(TaskQueueBase *taskQueue,
                                                  clock,
                                                  aliveFlag,
                                                  location);
-    taskQueue->postTask(std::move(function), location);
+    taskQueue->post_task(std::move(function), location);
     return RepeatingTaskHandle(std::move(aliveFlag));
 }
 
-// delayedStart is equivalent to Start except that the first invocation of the closure will be delayed
+// delayed_start is equivalent to Start except that the first invocation of the closure will be delayed
 // by the given amount.
-RepeatingTaskHandle RepeatingTaskHandle::delayedStart(TaskQueueBase *taskQueue,
+RepeatingTaskHandle RepeatingTaskHandle::delayed_start(TaskQueueBase *taskQueue,
                                                       TimeDelta firstDelay,
                                                       UniqueFunction<TimeDelta()> closure,
                                                       Clock *clock,
                                                       const SourceLocation &location)
 {
-    auto aliveFlag = TaskQueueBase::SafetyFlag::createDetached();
+    auto aliveFlag = TaskQueueBase::SafetyFlag::create_detached();
     // detail::RepeatingTaskHandleDTraceProbeDelayedStart();
     auto function = detail::RepeatingTaskClosure(taskQueue, firstDelay, std::move(closure), clock, aliveFlag, location);
-    taskQueue->postDelayedTask(std::move(function), firstDelay, location);
+    taskQueue->post_delayed_task(std::move(function), firstDelay, location);
     return RepeatingTaskHandle(std::move(aliveFlag));
 }
 
@@ -157,12 +157,12 @@ void RepeatingTaskHandle::stop()
 {
     if (mAliveFlag)
     {
-        mAliveFlag->setNotAlive();
+        mAliveFlag->set_not_alive();
         mAliveFlag.reset();
     }
 }
 
-bool RepeatingTaskHandle::isRunning() const
+bool RepeatingTaskHandle::is_running() const
 {
     return mAliveFlag != nullptr;
 }

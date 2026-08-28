@@ -48,9 +48,9 @@ struct CrashHandlerPrivate
     // breakpad MinidumpCallback, platform-specific signature. A static member of the friend struct so it
     // can reach CrashHandler's private pimpl (free functions cannot).
 #if defined(CXXKIT_OS_MACOS)
-    static bool onMinidump(const char *dumpPath, const char *minidumpId, void *context, bool succeeded);
+    static bool on_minidump(const char *dumpPath, const char *minidumpId, void *context, bool succeeded);
 #else
-    static bool onMinidump(const google_breakpad::MinidumpDescriptor &descriptor, void *context, bool succeeded);
+    static bool on_minidump(const google_breakpad::MinidumpDescriptor &descriptor, void *context, bool succeeded);
 #endif
 
     std::unique_ptr<google_breakpad::ExceptionHandler> mHandler; // armed by install(), released by uninstall()

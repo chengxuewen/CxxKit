@@ -50,10 +50,10 @@ ThreadPoolLocalData::~ThreadPoolLocalData()
     // CXXKIT_LOGGING_TRACE(CXXKIT_THREAD_POOL_LOGGER(), "ThreadPoolLocalData::~ThreadPoolLocalData:start");
     if (thread.get())
     {
-        std::lock_guard<std::mutex> lock(thread->dFunc()->mMutex);
-        thread->dFunc()->mDoneCondition.notify_all();
-        thread->dFunc()->mInFinish.store(false);
-        thread->dFunc()->mRunning.store(false);
+        std::lock_guard<std::mutex> lock(thread->d_func()->mMutex);
+        thread->d_func()->mDoneCondition.notify_all();
+        thread->d_func()->mInFinish.store(false);
+        thread->d_func()->mRunning.store(false);
         thread.reset();
     }
     // CXXKIT_LOGGING_TRACE(CXXKIT_THREAD_POOL_LOGGER(), "ThreadPoolLocalData::~ThreadPoolLocalData:stop");
@@ -64,22 +64,22 @@ ThreadPoolLocalData *ThreadPoolLocalData::current()
     if (!data->thread.get())
     {
         auto thread = new ThreadPool::Thread(true);
-        thread->dFunc()->mInFinish.store(false);
-        thread->dFunc()->mRunning.store(true);
+        thread->d_func()->mInFinish.store(false);
+        thread->d_func()->mRunning.store(true);
         data->thread.reset(thread);
     }
-    data->thread->dFunc()->mThreadId = std::this_thread::get_id();
+    data->thread->d_func()->mThreadId = std::this_thread::get_id();
     return data;
 }
 void ThreadPoolLocalData::init(const ThreadPool::Thread::SharedPtr &thread)
 {
     detail::tls::currentThreadData.thread = thread;
-    thread->dFunc()->mThreadId = std::this_thread::get_id();
+    thread->d_func()->mThreadId = std::this_thread::get_id();
 }
 
 void ThreadPoolTaskThread::start()
 {
-    CXXKIT_ASSERT_X(!this->isRunning(), "ThreadPoolThread::start", "still in running");
+    CXXKIT_ASSERT_X(!this->is_running(), "ThreadPoolThread::start", "still in running");
     if (mThread.joinable())
     {
         mThread.join();
@@ -87,13 +87,13 @@ void ThreadPoolTaskThread::start()
     mThread = std::thread(&ThreadPoolTaskThread::run, this);
 }
 
-void ThreadPoolTaskThread::exitWait()
+void ThreadPoolTaskThread::exit_wait()
 {
-    CXXKIT_LOGGING_TRACE(CXXKIT_THREAD_POOL_LOGGER(), "thread {} exitWait", utils::fmt::ptr(this));
+    CXXKIT_LOGGING_TRACE(CXXKIT_THREAD_POOL_LOGGER(), "thread {} exit_wait", utils::fmt::ptr(this));
     mExit.store(true);
     if (mThread.joinable())
     {
-        CXXKIT_LOGGING_TRACE(CXXKIT_THREAD_POOL_LOGGER(), "thread {} exitWait join", utils::fmt::ptr(this));
+        CXXKIT_LOGGING_TRACE(CXXKIT_THREAD_POOL_LOGGER(), "thread {} exit_wait join", utils::fmt::ptr(this));
         mThread.join();
     }
 }
@@ -114,7 +114,7 @@ void ThreadPoolTaskThread::wake()
     mTaskReadyCondition.notify_one();
 }
 
-void ThreadPoolTaskThread::wakeAll()
+void ThreadPoolTaskThread::wake_all()
 {
     CXXKIT_LOGGING_TRACE(CXXKIT_THREAD_POOL_LOGGER(), "thread {} wake all", utils::fmt::ptr(this));
     mTaskReadyCondition.notify_all();
@@ -124,8 +124,8 @@ void ThreadPoolTaskThread::run()
 {
     CXXKIT_LOGGING_TRACE(CXXKIT_THREAD_POOL_LOGGER(), "thread {} run enter", utils::fmt::ptr(this));
     mExit.store(false);
-    dFunc()->mRunning.store(true);
-    dFunc()->mInFinish.store(false);
+    d_func()->mRunning.store(true);
+    d_func()->mInFinish.store(false);
     ThreadPoolLocalData::init(mWeakThis.lock());
     std::unique_lock<std::mutex> lock(mManager->mMutex);
     while (!mExit.load())
@@ -153,17 +153,17 @@ void ThreadPoolTaskThread::run()
                                            "\nOCTK Concurrent has caught an exception thrown from a worker thread.\n"
                                            "This is not supported, exceptions thrown in worker threads must be\n"
                                            "caught before control returns to OCTK Concurrent.");
-                    this->registerThreadInactive();
+                    this->register_thread_inactive();
                     CXXKIT_RETHROW;
                 }
                 lock.lock();
             }
 
             // if too many threads are active, exit do task loop
-            if (mManager->isTooManyThreadsActive())
+            if (mManager->is_too_many_threads_active())
             {
                 CXXKIT_LOGGING_TRACE(CXXKIT_THREAD_POOL_LOGGER(),
-                                     "thread {} do isTooManyThreadsActive true",
+                                     "thread {} do is_too_many_threads_active true",
                                      utils::fmt::ptr(this));
                 break;
             }
@@ -179,14 +179,14 @@ void ThreadPoolTaskThread::run()
         } while (!mExit.load());
 
         // if too many threads are active or exit flag is set, expire this thread
-        bool expired = mManager->isTooManyThreadsActive() || mExit.load();
+        bool expired = mManager->is_too_many_threads_active() || mExit.load();
         if (!expired)
         {
-            // CXXKIT_LOGGING_TRACE(CXXKIT_THREAD_POOL_LOGGER(), "thread %p isTooManyThreadsActive false", this);
+            // CXXKIT_LOGGING_TRACE(CXXKIT_THREAD_POOL_LOGGER(), "thread %p is_too_many_threads_active false", this);
             // start enter waiting state
             CXXKIT_ASSERT(nullptr == mTask.get());
             mManager->mWaitingThreads.push_back(this);
-            this->registerThreadInactive();
+            this->register_thread_inactive();
             if (mExit.load())
             {
                 CXXKIT_LOGGING_TRACE(CXXKIT_THREAD_POOL_LOGGER(),
@@ -231,7 +231,7 @@ void ThreadPoolTaskThread::run()
                     CXXKIT_LOGGING_TRACE(CXXKIT_THREAD_POOL_LOGGER(),
                                          "thread {} is not in the all threads list",
                                          utils::fmt::ptr(this));
-                    this->registerThreadInactive();
+                    this->register_thread_inactive();
                     break;
                 }
             }
@@ -240,25 +240,25 @@ void ThreadPoolTaskThread::run()
         {
             CXXKIT_LOGGING_TRACE(CXXKIT_THREAD_POOL_LOGGER(), "thread {} is expired", utils::fmt::ptr(this));
             mManager->mExpiredThreads.push_back(this);
-            this->registerThreadInactive();
+            this->register_thread_inactive();
             break;
         }
     }
     CXXKIT_LOGGING_TRACE(CXXKIT_THREAD_POOL_LOGGER(), "thread {} run exit", utils::fmt::ptr(this));
-    dFunc()->mInFinish.store(true);
-    dFunc()->mRunning.store(false);
+    d_func()->mInFinish.store(true);
+    d_func()->mRunning.store(false);
 }
 
-void ThreadPoolTaskThread::registerThreadInactive()
+void ThreadPoolTaskThread::register_thread_inactive()
 {
     CXXKIT_ASSERT_X(mManager->mActiveThreadCount > 0,
-                    "ThreadPoolThread::registerThreadInactive()",
+                    "ThreadPoolThread::register_thread_inactive()",
                     "mActiveThreadCount must be greater than 0");
-    CXXKIT_LOGGING_TRACE(CXXKIT_THREAD_POOL_LOGGER(), "thread {} registerThreadInactive", utils::fmt::ptr(this));
+    CXXKIT_LOGGING_TRACE(CXXKIT_THREAD_POOL_LOGGER(), "thread {} register_thread_inactive", utils::fmt::ptr(this));
     if (--mManager->mActiveThreadCount == 0)
     {
         CXXKIT_LOGGING_TRACE(CXXKIT_THREAD_POOL_LOGGER(),
-                             "thread {} registerThreadInactive mNoActiveThreadsCondition",
+                             "thread {} register_thread_inactive mNoActiveThreadsCondition",
                              utils::fmt::ptr(this));
         mManager->mNoActiveThreadsCondition.notify_all();
     }
@@ -274,26 +274,26 @@ ThreadPool::Thread::~Thread()
     CXXKIT_LOGGING_TRACE(CXXKIT_THREAD_POOL_LOGGER(), "ThreadPool::Thread::~Thread() {}", utils::fmt::ptr(this));
 }
 
-ThreadPool::Thread::Id ThreadPool::Thread::threadId() const
+ThreadPool::Thread::Id ThreadPool::Thread::thread_id() const
 {
     CXXKIT_D(const Thread);
     std::lock_guard<std::mutex> lock(d->mMutex);
     return d->mThreadId;
 }
 
-bool ThreadPool::Thread::isFinished() const
+bool ThreadPool::Thread::is_finished() const
 {
     CXXKIT_D(const Thread);
     return !d->mRunning.load() && !d->mInFinish.load();
 }
 
-bool ThreadPool::Thread::isRunning() const
+bool ThreadPool::Thread::is_running() const
 {
     CXXKIT_D(const Thread);
     return d->mRunning.load();
 }
 
-bool ThreadPool::Thread::isAdopted() const
+bool ThreadPool::Thread::is_adopted() const
 {
     CXXKIT_D(const Thread);
     return d->mAdopted;
@@ -302,7 +302,7 @@ bool ThreadPool::Thread::isAdopted() const
 bool ThreadPool::Thread::wait(unsigned int msecs)
 {
     CXXKIT_D(Thread);
-    if (this->threadId() == Thread::currentThreadId())
+    if (this->thread_id() == Thread::current_thread_id())
     {
         CXXKIT_LOGGING_WARNING(CXXKIT_THREAD_POOL_LOGGER(), "ThreadPool::Thread::wait: Thread tried to wait on itself");
         return false;
@@ -336,7 +336,7 @@ ThreadPool::Thread::SharedPtr ThreadPool::Thread::current() noexcept
     return ThreadPoolLocalData::current()->thread;
 }
 
-ThreadPool::Thread::Id ThreadPool::Thread::currentThreadId() noexcept
+ThreadPool::Thread::Id ThreadPool::Thread::current_thread_id() noexcept
 {
     return std::this_thread::get_id();
 }
@@ -350,19 +350,19 @@ ThreadPoolPrivate::~ThreadPoolPrivate()
 {
 }
 
-ThreadPoolTaskThread::SharedPtr ThreadPoolPrivate::findThread(ThreadPoolTaskThread *thread)
+ThreadPoolTaskThread::SharedPtr ThreadPoolPrivate::find_thread(ThreadPoolTaskThread *thread)
 {
     const auto iter = mAllThreads.find(thread);
     return mAllThreads.end() != iter ? iter->second : nullptr;
 }
 
-void ThreadPoolPrivate::enqueueTask(const Task::SharedPtr &task, Priority priority)
+void ThreadPoolPrivate::enqueue_task(const Task::SharedPtr &task, Priority priority)
 {
     CXXKIT_ASSERT(nullptr != task);
     mTaskQueue.push(task, priority);
 }
 
-void ThreadPoolPrivate::startThread(const Task::SharedPtr &task)
+void ThreadPoolPrivate::start_thread(const Task::SharedPtr &task)
 {
     CXXKIT_ASSERT(nullptr != task.get());
     ThreadPoolTaskThread::SharedPtr thread(new ThreadPoolTaskThread(this));
@@ -371,23 +371,23 @@ void ThreadPoolPrivate::startThread(const Task::SharedPtr &task)
     mAllThreads.insert(std::make_pair(thread.get(), thread));
     thread->init(("Thread (pooled)"), thread);
     ++mActiveThreadCount;
-    thread->setTask(task);
+    thread->set_task(task);
     thread->start();
 }
 
-bool ThreadPoolPrivate::tryStart(const Task::SharedPtr &task)
+bool ThreadPoolPrivate::try_start(const Task::SharedPtr &task)
 {
     CXXKIT_ASSERT(task != nullptr);
 
     if (mAllThreads.empty())
     {
         // always create at least one thread
-        this->startThread(task);
+        this->start_thread(task);
         return true;
     }
 
     // can't do anything if we're over the limit
-    if (this->activeThreadCount() >= mMaxThreadCount)
+    if (this->active_thread_count() >= mMaxThreadCount)
     {
         return false;
     }
@@ -395,7 +395,7 @@ bool ThreadPoolPrivate::tryStart(const Task::SharedPtr &task)
     if (mWaitingThreads.size() > 0)
     {
         // recycle an available thread
-        this->enqueueTask(task, Priority::kHighest);
+        this->enqueue_task(task, Priority::kHighest);
         auto thread = mWaitingThreads.front();
         CXXKIT_ASSERT(!thread->task().get());
         mWaitingThreads.pop_front();
@@ -410,17 +410,17 @@ bool ThreadPoolPrivate::tryStart(const Task::SharedPtr &task)
         CXXKIT_ASSERT(!thread->task().get());
         mExpiredThreads.pop_front();
         ++mActiveThreadCount;
-        thread->setTask(task);
+        thread->set_task(task);
         thread->start();
         return true;
     }
 
     // start a new thread
-    this->startThread(task);
+    this->start_thread(task);
     return true;
 }
 
-void ThreadPoolPrivate::tryToStartMoreThreads()
+void ThreadPoolPrivate::try_to_start_more_threads()
 {
     // try to push tasks on the queue to any available threads
     while (!mTaskQueue.empty())
@@ -428,7 +428,7 @@ void ThreadPoolPrivate::tryToStartMoreThreads()
         auto task = mTaskQueue.first();
         if (task.get())
         {
-            if (!this->tryStart(task))
+            if (!this->try_start(task))
             {
                 break;
             }
@@ -437,18 +437,18 @@ void ThreadPoolPrivate::tryToStartMoreThreads()
     }
 }
 
-bool ThreadPoolPrivate::isTooManyThreadsActive() const
+bool ThreadPoolPrivate::is_too_many_threads_active() const
 {
-    const int activeThreadCount = this->activeThreadCount();
-    return activeThreadCount > mMaxThreadCount && (activeThreadCount - mReservedThreadCount) > 1;
+    const int active_thread_count = this->active_thread_count();
+    return active_thread_count > mMaxThreadCount && (active_thread_count - mReservedThreadCount) > 1;
 }
 
-int ThreadPoolPrivate::activeThreadCount() const
+int ThreadPoolPrivate::active_thread_count() const
 {
     return mAllThreads.size() - mExpiredThreads.size() - mWaitingThreads.size() + mReservedThreadCount;
 }
 
-bool ThreadPoolPrivate::isDone() const
+bool ThreadPoolPrivate::is_done() const
 {
     return mTaskQueue.empty() && 0 == mActiveThreadCount;
 }
@@ -462,14 +462,14 @@ void ThreadPoolPrivate::reset()
     for (auto &item : allThreads)
     {
         auto thread = item.second;
-        if (!thread->isFinished())
+        if (!thread->is_finished())
         {
             CXXKIT_LOGGING_TRACE(CXXKIT_THREAD_POOL_LOGGER(),
-                                 "thread {} is not finished, wake and exitWait",
+                                 "thread {} is not finished, wake and exit_wait",
                                  utils::fmt::ptr(thread.get()));
-            thread->wakeAll();
-            thread->exitWait();
-            CXXKIT_LOGGING_TRACE(CXXKIT_THREAD_POOL_LOGGER(), "thread {} exitWait done", utils::fmt::ptr(thread.get()));
+            thread->wake_all();
+            thread->exit_wait();
+            CXXKIT_LOGGING_TRACE(CXXKIT_THREAD_POOL_LOGGER(), "thread {} exit_wait done", utils::fmt::ptr(thread.get()));
         }
     }
     mMutex.lock();
@@ -488,10 +488,10 @@ ThreadPool::ThreadPool(ThreadPoolPrivate *d)
 
 ThreadPool::~ThreadPool()
 {
-    this->waitForDone();
+    this->wait_for_done();
 }
 
-ThreadPool *ThreadPool::defaultInstance()
+ThreadPool *ThreadPool::default_instance()
 {
     static std::once_flag once;
     static ThreadPool *instance;
@@ -507,7 +507,7 @@ void ThreadPool::start(std::function<void()> function, Priority priority)
     }
 }
 
-bool ThreadPool::tryStartNow(std::function<void()> function)
+bool ThreadPool::try_start_now(std::function<void()> function)
 {
     if (!function)
     {
@@ -516,13 +516,13 @@ bool ThreadPool::tryStartNow(std::function<void()> function)
 
     CXXKIT_D(ThreadPool);
     std::unique_lock<std::mutex> lock(d->mMutex);
-    if (!d->mAllThreads.empty() && d->activeThreadCount() >= d->mMaxThreadCount)
+    if (!d->mAllThreads.empty() && d->active_thread_count() >= d->mMaxThreadCount)
     {
         return false;
     }
 
     auto task = Task::create(std::move(function));
-    if (!d->tryStart(task))
+    if (!d->try_start(task))
     {
         return false;
     }
@@ -536,25 +536,25 @@ void ThreadPool::start(const Task::SharedPtr &task, Priority priority)
     {
         CXXKIT_D(ThreadPool);
         std::unique_lock<std::mutex> lock(d->mMutex);
-        if (!d->tryStart(task))
+        if (!d->try_start(task))
         {
             if (!d->mWaitingThreads.empty())
             {
                 auto thread = d->mWaitingThreads.front();
                 CXXKIT_ASSERT(!thread->task().get());
                 d->mWaitingThreads.pop_front();
-                thread->setTask(task);
+                thread->set_task(task);
                 thread->wake();
             }
             else
             {
-                d->enqueueTask(task, priority);
+                d->enqueue_task(task, priority);
             }
         }
     }
 }
 
-bool ThreadPool::tryStartNow(const Task::SharedPtr &task)
+bool ThreadPool::try_start_now(const Task::SharedPtr &task)
 {
     if (!task)
     {
@@ -563,12 +563,12 @@ bool ThreadPool::tryStartNow(const Task::SharedPtr &task)
 
     CXXKIT_D(ThreadPool);
     std::unique_lock<std::mutex> lock(d->mMutex);
-    if (!d->mAllThreads.empty() && d->activeThreadCount() >= d->mMaxThreadCount)
+    if (!d->mAllThreads.empty() && d->active_thread_count() >= d->mMaxThreadCount)
     {
         return false;
     }
 
-    if (!d->tryStart(task))
+    if (!d->try_start(task))
     {
         return false;
     }
@@ -576,32 +576,32 @@ bool ThreadPool::tryStartNow(const Task::SharedPtr &task)
     return true;
 }
 
-int ThreadPool::maxThreadCount() const
+int ThreadPool::max_thread_count() const
 {
     CXXKIT_D(const ThreadPool);
     std::lock_guard<std::mutex> lock(d->mMutex);
     return d->mMaxThreadCount;
 }
 
-void ThreadPool::setMaxThreadCount(int count)
+void ThreadPool::set_max_thread_count(int count)
 {
     CXXKIT_D(ThreadPool);
     std::lock_guard<std::mutex> lock(d->mMutex);
     if (count != d->mMaxThreadCount)
     {
         d->mMaxThreadCount = count;
-        d->tryToStartMoreThreads();
+        d->try_to_start_more_threads();
     }
 }
 
-int ThreadPool::expiryTimeout() const
+int ThreadPool::expiry_timeout() const
 {
     CXXKIT_D(const ThreadPool);
     std::lock_guard<std::mutex> lock(d->mMutex);
     return d->mExpiryTimeout;
 }
 
-void ThreadPool::setExpiryTimeout(int msecs)
+void ThreadPool::set_expiry_timeout(int msecs)
 {
     CXXKIT_D(ThreadPool);
     std::lock_guard<std::mutex> lock(d->mMutex);
@@ -611,34 +611,34 @@ void ThreadPool::setExpiryTimeout(int msecs)
     }
 }
 
-bool ThreadPool::waitForDone(unsigned int msecs)
+bool ThreadPool::wait_for_done(unsigned int msecs)
 {
     CXXKIT_D(ThreadPool);
     auto deadline = std::chrono::steady_clock::now() + std::chrono::milliseconds(msecs);
     std::unique_lock<std::mutex> lock(d->mMutex);
     do
     {
-        CXXKIT_LOGGING_TRACE(CXXKIT_THREAD_POOL_LOGGER(), "waitForDone() do");
+        CXXKIT_LOGGING_TRACE(CXXKIT_THREAD_POOL_LOGGER(), "wait_for_done() do");
         if (kWaitForeverMSecs == msecs)
         {
-            CXXKIT_LOGGING_TRACE(CXXKIT_THREAD_POOL_LOGGER(), "waitForDone() do wait forever");
-            d->mNoActiveThreadsCondition.wait(lock, [d]() { return d->isDone(); });
+            CXXKIT_LOGGING_TRACE(CXXKIT_THREAD_POOL_LOGGER(), "wait_for_done() do wait forever");
+            d->mNoActiveThreadsCondition.wait(lock, [d]() { return d->is_done(); });
         }
         else
         {
-            CXXKIT_LOGGING_TRACE(CXXKIT_THREAD_POOL_LOGGER(), "waitForDone() do wait {} ms", msecs);
+            CXXKIT_LOGGING_TRACE(CXXKIT_THREAD_POOL_LOGGER(), "wait_for_done() do wait {} ms", msecs);
             d->mNoActiveThreadsCondition.wait_until(lock, deadline);
-            if (!d->isDone())
+            if (!d->is_done())
             {
-                CXXKIT_LOGGING_TRACE(CXXKIT_THREAD_POOL_LOGGER(), "waitForDone() do !isDone return false");
+                CXXKIT_LOGGING_TRACE(CXXKIT_THREAD_POOL_LOGGER(), "wait_for_done() do !is_done return false");
                 return false;
             }
         }
         d->reset();
         // More threads can be started during reset(), in that case continue waiting if we still have time left.
-    } while (!d->isDone() && std::chrono::steady_clock::now() < deadline);
-    CXXKIT_LOGGING_TRACE(CXXKIT_THREAD_POOL_LOGGER(), "waitForDone() do finish:{}", d->isDone());
-    return d->isDone();
+    } while (!d->is_done() && std::chrono::steady_clock::now() < deadline);
+    CXXKIT_LOGGING_TRACE(CXXKIT_THREAD_POOL_LOGGER(), "wait_for_done() do finish:{}", d->is_done());
+    return d->is_done();
 }
 
 bool ThreadPool::cancel(Task *task)
@@ -659,47 +659,47 @@ void ThreadPool::clear()
     d->mTaskQueue.clear();
 }
 
-void ThreadPool::reserveThread()
+void ThreadPool::reserve_thread()
 {
     CXXKIT_D(ThreadPool);
     std::lock_guard<std::mutex> lock(d->mMutex);
     ++d->mReservedThreadCount;
 }
 
-void ThreadPool::releaseThread()
+void ThreadPool::release_thread()
 {
     CXXKIT_D(ThreadPool);
     std::lock_guard<std::mutex> lock(d->mMutex);
     --d->mReservedThreadCount;
-    d->tryToStartMoreThreads();
+    d->try_to_start_more_threads();
 }
 
-int ThreadPool::activeThreadCount() const
+int ThreadPool::active_thread_count() const
 {
     CXXKIT_D(const ThreadPool);
     std::lock_guard<std::mutex> lock(d->mMutex);
-    return d->activeThreadCount();
+    return d->active_thread_count();
 }
 
-uint64_t ThreadPool::taskCount() const
+uint64_t ThreadPool::task_count() const
 {
     CXXKIT_D(const ThreadPool);
     std::lock_guard<std::mutex> lock(d->mMutex);
     return d->mTaskQueue.size();
 }
-uint64_t ThreadPool::tasksCompletedCount() const
+uint64_t ThreadPool::tasks_completed_count() const
 {
     CXXKIT_D(const ThreadPool);
     return d->mTasksCompletedCount.load();
 }
 
-uint64_t ThreadPool::tasksDispatchedCount() const
+uint64_t ThreadPool::tasks_dispatched_count() const
 {
     CXXKIT_D(const ThreadPool);
     return d->mTasksDispatchedCount.load();
 }
 
-int ThreadPool::idealThreadCount()
+int ThreadPool::ideal_thread_count()
 {
     return std::thread::hardware_concurrency();
 }

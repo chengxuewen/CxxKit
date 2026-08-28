@@ -53,16 +53,16 @@ public:
     explicit EventLoop(Object *parent = nullptr);
     ~EventLoop() override;
 
-    bool processEvents(ProcessFlags flags = ProcessFlag::kAllEvents);
-    void processEvents(ProcessFlags flags, int maximumTime);
+    bool process_events(ProcessFlags flags = ProcessFlag::kAllEvents);
+    void process_events(ProcessFlags flags, int maximumTime);
 
     int exec(ProcessFlags flags = ProcessFlag::kAllEvents);
-    void wakeUp();
+    void wake_up();
 
     void exit(int retCode = 0);
     void quit();
 
-    bool isRunning() const;
+    bool is_running() const;
 
     bool event(Event *event) override;
 

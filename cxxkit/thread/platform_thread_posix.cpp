@@ -88,14 +88,14 @@ namespace tls
 static thread_local PlatformThreadData *currentThreadData = nullptr;
 static pthread_once_t currentThreadDataOnce = PTHREAD_ONCE_INIT;
 static pthread_key_t currentThreadDataKey;
-static void destroyCurrentThreadData(void *p)
+static void destroy_current_thread_data(void *p)
 {
     auto data = static_cast<PlatformThreadData *>(p);
     // thread_local variables are set to zero before calling this destructor function,
     // if they are internally using pthread-specific data management,
     // so we need to set it back to the right value...
     currentThreadData = data;
-    if (data->isAdopted)
+    if (data->is_adopted)
     {
         auto thread = data->thread.load();
         CXXKIT_ASSERT(thread);
@@ -108,14 +108,14 @@ static void destroyCurrentThreadData(void *p)
     // ... but we must reset it to zero before returning so we aren't leaving a dangling pointer.
     currentThreadData = nullptr;
 }
-static void createCurrentThreadDataKey()
+static void create_current_thread_data_key()
 {
     // create key
-    pthread_key_create(&currentThreadDataKey, destroyCurrentThreadData);
+    pthread_key_create(&currentThreadDataKey, destroy_current_thread_data);
 }
-static void destroyCurrentThreadDataKey()
+static void destroy_current_thread_data_key()
 {
-    pthread_once(&currentThreadDataOnce, createCurrentThreadDataKey);
+    pthread_once(&currentThreadDataOnce, create_current_thread_data_key);
     pthread_key_delete(currentThreadDataKey);
 
     // Reset currentThreadDataOnce in case we end up recreating the thread-data in the rare case of
@@ -123,21 +123,21 @@ static void destroyCurrentThreadDataKey()
     pthread_once_t pthreadOnceInit = PTHREAD_ONCE_INIT;
     currentThreadDataOnce = pthreadOnceInit;
 }
-CXXKIT_DESTRUCTOR_FUNCTION(destroyCurrentThreadDataKey)
+CXXKIT_DESTRUCTOR_FUNCTION(destroy_current_thread_data_key)
 } // namespace tls
 // Utility functions for getting, setting and clearing thread specific data.
-static PlatformThreadData *getThreadData()
+static PlatformThreadData *get_thread_data()
 {
-    // CXXKIT_DEBUG("getThreadData():%p", tls::currentThreadData);
+    // CXXKIT_DEBUG("get_thread_data():%p", tls::currentThreadData);
     return tls::currentThreadData;
 }
-static void setThreadData(PlatformThreadData *data)
+static void set_thread_data(PlatformThreadData *data)
 {
     tls::currentThreadData = data;
-    pthread_once(&tls::currentThreadDataOnce, tls::createCurrentThreadDataKey);
+    pthread_once(&tls::currentThreadDataOnce, tls::create_current_thread_data_key);
     pthread_setspecific(tls::currentThreadDataKey, data);
 }
-static void clearThreadData()
+static void clear_thread_data()
 {
     tls::currentThreadData = nullptr;
     pthread_setspecific(tls::currentThreadDataKey, nullptr);
@@ -148,7 +148,7 @@ namespace thread
 {
 #    if CXXKIT_HAS_THREAD_PRIORITY_SCHEDULING
 #        if defined(CXXKIT_OS_QNX)
-static bool calculatePriority(PlatformThread::Priority priority, int *sched_policy, int *sched_priority)
+static bool calculate_priority(PlatformThread::Priority priority, int *sched_policy, int *sched_priority)
 {
     // On QNX, NormalPriority is mapped to 10.  A QNX system could use a value different
     // than 10 for the "normal" priority but it's difficult to achieve this so we'll
@@ -200,7 +200,7 @@ static bool calculatePriority(PlatformThread::Priority priority, int *sched_poli
     }
 
     prio = ((priority - from_min) * (to_max - to_min)) / (from_max - from_min) + to_min;
-    prio = qBound(to_min, prio, to_max);
+    prio = q_bound(to_min, prio, to_max);
 
     *sched_priority = prio;
     return true;
@@ -208,7 +208,7 @@ static bool calculatePriority(PlatformThread::Priority priority, int *sched_poli
 #        else
 // Does some magic and calculate the Unix scheduler priorities sched_policy is IN/OUT:
 // it must be set to a valid policy before calling this function sched_priority is OUT only
-static bool calculatePriority(PlatformThread::Priority priority, int *sched_policy, int *sched_priority)
+static bool calculate_priority(PlatformThread::Priority priority, int *sched_policy, int *sched_priority)
 {
 #            ifdef SCHED_IDLE
     if (priority == PlatformThread::Priority::kIdle)
@@ -253,7 +253,7 @@ static bool calculatePriority(PlatformThread::Priority priority, int *sched_poli
 #        endif     // defined(CXXKIT_OS_QNX)
 #    endif         // CXXKIT_HAS_THREAD_PRIORITY_SCHEDULING
 #    if (defined(CXXKIT_OS_LINUX) || defined(CXXKIT_OS_MAC) || defined(CXXKIT_OS_QNX))
-static void setCurrentName(const char *name)
+static void set_current_name(const char *name)
 {
 #        if defined(CXXKIT_OS_LINUX) && !defined(CXXKIT_LINUXBASE)
     prctl(PR_SET_NAME, (unsigned long)name, 0, 0, 0);
@@ -276,7 +276,7 @@ static void finish(void *arg)
         threadPrivate->mPriority = PlatformThread::Priority::kInherit;
         void *data = &threadPrivate->mData->tls;
         lock.unlock();
-        threadPrivate->onFinished();
+        threadPrivate->on_finished();
         // Application::sendPostedEvents(nullptr, Event::DeferredDelete);
         // ThreadStorageData::finish((void **)data);
         lock.lock();
@@ -295,7 +295,7 @@ static void finish(void *arg)
         threadPrivate->mFinished = true;
         threadPrivate->mInterruptionRequested = false;
 
-        threadData->threadId.store(0);
+        threadData->thread_id.store(0);
         threadPrivate->mThreadHandle = 0;
 
         threadPrivate->mInFinish = false;
@@ -335,12 +335,12 @@ static void *start(void *arg)
             // do we need to reset the thread priority?
             if (int(threadPrivate->mPriority) & kThreadPriorityResetFlag)
             {
-                threadPrivate->setPriority(
+                threadPrivate->set_priority(
                     PlatformThread::Priority((int)threadPrivate->mPriority & ~kThreadPriorityResetFlag));
             }
-            threadData->threadId.store(PlatformThread::currentThreadId());
+            threadData->thread_id.store(PlatformThread::current_thread_id());
             threadPrivate->mThreadHandle = pthread_self();
-            setThreadData(threadData);
+            set_thread_data(threadData);
 
             threadData->ref();
         }
@@ -353,12 +353,12 @@ static void *start(void *arg)
             // have a cross platform way of setting the name of an arbitrary thread.
             if (threadPrivate->mName.empty())
             {
-                //setCurrentName(threadPrivate->mName.c_str());
-                PlatformThread::setCurrentThreadName(threadPrivate->mName.c_str());
+                //set_current_name(threadPrivate->mName.c_str());
+                PlatformThread::set_current_thread_name(threadPrivate->mName.c_str());
             }
         }
 #    endif
-        threadPrivate->onStarted();
+        threadPrivate->on_started();
 #    if !defined(CXXKIT_OS_ANDROID)
         pthread_setcancelstate(PTHREAD_CANCEL_ENABLE, nullptr);
         pthread_testcancel();
@@ -391,38 +391,38 @@ static void *start(void *arg)
 
 PlatformThreadData *PlatformThreadData::current(bool createIfNecessary)
 {
-    auto *threadData = detail::getThreadData();
+    auto *threadData = detail::get_thread_data();
     if (!threadData && createIfNecessary)
     {
         threadData = new PlatformThreadData;
         CXXKIT_TRY
         {
-            detail::setThreadData(threadData);
+            detail::set_thread_data(threadData);
             threadData->thread = new AdoptedPlatformThread(threadData);
             auto threadPrivate = PlatformThreadPrivate::get(threadData->thread);
             threadPrivate->mThreadHandle = pthread_self();
         }
         CXXKIT_CATCH(...)
         {
-            detail::clearThreadData();
+            detail::clear_thread_data();
             threadData->deref();
             threadData = nullptr;
             CXXKIT_RETHROW;
         }
-        threadData->isAdopted = true;
-        threadData->threadId.store(PlatformThread::currentThreadId());
-        // if (!CoreApplicationPrivate::theMainThread.loadAcquire())
+        threadData->is_adopted = true;
+        threadData->thread_id.store(PlatformThread::current_thread_id());
+        // if (!CoreApplicationPrivate::theMainThread.load_acquire())
         // CoreApplicationPrivate::theMainThread.storeRelease(data->thread.loadRelaxed());
     }
     return threadData;
 }
 
-void PlatformThreadData::clearCurrent()
+void PlatformThreadData::clear_current()
 {
-    detail::clearThreadData();
+    detail::clear_thread_data();
 }
 
-void PlatformThreadPrivate::setPriority(Priority priority)
+void PlatformThreadPrivate::set_priority(Priority priority)
 {
     mPriority = priority;
     // copied from start() with a few modifications:
@@ -434,15 +434,15 @@ void PlatformThreadPrivate::setPriority(Priority priority)
     if (pthread_getschedparam(mThreadHandle, &sched_policy, &param) != 0)
     {
         // failed to get the scheduling policy, don't bother setting the priority
-        CXXKIT_WARNING("PlatformThread::setPriority: Cannot get scheduler parameters");
+        CXXKIT_WARNING("PlatformThread::set_priority: Cannot get scheduler parameters");
         return;
     }
 
     int prio;
-    if (!detail::thread::calculatePriority(priority, &sched_policy, &prio))
+    if (!detail::thread::calculate_priority(priority, &sched_policy, &prio))
     {
         // failed to get the scheduling parameters, don't bother setting the priority
-        CXXKIT_WARNING("PlatformThread::setPriority: Cannot determine scheduler priority range");
+        CXXKIT_WARNING("PlatformThread::set_priority: Cannot determine scheduler priority range");
         return;
     }
 
@@ -488,7 +488,7 @@ bool PlatformThreadPrivate::start(Priority priority)
                 break;
             }
             int prio;
-            if (!detail::thread::calculatePriority(priority, &sched_policy, &prio))
+            if (!detail::thread::calculate_priority(priority, &sched_policy, &prio))
             {
                 // failed to get the scheduling parameters, don't bother setting the priority
                 CXXKIT_WARNING("PlatformThread::start: Cannot determine scheduler priority range");
@@ -554,7 +554,7 @@ Status PlatformThreadPrivate::terminate()
     return Status::ok;
 }
 
-void PlatformThread::setCurrentThreadName(const StringView name)
+void PlatformThread::set_current_thread_name(const StringView name)
 {
 #    if defined(CXXKIT_OS_LINUX) || defined(CXXKIT_LINUXBASE)
     prctl(PR_SET_NAME, reinterpret_cast<unsigned long>(name.data()), 0, 0, 0);
@@ -565,7 +565,7 @@ void PlatformThread::setCurrentThreadName(const StringView name)
 #    endif
 }
 
-int PlatformThread::idealConcurrencyThreadCount() noexcept
+int PlatformThread::ideal_concurrency_thread_count() noexcept
 {
     int cores = 1;
 #    if defined(PTK_OS_MAC)
@@ -618,7 +618,7 @@ int PlatformThread::idealConcurrencyThreadCount() noexcept
 #    elif defined(PTK_OS_VXWORKS)
     // VxWorks
 #        if defined(QT_VXWORKS_HAS_CPUSET)
-    cpuset_t cpus = vxCpuEnabledGet();
+    cpuset_t cpus = vx_cpu_enabled_get();
     cores = 0;
 
     // 128 cores should be enough for everyone ;)
@@ -649,7 +649,7 @@ int PlatformThread::idealConcurrencyThreadCount() noexcept
     return cores;
 }
 
-PlatformThread::Id PlatformThread::currentThreadId() noexcept
+PlatformThread::Id PlatformThread::current_thread_id() noexcept
 {
 #    if defined(CXXKIT_OS_MAC) || defined(CXXKIT_OS_IOS)
     uint64_t tid{0};
@@ -665,11 +665,11 @@ PlatformThread::Id PlatformThread::currentThreadId() noexcept
 #    endif
 }
 
-void PlatformThread::setTerminationEnabled(bool enabled)
+void PlatformThread::set_termination_enabled(bool enabled)
 {
-    auto thread = PlatformThread::currentThread();
+    auto thread = PlatformThread::current_thread();
     CXXKIT_ASSERT_X(thread != nullptr,
-                    "PlatformThread::setTerminationEnabled()",
+                    "PlatformThread::set_termination_enabled()",
                     "Current thread was not started with PlatformThread.");
     CXXKIT_UNUSED(thread)
 

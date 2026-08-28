@@ -44,7 +44,7 @@ public:
     using Error::Domain::Domain;
     TestDomain() = default;
 
-    StringView codeString(ErrorId code) const override
+    StringView code_string(ErrorId code) const override
     {
         switch (code)
         {
@@ -68,7 +68,7 @@ public:
     using Error::Domain::Domain;
     AnotherDomain() = default;
 
-    StringView codeString(ErrorId code) const override
+    StringView code_string(ErrorId code) const override
     {
         switch (code)
         {
@@ -98,16 +98,16 @@ TEST(ErrorTest, CreateWithDefaultDomain)
     EXPECT_TRUE(domain.id() == Error::kInvalidId);
 
     const auto errorShare = error;
-    EXPECT_EQ(error->refCount(), 2);
-    EXPECT_EQ(errorShare->refCount(), 2);
+    EXPECT_EQ(error->ref_count(), 2);
+    EXPECT_EQ(errorShare->ref_count(), 2);
 
     EXPECT_EQ(error->message(), "Default domain Test");
     EXPECT_EQ(error->code(), Error::kInvalidId);
 
-    EXPECT_EQ(error->refCount(), 2);
-    EXPECT_EQ(errorShare->refCount(), 2);
+    EXPECT_EQ(error->ref_count(), 2);
+    EXPECT_EQ(errorShare->ref_count(), 2);
     auto errorCopy = error;
-    EXPECT_EQ(errorCopy->refCount(), 1);
+    EXPECT_EQ(errorCopy->ref_count(), 1);
 }
 
 TEST(ErrorTest, CreateWithEmptyMessage)
@@ -133,7 +133,7 @@ TEST(ErrorTest, ToString)
     auto domain = testDomain();
     auto error = Error::create(domain, TestDomain::kTestError1, "Something went wrong");
 
-    std::string string = error->toString();
+    std::string string = error->to_string();
     EXPECT_FALSE(string.empty());
     EXPECT_NE(string.find(domain.type().data()), std::string::npos) << string << ", " << domain.type().data();
     EXPECT_NE(string.find("100"), std::string::npos);
@@ -146,7 +146,7 @@ TEST(ErrorTest, ToStringWithCause)
     auto cause = Error::create(domain, TestDomain::kTestError1, "Root cause");
     auto error = Error::create(domain, TestDomain::kTestError2, "Wrapper", cause);
 
-    std::string string = error->toString();
+    std::string string = error->to_string();
     EXPECT_NE(string.find("Wrapper"), std::string::npos);
     EXPECT_NE(string.find("Root cause"), std::string::npos);
     EXPECT_NE(string.find("Caused by"), std::string::npos);
@@ -171,7 +171,7 @@ TEST(ErrorTest, DomainBasicOperations)
     auto domain = testDomain();
 
     // Test basic domain information
-    EXPECT_TRUE(domain.isValid());
+    EXPECT_TRUE(domain.is_valid());
     EXPECT_NE(domain.id(), Error::kInvalidId);
     EXPECT_EQ(domain.type(), "TestDomain");
     EXPECT_EQ(domain.name(), "testDomain");
@@ -188,16 +188,16 @@ TEST(ErrorTest, DomainBasicOperations)
 
 TEST(ErrorTest, InvalidDomain)
 {
-    Error::Domain invalidDomain;
-    EXPECT_FALSE(invalidDomain.isValid());
-    EXPECT_EQ(invalidDomain.id(), Error::kInvalidId);
-    EXPECT_EQ(invalidDomain.type(), "");
-    EXPECT_EQ(invalidDomain.name(), "");
-    EXPECT_EQ(invalidDomain.description(), "");
+    Error::Domain invalid_domain;
+    EXPECT_FALSE(invalid_domain.is_valid());
+    EXPECT_EQ(invalid_domain.id(), Error::kInvalidId);
+    EXPECT_EQ(invalid_domain.type(), "");
+    EXPECT_EQ(invalid_domain.name(), "");
+    EXPECT_EQ(invalid_domain.description(), "");
 
     // Test creating an error with an invalid domain
-    auto error = Error::create(invalidDomain, 123, "Test");
-    EXPECT_FALSE(error->domain().isValid()); // Should use default domain
+    auto error = Error::create(invalid_domain, 123, "Test");
+    EXPECT_FALSE(error->domain().is_valid()); // Should use default domain
 }
 
 TEST(ErrorTest, CopyAndMoveSemantics)
@@ -212,7 +212,7 @@ TEST(ErrorTest, CopyAndMoveSemantics)
     EXPECT_EQ(copied->message(), original->message());
     EXPECT_EQ(&copied->domain(), &original->domain());
     EXPECT_EQ(copied->cause(), original->cause());
-    EXPECT_EQ(copied->refCount(), 2); // Should share reference count
+    EXPECT_EQ(copied->ref_count(), 2); // Should share reference count
 
     // Test Error move semantics
     auto moved = std::move(original);
@@ -249,8 +249,8 @@ TEST(ErrorTest, DomainCopyAndMoveSemantics)
 TEST(ErrorTest, DomainRegistry)
 {
     // Test domain registration (indirectly tested via CXXKIT_DEFINE_ERROR_DOMAIN macro)
-    EXPECT_TRUE(testDomain().isValid());
-    EXPECT_TRUE(anotherDomain().isValid());
+    EXPECT_TRUE(testDomain().is_valid());
+    EXPECT_TRUE(anotherDomain().is_valid());
     EXPECT_NE(testDomain().id(), anotherDomain().id());
 
     // Test domain type uniqueness
@@ -263,7 +263,7 @@ TEST(ErrorTest, DomainRegistry)
 TEST(ErrorTest, DomainRegistryConflictHandling)
 {
     // Attempt to register a domain with the same type as an existing one (should fail)
-    // Note: This requires access to Registry::registerDomain, which may require adjusting access permissions
+    // Note: This requires access to Registry::register_domain, which may require adjusting access permissions
     // Or testing conflict handling logic through other means
 }
 
@@ -283,7 +283,7 @@ TEST(ErrorTest, ErrorChainMaxDepth)
     EXPECT_EQ(current->depth(), static_cast<size_t>(kMaxDepth + 1));
 
     // Check if string representation is truncated
-    std::string errorStr = current->toString();
+    std::string errorStr = current->to_string();
     EXPECT_TRUE(errorStr.find("error chain too deep") != std::string::npos);
 }
 
@@ -295,7 +295,7 @@ TEST(ErrorTest, MultipleDomains)
 
     EXPECT_NE(&error1->domain(), &error2->domain());
     EXPECT_NE(error1->code(), error2->code());
-    EXPECT_NE(error1->toString(), error2->toString());
+    EXPECT_NE(error1->to_string(), error2->to_string());
 }
 
 CXXKIT_END_NAMESPACE

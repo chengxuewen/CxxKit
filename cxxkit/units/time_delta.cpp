@@ -31,7 +31,7 @@ CXXKIT_BEGIN_NAMESPACE
 
 namespace utils
 {
-std::string toString(TimeDelta value)
+std::string to_string(TimeDelta value)
 {
     std::stringstream ss;
     if (value.IsPlusInfinity())

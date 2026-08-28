@@ -116,12 +116,12 @@ TEST(CrashHandler, InstallGuard)
 
     const std::string dir = makeTempDir();
     ASSERT_FALSE(dir.empty());
-    ASSERT_TRUE(handler.setDumpPath(dir.c_str()));
+    ASSERT_TRUE(handler.set_dump_path(dir.c_str()));
     ASSERT_TRUE(handler.install());
-    EXPECT_TRUE(handler.isHandlerInstalled());
+    EXPECT_TRUE(handler.is_handler_installed());
     EXPECT_FALSE(handler.install()); // mutual exclusion contract: second install refused
     handler.uninstall();
-    EXPECT_FALSE(handler.isHandlerInstalled());
+    EXPECT_FALSE(handler.is_handler_installed());
     ::rmdir(dir.c_str());
 }
 
@@ -132,14 +132,14 @@ TEST(CrashHandler, ManualMinidump)
 
     const std::string dir = makeTempDir();
     ASSERT_FALSE(dir.empty());
-    ASSERT_TRUE(handler.setDumpPath(dir.c_str()));
+    ASSERT_TRUE(handler.set_dump_path(dir.c_str()));
     ASSERT_TRUE(handler.install());
-    EXPECT_TRUE(handler.writeMinidump());
+    EXPECT_TRUE(handler.write_minidump());
 
-    const std::vector<std::string> dumps = handler.dumpFileList();
+    const std::vector<std::string> dumps = handler.dump_file_list();
     EXPECT_FALSE(dumps.empty());
-    handler.clearDumps();
-    EXPECT_TRUE(handler.dumpFileList().empty());
+    handler.clear_dumps();
+    EXPECT_TRUE(handler.dump_file_list().empty());
     handler.uninstall();
     ::rmdir(dir.c_str());
 }

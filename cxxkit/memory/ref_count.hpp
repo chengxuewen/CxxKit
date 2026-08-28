@@ -31,17 +31,17 @@
 CXXKIT_BEGIN_NAMESPACE
 // Refcounted objects should implement the following informal interface:
 //
-// void addRef() const ;
+// void add_ref() const ;
 // RefCountReleaseStatus Release() const;
 //
-// You may access members of a reference-counted object, including the addRef()
+// You may access members of a reference-counted object, including the add_ref()
 // and Release() methods, only if you already own a reference to it, or if
 // you're borrowing someone else's reference. (A newly created object is a
 // special case: the reference count is zero on construction, and the code that
-// creates the object should immediately call addRef(), bringing the reference
+// creates the object should immediately call add_ref(), bringing the reference
 // count from zero to one, e.g., by constructing an SharedRefPtr).
 //
-// addRef() creates a new reference to the object.
+// add_ref() creates a new reference to the object.
 //
 // Release() releases a reference to the object; the caller now has one less
 // reference than before the call. Returns kDroppedLastRef if the number of
@@ -57,7 +57,7 @@ CXXKIT_BEGIN_NAMESPACE
 // users of the object, but the object can go away at any time, e.g., as the
 // result of another thread calling Release().
 //
-// Calling addRef() and Release() manually is discouraged. It's recommended to
+// Calling add_ref() and Release() manually is discouraged. It's recommended to
 // use SharedRefPtr to manage all pointers to reference counted objects.
 // Note that SharedRefPtr depends on compile-time duck-typing; formally
 // implementing the below RefCountInterface is not required.
@@ -75,7 +75,7 @@ enum class RefCountReleaseStatus
 class RefCountInterface
 {
 public:
-    virtual void addRef() const = 0;
+    virtual void add_ref() const = 0;
     virtual RefCountReleaseStatus Release() const = 0;
 
     // Non-public destructor, because Release() has exclusive responsibility for
@@ -95,7 +95,7 @@ public:
     }
     RefCounter() = delete;
 
-    void incRef()
+    void inc_ref()
     {
         // Relaxed memory order: The current thread is allowed to act on the
         // resource protected by the reference counter both before and after the
@@ -152,7 +152,7 @@ public:
     RefCountedBase(const RefCountedBase &) = delete;
     RefCountedBase &operator=(const RefCountedBase &) = delete;
 
-    void addRef() const { mRefCount.incRef(); }
+    void add_ref() const { mRefCount.inc_ref(); }
     RefCountReleaseStatus Release() const
     {
         const auto status = mRefCount.DecRef();
@@ -196,7 +196,7 @@ public:
     RefCountedNonVirtual(const RefCountedNonVirtual &) = delete;
     RefCountedNonVirtual &operator=(const RefCountedNonVirtual &) = delete;
 
-    void addRef() const { mRefCount.incRef(); }
+    void add_ref() const { mRefCount.inc_ref(); }
     RefCountReleaseStatus Release() const
     {
         // If you run into this assert, T has virtual methods. There are two

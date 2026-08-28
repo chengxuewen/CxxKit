@@ -209,13 +209,13 @@ public:
      * @brief Checks if the operation was successful.
      * @return true if successful, false otherwise.
      */
-    bool isOk() const { return !mError.data(); }
+    bool is_ok() const { return !mError.data(); }
 
     /**
      * @brief Converts to bool type. Returns true if the operation was successful.
      * @return true if successful, false otherwise.
      */
-    operator bool() const { return isOk(); }
+    operator bool() const { return is_ok(); }
 
     /**
      * @brief Gets shared pointer to the stored error object if the operation failed.
@@ -227,19 +227,19 @@ public:
      * @brief Gets the error code directly.
      * @return The error code, or Error::kInvalidId if successful.
      */
-    ErrorId errorCode() const { return mError.data() ? mError.data()->code() : Error::kInvalidId; }
+    ErrorId error_code() const { return mError.data() ? mError.data()->code() : Error::kInvalidId; }
 
     /**
      * @brief Gets the error message directly.
      * @return The error message, or an empty string if successful.
      */
-    std::string errorMessage() const { return mError.data() ? mError.data()->message() : ""; }
+    std::string error_message() const { return mError.data() ? mError.data()->message() : ""; }
 
     /**
      * @brief Gets the full error string including domain, code, and message.
      * @return The formatted error string, or an empty string if successful.
      */
-    std::string errorString() const { return mError.data() ? mError.data()->toString() : ""; }
+    std::string error_string() const { return mError.data() ? mError.data()->to_string() : ""; }
 
 private:
     Error::SharedDataPtr mError{nullptr}; ///< The error object, nullptr if successful.
@@ -253,13 +253,13 @@ private:
  */
 inline std::ostream &operator<<(std::ostream &os, const Status &status)
 {
-    if (status.isOk())
+    if (status.is_ok())
     {
         os << "OK";
     }
     else
     {
-        os << status.errorString();
+        os << status.error_string();
     }
     return os;
 }

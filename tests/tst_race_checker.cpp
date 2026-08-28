@@ -36,7 +36,7 @@ TEST(RaceChecker, SingleScopeNoDetection)
     RaceChecker checker;
     {
         RaceChecker::Scope scope(&checker);
-        EXPECT_FALSE(scope.isDetected());
+        EXPECT_FALSE(scope.is_detected());
     }
 }
 
@@ -44,14 +44,14 @@ TEST(RaceChecker, NestedScopeDetectsReentry)
 {
     RaceChecker checker;
     RaceChecker::Scope outer(&checker);
-    EXPECT_FALSE(outer.isDetected());
+    EXPECT_FALSE(outer.is_detected());
     {
         // Second Scope on the same checker before the first is destroyed = reentrant use.
         RaceChecker::Scope inner(&checker);
         // The inner scope may flag (implementation uses a count); either way it must not crash.
-        (void)inner.isDetected();
+        (void)inner.is_detected();
     }
-    (void)outer.isDetected();
+    (void)outer.is_detected();
 }
 
 TEST(RaceChecker, CrossThreadScopeDetects)
@@ -61,9 +61,9 @@ TEST(RaceChecker, CrossThreadScopeDetects)
     bool otherDetected = false;
     std::thread t([&otherDetected, &checker]() {
         RaceChecker::Scope other(&checker); // concurrent access from another thread while held
-        otherDetected = other.isDetected();
+        otherDetected = other.is_detected();
     });
     t.join();
-    (void)mainScope.isDetected();
+    (void)mainScope.is_detected();
     EXPECT_NO_THROW((void)otherDetected);
 }

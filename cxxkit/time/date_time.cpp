@@ -44,67 +44,67 @@ ClockInterface *ClockInterface::GetClockForTesting()
     return g_clock;
 }
 
-int64_t DateTime::systemTimeSecs()
+int64_t DateTime::system_time_secs()
 {
     const auto now = std::chrono::system_clock::now();
     return std::chrono::duration_cast<std::chrono::seconds>(now.time_since_epoch()).count();
 }
 
-int64_t DateTime::systemTimeMSecs()
+int64_t DateTime::system_time_m_secs()
 {
     const auto now = std::chrono::system_clock::now();
     return std::chrono::duration_cast<std::chrono::milliseconds>(now.time_since_epoch()).count();
 }
 
-int64_t DateTime::systemTimeUSecs()
+int64_t DateTime::system_time_u_secs()
 {
     const auto now = std::chrono::system_clock::now();
     return std::chrono::duration_cast<std::chrono::microseconds>(now.time_since_epoch()).count();
 }
 
-int64_t DateTime::systemTimeNSecs()
+int64_t DateTime::system_time_n_secs()
 {
     const auto now = std::chrono::system_clock::now();
     return std::chrono::duration_cast<std::chrono::nanoseconds>(now.time_since_epoch()).count();
 }
 
-int64_t DateTime::systemTimeFromSteadyNSecs(int64_t nsecs)
+int64_t DateTime::system_time_from_steady_n_secs(int64_t nsecs)
 {
     std::chrono::nanoseconds nanoseconds(nsecs);
-    std::chrono::steady_clock::time_point timePoint(nanoseconds);
+    std::chrono::steady_clock::time_point time_point(nanoseconds);
 
     auto steadyNow = std::chrono::steady_clock::now();
-    auto offset = std::chrono::duration_cast<std::chrono::system_clock::duration>(timePoint - steadyNow);
+    auto offset = std::chrono::duration_cast<std::chrono::system_clock::duration>(time_point - steadyNow);
     auto systemTimePoint = std::chrono::system_clock::now() + offset;
     return std::chrono::duration_cast<std::chrono::nanoseconds>(systemTimePoint.time_since_epoch()).count();
 }
 
-int64_t DateTime::steadyTimeSecs()
+int64_t DateTime::steady_time_secs()
 {
     const auto now = std::chrono::steady_clock::now();
     return std::chrono::duration_cast<std::chrono::seconds>(now.time_since_epoch()).count();
     ;
 }
 
-int64_t DateTime::steadyTimeMSecs()
+int64_t DateTime::steady_time_m_secs()
 {
     const auto now = std::chrono::steady_clock::now();
     return std::chrono::duration_cast<std::chrono::milliseconds>(now.time_since_epoch()).count();
 }
 
-int64_t DateTime::steadyTimeUSecs()
+int64_t DateTime::steady_time_u_secs()
 {
     const auto now = std::chrono::steady_clock::now();
     return std::chrono::duration_cast<std::chrono::microseconds>(now.time_since_epoch()).count();
 }
 
-int64_t DateTime::steadyTimeNSecs()
+int64_t DateTime::steady_time_n_secs()
 {
     const auto now = std::chrono::steady_clock::now();
     return std::chrono::duration_cast<std::chrono::nanoseconds>(now.time_since_epoch()).count();
 }
 
-int64_t DateTime::steadyTimeFromSystemNSecs(int64_t nsecs)
+int64_t DateTime::steady_time_from_system_n_secs(int64_t nsecs)
 {
     auto systemNow = std::chrono::system_clock::now();
     auto steadyNow = std::chrono::steady_clock::now();
@@ -117,12 +117,12 @@ int64_t DateTime::steadyTimeFromSystemNSecs(int64_t nsecs)
     return steadyTimePoint.time_since_epoch().count();
 }
 
-DateTime::LocalTime DateTime::localTimeFromSystemTimeSecs(int64_t secs)
+DateTime::LocalTime DateTime::local_time_from_system_time_secs(int64_t secs)
 {
-    secs = secs > 0 ? secs : systemTimeSecs();
+    secs = secs > 0 ? secs : system_time_secs();
     std::chrono::milliseconds milliseconds(secs);
-    std::chrono::system_clock::time_point timePoint(milliseconds);
-    std::time_t time = std::chrono::system_clock::to_time_t(timePoint);
+    std::chrono::system_clock::time_point time_point(milliseconds);
+    std::time_t time = std::chrono::system_clock::to_time_t(time_point);
     std::tm *localTime = std::localtime(&time);
     const int mil = int(milliseconds.count() % 1000);
     return {mil,
@@ -137,12 +137,12 @@ DateTime::LocalTime DateTime::localTimeFromSystemTimeSecs(int64_t secs)
             localTime->tm_isdst};
 }
 
-DateTime::LocalTime DateTime::localTimeFromSystemTimeMSecs(int64_t msecs)
+DateTime::LocalTime DateTime::local_time_from_system_time_m_secs(int64_t msecs)
 {
-    msecs = msecs > 0 ? msecs : systemTimeMSecs();
+    msecs = msecs > 0 ? msecs : system_time_m_secs();
     std::chrono::milliseconds milliseconds(msecs);
-    std::chrono::system_clock::time_point timePoint(milliseconds);
-    std::time_t time = std::chrono::system_clock::to_time_t(timePoint);
+    std::chrono::system_clock::time_point time_point(milliseconds);
+    std::time_t time = std::chrono::system_clock::to_time_t(time_point);
     std::tm *localTime = std::localtime(&time);
     const int mil = int(milliseconds.count() % 1000);
     return {mil,
@@ -157,24 +157,24 @@ DateTime::LocalTime DateTime::localTimeFromSystemTimeMSecs(int64_t msecs)
             localTime->tm_isdst};
 }
 
-std::string DateTime::localTimeStringFromSystemTimeSecs(int64_t secs)
+std::string DateTime::local_time_string_from_system_time_secs(int64_t secs)
 {
-    secs = secs > 0 ? secs : DateTime::systemTimeSecs();
+    secs = secs > 0 ? secs : DateTime::system_time_secs();
     std::chrono::seconds seconds(secs);
-    std::chrono::system_clock::time_point timePoint(seconds);
-    std::time_t time = std::chrono::system_clock::to_time_t(timePoint);
+    std::chrono::system_clock::time_point time_point(seconds);
+    std::time_t time = std::chrono::system_clock::to_time_t(time_point);
     std::tm *localTime = std::localtime(&time);
     std::stringstream ss;
     ss << std::put_time(localTime, "%Y-%m-%d %H:%M:%S");
     return ss.str();
 }
 
-std::string DateTime::localTimeStringFromSystemTimeMSecs(int64_t msecs)
+std::string DateTime::local_time_string_from_system_time_m_secs(int64_t msecs)
 {
-    msecs = msecs > 0 ? msecs : systemTimeMSecs();
+    msecs = msecs > 0 ? msecs : system_time_m_secs();
     std::chrono::milliseconds milliseconds(msecs);
-    std::chrono::system_clock::time_point timePoint(milliseconds);
-    std::time_t time = std::chrono::system_clock::to_time_t(timePoint);
+    std::chrono::system_clock::time_point time_point(milliseconds);
+    std::time_t time = std::chrono::system_clock::to_time_t(time_point);
     std::tm *localTime = std::localtime(&time);
     std::stringstream ss;
     ss << std::put_time(localTime, "%Y-%m-%d %H:%M:%S") << '.' << std::setfill('0') << std::setw(3)

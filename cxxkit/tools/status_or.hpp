@@ -63,13 +63,13 @@ public:
     /// @brief Construct with an error Status (must not be ok).
     StatusOr(const Status &status) : mHasValue(false), mStatus(status)
     {
-        CXXKIT_CHECK(!mStatus.isOk()) << "StatusOr constructed with ok Status";
+        CXXKIT_CHECK(!mStatus.is_ok()) << "StatusOr constructed with ok Status";
     }
 
     /// @brief Construct with an error Status (move, must not be ok).
     StatusOr(Status &&status) : mHasValue(false), mStatus(std::move(status))
     {
-        CXXKIT_CHECK(!mStatus.isOk()) << "StatusOr constructed with ok Status";
+        CXXKIT_CHECK(!mStatus.is_ok()) << "StatusOr constructed with ok Status";
     }
 
     /// @brief Copy constructor.
@@ -77,7 +77,7 @@ public:
     {
         if (mHasValue)
         {
-            new (&mStorage) T(other.valueRef());
+            new (&mStorage) T(other.value_ref());
         }
     }
 
@@ -86,7 +86,7 @@ public:
     {
         if (mHasValue)
         {
-            new (&mStorage) T(std::move(other.valueRef()));
+            new (&mStorage) T(std::move(other.value_ref()));
         }
     }
 
@@ -95,7 +95,7 @@ public:
     {
         if (mHasValue)
         {
-            valueRef().~T();
+            value_ref().~T();
         }
     }
 
@@ -108,13 +108,13 @@ public:
         }
         if (mHasValue)
         {
-            valueRef().~T();
+            value_ref().~T();
         }
         mHasValue = other.mHasValue;
         mStatus = other.mStatus;
         if (mHasValue)
         {
-            new (&mStorage) T(other.valueRef());
+            new (&mStorage) T(other.value_ref());
         }
         return *this;
     }
@@ -128,13 +128,13 @@ public:
         }
         if (mHasValue)
         {
-            valueRef().~T();
+            value_ref().~T();
         }
         mHasValue = other.mHasValue;
         mStatus = std::move(other.mStatus);
         if (mHasValue)
         {
-            new (&mStorage) T(std::move(other.valueRef()));
+            new (&mStorage) T(std::move(other.value_ref()));
         }
         return *this;
     }
@@ -149,27 +149,27 @@ public:
     T &value()
     {
         CXXKIT_CHECK(mHasValue) << "StatusOr::value() called on error";
-        return valueRef();
+        return value_ref();
     }
     const T &value() const
     {
         CXXKIT_CHECK(mHasValue) << "StatusOr::value() called on error";
-        return valueRef();
+        return value_ref();
     }
 
     /// @brief Returns the value or the provided default.
-    T value_or(T default_value) const { return mHasValue ? valueRef() : default_value; }
+    T value_or(T default_value) const { return mHasValue ? value_ref() : default_value; }
 
     /// @brief Returns the value; aborts via CXXKIT_CHECK if error.
     T &OrDie()
     {
-        CXXKIT_CHECK(mHasValue) << "StatusOr::OrDie(): " << mStatus.errorMessage();
-        return valueRef();
+        CXXKIT_CHECK(mHasValue) << "StatusOr::OrDie(): " << mStatus.error_message();
+        return value_ref();
     }
     const T &OrDie() const
     {
-        CXXKIT_CHECK(mHasValue) << "StatusOr::OrDie(): " << mStatus.errorMessage();
-        return valueRef();
+        CXXKIT_CHECK(mHasValue) << "StatusOr::OrDie(): " << mStatus.error_message();
+        return value_ref();
     }
 
 private:
@@ -177,8 +177,8 @@ private:
     Status mStatus;
     typename std::aligned_storage<sizeof(T), alignof(T)>::type mStorage;
 
-    T &valueRef() { return *reinterpret_cast<T *>(&mStorage); }
-    const T &valueRef() const { return *reinterpret_cast<const T *>(&mStorage); }
+    T &value_ref() { return *reinterpret_cast<T *>(&mStorage); }
+    const T &value_ref() const { return *reinterpret_cast<const T *>(&mStorage); }
 };
 
 /// @brief Factory function: creates a StatusOr<T> holding a value.

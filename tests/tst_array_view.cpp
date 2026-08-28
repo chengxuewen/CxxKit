@@ -665,7 +665,7 @@ TEST(ArrayViewTest, TestReinterpretCastFixedSize)
 {
     uint8_t bytes[] = {1, 2, 3};
     ArrayView<uint8_t, 3> uint8_av(bytes);
-    ArrayView<int8_t, 3> int8_av = cxxkit::utils::reinterpretArrayView<int8_t>(uint8_av);
+    ArrayView<int8_t, 3> int8_av = cxxkit::utils::reinterpret_array_view<int8_t>(uint8_av);
     EXPECT_EQ(int8_av.size(), uint8_av.size());
     EXPECT_EQ(int8_av[0], 1);
     EXPECT_EQ(int8_av[1], 2);
@@ -676,7 +676,7 @@ TEST(ArrayViewTest, TestReinterpretCastVariableSize)
 {
     std::vector<int8_t> v = {1, 2, 3};
     ArrayView<int8_t> int8_av(v);
-    ArrayView<uint8_t> uint8_av = cxxkit::utils::reinterpretArrayView<uint8_t>(int8_av);
+    ArrayView<uint8_t> uint8_av = cxxkit::utils::reinterpret_array_view<uint8_t>(int8_av);
     EXPECT_EQ(int8_av.size(), uint8_av.size());
     EXPECT_EQ(uint8_av[0], 1);
     EXPECT_EQ(uint8_av[1], 2);

@@ -48,7 +48,7 @@ public:
     {
         if (mPtr)
         {
-            mPtr->addRef();
+            mPtr->add_ref();
         }
     }
 
@@ -57,7 +57,7 @@ public:
     {
         if (mPtr)
         {
-            mPtr->addRef();
+            mPtr->add_ref();
         }
     }
 
@@ -67,7 +67,7 @@ public:
     {
         if (mPtr)
         {
-            mPtr->addRef();
+            mPtr->add_ref();
         }
     }
 
@@ -110,10 +110,10 @@ public:
 
     SharedRefPtr<T> &operator=(T *p)
     {
-        // addRef first so that self assignment should work
+        // add_ref first so that self assignment should work
         if (p)
         {
-            p->addRef();
+            p->add_ref();
         }
         if (mPtr)
         {

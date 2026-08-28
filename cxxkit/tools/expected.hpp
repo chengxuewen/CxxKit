@@ -39,11 +39,6 @@ using Expected = tl::expected<T, E>;
 namespace utils
 {
 using tl::make_unexpected;
-template <typename E>
-Unexpected<typename std::decay<E>::type> makeUnexpected(E &&e)
-{
-    return tl::make_unexpected(e);
-}
 } // namespace utils
 
 CXXKIT_END_NAMESPACE

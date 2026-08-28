@@ -139,15 +139,15 @@ TYPED_TEST(CleanupTest, FactoryProducesCorrectType)
 {
     {
         auto callback = TypeParam::AsCallback([] {});
-        auto scopeGuard = utils::makeScopeGuard(std::move(callback));
+        auto scopeGuard = utils::make_scope_guard(std::move(callback));
         static_assert(IsSame<ScopeGuard<decltype(callback)>, decltype(scopeGuard)>(), "");
     }
     {
-        auto scopeGuard = utils::makeScopeGuard(&FnPtrFunction);
+        auto scopeGuard = utils::make_scope_guard(&FnPtrFunction);
         static_assert(IsSame<ScopeGuard<void (*)()>, decltype(scopeGuard)>(), "");
     }
     {
-        auto scopeGuard = utils::makeScopeGuard(FnPtrFunction);
+        auto scopeGuard = utils::make_scope_guard(FnPtrFunction);
         static_assert(IsSame<ScopeGuard<void (*)()>, decltype(scopeGuard)>(), "");
     }
 }
@@ -174,27 +174,27 @@ TYPED_TEST(CleanupTest, FactoryAndCTADProduceSameType)
 {
     {
         auto callback = IdentityFactory::AsCallback([] {});
-        auto factory_cleanup = utils::makeScopeGuard(callback);
+        auto factory_cleanup = utils::make_scope_guard(callback);
         ScopeGuard deduction_cleanup = callback;
         static_assert(IsSame<decltype(factory_cleanup), decltype(deduction_cleanup)>(), "");
     }
     {
-        auto factory_cleanup = utils::makeScopeGuard(FunctorClassFactory::AsCallback([] {}));
+        auto factory_cleanup = utils::make_scope_guard(FunctorClassFactory::AsCallback([] {}));
         ScopeGuard deduction_cleanup = FunctorClassFactory::AsCallback([] {});
         static_assert(IsSame<decltype(factory_cleanup), decltype(deduction_cleanup)>(), "");
     }
     {
-        auto factory_cleanup = utils::makeScopeGuard(StdFunctionFactory::AsCallback([] {}));
+        auto factory_cleanup = utils::make_scope_guard(StdFunctionFactory::AsCallback([] {}));
         ScopeGuard deduction_cleanup = StdFunctionFactory::AsCallback([] {});
         static_assert(IsSame<decltype(factory_cleanup), decltype(deduction_cleanup)>(), "");
     }
     {
-        auto factory_cleanup = utils::makeScopeGuard(&FnPtrFunction);
+        auto factory_cleanup = utils::make_scope_guard(&FnPtrFunction);
         ScopeGuard deduction_cleanup = &FnPtrFunction;
         static_assert(IsSame<decltype(factory_cleanup), decltype(deduction_cleanup)>(), "");
     }
     {
-        auto factory_cleanup = utils::makeScopeGuard(FnPtrFunction);
+        auto factory_cleanup = utils::make_scope_guard(FnPtrFunction);
         ScopeGuard deduction_cleanup = FnPtrFunction;
         static_assert(IsSame<decltype(factory_cleanup), decltype(deduction_cleanup)>(), "");
     }
@@ -206,7 +206,7 @@ TYPED_TEST(CleanupTest, BasicUsage)
     bool called = false;
 
     {
-        auto scopeGuard = utils::makeScopeGuard(TypeParam::AsCallback([&called] { called = true; }));
+        auto scopeGuard = utils::make_scope_guard(TypeParam::AsCallback([&called] { called = true; }));
         EXPECT_FALSE(called); // Constructor shouldn't invoke the callback
     }
 
@@ -218,7 +218,7 @@ TYPED_TEST(CleanupTest, BasicUsageWithFunctionPointer)
     fn_ptr_called = false;
 
     {
-        auto scopeGuard = utils::makeScopeGuard(TypeParam::AsCallback(&FnPtrFunction));
+        auto scopeGuard = utils::make_scope_guard(TypeParam::AsCallback(&FnPtrFunction));
         EXPECT_FALSE(fn_ptr_called); // Constructor shouldn't invoke the callback
     }
 
@@ -230,7 +230,7 @@ TYPED_TEST(CleanupTest, Cancel)
     bool called = false;
 
     {
-        auto scopeGuard = utils::makeScopeGuard(TypeParam::AsCallback([&called] { called = true; }));
+        auto scopeGuard = utils::make_scope_guard(TypeParam::AsCallback([&called] { called = true; }));
         EXPECT_FALSE(called); // Constructor shouldn't invoke the callback
 
         std::move(scopeGuard).cancel();
@@ -245,7 +245,7 @@ TYPED_TEST(CleanupTest, Invoke)
     bool called = false;
 
     {
-        auto scopeGuard = utils::makeScopeGuard(TypeParam::AsCallback([&called] { called = true; }));
+        auto scopeGuard = utils::make_scope_guard(TypeParam::AsCallback([&called] { called = true; }));
         EXPECT_FALSE(called); // Constructor shouldn't invoke the callback
 
         std::move(scopeGuard).invoke();
@@ -262,7 +262,7 @@ TYPED_TEST(CleanupTest, Move)
     bool called = false;
 
     {
-        auto moved_from_cleanup = utils::makeScopeGuard(TypeParam::AsCallback([&called] { called = true; }));
+        auto moved_from_cleanup = utils::make_scope_guard(TypeParam::AsCallback([&called] { called = true; }));
         EXPECT_FALSE(called); // Constructor shouldn't invoke the callback
 
         {
@@ -290,7 +290,7 @@ struct DestructionCounter
 TYPED_TEST(CleanupTest, DestructorDestroys)
 {
     {
-        auto scopeGuard = utils::makeScopeGuard(TypeParam::AsCallback(DestructionCounter()));
+        auto scopeGuard = utils::make_scope_guard(TypeParam::AsCallback(DestructionCounter()));
         DestructionCount = 0;
     }
 
@@ -300,7 +300,7 @@ TYPED_TEST(CleanupTest, DestructorDestroys)
 TYPED_TEST(CleanupTest, CancelDestroys)
 {
     {
-        auto scopeGuard = utils::makeScopeGuard(TypeParam::AsCallback(DestructionCounter()));
+        auto scopeGuard = utils::make_scope_guard(TypeParam::AsCallback(DestructionCounter()));
         DestructionCount = 0;
 
         std::move(scopeGuard).cancel();
@@ -313,7 +313,7 @@ TYPED_TEST(CleanupTest, CancelDestroys)
 TYPED_TEST(CleanupTest, InvokeDestroys)
 {
     {
-        auto scopeGuard = utils::makeScopeGuard(TypeParam::AsCallback(DestructionCounter()));
+        auto scopeGuard = utils::make_scope_guard(TypeParam::AsCallback(DestructionCounter()));
         DestructionCount = 0;
 
         std::move(scopeGuard).invoke();

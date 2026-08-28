@@ -92,7 +92,7 @@ protected:
 /** @brief Transfer ownership out of the singleton scope.
  * @return Raw pointer to the instance, disassociated from internal scope.
  */
-    T *detachScoped()
+    T *detach_scoped()
     {
         CXXKIT_ASSERT(mInstance.load());
         mScoped.release();
@@ -102,7 +102,7 @@ protected:
 /** @brief Destroy the singleton instance and release all ownership.
  * @note Call during process tear-down; afterwards instance() is undefined.
  */
-    void destroy() { delete this->detachScoped(); }
+    void destroy() { delete this->detach_scoped(); }
 
 private:
     static void create()

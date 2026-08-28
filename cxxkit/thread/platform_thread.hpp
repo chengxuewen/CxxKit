@@ -116,15 +116,15 @@ public:
     PlatformThread(PlatformThreadPrivate *d);
     virtual ~PlatformThread();
 
-    bool isInterruptionRequested() const;
-    Status requestInterruption();
+    bool is_interruption_requested() const;
+    Status request_interruption();
 
     std::string name() const;
-    Status setName(const StringView name, const void *obj = nullptr);
+    Status set_name(const StringView name, const void *obj = nullptr);
 
     /**
      * If the thread is not running, this function returns \c InheritPriority.
-     * \sa Priority, setPriority(), start()
+     * \sa Priority, set_priority(), start()
      * @return Returns the priority for a running thread.
      */
     Priority priority() const;
@@ -142,31 +142,31 @@ public:
      * @param priority
      * @return
      */
-    Status setPriority(Priority priority);
+    Status set_priority(Priority priority);
 
     /**
-     * @return Returns the maximum stack size for the thread (if set with setStackSize()); otherwise returns zero.
+     * @return Returns the maximum stack size for the thread (if set with set_stack_size()); otherwise returns zero.
      */
-    uint_t stackSize() const;
+    uint_t stack_size() const;
     /**
-     * Sets the maximum stack size for the thread to \a stackSize.
-     * If \a stackSize is greater than zero, the maximum stack size is set to \a stackSize bytes,
+     * Sets the maximum stack size for the thread to \a stack_size.
+     * If \a stack_size is greater than zero, the maximum stack size is set to \a stack_size bytes,
      * otherwise the maximum stack size is automatically determined by the operating system.
      *
      * \warning Most operating systems place minimum and maximum limits on thread stack sizes.
      * The thread will fail to start if the stack size is outside these limits.
      *
-     * \sa stackSize()
-     * @param stackSize
+     * \sa stack_size()
+     * @param stack_size
      * @return
      */
-    Status setStackSize(uint_t stackSize);
+    Status set_stack_size(uint_t stack_size);
 
-    bool isFinished() const;
-    bool isRunning() const;
-    bool isAdopted() const;
+    bool is_finished() const;
+    bool is_running() const;
+    bool is_adopted() const;
 
-    Id threadId() const;
+    Id thread_id() const;
     int retval() const;
 
     Status start(Priority = Priority::kInherit);
@@ -175,11 +175,11 @@ public:
     CXXKIT_STATIC_CONSTANT_NUMBER(kWaitForeverMSecs, std::numeric_limits<unsigned int>::max())
     bool wait(unsigned int msecs = kWaitForeverMSecs);
 
-    static void setCurrentThreadName(const StringView name);
-    static int idealConcurrencyThreadCount() noexcept;
+    static void set_current_thread_name(const StringView name);
+    static int ideal_concurrency_thread_count() noexcept;
 
-    static PlatformThread *currentThread() noexcept;
-    static Id currentThreadId() noexcept;
+    static PlatformThread *current_thread() noexcept;
+    static Id current_thread_id() noexcept;
 
     static void usleep(unsigned long usecs);
     static void msleep(unsigned long msecs);
@@ -216,10 +216,10 @@ public:
 #endif
 
 protected:
-    static void setTerminationEnabled(bool enabled = true);
+    static void set_termination_enabled(bool enabled = true);
 
-    virtual void onFinished() { }
-    virtual void onStarted() { }
+    virtual void on_finished() { }
+    virtual void on_started() { }
     virtual void run() { }
 
 protected:

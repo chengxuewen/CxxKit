@@ -68,8 +68,8 @@ public:
 protected:
     void run() override
     {
-        id = currentThreadId();
-        thread = currentThread();
+        id = current_thread_id();
+        thread = current_thread();
         loopWait.store(true);
         while (loopWait.load())
         {
@@ -102,13 +102,13 @@ public:
 protected:
     void run()
     {
-        this->setTerminationEnabled(false);
+        this->set_termination_enabled(false);
         {
             std::unique_lock<std::mutex> lock(mutex);
             cond.notify_one();
             cond.wait_for(lock, std::chrono::milliseconds(kFiveMinutes));
         }
-        this->setTerminationEnabled(true);
+        this->set_termination_enabled(true);
         CXXKIT_FATAL("TerminateThread: test case hung");
     }
 };
@@ -201,7 +201,7 @@ protected:
         auto threadWrapper = reinterpret_cast<ThreadWrapper *>(that);
 
         // Adopt thread, create QThread object.
-        threadWrapper->mPlatformThread = PlatformThread::currentThread();
+        threadWrapper->mPlatformThread = PlatformThread::current_thread();
 
         // Release main thread.
         {
@@ -239,7 +239,7 @@ private:
 TEST(PlatformThreadTest, DefaultConstructedIsInvalid)
 {
     PlatformThread thread;
-    EXPECT_EQ(thread.threadId(), 0);
+    EXPECT_EQ(thread.thread_id(), 0);
 }
 
 TEST(PlatformThreadTest, CurrentThreadId)
@@ -249,17 +249,17 @@ TEST(PlatformThreadTest, CurrentThreadId)
         CurrentThread thread;
         thread.start();
         thread.waitLoopWait();
-        EXPECT_EQ(thread.id, thread.threadId());
+        EXPECT_EQ(thread.id, thread.thread_id());
         thread.stopLoopWait();
         EXPECT_TRUE(thread.wait(1000)); // 1000ms
         EXPECT_NE(thread.id, 0);
-        EXPECT_NE(thread.id, PlatformThread::currentThreadId());
+        EXPECT_NE(thread.id, PlatformThread::current_thread_id());
     }
 }
 
 TEST(PlatformThreadTest, CurrentThread)
 {
-    EXPECT_NE(PlatformThread::currentThread(), nullptr);
+    EXPECT_NE(PlatformThread::current_thread(), nullptr);
 
     CurrentThread thread;
     thread.start();
@@ -273,28 +273,28 @@ TEST(PlatformThreadTest, IsFinished)
 {
     SimpleThread thread;
 
-    EXPECT_FALSE(thread.isFinished());
+    EXPECT_FALSE(thread.is_finished());
 
     std::unique_lock<std::mutex> lock(thread.mutex);
     thread.start();
-    EXPECT_FALSE(thread.isFinished());
+    EXPECT_FALSE(thread.is_finished());
     thread.cond.wait(lock);
     EXPECT_TRUE(thread.wait(1000)); // 1000ms
-    EXPECT_TRUE(thread.isFinished());
+    EXPECT_TRUE(thread.is_finished());
 }
 
 TEST(PlatformThreadTest, IsRunning)
 {
     SimpleThread thread;
 
-    EXPECT_FALSE(thread.isRunning());
+    EXPECT_FALSE(thread.is_running());
 
     std::unique_lock<std::mutex> lock(thread.mutex);
     thread.start();
-    EXPECT_TRUE(thread.isRunning());
+    EXPECT_TRUE(thread.is_running());
     thread.cond.wait(lock);
     EXPECT_TRUE(thread.wait(1000)); // 1000ms
-    EXPECT_FALSE(thread.isRunning());
+    EXPECT_FALSE(thread.is_running());
 }
 
 TEST(PlatformThreadTest, SetPriority)
@@ -303,72 +303,72 @@ TEST(PlatformThreadTest, SetPriority)
     EXPECT_EQ(thread.priority(), PlatformThread::Priority::kInherit);
 
     // cannot change the priority, since the thread is not running
-    EXPECT_FALSE(thread.setPriority(PlatformThread::Priority::kIdle).isOk());
+    EXPECT_FALSE(thread.set_priority(PlatformThread::Priority::kIdle).is_ok());
     EXPECT_EQ(thread.priority(), PlatformThread::Priority::kInherit);
-    EXPECT_FALSE(thread.setPriority(PlatformThread::Priority::kLowest).isOk());
+    EXPECT_FALSE(thread.set_priority(PlatformThread::Priority::kLowest).is_ok());
     EXPECT_EQ(thread.priority(), PlatformThread::Priority::kInherit);
-    EXPECT_FALSE(thread.setPriority(PlatformThread::Priority::kLow).isOk());
+    EXPECT_FALSE(thread.set_priority(PlatformThread::Priority::kLow).is_ok());
     EXPECT_EQ(thread.priority(), PlatformThread::Priority::kInherit);
-    EXPECT_FALSE(thread.setPriority(PlatformThread::Priority::kNormal).isOk());
+    EXPECT_FALSE(thread.set_priority(PlatformThread::Priority::kNormal).is_ok());
     EXPECT_EQ(thread.priority(), PlatformThread::Priority::kInherit);
-    EXPECT_FALSE(thread.setPriority(PlatformThread::Priority::kHigh).isOk());
+    EXPECT_FALSE(thread.set_priority(PlatformThread::Priority::kHigh).is_ok());
     EXPECT_EQ(thread.priority(), PlatformThread::Priority::kInherit);
-    EXPECT_FALSE(thread.setPriority(PlatformThread::Priority::kHighest).isOk());
+    EXPECT_FALSE(thread.set_priority(PlatformThread::Priority::kHighest).is_ok());
     EXPECT_EQ(thread.priority(), PlatformThread::Priority::kInherit);
-    EXPECT_FALSE(thread.setPriority(PlatformThread::Priority::kTimeCritical).isOk());
+    EXPECT_FALSE(thread.set_priority(PlatformThread::Priority::kTimeCritical).is_ok());
     EXPECT_EQ(thread.priority(), PlatformThread::Priority::kInherit);
-    EXPECT_FALSE(thread.setPriority(PlatformThread::Priority::kInherit).isOk());
+    EXPECT_FALSE(thread.set_priority(PlatformThread::Priority::kInherit).is_ok());
     EXPECT_EQ(thread.priority(), PlatformThread::Priority::kInherit);
 
     EXPECT_EQ(thread.priority(), PlatformThread::Priority::kInherit);
     std::unique_lock<std::mutex> lock(thread.mutex);
     thread.start();
-    EXPECT_FALSE(thread.setPriority(PlatformThread::Priority::kInherit).isOk()); //"Argument cannot be InheritPriority";
+    EXPECT_FALSE(thread.set_priority(PlatformThread::Priority::kInherit).is_ok()); //"Argument cannot be InheritPriority";
     // change the priority of a running thread
-    EXPECT_TRUE(thread.setPriority(PlatformThread::Priority::kIdle).isOk());
+    EXPECT_TRUE(thread.set_priority(PlatformThread::Priority::kIdle).is_ok());
     EXPECT_EQ(thread.priority(), PlatformThread::Priority::kIdle);
-    EXPECT_TRUE(thread.setPriority(PlatformThread::Priority::kLowest).isOk());
+    EXPECT_TRUE(thread.set_priority(PlatformThread::Priority::kLowest).is_ok());
     EXPECT_EQ(thread.priority(), PlatformThread::Priority::kLowest);
-    EXPECT_TRUE(thread.setPriority(PlatformThread::Priority::kLow).isOk());
+    EXPECT_TRUE(thread.set_priority(PlatformThread::Priority::kLow).is_ok());
     EXPECT_EQ(thread.priority(), PlatformThread::Priority::kLow);
-    EXPECT_TRUE(thread.setPriority(PlatformThread::Priority::kNormal).isOk());
+    EXPECT_TRUE(thread.set_priority(PlatformThread::Priority::kNormal).is_ok());
     EXPECT_EQ(thread.priority(), PlatformThread::Priority::kNormal);
-    EXPECT_TRUE(thread.setPriority(PlatformThread::Priority::kHigh).isOk());
+    EXPECT_TRUE(thread.set_priority(PlatformThread::Priority::kHigh).is_ok());
     EXPECT_EQ(thread.priority(), PlatformThread::Priority::kHigh);
-    EXPECT_TRUE(thread.setPriority(PlatformThread::Priority::kHighest).isOk());
+    EXPECT_TRUE(thread.set_priority(PlatformThread::Priority::kHighest).is_ok());
     EXPECT_EQ(thread.priority(), PlatformThread::Priority::kHighest);
-    EXPECT_TRUE(thread.setPriority(PlatformThread::Priority::kTimeCritical).isOk());
+    EXPECT_TRUE(thread.set_priority(PlatformThread::Priority::kTimeCritical).is_ok());
     EXPECT_EQ(thread.priority(), PlatformThread::Priority::kTimeCritical);
     thread.cond.wait(lock);
     EXPECT_TRUE(thread.wait(1000)); // 1000ms
 
     // cannot change the priority, since the thread is finished
-    EXPECT_FALSE(thread.setPriority(PlatformThread::Priority::kIdle).isOk());
+    EXPECT_FALSE(thread.set_priority(PlatformThread::Priority::kIdle).is_ok());
     EXPECT_EQ(thread.priority(), PlatformThread::Priority::kInherit);
-    EXPECT_FALSE(thread.setPriority(PlatformThread::Priority::kLowest).isOk());
+    EXPECT_FALSE(thread.set_priority(PlatformThread::Priority::kLowest).is_ok());
     EXPECT_EQ(thread.priority(), PlatformThread::Priority::kInherit);
-    EXPECT_FALSE(thread.setPriority(PlatformThread::Priority::kLow).isOk());
+    EXPECT_FALSE(thread.set_priority(PlatformThread::Priority::kLow).is_ok());
     EXPECT_EQ(thread.priority(), PlatformThread::Priority::kInherit);
-    EXPECT_FALSE(thread.setPriority(PlatformThread::Priority::kNormal).isOk());
+    EXPECT_FALSE(thread.set_priority(PlatformThread::Priority::kNormal).is_ok());
     EXPECT_EQ(thread.priority(), PlatformThread::Priority::kInherit);
-    EXPECT_FALSE(thread.setPriority(PlatformThread::Priority::kHigh).isOk());
+    EXPECT_FALSE(thread.set_priority(PlatformThread::Priority::kHigh).is_ok());
     EXPECT_EQ(thread.priority(), PlatformThread::Priority::kInherit);
-    EXPECT_FALSE(thread.setPriority(PlatformThread::Priority::kHighest).isOk());
+    EXPECT_FALSE(thread.set_priority(PlatformThread::Priority::kHighest).is_ok());
     EXPECT_EQ(thread.priority(), PlatformThread::Priority::kInherit);
-    EXPECT_FALSE(thread.setPriority(PlatformThread::Priority::kTimeCritical).isOk());
+    EXPECT_FALSE(thread.set_priority(PlatformThread::Priority::kTimeCritical).is_ok());
     EXPECT_EQ(thread.priority(), PlatformThread::Priority::kInherit);
-    EXPECT_FALSE(thread.setPriority(PlatformThread::Priority::kInherit).isOk());
+    EXPECT_FALSE(thread.set_priority(PlatformThread::Priority::kInherit).is_ok());
     EXPECT_EQ(thread.priority(), PlatformThread::Priority::kInherit);
 }
 
 TEST(PlatformThreadTest, SetStackSize)
 {
     SimpleThread thread;
-    EXPECT_EQ(thread.stackSize(), 0u);
-    thread.setStackSize(8192u);
-    EXPECT_EQ(thread.stackSize(), 8192u);
-    thread.setStackSize(0u);
-    EXPECT_EQ(thread.stackSize(), 0u);
+    EXPECT_EQ(thread.stack_size(), 0u);
+    thread.set_stack_size(8192u);
+    EXPECT_EQ(thread.stack_size(), 8192u);
+    thread.set_stack_size(0u);
+    EXPECT_EQ(thread.stack_size(), 0u);
 }
 
 TEST(PlatformThreadTest, Start)
@@ -386,16 +386,16 @@ TEST(PlatformThreadTest, Start)
     for (auto i = 0; i < prio_count; ++i)
     {
         SimpleThread thread;
-        EXPECT_FALSE(thread.isFinished());
-        EXPECT_FALSE(thread.isRunning());
+        EXPECT_FALSE(thread.is_finished());
+        EXPECT_FALSE(thread.is_running());
         std::unique_lock<std::mutex> lock(thread.mutex);
         thread.start(priorities[i]);
-        EXPECT_TRUE(thread.isRunning());
-        EXPECT_FALSE(thread.isFinished());
+        EXPECT_TRUE(thread.is_running());
+        EXPECT_FALSE(thread.is_finished());
         thread.cond.wait(lock);
         EXPECT_TRUE(thread.wait(1000)); // 1000ms
-        EXPECT_TRUE(thread.isFinished());
-        EXPECT_FALSE(thread.isRunning());
+        EXPECT_TRUE(thread.is_finished());
+        EXPECT_FALSE(thread.is_running());
     }
 }
 
@@ -449,13 +449,13 @@ bool threadAdoptedOk = false;
 PlatformThread *mainThread{nullptr};
 void testNativeThreadAdoption(void *)
 {
-    threadAdoptedOk = (PlatformThread::currentThreadId() != 0 && PlatformThread::currentThread() != 0 &&
-                       PlatformThread::currentThread() != mainThread);
+    threadAdoptedOk = (PlatformThread::current_thread_id() != 0 && PlatformThread::current_thread() != 0 &&
+                       PlatformThread::current_thread() != mainThread);
 }
 TEST(PlatformThreadTest, Adoption)
 {
     threadAdoptedOk = false;
-    mainThread = PlatformThread::currentThread();
+    mainThread = PlatformThread::current_thread();
     ThreadWrapper threadWrapper;
     threadWrapper.setWaitForStop();
     threadWrapper.startAndWait(testNativeThreadAdoption);
@@ -475,19 +475,19 @@ TEST(PlatformThreadTest, AdoptedThreadSetPriority)
 
     // change the priority of a running thread
     EXPECT_EQ(threadWrapper.platformThread()->priority(), PlatformThread::Priority::kInherit);
-    threadWrapper.platformThread()->setPriority(PlatformThread::Priority::kIdle);
+    threadWrapper.platformThread()->set_priority(PlatformThread::Priority::kIdle);
     EXPECT_EQ(threadWrapper.platformThread()->priority(), PlatformThread::Priority::kIdle);
-    threadWrapper.platformThread()->setPriority(PlatformThread::Priority::kLowest);
+    threadWrapper.platformThread()->set_priority(PlatformThread::Priority::kLowest);
     EXPECT_EQ(threadWrapper.platformThread()->priority(), PlatformThread::Priority::kLowest);
-    threadWrapper.platformThread()->setPriority(PlatformThread::Priority::kLow);
+    threadWrapper.platformThread()->set_priority(PlatformThread::Priority::kLow);
     EXPECT_EQ(threadWrapper.platformThread()->priority(), PlatformThread::Priority::kLow);
-    threadWrapper.platformThread()->setPriority(PlatformThread::Priority::kNormal);
+    threadWrapper.platformThread()->set_priority(PlatformThread::Priority::kNormal);
     EXPECT_EQ(threadWrapper.platformThread()->priority(), PlatformThread::Priority::kNormal);
-    threadWrapper.platformThread()->setPriority(PlatformThread::Priority::kHigh);
+    threadWrapper.platformThread()->set_priority(PlatformThread::Priority::kHigh);
     EXPECT_EQ(threadWrapper.platformThread()->priority(), PlatformThread::Priority::kHigh);
-    threadWrapper.platformThread()->setPriority(PlatformThread::Priority::kHighest);
+    threadWrapper.platformThread()->set_priority(PlatformThread::Priority::kHighest);
     EXPECT_EQ(threadWrapper.platformThread()->priority(), PlatformThread::Priority::kHighest);
-    threadWrapper.platformThread()->setPriority(PlatformThread::Priority::kTimeCritical);
+    threadWrapper.platformThread()->set_priority(PlatformThread::Priority::kTimeCritical);
     EXPECT_EQ(threadWrapper.platformThread()->priority(), PlatformThread::Priority::kTimeCritical);
 
     threadWrapper.stop();
@@ -501,8 +501,8 @@ TEST(PlatformThreadTest, AdoptedThreadExit)
 
     threadWrapper.startAndWait();
     EXPECT_TRUE(threadWrapper.platformThread());
-    EXPECT_TRUE(threadWrapper.platformThread()->isRunning());
-    EXPECT_TRUE(!threadWrapper.platformThread()->isFinished());
+    EXPECT_TRUE(threadWrapper.platformThread()->is_running());
+    EXPECT_TRUE(!threadWrapper.platformThread()->is_finished());
 
     threadWrapper.stop();
     threadWrapper.join();
@@ -530,7 +530,7 @@ TEST(PlatformThreadTest, Create)
         const auto &function = []() {};
         auto thread = PlatformThread::create(function);
         EXPECT_TRUE(thread);
-        EXPECT_FALSE(thread->isRunning());
+        EXPECT_FALSE(thread->is_running());
         thread->start();
         EXPECT_TRUE(thread->wait());
     }
@@ -541,7 +541,7 @@ TEST(PlatformThreadTest, Create)
         const auto &function = [&i]() { i = 42; };
         auto thread(PlatformThread::create(function));
         EXPECT_TRUE(thread);
-        EXPECT_FALSE(thread->isRunning());
+        EXPECT_FALSE(thread->is_running());
         EXPECT_EQ(i, 0);
         thread->start();
         EXPECT_TRUE(thread->wait());
@@ -562,11 +562,11 @@ TEST(PlatformThreadTest, Create)
         auto thread(PlatformThread::create(function));
         EXPECT_TRUE(thread);
         thread->start();
-        EXPECT_TRUE(thread->isRunning());
+        EXPECT_TRUE(thread->is_running());
         semaphore1.release();
         semaphore2.acquire();
         EXPECT_TRUE(thread->wait());
-        EXPECT_FALSE(thread->isRunning());
+        EXPECT_FALSE(thread->is_running());
     }
 
     {
@@ -574,7 +574,7 @@ TEST(PlatformThreadTest, Create)
         const auto &function = []() { return 42; };
         auto thread(PlatformThread::create(function));
         EXPECT_TRUE(thread);
-        EXPECT_FALSE(thread->isRunning());
+        EXPECT_FALSE(thread->is_running());
         thread->start();
         EXPECT_TRUE(thread->wait());
     }
@@ -586,13 +586,13 @@ TEST(PlatformThreadTest, Create)
         const auto &function = [&thread, &s]() -> void
         {
             s.acquire();
-            EXPECT_EQ(thread.get(), PlatformThread::currentThread());
+            EXPECT_EQ(thread.get(), PlatformThread::current_thread());
         };
 
         thread = std::move(PlatformThread::create(function));
         EXPECT_TRUE(thread);
         thread->start();
-        EXPECT_TRUE(thread->isRunning());
+        EXPECT_TRUE(thread->is_running());
         s.release();
         EXPECT_TRUE(thread->wait());
     }
@@ -633,7 +633,7 @@ TEST(PlatformThreadTest, Create)
             MoveOnlyFunctor f(&i);
             auto thread(PlatformThread::create(std::move(f)));
             EXPECT_TRUE(thread);
-            EXPECT_FALSE(thread->isRunning());
+            EXPECT_FALSE(thread->is_running());
             thread->start();
             EXPECT_TRUE(thread->wait());
             EXPECT_EQ(i, 42);
@@ -646,7 +646,7 @@ TEST(PlatformThreadTest, Create)
             auto moveOnlyFunction = [&i, mo = std::move(mo)]() { i = mo.v; };
             auto thread(PlatformThread::create(std::move(moveOnlyFunction)));
             EXPECT_TRUE(thread);
-            EXPECT_FALSE(thread->isRunning());
+            EXPECT_FALSE(thread->is_running());
             thread->start();
             EXPECT_TRUE(thread->wait());
             EXPECT_EQ(i, 123);
@@ -659,7 +659,7 @@ TEST(PlatformThreadTest, Create)
             const auto &function = [&i](MoveOnlyValue &&mo) { i = mo.v; };
             auto thread(PlatformThread::create(function, MoveOnlyValue(123)));
             EXPECT_TRUE(thread);
-            EXPECT_FALSE(thread->isRunning());
+            EXPECT_FALSE(thread->is_running());
             thread->start();
             EXPECT_TRUE(thread->wait());
             EXPECT_EQ(i, 123);
@@ -671,7 +671,7 @@ TEST(PlatformThreadTest, Create)
             MoveOnlyValue mo(-1);
             auto thread(PlatformThread::create(function, std::move(mo)));
             EXPECT_TRUE(thread);
-            EXPECT_FALSE(thread->isRunning());
+            EXPECT_FALSE(thread->is_running());
             thread->start();
             EXPECT_TRUE(thread->wait());
             EXPECT_EQ(i, -1);
@@ -686,7 +686,7 @@ TEST(PlatformThreadTest, Create)
         const auto &function = [&i](int j, int k) { i = j * k; };
         auto thread(PlatformThread::create(function, 3, 4));
         EXPECT_TRUE(thread);
-        EXPECT_FALSE(thread->isRunning());
+        EXPECT_FALSE(thread->is_running());
         EXPECT_EQ(i, 0);
         thread->start();
         EXPECT_TRUE(thread->wait());
@@ -698,7 +698,7 @@ TEST(PlatformThreadTest, Create)
         const auto &function = [](double d) { return d * 2.0; };
         auto thread(PlatformThread::create(function, 3.14));
         EXPECT_TRUE(thread);
-        EXPECT_FALSE(thread->isRunning());
+        EXPECT_FALSE(thread->is_running());
         thread->start();
         EXPECT_TRUE(thread->wait());
     }
@@ -722,7 +722,7 @@ TEST(PlatformThreadTest, Create)
         PlatformThread::UniquePtr thread;
         thread = PlatformThread::create(&S::doSomething, object);
         EXPECT_TRUE(thread);
-        EXPECT_FALSE(thread->isRunning());
+        EXPECT_FALSE(thread->is_running());
         thread->start();
         EXPECT_TRUE(thread->wait());
 
@@ -730,7 +730,7 @@ TEST(PlatformThreadTest, Create)
 
         thread = PlatformThread::create(&S::doSomething, std::ref(object));
         EXPECT_TRUE(thread);
-        EXPECT_FALSE(thread->isRunning());
+        EXPECT_FALSE(thread->is_running());
         thread->start();
         EXPECT_TRUE(thread->wait());
 
@@ -738,7 +738,7 @@ TEST(PlatformThreadTest, Create)
 
         thread = PlatformThread::create(&S::doSomething, &object);
         EXPECT_TRUE(thread);
-        EXPECT_FALSE(thread->isRunning());
+        EXPECT_FALSE(thread->is_running());
         thread->start();
         EXPECT_TRUE(thread->wait());
 

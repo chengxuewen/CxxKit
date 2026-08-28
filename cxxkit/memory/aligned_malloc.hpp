@@ -45,33 +45,33 @@ namespace utils
 // address of `ptr`.
 // Note that there is no guarantee that the memory in question is available.
 // `ptr` has no requirements other than it can't be NULL.
-CXXKIT_MEMORY_API void *getRightAlign(const void *ptr, size_t alignment);
+CXXKIT_MEMORY_API void *get_right_align(const void *ptr, size_t alignment);
 
 // Allocates memory of `size` bytes aligned on an `alignment` boundry.
 // The return value is a pointer to the memory. Note that the memory must
-// be de-allocated using alignedFree.
-CXXKIT_MEMORY_API void *alignedMalloc(size_t size, size_t alignment);
-// De-allocates memory created using the alignedMalloc() API.
-CXXKIT_MEMORY_API void alignedFree(void *mem_block);
+// be de-allocated using aligned_free.
+CXXKIT_MEMORY_API void *aligned_malloc(size_t size, size_t alignment);
+// De-allocates memory created using the aligned_malloc() API.
+CXXKIT_MEMORY_API void aligned_free(void *mem_block);
 
 // Templated versions to facilitate usage of aligned malloc without casting
 // to and from void*.
 template <typename T>
-T *getRightAlign(const T *ptr, size_t alignment)
+T *get_right_align(const T *ptr, size_t alignment)
 {
-    return reinterpret_cast<T *>(getRightAlign(reinterpret_cast<const void *>(ptr), alignment));
+    return reinterpret_cast<T *>(get_right_align(reinterpret_cast<const void *>(ptr), alignment));
 }
 template <typename T>
-T *alignedMalloc(size_t size, size_t alignment)
+T *aligned_malloc(size_t size, size_t alignment)
 {
-    return reinterpret_cast<T *>(alignedMalloc(size, alignment));
+    return reinterpret_cast<T *>(aligned_malloc(size, alignment));
 }
 } // namespace utils
 // Deleter for use with unique_ptr. E.g., use as
 //   std::unique_ptr<Foo, alignedFreeDeleter> foo;
 struct AlignedFreeDeleter
 {
-    inline void operator()(void *ptr) const { utils::alignedFree(ptr); }
+    inline void operator()(void *ptr) const { utils::aligned_free(ptr); }
 };
 CXXKIT_END_NAMESPACE
 

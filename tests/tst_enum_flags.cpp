@@ -140,9 +140,9 @@ TEST(EnumFlagsTest, TestFlagOperatorAnd)
     {
         // return reference
         enum_testFlags f1 = enum_testFlag::value_1 | enum_testFlag::value_2;
-        EXPECT_TRUE(f1.testFlag(enum_testFlag::value_1));
-        EXPECT_TRUE(f1.testFlag(enum_testFlag::value_2));
-        EXPECT_FALSE(f1.testFlag(enum_testFlag::value_3));
+        EXPECT_TRUE(f1.test_flag(enum_testFlag::value_1));
+        EXPECT_TRUE(f1.test_flag(enum_testFlag::value_2));
+        EXPECT_FALSE(f1.test_flag(enum_testFlag::value_3));
 
         f1 &= uint32_t(2);
         EXPECT_EQ(f1, 2);
@@ -155,8 +155,8 @@ TEST(EnumFlagsTest, TestFlagOperatorAnd)
         enum_testFlags f1(enum_testFlag::value_1 | enum_testFlag::value_2);
         enum_testFlags f2 = f1 & enum_testFlag::value_2;
 
-        EXPECT_FALSE(f2.testFlag(enum_testFlag::value_1));
-        EXPECT_TRUE(f2.testFlag(enum_testFlag::value_2));
+        EXPECT_FALSE(f2.test_flag(enum_testFlag::value_1));
+        EXPECT_TRUE(f2.test_flag(enum_testFlag::value_2));
 
         f2 = f1 & uint32_t(2);
         EXPECT_EQ(f2, 2);
@@ -174,13 +174,13 @@ TEST(EnumFlagsTest, TestFlagOperatorOr)
 
         f1 |= enum_testFlag::value_3;
 
-        EXPECT_TRUE(f1.testFlag(enum_testFlag::value_1));
-        EXPECT_TRUE(f1.testFlag(enum_testFlag::value_2));
-        EXPECT_TRUE(f1.testFlag(enum_testFlag::value_3));
+        EXPECT_TRUE(f1.test_flag(enum_testFlag::value_1));
+        EXPECT_TRUE(f1.test_flag(enum_testFlag::value_2));
+        EXPECT_TRUE(f1.test_flag(enum_testFlag::value_3));
 
         enum_testFlags f2(enum_testFlag::value_4);
         f1 |= f2;
-        EXPECT_TRUE(f1.testFlag(enum_testFlag::value_4));
+        EXPECT_TRUE(f1.test_flag(enum_testFlag::value_4));
     }
     {
         // return value
@@ -188,14 +188,14 @@ TEST(EnumFlagsTest, TestFlagOperatorOr)
 
         enum_testFlags f2 = f1 | enum_testFlag::value_3;
 
-        EXPECT_TRUE(f2.testFlag(enum_testFlag::value_1));
-        EXPECT_TRUE(f2.testFlag(enum_testFlag::value_2));
-        EXPECT_TRUE(f2.testFlag(enum_testFlag::value_3));
+        EXPECT_TRUE(f2.test_flag(enum_testFlag::value_1));
+        EXPECT_TRUE(f2.test_flag(enum_testFlag::value_2));
+        EXPECT_TRUE(f2.test_flag(enum_testFlag::value_3));
 
         enum_testFlags f3(enum_testFlag::value_4);
         f2 = f1 | f3;
 
-        EXPECT_TRUE(f2.testFlag(enum_testFlag::value_4));
+        EXPECT_TRUE(f2.test_flag(enum_testFlag::value_4));
     }
 }
 
@@ -208,22 +208,22 @@ TEST(EnumFlagsTest, TestFlagOperatorXor)
 
         f1 ^= enum_testFlag::value_3;
 
-        EXPECT_TRUE(f1.testFlag(enum_testFlag::value_1));
-        EXPECT_TRUE(f1.testFlag(enum_testFlag::value_2));
-        EXPECT_TRUE(f1.testFlag(enum_testFlag::value_3));
+        EXPECT_TRUE(f1.test_flag(enum_testFlag::value_1));
+        EXPECT_TRUE(f1.test_flag(enum_testFlag::value_2));
+        EXPECT_TRUE(f1.test_flag(enum_testFlag::value_3));
 
         f1 ^= enum_testFlag::value_2;
 
-        EXPECT_TRUE(f1.testFlag(enum_testFlag::value_1));
-        EXPECT_FALSE(f1.testFlag(enum_testFlag::value_2));
-        EXPECT_TRUE(f1.testFlag(enum_testFlag::value_3));
+        EXPECT_TRUE(f1.test_flag(enum_testFlag::value_1));
+        EXPECT_FALSE(f1.test_flag(enum_testFlag::value_2));
+        EXPECT_TRUE(f1.test_flag(enum_testFlag::value_3));
 
         enum_testFlags f3(enum_testFlag::value_3);
         f1 ^= f3;
 
-        EXPECT_TRUE(f1.testFlag(enum_testFlag::value_1));
-        EXPECT_FALSE(f1.testFlag(enum_testFlag::value_2));
-        EXPECT_FALSE(f1.testFlag(enum_testFlag::value_3));
+        EXPECT_TRUE(f1.test_flag(enum_testFlag::value_1));
+        EXPECT_FALSE(f1.test_flag(enum_testFlag::value_2));
+        EXPECT_FALSE(f1.test_flag(enum_testFlag::value_3));
     }
     {
         // return value
@@ -231,22 +231,22 @@ TEST(EnumFlagsTest, TestFlagOperatorXor)
 
         enum_testFlags f2 = f1 ^ enum_testFlag::value_3;
 
-        EXPECT_TRUE(f2.testFlag(enum_testFlag::value_1));
-        EXPECT_TRUE(f2.testFlag(enum_testFlag::value_2));
-        EXPECT_TRUE(f2.testFlag(enum_testFlag::value_3));
+        EXPECT_TRUE(f2.test_flag(enum_testFlag::value_1));
+        EXPECT_TRUE(f2.test_flag(enum_testFlag::value_2));
+        EXPECT_TRUE(f2.test_flag(enum_testFlag::value_3));
 
         f2 = f2 ^ enum_testFlag::value_2;
 
-        EXPECT_TRUE(f2.testFlag(enum_testFlag::value_1));
-        EXPECT_FALSE(f2.testFlag(enum_testFlag::value_2));
-        EXPECT_TRUE(f2.testFlag(enum_testFlag::value_3));
+        EXPECT_TRUE(f2.test_flag(enum_testFlag::value_1));
+        EXPECT_FALSE(f2.test_flag(enum_testFlag::value_2));
+        EXPECT_TRUE(f2.test_flag(enum_testFlag::value_3));
 
         enum_testFlags f3(enum_testFlag::value_3);
         f2 = f2 ^ f3;
 
-        EXPECT_TRUE(f2.testFlag(enum_testFlag::value_1));
-        EXPECT_FALSE(f2.testFlag(enum_testFlag::value_2));
-        EXPECT_FALSE(f2.testFlag(enum_testFlag::value_3));
+        EXPECT_TRUE(f2.test_flag(enum_testFlag::value_1));
+        EXPECT_FALSE(f2.test_flag(enum_testFlag::value_2));
+        EXPECT_FALSE(f2.test_flag(enum_testFlag::value_3));
     }
 }
 
@@ -256,10 +256,10 @@ TEST(EnumFlagsTest, TestFlagOperatorNot)
 
     enum_testFlags f2 = ~f1;
 
-    EXPECT_FALSE(f2.testFlag(enum_testFlag::value_1));
-    EXPECT_FALSE(f2.testFlag(enum_testFlag::value_2));
-    EXPECT_TRUE(f2.testFlag(enum_testFlag::value_3));
-    EXPECT_TRUE(f2.testFlag(enum_testFlag::value_4));
+    EXPECT_FALSE(f2.test_flag(enum_testFlag::value_1));
+    EXPECT_FALSE(f2.test_flag(enum_testFlag::value_2));
+    EXPECT_TRUE(f2.test_flag(enum_testFlag::value_3));
+    EXPECT_TRUE(f2.test_flag(enum_testFlag::value_4));
 }
 
 TEST(EnumFlagsTest, TestFlagZeroFlag)
@@ -268,17 +268,17 @@ TEST(EnumFlagsTest, TestFlagZeroFlag)
         enum_testFlags f = enum_testFlag::value_1 | enum_testFlag::value_2;
         /* enum_testFlag::value_0 has the value 0. */
 
-        EXPECT_FALSE(f.testFlag(enum_testFlag::value_0));
+        EXPECT_FALSE(f.test_flag(enum_testFlag::value_0));
     }
 
     {
         /* A zero enum set should test true with zero. */
-        EXPECT_TRUE(enum_testFlags().testFlag(enum_testFlag::value_0));
+        EXPECT_TRUE(enum_testFlags().test_flag(enum_testFlag::value_0));
     }
 
     {
         enum_testFlags f = enum_testFlag::value_0;
-        EXPECT_TRUE(f.testFlag(enum_testFlag::value_0));
+        EXPECT_TRUE(f.test_flag(enum_testFlag::value_0));
     }
 }
 
@@ -286,12 +286,12 @@ TEST(EnumFlagsTest, TestFlagMultiBits)
 {
     {
         const enum_testFlags f(enum_testFlag::value_1);
-        EXPECT_FALSE(f.testFlag(enum_testFlag::value_4));
+        EXPECT_FALSE(f.test_flag(enum_testFlag::value_4));
     }
 
     {
         const enum_testFlags f(enum_testFlag::value_14);
-        EXPECT_TRUE(f.testFlag(enum_testFlag::value_4));
+        EXPECT_TRUE(f.test_flag(enum_testFlag::value_4));
     }
 }
 
@@ -300,15 +300,15 @@ TEST(EnumFlagsTest, TestFlag)
     enum_testFlags f = enum_testFlag::value_1 | enum_testFlag::value_2;
 
 
-    EXPECT_TRUE(f.testFlag(enum_testFlag::value_1));
-    EXPECT_TRUE(f.testFlag(enum_testFlag::value_2));
-    EXPECT_FALSE(f.testFlag(enum_testFlag::value_3));
-    EXPECT_FALSE(f.testFlag(enum_testFlag::value_4));
+    EXPECT_TRUE(f.test_flag(enum_testFlag::value_1));
+    EXPECT_TRUE(f.test_flag(enum_testFlag::value_2));
+    EXPECT_FALSE(f.test_flag(enum_testFlag::value_3));
+    EXPECT_FALSE(f.test_flag(enum_testFlag::value_4));
 
     f = 0;
     // negative
-    EXPECT_FALSE(f.testFlag(enum_testFlag::value_1));
-    EXPECT_FALSE(f.testFlag(enum_testFlag::value_2));
+    EXPECT_FALSE(f.test_flag(enum_testFlag::value_1));
+    EXPECT_FALSE(f.test_flag(enum_testFlag::value_2));
 }
 
 TEST(EnumFlagsTest, ConstExpr)
@@ -359,14 +359,14 @@ TEST(EnumFlagsTest, InitializerLists)
 {
     // Use explicit OR instead of initializer list
     MockMouseButtons bts = {MockMouseButton::LeftButton, MockMouseButton::RightButton};
-    EXPECT_TRUE(bts.testFlag(MockMouseButton::LeftButton));
-    EXPECT_TRUE(bts.testFlag(MockMouseButton::RightButton));
-    EXPECT_FALSE(bts.testFlag(MockMouseButton::MiddleButton));
+    EXPECT_TRUE(bts.test_flag(MockMouseButton::LeftButton));
+    EXPECT_TRUE(bts.test_flag(MockMouseButton::RightButton));
+    EXPECT_FALSE(bts.test_flag(MockMouseButton::MiddleButton));
 
     MyStrictNoOpFlags flags = {MyStrictNoOpEnum::StrictOne, MyStrictNoOpEnum::StrictFour};
-    EXPECT_TRUE(flags.testFlag(MyStrictNoOpEnum::StrictOne));
-    EXPECT_TRUE(flags.testFlag(MyStrictNoOpEnum::StrictFour));
-    EXPECT_FALSE(flags.testFlag(MyStrictNoOpEnum::StrictTwo));
+    EXPECT_TRUE(flags.test_flag(MyStrictNoOpEnum::StrictOne));
+    EXPECT_TRUE(flags.test_flag(MyStrictNoOpEnum::StrictFour));
+    EXPECT_FALSE(flags.test_flag(MyStrictNoOpEnum::StrictTwo));
 }
 
 TEST(EnumFlagsTest, ClassEnum)
@@ -388,8 +388,8 @@ TEST(EnumFlagsTest, ClassEnum)
     MyStrictFlags f3(e2 | e1);
     EXPECT_EQ(f3, 3);
 
-    EXPECT_TRUE(f3.testFlag(MyStrictEnum::StrictOne));
-    EXPECT_TRUE(!f1.testFlag(MyStrictEnum::StrictTwo));
+    EXPECT_TRUE(f3.test_flag(MyStrictEnum::StrictOne));
+    EXPECT_TRUE(!f1.test_flag(MyStrictEnum::StrictTwo));
 
     EXPECT_TRUE(!f0);
 

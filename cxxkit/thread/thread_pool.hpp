@@ -48,7 +48,7 @@
  *
  * ThreadPool deletes the ThreadPool::Task automatically by param autoDelete is true.
  *
- * ThreadPool supports executing the same ThreadPool::Task more than once by calling tryStartNow(this) from
+ * ThreadPool supports executing the same ThreadPool::Task more than once by calling try_start_now(this) from
  * within ThreadPool::Task::run().
  * If autoDelete is enabled the ThreadPool::Task will be deleted when the last thread exits the run function.
  * Calling start() multiple times with the same ThreadPool::Task when autoDelete is enabled creates a race
@@ -56,16 +56,16 @@
  *
  * Threads that are unused for a certain amount of time will expire.
  * The default expiry timeout is 30000 milliseconds (30 seconds).
- * This can be changed using setExpiryTimeout().
+ * This can be changed using set_expiry_timeout().
  * Setting a negative expiry timeout disables the expiry mechanism.
  *
- * Call maxThreadCount() to query the maximum number of threads to be used.
- * If needed, you can change the limit with setMaxThreadCount().
- * The default maxThreadCount() is ThreadPool::idealThreadCount().
- * The activeThreadCount() function returns the number of threads currently doing work.
+ * Call max_thread_count() to query the maximum number of threads to be used.
+ * If needed, you can change the limit with set_max_thread_count().
+ * The default max_thread_count() is ThreadPool::ideal_thread_count().
+ * The active_thread_count() function returns the number of threads currently doing work.
  *
- * The reserveThread() function reserves a thread for external use.
- * Use releaseThread() when your are done with the thread, so that it may be reused.
+ * The reserve_thread() function reserves a thread for external use.
+ * Use release_thread() when your are done with the thread, so that it may be reused.
  * Essentially, these functions temporarily increase or reduce the active thread count and are useful when
  * implementing time-consuming operations that are not visible to the ThreadPool.
  *
@@ -108,28 +108,28 @@ public:
 
         virtual ~Thread();
 
-        Id threadId() const;
+        Id thread_id() const;
 
-        bool isFinished() const;
-        bool isRunning() const;
-        bool isAdopted() const;
+        bool is_finished() const;
+        bool is_running() const;
+        bool is_adopted() const;
 
         CXXKIT_STATIC_CONSTANT_NUMBER(kWaitForeverMSecs, std::numeric_limits<unsigned int>::max())
         bool wait(unsigned int msecs = kWaitForeverMSecs);
 
         static SharedPtr current() noexcept;
-        static Id currentThreadId() noexcept;
+        static Id current_thread_id() noexcept;
     };
 
     ThreadPool();
     ThreadPool(ThreadPoolPrivate *d);
     virtual ~ThreadPool() override;
 
-    static ThreadPool *defaultInstance();
+    static ThreadPool *default_instance();
 
     /**
      * Reserves a thread and uses it to run @a function, unless this thread will make the current thread count
-     * exceed maxThreadCount().  In that case, @a function is added to a run queue instead.
+     * exceed max_thread_count().  In that case, @a function is added to a run queue instead.
      * The @a priority argument can be used to control the run queue's order of execution.
      *
      * @param function
@@ -145,11 +145,11 @@ public:
      * @param function
      * @return
      */
-    bool tryStartNow(std::function<void()> function);
+    bool try_start_now(std::function<void()> function);
 
     /**
      * Reserves a thread and uses it to run @a task, unless this thread will make the current thread count exceed
-     * maxThreadCount().  In that case, @a task is added to a run queue instead. The @a priority argument can
+     * max_thread_count().  In that case, @a task is added to a run queue instead. The @a priority argument can
      * be used to control the run queue's order of execution.
      * @param task
      * @param priority
@@ -165,11 +165,11 @@ public:
      * @param task the task to run.
      * @return true if a thread was reserved and ran the task.
      */
-    bool tryStartNow(const Task::SharedPtr &task);
+    bool try_start_now(const Task::SharedPtr &task);
 
     /**
      * Reserves a thread and uses it to run @a runnable, unless this thread will make the current thread count
-     * exceed maxThreadCount().  In that case, @a runnable is added to a run queue instead.
+     * exceed max_thread_count().  In that case, @a runnable is added to a run queue instead.
      * The @a priority argument can be used to control the run queue's order of execution.
      *
      * Note that on success the thread pool takes ownership of the @a runnable if @a autoDelete is true,
@@ -181,7 +181,7 @@ public:
      */
     void start(Task *task, bool autoDelete = true, Priority priority = Priority::kNormal)
     {
-        return this->start(Task::makeShared(task, autoDelete), priority);
+        return this->start(Task::make_shared(task, autoDelete), priority);
     }
     /**
      * Attempts to reserve a thread to run @a runnable.
@@ -197,35 +197,35 @@ public:
      * @param autoDelete
      * @return
      */
-    bool tryStartNow(Task *task, bool autoDelete = true)
+    bool try_start_now(Task *task, bool autoDelete = true)
     {
-        return this->tryStartNow(Task::makeShared(task, autoDelete));
+        return this->try_start_now(Task::make_shared(task, autoDelete));
     }
 
     /**
      * This property represents the maximum number of threads used by the thread pool.
      *
-     * @note The thread pool will always use at least 1 thread, even if @a maxThreadCount limit is zero or negative.
-     * The default @a maxThreadCount is QThread::idealThreadCount().
+     * @note The thread pool will always use at least 1 thread, even if @a max_thread_count limit is zero or negative.
+     * The default @a max_thread_count is QThread::ideal_thread_count().
      * @return
      */
-    int maxThreadCount() const;
-    void setMaxThreadCount(int count);
+    int max_thread_count() const;
+    void set_max_thread_count(int count);
 
     /**
-     * Threads that are unused for @a expiryTimeout milliseconds are considered to have expired and will exit.
+     * Threads that are unused for @a expiry_timeout milliseconds are considered to have expired and will exit.
      * Such threads will be restarted as needed.
-     * The default @a expiryTimeout is 30000 milliseconds (30 seconds).
-     * If @a expiryTimeout is negative, newly created threads will not expire, e.g.,
+     * The default @a expiry_timeout is 30000 milliseconds (30 seconds).
+     * If @a expiry_timeout is negative, newly created threads will not expire, e.g.,
      * they will not exit until the thread pool is destroyed.
      *
-     * Note that setting @a expiryTimeout has no effect on already running threads.
-     * Only newly created threads will use the new @a expiryTimeout.
-     * We recommend setting the @a expiryTimeout immediately after creating the thread pool, but before calling start().
+     * Note that setting @a expiry_timeout has no effect on already running threads.
+     * Only newly created threads will use the new @a expiry_timeout.
+     * We recommend setting the @a expiry_timeout immediately after creating the thread pool, but before calling start().
      * @return
      */
-    int expiryTimeout() const;
-    void setExpiryTimeout(int msecs);
+    int expiry_timeout() const;
+    void set_expiry_timeout(int msecs);
 
     CXXKIT_STATIC_CONSTANT_NUMBER(kWaitForeverMSecs, std::numeric_limits<unsigned int>::max())
     /**
@@ -236,7 +236,7 @@ public:
      * @param msecs
      * @return
      */
-    bool waitForDone(unsigned int msecs = kWaitForeverMSecs);
+    bool wait_for_done(unsigned int msecs = kWaitForeverMSecs);
     /**
      * Removes the specified @a runnable from the queue if it is not yet started.
      * The tasks for which autoDelete set true are deleted.
@@ -251,50 +251,50 @@ public:
     void clear();
 
     /**
-     * Reserves one thread, disregarding activeThreadCount() and maxThreadCount().
-     * Once you are done with the thread, call releaseThread() to allow it to be reused.
+     * Reserves one thread, disregarding active_thread_count() and max_thread_count().
+     * Once you are done with the thread, call release_thread() to allow it to be reused.
      *
      * @note This function will always increase the number of active threads.
-     * This means that by using this function, it is possible for activeThreadCount() to return a value
-     * greater than maxThreadCount() .
+     * This means that by using this function, it is possible for active_thread_count() to return a value
+     * greater than max_thread_count() .
      *
-     * @sa releaseThread()
+     * @sa release_thread()
      */
-    void reserveThread();
+    void reserve_thread();
     /**
-     * Releases a thread previously reserved by a call to reserveThread().
-     * @note Calling this function without previously reserving a thread temporarily increases maxThreadCount().
+     * Releases a thread previously reserved by a call to reserve_thread().
+     * @note Calling this function without previously reserving a thread temporarily increases max_thread_count().
      * This is useful when athread goes to sleep waiting for more work, allowing other threads to continue.
-     * Be sure to call reserveThread() when done waiting, so that the thread pool can correctly maintain the
-     * activeThreadCount().
+     * Be sure to call reserve_thread() when done waiting, so that the thread pool can correctly maintain the
+     * active_thread_count().
      *
-     * @sa reserveThread()
+     * @sa reserve_thread()
      */
-    void releaseThread();
+    void release_thread();
 
     /**
      * This property represents the number of active threads in the thread pool.
-     * @note It is possible for this function to return a value that is greater than maxThreadCount().
-     * See reserveThread() for more details.
-     * @sa reserveThread(), releaseThread()
+     * @note It is possible for this function to return a value that is greater than max_thread_count().
+     * See reserve_thread() for more details.
+     * @sa reserve_thread(), release_thread()
      * @return
      */
-    int activeThreadCount() const;
+    int active_thread_count() const;
 
-    uint64_t taskCount() const;
+    uint64_t task_count() const;
     /**
      * This property represents the number of tasks that have been completed by the thread pool.
      * @return
      */
-    uint64_t tasksCompletedCount() const;
+    uint64_t tasks_completed_count() const;
     /**
      * This property represents the number of tasks that have been dispatched by the thread pool.
      * @return
      */
-    uint64_t tasksDispatchedCount() const;
+    uint64_t tasks_dispatched_count() const;
 
 
-    static int idealThreadCount();
+    static int ideal_thread_count();
 
 protected:
     CXXKIT_DEFINE_DPTR(ThreadPool)

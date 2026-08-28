@@ -95,12 +95,12 @@ TEST(TaskQueueThreadTest, PostDelayedTask)
     std::mutex mutex;
     ElapsedTimer timer;
     std::condition_variable condition;
-    auto taskQueueThread = TaskQueueThread::makeShared();
+    auto taskQueueThread = TaskQueueThread::make_shared();
     timer.start();
-    taskQueueThread->postDelayedTask(
+    taskQueueThread->post_delayed_task(
         [taskQueueThread, &condition]()
         {
-            EXPECT_TRUE(taskQueueThread->isCurrent());
+            EXPECT_TRUE(taskQueueThread->is_current());
             condition.notify_one();
         },
         TimeDelta::Millis(3));
@@ -117,15 +117,15 @@ TEST(RepeatingTaskTest, CancelDelayedTaskBeforeItRuns)
     MockClosure mock;
     EXPECT_CALL(mock, Call).Times(0);
     EXPECT_CALL(mock, Delete).WillOnce(Invoke([&done] { done.release(); }));
-    auto taskQueueThread = TaskQueueThread::makeShared();
-    auto handle = RepeatingTaskHandle::delayedStart(taskQueueThread.get(),
+    auto taskQueueThread = TaskQueueThread::make_shared();
+    auto handle = RepeatingTaskHandle::delayed_start(taskQueueThread.get(),
                                                     TimeDelta::Millis(100),
                                                     MoveOnlyClosure(&mock));
     {
-        auto handleMove = utils::makeMoveWrapper(std::move(handle));
-        taskQueueThread->postTask([handleMove]() mutable { handleMove.move().stop(); });
+        auto handleMove = utils::make_move_wrapper(std::move(handle));
+        taskQueueThread->post_task([handleMove]() mutable { handleMove.move().stop(); });
     }
-    EXPECT_TRUE(done.tryAcquireFor(1, std::chrono::microseconds(kTimeout.us())));
+    EXPECT_TRUE(done.try_acquire_for(1, std::chrono::microseconds(kTimeout.us())));
 }
 
 TEST(RepeatingTaskTest, CancelTaskAfterItRuns)
@@ -134,13 +134,13 @@ TEST(RepeatingTaskTest, CancelTaskAfterItRuns)
     MockClosure mock;
     EXPECT_CALL(mock, Call).WillOnce(Return(TimeDelta::Millis(100)));
     EXPECT_CALL(mock, Delete).WillOnce(Invoke([&done] { done.release(); }));
-    auto taskQueueThread = TaskQueueThread::makeShared();
+    auto taskQueueThread = TaskQueueThread::make_shared();
     auto handle = RepeatingTaskHandle::start(taskQueueThread.get(), MoveOnlyClosure(&mock));
     {
-        auto handleMove = utils::makeMoveWrapper(std::move(handle));
-        taskQueueThread->postTask([handleMove]() mutable { handleMove.move().stop(); });
+        auto handleMove = utils::make_move_wrapper(std::move(handle));
+        taskQueueThread->post_task([handleMove]() mutable { handleMove.move().stop(); });
     }
-    EXPECT_TRUE(done.tryAcquireFor(1, std::chrono::microseconds(kTimeout.us())));
+    EXPECT_TRUE(done.try_acquire_for(1, std::chrono::microseconds(kTimeout.us())));
 }
 
 TEST(RepeatingTaskTest, ZeroReturnValueRepostsTheTask)
@@ -156,10 +156,10 @@ TEST(RepeatingTaskTest, ZeroReturnValueRepostsTheTask)
                 done.release();
                 return TimeDelta::PlusInfinity();
             }));
-    auto taskQueueThread = TaskQueueThread::makeShared();
+    auto taskQueueThread = TaskQueueThread::make_shared();
     timer.start();
     RepeatingTaskHandle::start(taskQueueThread.get(), MoveOnlyClosure(&closure));
-    EXPECT_TRUE(done.tryAcquireFor(1, std::chrono::microseconds(kTimeout.us()))) << "elapsed:" << timer.elapsed();
+    EXPECT_TRUE(done.try_acquire_for(1, std::chrono::microseconds(kTimeout.us()))) << "elapsed:" << timer.elapsed();
 }
 
 TEST(RepeatingTaskTest, StartPeriodicTask)
@@ -175,9 +175,9 @@ TEST(RepeatingTaskTest, StartPeriodicTask)
                 done.release();
                 return TimeDelta::PlusInfinity();
             }));
-    auto taskQueueThread = TaskQueueThread::makeShared();
+    auto taskQueueThread = TaskQueueThread::make_shared();
     RepeatingTaskHandle::start(taskQueueThread.get(), closure.AsStdFunction());
-    EXPECT_TRUE(done.tryAcquireFor(1, std::chrono::microseconds(kTimeout.us())));
+    EXPECT_TRUE(done.try_acquire_for(1, std::chrono::microseconds(kTimeout.us())));
 }
 
 TEST(RepeatingTaskTest, Example)
@@ -197,27 +197,27 @@ TEST(RepeatingTaskTest, Example)
                                                  });
         }
     };
-    auto taskQueueThread = TaskQueueThread::makeShared();
+    auto taskQueueThread = TaskQueueThread::make_shared();
     auto object = utils::make_unique<ObjectOnTaskQueue>();
     // Create and start the periodic task.
     RepeatingTaskHandle handle;
     object->StartPeriodicTask(&handle, taskQueueThread.get());
     // Restart the task
     {
-        auto handleMove = utils::makeMoveWrapper(std::move(handle));
-        taskQueueThread->postTask([handleMove]() mutable { handleMove.move().stop(); });
+        auto handleMove = utils::make_move_wrapper(std::move(handle));
+        taskQueueThread->post_task([handleMove]() mutable { handleMove.move().stop(); });
     }
     object->StartPeriodicTask(&handle, taskQueueThread.get());
     {
-        auto handleMove = utils::makeMoveWrapper(std::move(handle));
-        taskQueueThread->postTask([handleMove]() mutable { handleMove.move().stop(); });
+        auto handleMove = utils::make_move_wrapper(std::move(handle));
+        taskQueueThread->post_task([handleMove]() mutable { handleMove.move().stop(); });
     }
     struct Destructor
     {
         void operator()() { object.reset(); }
         std::unique_ptr<ObjectOnTaskQueue> object;
     };
-    taskQueueThread->postTask(Destructor{std::move(object)});
+    taskQueueThread->post_task(Destructor{std::move(object)});
     // Do not wait for the destructor closure in order to create a race between
     // task queue destruction and running the desctructor closure.
 }
@@ -232,16 +232,16 @@ TEST(SafetyFlagTest, Basic)
         {
         public:
             Owner() = default;
-            ~Owner() { mFlag->setNotAlive(); }
+            ~Owner() { mFlag->set_not_alive(); }
 
             TaskQueueBase::SafetyFlag::SharedPtr mFlag = TaskQueueBase::SafetyFlag::create();
         } owner;
-        EXPECT_TRUE(owner.mFlag->isAlive());
+        EXPECT_TRUE(owner.mFlag->is_alive());
         safetyFlag = owner.mFlag;
-        EXPECT_TRUE(safetyFlag->isAlive());
+        EXPECT_TRUE(safetyFlag->is_alive());
     }
     // `owner` now out of scope.
-    EXPECT_FALSE(safetyFlag->isAlive());
+    EXPECT_FALSE(safetyFlag->is_alive());
 }
 
 TEST(SafetyFlagTest, BasicScoped)
@@ -253,16 +253,16 @@ TEST(SafetyFlagTest, BasicScoped)
             TaskQueueBase::SafetyFlag::Scoped safety;
         } owner;
         safetyFlag = owner.safety.flag();
-        EXPECT_TRUE(safetyFlag->isAlive());
+        EXPECT_TRUE(safetyFlag->is_alive());
     }
     // `owner` now out of scope.
-    EXPECT_FALSE(safetyFlag->isAlive());
+    EXPECT_FALSE(safetyFlag->is_alive());
 }
 
 TEST(SafetyFlagTest, PendingTaskSuccess)
 {
-    auto tq1 = TaskQueueThread::makeShared();
-    auto tq2 = TaskQueueThread::makeShared();
+    auto tq1 = TaskQueueThread::make_shared();
+    auto tq2 = TaskQueueThread::make_shared();
 
     class Owner
     {
@@ -274,18 +274,18 @@ TEST(SafetyFlagTest, PendingTaskSuccess)
         }
         ~Owner()
         {
-            CXXKIT_DCHECK(mTaskQueue->isCurrent());
-            mFlag->setNotAlive();
+            CXXKIT_DCHECK(mTaskQueue->is_current());
+            mFlag->set_not_alive();
         }
 
         void DoStuff()
         {
-            CXXKIT_DCHECK(!mTaskQueue->isCurrent());
+            CXXKIT_DCHECK(!mTaskQueue->is_current());
             TaskQueueBase::SafetyFlag::SharedPtr safe = mFlag;
-            mTaskQueue->postTask(
+            mTaskQueue->post_task(
                 [safe, this]()
                 {
-                    if (!safe->isAlive())
+                    if (!safe->is_alive())
                     {
                         return;
                     }
@@ -303,7 +303,7 @@ TEST(SafetyFlagTest, PendingTaskSuccess)
 
     Semaphore blocker;
     std::unique_ptr<Owner> owner;
-    tq1->postTask(
+    tq1->post_task(
         [&owner, &blocker]()
         {
             owner = std::make_unique<Owner>();
@@ -313,14 +313,14 @@ TEST(SafetyFlagTest, PendingTaskSuccess)
     blocker.acquire();
     ASSERT_TRUE(owner);
     ASSERT_EQ(blocker.available(), 0);
-    tq2->postTask(
+    tq2->post_task(
         [&owner, &blocker]()
         {
             owner->DoStuff();
             blocker.release();
         });
     blocker.acquire(); // wait owner->DoStuff();
-    tq1->postTask(
+    tq1->post_task(
         [&owner, &blocker]()
         {
             EXPECT_TRUE(owner->stuff_done());
@@ -333,8 +333,8 @@ TEST(SafetyFlagTest, PendingTaskSuccess)
 
 TEST(SafetyFlagTest, PendingTaskDropped)
 {
-    auto tq1 = TaskQueueThread::makeShared();
-    auto tq2 = TaskQueueThread::makeShared();
+    auto tq1 = TaskQueueThread::make_shared();
+    auto tq2 = TaskQueueThread::make_shared();
 
     class Owner
     {
@@ -346,12 +346,12 @@ TEST(SafetyFlagTest, PendingTaskDropped)
             CXXKIT_DCHECK(mTaskQueue);
             *mStuffDone = false;
         }
-        ~Owner() { CXXKIT_DCHECK(mTaskQueue->isCurrent()); }
+        ~Owner() { CXXKIT_DCHECK(mTaskQueue->is_current()); }
 
         void DoStuff()
         {
-            CXXKIT_DCHECK(!mTaskQueue->isCurrent());
-            mTaskQueue->postTask(TaskQueueThread::createSafeTask(mSafety.flag(), [this]() { *mStuffDone = true; }));
+            CXXKIT_DCHECK(!mTaskQueue->is_current());
+            mTaskQueue->post_task(TaskQueueThread::create_safe_task(mSafety.flag(), [this]() { *mStuffDone = true; }));
         }
 
     private:
@@ -363,7 +363,7 @@ TEST(SafetyFlagTest, PendingTaskDropped)
     std::unique_ptr<Owner> owner;
     bool stuff_done = false;
     Semaphore blocker;
-    tq1->postTask(
+    tq1->post_task(
         [&owner, &stuff_done, &blocker]()
         {
             owner = std::make_unique<Owner>(&stuff_done);
@@ -375,7 +375,7 @@ TEST(SafetyFlagTest, PendingTaskDropped)
 
     // Queue up a task on tq1 that will execute before the 'DoStuff' task
     // can, and delete the `owner` before the 'stuff' task can execute.
-    tq1->postTask(
+    tq1->post_task(
         [&blocker, &owner]()
         {
             blocker.acquire(); // wait owner->DoStuff();
@@ -384,7 +384,7 @@ TEST(SafetyFlagTest, PendingTaskDropped)
         });
 
     // Queue up a DoStuff...
-    tq2->postTask(
+    tq2->post_task(
         [&owner, &blocker]()
         {
             owner->DoStuff();
@@ -401,24 +401,24 @@ TEST(SafetyFlagTest, PendingTaskDropped)
 
 TEST(SafetyFlagTest, PendingTaskNotAliveInitialized)
 {
-    auto tq = TaskQueueThread::makeShared();
+    auto tq = TaskQueueThread::make_shared();
 
     // Create a new flag that initially not `alive`.
-    auto flag = TaskQueueThread::SafetyFlag::createDetachedInactive();
-    tq->postTask([flag]() { EXPECT_FALSE(flag->isAlive()); });
+    auto flag = TaskQueueThread::SafetyFlag::create_detached_inactive();
+    tq->post_task([flag]() { EXPECT_FALSE(flag->is_alive()); });
 
     bool task_1_ran = false;
     bool task_2_ran = false;
     Semaphore blocker;
-    tq->postTask(TaskQueueThread::createSafeTask(flag, [&task_1_ran]() { task_1_ran = true; }));
-    tq->postTask(
+    tq->post_task(TaskQueueThread::create_safe_task(flag, [&task_1_ran]() { task_1_ran = true; }));
+    tq->post_task(
         [&flag, &blocker]()
         {
-            flag->setAlive();
+            flag->set_alive();
             blocker.release(); // notify post task_2_ran = true; task
         });
-    blocker.acquire(); // wait flag->setAlive();
-    tq->postTask(TaskQueueThread::createSafeTask(flag,
+    blocker.acquire(); // wait flag->set_alive();
+    tq->post_task(TaskQueueThread::create_safe_task(flag,
                                                  [&task_2_ran, &blocker]()
                                                  {
                                                      task_2_ran = true;
@@ -431,14 +431,14 @@ TEST(SafetyFlagTest, PendingTaskNotAliveInitialized)
 
 TEST(SafetyFlagTest, PendingTaskInitializedForTaskQueue)
 {
-    auto tq = TaskQueueThread::makeShared();
+    auto tq = TaskQueueThread::make_shared();
 
     // Create a new flag that initially `alive`, attached to a specific TQ.
-    auto flag = TaskQueueThread::SafetyFlag::createAttachedToTaskQueue(true, tq.get());
-    tq->postTask([flag]() { EXPECT_TRUE(flag->isAlive()); });
+    auto flag = TaskQueueThread::SafetyFlag::create_attached_to_task_queue(true, tq.get());
+    tq->post_task([flag]() { EXPECT_TRUE(flag->is_alive()); });
     // Repeat the same steps but initialize as inactive.
-    flag = TaskQueueThread::SafetyFlag::createAttachedToTaskQueue(false, tq.get());
-    tq->postTask([flag]() { EXPECT_FALSE(flag->isAlive()); });
+    flag = TaskQueueThread::SafetyFlag::create_attached_to_task_queue(false, tq.get());
+    tq->post_task([flag]() { EXPECT_FALSE(flag->is_alive()); });
 }
 
 TEST(SafetyFlagTest, SafeTask)
@@ -447,13 +447,13 @@ TEST(SafetyFlagTest, SafeTask)
 
     int count = 0;
     // Create two identical tasks that increment the `count`.
-    auto task1 = TaskQueueBase::createSafeTask(flag, [&count] { ++count; });
-    auto task2 = TaskQueueBase::createSafeTask(flag, [&count] { ++count; });
+    auto task1 = TaskQueueBase::create_safe_task(flag, [&count] { ++count; });
+    auto task2 = TaskQueueBase::create_safe_task(flag, [&count] { ++count; });
 
     EXPECT_EQ(count, 0);
     task1->run();
     EXPECT_EQ(count, 1);
-    flag->setNotAlive();
+    flag->set_not_alive();
     // Now task2 should actually not run.
     task2->run();
     EXPECT_EQ(count, 1);

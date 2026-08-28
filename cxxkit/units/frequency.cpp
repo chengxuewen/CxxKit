@@ -28,7 +28,7 @@
 #include <string>
 
 CXXKIT_BEGIN_NAMESPACE
-std::string toString(Frequency value)
+std::string to_string(Frequency value)
 {
     std::stringstream ss;
     if (value.IsPlusInfinity())

@@ -39,31 +39,31 @@ CXXKIT_BEGIN_NAMESPACE
 
 namespace detail
 {
-static inline std::mutex &loggersMapMutex()
+static inline std::mutex &loggers_map_mutex()
 {
     static std::mutex mutex;
     return mutex;
 }
 
-static inline std::unordered_map<int, Logger::Pointer> &loggersIdMap()
+static inline std::unordered_map<int, Logger::Pointer> &loggers_id_map()
 {
     static std::unordered_map<int, Logger::Pointer> map;
     return map;
 }
 
-static inline std::unordered_map<std::string, Logger::Pointer> &loggersNameMap()
+static inline std::unordered_map<std::string, Logger::Pointer> &loggers_name_map()
 {
     static std::unordered_map<std::string, Logger::Pointer> map;
     return map;
 }
 
-static inline std::atomic<int> &loggerIdNumberCounter()
+static inline std::atomic<int> &logger_id_number_counter()
 {
     static std::atomic<int> counter{0};
     return counter;
 }
 
-static inline std::string currentThreadIdString()
+static inline std::string current_thread_id_string()
 {
     std::stringstream ss;
     ss << std::this_thread::get_id();
@@ -73,20 +73,20 @@ static inline std::string currentThreadIdString()
 
 LoggerPrivate::LoggerPrivate(Logger *p, const char *name)
     : mPPtr(p)
-    , mIdNumber(detail::loggerIdNumberCounter().fetch_add(1))
+    , mIdNumber(detail::logger_id_number_counter().fetch_add(1))
     , mName(name)
     , mNoSource(false)
 {
-    std::lock_guard<std::mutex> locker(detail::loggersMapMutex());
-    detail::loggersIdMap().emplace(mIdNumber, p);
-    detail::loggersNameMap().emplace(name, p);
+    std::lock_guard<std::mutex> locker(detail::loggers_map_mutex());
+    detail::loggers_id_map().emplace(mIdNumber, p);
+    detail::loggers_name_map().emplace(name, p);
 }
 
 LoggerPrivate::~LoggerPrivate()
 {
 }
 
-bool LoggerPrivate::messageHandlerOutput(const Context &context, const char *message)
+bool LoggerPrivate::message_handler_output(const Context &context, const char *message)
 {
     const auto handlerWraper = mMessageHandlerWraper.load();
     if (handlerWraper)
@@ -108,7 +108,7 @@ Logger::Logger(const char *name, LogLevel defaultLevel)
     mDPtr->mLogger->set_pattern("[%Y-%m-%d %H:%M:%S.%e] [%n] [%^%l%$] <%t> [%s:%#] %v");
     mDPtr->mLogger->set_level(spdlog::level::trace);
     mDPtr->mLogger->flush_on(spdlog::level::debug);
-    this->switchLevel(defaultLevel);
+    this->switch_level(defaultLevel);
 }
 
 Logger::Logger(LoggerPrivate *d)
@@ -120,44 +120,44 @@ Logger::~Logger()
 {
 }
 
-Logger::Pointer Logger::logger(int idNumber)
+Logger::Pointer Logger::logger(int id_number)
 {
-    std::lock_guard<std::mutex> locker(detail::loggersMapMutex());
-    const auto iter = detail::loggersIdMap().find(idNumber);
-    return detail::loggersIdMap().end() != iter ? iter->second : nullptr;
+    std::lock_guard<std::mutex> locker(detail::loggers_map_mutex());
+    const auto iter = detail::loggers_id_map().find(id_number);
+    return detail::loggers_id_map().end() != iter ? iter->second : nullptr;
 }
 
 Logger::Pointer Logger::logger(const char *name)
 {
-    std::lock_guard<std::mutex> locker(detail::loggersMapMutex());
-    const auto iter = detail::loggersNameMap().find(name);
-    return detail::loggersNameMap().end() != iter ? iter->second : nullptr;
+    std::lock_guard<std::mutex> locker(detail::loggers_map_mutex());
+    const auto iter = detail::loggers_name_map().find(name);
+    return detail::loggers_name_map().end() != iter ? iter->second : nullptr;
 }
 
-int Logger::loggerIdNumber(const char *name)
+int Logger::logger_id_number(const char *name)
 {
     auto logger = Logger::logger(name);
-    return logger ? logger->idNumber() : -1;
+    return logger ? logger->id_number() : -1;
 }
 
-const char *Logger::loggerName(int idNumber)
+const char *Logger::logger_name(int id_number)
 {
-    auto logger = Logger::logger(idNumber);
+    auto logger = Logger::logger(id_number);
     return logger ? logger->name() : nullptr;
 }
 
-std::vector<Logger::Pointer> Logger::allLoggers()
+std::vector<Logger::Pointer> Logger::all_loggers()
 {
     std::vector<Logger::Pointer> loggers;
-    std::lock_guard<std::mutex> locker(detail::loggersMapMutex());
-    std::transform(detail::loggersNameMap().begin(),
-                   detail::loggersNameMap().end(),
+    std::lock_guard<std::mutex> locker(detail::loggers_map_mutex());
+    std::transform(detail::loggers_name_map().begin(),
+                   detail::loggers_name_map().end(),
                    std::back_inserter(loggers),
                    [](const std::pair<std::string, Logger::Pointer> &pair) { return pair.second; });
     return loggers;
 }
 
-int Logger::idNumber() const
+int Logger::id_number() const
 {
     CXXKIT_D(const Logger);
     return d->mIdNumber;
@@ -169,19 +169,19 @@ const char *Logger::name() const
     return d->mName;
 }
 
-bool Logger::isNoSource() const
+bool Logger::is_no_source() const
 {
     CXXKIT_D(const Logger);
     return d->mNoSource;
 }
 
-void Logger::setNoSource(bool noSource)
+void Logger::set_no_source(bool noSource)
 {
     CXXKIT_D(Logger);
     d->mNoSource = noSource;
 }
 
-void Logger::switchLevel(LogLevel level)
+void Logger::switch_level(LogLevel level)
 {
     CXXKIT_D(Logger);
     for (size_t i = 0; i < kLogLevelNum; i++)
@@ -190,13 +190,13 @@ void Logger::switchLevel(LogLevel level)
     }
 }
 
-bool Logger::isLevelEnabled(LogLevel level) const
+bool Logger::is_level_enabled(LogLevel level) const
 {
     CXXKIT_D(const Logger);
     return d->mLevelEnabled[(int)level].load();
 }
 
-void Logger::setLevelEnable(LogLevel level, bool enable)
+void Logger::set_level_enable(LogLevel level, bool enable)
 {
     CXXKIT_D(Logger);
     d->mLevelEnabled[(int)level].store(enable);
@@ -205,7 +205,7 @@ void Logger::setLevelEnable(LogLevel level, bool enable)
 void Logger::output(const Context &context, const char *message)
 {
     CXXKIT_D(Logger);
-    if (!d->messageHandlerOutput(context, message))
+    if (!d->message_handler_output(context, message))
     {
         if (d->mNoSource)
         {
@@ -213,14 +213,14 @@ void Logger::output(const Context &context, const char *message)
         }
         else
         {
-            d->mLogger->log(spdlog::source_loc{context.filePath, context.line, context.funcName},
+            d->mLogger->log(spdlog::source_loc{context.file_path, context.line, context.funcName},
                             static_cast<spdlog::level::level_enum>(context.level),
                             message);
         }
     }
     if (LogLevel::Fatal == context.level)
     {
-        this->fatalAbort();
+        this->fatal_abort();
     }
 }
 
@@ -229,7 +229,7 @@ void Logger::vlogging(const Context &context, const char *format, va_list args)
     CXXKIT_D(Logger);
     char message[CXXKIT_LOGGING_BUFFER_SIZE_MAX] = {0};
     std::vsnprintf(message, CXXKIT_LOGGING_BUFFER_SIZE_MAX, format, args);
-    if (!d->messageHandlerOutput(context, message))
+    if (!d->message_handler_output(context, message))
     {
         if (d->mNoSource)
         {
@@ -237,18 +237,18 @@ void Logger::vlogging(const Context &context, const char *format, va_list args)
         }
         else
         {
-            d->mLogger->log(spdlog::source_loc{context.filePath, context.line, context.funcName},
+            d->mLogger->log(spdlog::source_loc{context.file_path, context.line, context.funcName},
                             static_cast<spdlog::level::level_enum>(context.level),
                             message);
         }
     }
     if (LogLevel::Fatal == context.level)
     {
-        this->fatalAbort();
+        this->fatal_abort();
     }
 }
 
-void Logger::installMessageHandler(const MessageHandler &handler, bool uniqueOwnership)
+void Logger::install_message_handler(const MessageHandler &handler, bool uniqueOwnership)
 {
     CXXKIT_D(Logger);
     auto newWraper = handler ? new LoggerPrivate::MessageHandlerWraper(handler) : nullptr;
@@ -260,7 +260,7 @@ void Logger::installMessageHandler(const MessageHandler &handler, bool uniqueOwn
     }
 }
 
-void Logger::fatalAbort()
+void Logger::fatal_abort()
 {
 #ifdef CXXKIT_OS_WIN32
     DebugBreak();

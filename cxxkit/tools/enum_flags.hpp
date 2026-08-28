@@ -318,13 +318,13 @@ public:
      *
      * @return `true`, when the flag is set, otherwise `false`.
      */
-    CXXKIT_CONSTEXPR inline bool testFlag(Enum flag) const CXXKIT_NOEXCEPT
+    CXXKIT_CONSTEXPR inline bool test_flag(Enum flag) const CXXKIT_NOEXCEPT
     {
         return ((mValue & static_cast<Value>(flag)) == static_cast<Value>(flag) &&
                 (static_cast<Value>(flag) != 0 || mValue == static_cast<Value>(flag)));
     }
 
-    CXXKIT_CONSTEXPR inline EnumFlags &setFlag(Enum flag, bool on = true) CXXKIT_NOEXCEPT
+    CXXKIT_CONSTEXPR inline EnumFlags &set_flag(Enum flag, bool on = true) CXXKIT_NOEXCEPT
     {
         return on ? (*this |= flag) : (*this &= ~Int(flag));
     }

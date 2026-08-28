@@ -33,16 +33,16 @@ CXXKIT_BEGIN_NAMESPACE
 struct SourceLocation
 {
 public:
-    static constexpr SourceLocation current(const char *functionName = __builtin_FUNCTION(),
-                                            const char *filePath = __builtin_FILE(),
-                                            int lineNumber = __builtin_LINE()) noexcept
+    static constexpr SourceLocation current(const char *function_name = __builtin_FUNCTION(),
+                                            const char *file_path = __builtin_FILE(),
+                                            int line_number = __builtin_LINE()) noexcept
     {
-        return SourceLocation(functionName, filePath, lineNumber);
+        return SourceLocation(function_name, file_path, line_number);
     }
-    constexpr SourceLocation(const char *functionName, const char *filePath, int lineNumber) noexcept
-        : mFunctionName(functionName)
-        , mFilePath(filePath)
-        , mLineNumber(lineNumber)
+    constexpr SourceLocation(const char *function_name, const char *file_path, int line_number) noexcept
+        : mFunctionName(function_name)
+        , mFilePath(file_path)
+        , mLineNumber(line_number)
     {
     }
 
@@ -51,12 +51,12 @@ public:
     constexpr SourceLocation(SourceLocation &&other) noexcept = default;
     SourceLocation &operator=(const SourceLocation &other) noexcept = default;
 
-    std::string fileLine() const noexcept { return std::string(this->fileName()) + ":" + std::to_string(mLineNumber); }
-    std::string toString() const { return std::string(mFunctionName) + "@" + this->fileLine(); }
-    constexpr const char *functionName() const noexcept { return mFunctionName; }
-    const char *fileName() const noexcept { return CXXKIT_PATH_NAME(mFilePath); }
-    constexpr const char *filePath() const noexcept { return mFilePath; }
-    constexpr int lineNumber() const noexcept { return mLineNumber; }
+    std::string file_line() const noexcept { return std::string(this->file_name()) + ":" + std::to_string(mLineNumber); }
+    std::string to_string() const { return std::string(mFunctionName) + "@" + this->file_line(); }
+    constexpr const char *function_name() const noexcept { return mFunctionName; }
+    const char *file_name() const noexcept { return CXXKIT_PATH_NAME(mFilePath); }
+    constexpr const char *file_path() const noexcept { return mFilePath; }
+    constexpr int line_number() const noexcept { return mLineNumber; }
 
 private:
     const char *mFunctionName = nullptr;

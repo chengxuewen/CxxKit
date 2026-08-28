@@ -47,17 +47,17 @@ EventLoop::~EventLoop()
 {
 }
 
-bool EventLoop::isRunning() const
+bool EventLoop::is_running() const
 {
     CXXKIT_D(const EventLoop);
     return !d->mExit.load();
 }
 
-void EventLoop::processEvents(ProcessFlags flags, int maximumTime)
+void EventLoop::process_events(ProcessFlags flags, int maximumTime)
 {
 }
 
-bool EventLoop::processEvents(ProcessFlags flags)
+bool EventLoop::process_events(ProcessFlags flags)
 {
     CXXKIT_D(EventLoop);
     // auto threadData = d->threadData.loadRelaxed();
@@ -65,7 +65,7 @@ bool EventLoop::processEvents(ProcessFlags flags)
     // {
     //     return false;
     // }
-    // return threadData->eventDispatcher.loadRelaxed()->processEvents(flags);
+    // return threadData->eventDispatcher.loadRelaxed()->process_events(flags);
     return false;
 }
 
@@ -80,13 +80,13 @@ int EventLoop::exec(ProcessFlags flags)
 
     while (!d->mExit.load())
     {
-        this->processEvents(flags | ProcessFlag::kWaitForMoreEvents | ProcessFlag::kEventLoopExec);
+        this->process_events(flags | ProcessFlag::kWaitForMoreEvents | ProcessFlag::kEventLoopExec);
     }
 
     return d->mRetCode.load();
 }
 
-void EventLoop::wakeUp()
+void EventLoop::wake_up()
 {
 }
 

@@ -73,11 +73,11 @@ public:
 
     void leave() { mState.exchange(State::Done); }
 
-    bool isDone() const { return State::Done == mState.load(); }
-    bool isInProcess() const { return State::InProcess == mState.load(); }
-    bool isNeverCalled() const { return State::NeverCalled == mState.load(); }
+    bool is_done() const { return State::Done == mState.load(); }
+    bool is_in_process() const { return State::InProcess == mState.load(); }
+    bool is_never_called() const { return State::NeverCalled == mState.load(); }
 
-    static OnceFlag *localOnceFlag();
+    static OnceFlag *local_once_flag();
 
 protected:
     std::atomic<State> mState{State::NeverCalled};
@@ -102,14 +102,14 @@ public:
 namespace utils
 {
 template <typename Func>
-bool callOnce(OnceFlag &flag, Func func)
+bool call_once(OnceFlag &flag, Func func)
 {
     return flag.call(std::move(func));
 }
 template <typename Func>
-void callOncePerThread(Func func)
+void call_once_per_thread(Func func)
 {
-    callOnce(*OnceFlag::localOnceFlag(), func);
+    call_once(*OnceFlag::local_once_flag(), func);
 }
 } // namespace utils
 

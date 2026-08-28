@@ -47,12 +47,12 @@ public:
     explicit ContextChecker(TaskQueueBase *attachedTaskQueue);
     virtual ~ContextChecker();
 
-    static std::string expectationToString(const ContextChecker *checker);
+    static std::string expectation_to_string(const ContextChecker *checker);
 
     /**
      * Returns true if sequence checker is attached to the current sequence.
      */
-    bool isCurrent() const;
+    bool is_current() const;
 
     /**
      * Detaches checker from sequence to which it is attached. Next attempt to do a check with this
@@ -82,5 +82,5 @@ CXXKIT_END_NAMESPACE
  * @param x
  */
 #define CXXKIT_DCHECK_RUN_ON(x)                                                                                        \
-    CXXKIT_DCHECK((x)->isCurrent()) << "\n" << ContextChecker::expectationToString(x);                                 \
+    CXXKIT_DCHECK((x)->is_current()) << "\n" << ContextChecker::expectation_to_string(x);                                 \
     []() CXXKIT_ATTRIBUTE_ASSERT_EXCLUSIVE_LOCK(x) {}()

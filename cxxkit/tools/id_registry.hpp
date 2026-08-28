@@ -37,12 +37,12 @@ public:
     IdRegistry();
     virtual ~IdRegistry();
 
-    int64_t registeredIdCount() const;
-    bool isIdRegistered(int64_t id) const;
+    int64_t registered_id_count() const;
+    bool is_id_registered(int64_t id) const;
 
-    int64_t requestId();
-    void registerId(int64_t id);
-    void unregisterId(int64_t id);
+    int64_t request_id();
+    void register_id(int64_t id);
+    void unregister_id(int64_t id);
 
 protected:
     CXXKIT_DEFINE_DPTR(IdRegistry)

@@ -45,25 +45,25 @@ protected:
     TaskQueueThread();
 
 public:
-    static SharedPtr makeShared();
-    static UniquePtr makeUnique();
-    static SharedPtr create() { return makeShared(); }
+    static SharedPtr make_shared();
+    static UniquePtr make_unique();
+    static SharedPtr create() { return make_shared(); }
 
     ~TaskQueueThread() override;
 
     void destroy() override;
-    bool cancelTask(const Task *task) override;
+    bool cancel_task(const Task *task) override;
 
-    using TaskQueueBase::postTask;
-    void postTask(const Task::SharedPtr &task, const SourceLocation &location = SourceLocation::current()) override;
-    using TaskQueueBase::postDelayedTask;
-    void postDelayedTask(const Task::SharedPtr &task,
+    using TaskQueueBase::post_task;
+    void post_task(const Task::SharedPtr &task, const SourceLocation &location = SourceLocation::current()) override;
+    using TaskQueueBase::post_delayed_task;
+    void post_delayed_task(const Task::SharedPtr &task,
                          const TimeDelta &delay,
                          const SourceLocation &location = SourceLocation::current()) override;
 
 protected:
-    NextTask popNextTask();
-    void processTasks();
+    NextTask pop_next_task();
+    void process_tasks();
 
     CXXKIT_DEFINE_DPTR(TaskQueueThread)
     CXXKIT_DECLARE_PRIVATE(TaskQueueThread)

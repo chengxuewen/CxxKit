@@ -57,7 +57,7 @@ Object *Object::parent() const
     return d->mParent;
 }
 
-void Object::setParent(Object *parent)
+void Object::set_parent(Object *parent)
 {
     CXXKIT_D(Object);
     d->mParent = parent;
@@ -75,7 +75,7 @@ bool Object::event(Event *event)
     {
         case Event::Type::kTimer:
         {
-            this->timerEvent(dynamic_cast<TimerEvent *>(event));
+            this->timer_event(dynamic_cast<TimerEvent *>(event));
             break;
         }
 
@@ -83,7 +83,7 @@ bool Object::event(Event *event)
         case Event::Type::kChildPolished:
         case Event::Type::kChildRemoved:
         {
-            this->childEvent(dynamic_cast<ChildEvent *>(event));
+            this->child_event(dynamic_cast<ChildEvent *>(event));
             break;
         }
         case Event::Type::kDeferredDelete:
@@ -99,7 +99,7 @@ bool Object::event(Event *event)
         default:
             if (event->type() >= Event::Type::kUser)
             {
-                this->customEvent(event);
+                this->custom_event(event);
                 break;
             }
             return false;
@@ -107,24 +107,24 @@ bool Object::event(Event *event)
     return true;
 }
 
-bool Object::eventFilter(Object *watched, Event *event)
+bool Object::event_filter(Object *watched, Event *event)
 {
     CXXKIT_UNUSED(watched);
     CXXKIT_UNUSED(event);
     return false;
 }
 
-void Object::timerEvent(TimerEvent *event)
+void Object::timer_event(TimerEvent *event)
 {
     CXXKIT_UNUSED(event);
 }
 
-void Object::childEvent(ChildEvent *event)
+void Object::child_event(ChildEvent *event)
 {
     CXXKIT_UNUSED(event);
 }
 
-void Object::customEvent(Event *event)
+void Object::custom_event(Event *event)
 {
     CXXKIT_UNUSED(event);
 }

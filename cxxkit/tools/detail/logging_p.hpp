@@ -54,7 +54,7 @@ public:
     LoggerPrivate(Logger *p, const char *name);
     virtual ~LoggerPrivate();
 
-    bool messageHandlerOutput(const Context &context, const char *message);
+    bool message_handler_output(const Context &context, const char *message);
 
     bool mNoSource;
     const int mIdNumber;

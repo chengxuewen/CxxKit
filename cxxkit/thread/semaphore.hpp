@@ -112,7 +112,7 @@ public:
         mCount -= n;
     }
 
-    bool tryAcquire(std::ptrdiff_t n = 1)
+    bool try_acquire(std::ptrdiff_t n = 1)
     {
         Lock lock{mMutex};
         if (mCount < n)
@@ -123,22 +123,22 @@ public:
         return true;
     }
     CXXKIT_STATIC_CONSTANT_NUMBER(kWaitForeverMSecs, std::numeric_limits<unsigned int>::max())
-    bool tryAcquire(std::ptrdiff_t n, unsigned int msecs)
+    bool try_acquire(std::ptrdiff_t n, unsigned int msecs)
     {
-        return this->tryAcquireWait(n, std::chrono::steady_clock::now() + std::chrono::milliseconds(msecs));
+        return this->try_acquire_wait(n, std::chrono::steady_clock::now() + std::chrono::milliseconds(msecs));
     }
 
     template <typename Rep, typename Period>
-    bool tryAcquireFor(std::ptrdiff_t n, const std::chrono::duration<Rep, Period> &relTime)
+    bool try_acquire_for(std::ptrdiff_t n, const std::chrono::duration<Rep, Period> &relTime)
     {
         const auto absTime = std::chrono::steady_clock::now() + relTime;
-        return this->tryAcquireWait(n, absTime);
+        return this->try_acquire_wait(n, absTime);
     }
 
     template <typename Clock, typename Duration>
-    bool tryAcquireUntil(std::ptrdiff_t n, const std::chrono::time_point<Clock, Duration> &absTime)
+    bool try_acquire_until(std::ptrdiff_t n, const std::chrono::time_point<Clock, Duration> &absTime)
     {
-        return this->tryAcquireWait(n, absTime);
+        return this->try_acquire_wait(n, absTime);
     }
 
     void release(std::ptrdiff_t update = 1)
@@ -158,7 +158,7 @@ public:
 
 protected:
     template <typename Clock, typename Duration>
-    bool tryAcquireWait(std::ptrdiff_t n, const std::chrono::time_point<Clock, Duration> &timeoutTime)
+    bool try_acquire_wait(std::ptrdiff_t n, const std::chrono::time_point<Clock, Duration> &timeoutTime)
     {
         UniqueLock lock{mMutex};
         if (!mCondition.wait_until(lock, timeoutTime, [&]() { return mCount >= n; }))

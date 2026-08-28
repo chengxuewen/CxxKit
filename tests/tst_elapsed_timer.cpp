@@ -38,10 +38,10 @@ namespace
 {
 static const int minResolution = 100; // the minimum resolution for the tests
 
-static std::string toString(const ElapsedTimer &t)
+static std::string to_string(const ElapsedTimer &t)
 {
     std::stringstream ss;
-    ss << "(" << t.msecsSinceReference() << ")";
+    ss << "(" << t.msecs_since_reference() << ")";
     return ss.str();
 }
 
@@ -49,24 +49,24 @@ static std::string toString(const ElapsedTimer &t)
 
 TEST(ElapsedTimerTest, Statics)
 {
-    std::cout << "Clock type is " << (int)ElapsedTimer::clockType() << std::endl;
-    std::cout << "Said clock is" << (ElapsedTimer::isMonotonic() ? "monotonic" : "not monotonic") << std::endl;
+    std::cout << "Clock type is " << (int)ElapsedTimer::clock_type() << std::endl;
+    std::cout << "Said clock is" << (ElapsedTimer::is_monotonic() ? "monotonic" : "not monotonic") << std::endl;
     ElapsedTimer t;
     t.start();
-    std::cout << "Current time is " << t.msecsSinceReference() << std::endl;
+    std::cout << "Current time is " << t.msecs_since_reference() << std::endl;
 }
 
 TEST(ElapsedTimerTest, Validity)
 {
     ElapsedTimer t;
 
-    EXPECT_TRUE(!t.isValid()); // non-POD now, it should always start invalid
+    EXPECT_TRUE(!t.is_valid()); // non-POD now, it should always start invalid
 
     t.start();
-    EXPECT_TRUE(t.isValid());
+    EXPECT_TRUE(t.is_valid());
 
     t.invalidate();
-    EXPECT_TRUE(!t.isValid());
+    EXPECT_TRUE(!t.is_valid());
 }
 
 TEST(ElapsedTimerTest, Basics)
@@ -74,24 +74,24 @@ TEST(ElapsedTimerTest, Basics)
     ElapsedTimer t1;
     t1.start();
 
-    EXPECT_TRUE(t1.msecsSinceReference() != 0);
+    EXPECT_TRUE(t1.msecs_since_reference() != 0);
 
     EXPECT_EQ(t1, t1);
     EXPECT_TRUE(!(t1 != t1));
     EXPECT_TRUE(!(t1 < t1));
-    EXPECT_EQ(t1.msecsTo(t1), int64_t(0));
-    EXPECT_EQ(t1.secsTo(t1), int64_t(0));
+    EXPECT_EQ(t1.msecs_to(t1), int64_t(0));
+    EXPECT_EQ(t1.secs_to(t1), int64_t(0));
 
-    uint64_t value1 = t1.msecsSinceReference();
-    std::cout << "value1:" << value1 << " t1:" << toString(t1) << std::endl;
-    int64_t nsecs = t1.nsecsElapsed();
+    uint64_t value1 = t1.msecs_since_reference();
+    std::cout << "value1:" << value1 << " t1:" << to_string(t1) << std::endl;
+    int64_t nsecs = t1.nsecs_elapsed();
     int64_t elapsed = t1.restart();
     std::cout << "nsecs:" << nsecs << " elapsed:" << elapsed << std::endl;
     EXPECT_TRUE(elapsed < minResolution);
     EXPECT_TRUE(nsecs / 1000000 < minResolution);
 
-    uint64_t value2 = t1.msecsSinceReference();
-    std::cout << "value2:" << value2 << " t1:" << toString(t1) << " elapsed:" << elapsed << " nsecs:" << nsecs
+    uint64_t value2 = t1.msecs_since_reference();
+    std::cout << "value2:" << value2 << " t1:" << to_string(t1) << " elapsed:" << elapsed << " nsecs:" << nsecs
               << std::endl;
     // in theory, elapsed == value2 - value1
 
@@ -107,7 +107,7 @@ TEST(ElapsedTimerTest, Elapsed)
 
     std::this_thread::sleep_for(std::chrono::milliseconds(2 * minResolution));
 
-    auto nsecs = t1.nsecsElapsed();
+    auto nsecs = t1.nsecs_elapsed();
     auto msecs = t1.elapsed();
     EXPECT_TRUE(nsecs > 0);
     EXPECT_TRUE(msecs > 0);
@@ -119,9 +119,9 @@ TEST(ElapsedTimerTest, Elapsed)
         GTEST_SKIP() << "Sampling timer took too long, aborting test";
     }
 
-    EXPECT_TRUE(t1.hasExpired(minResolution));
-    EXPECT_TRUE(!t1.hasExpired(8 * minResolution));
-    EXPECT_TRUE(!t1.hasExpired(-1));
+    EXPECT_TRUE(t1.has_expired(minResolution));
+    EXPECT_TRUE(!t1.has_expired(8 * minResolution));
+    EXPECT_TRUE(!t1.has_expired(-1));
 
     int64_t elapsed = t1.restart();
     EXPECT_TRUE(elapsed >= msecs);
@@ -140,9 +140,9 @@ TEST(ElapsedTimerTest, MsecsTo)
     EXPECT_TRUE(!(t1 == t2));
     EXPECT_TRUE(t1 < t2);
 
-    auto diff = t1.msecsTo(t2);
+    auto diff = t1.msecs_to(t2);
     EXPECT_TRUE(diff > 0);
-    diff = t2.msecsTo(t1);
+    diff = t2.msecs_to(t1);
     EXPECT_TRUE(diff < 0);
 }
 

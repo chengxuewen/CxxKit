@@ -66,8 +66,8 @@ public:
 
     inline Type type() const { return static_cast<Type>(mType); }
 
-    inline bool isAccepted() const { return mAccept; }
-    inline void setAccepted(bool accepted) { mAccept = accepted; }
+    inline bool is_accepted() const { return mAccept; }
+    inline void set_accepted(bool accepted) { mAccept = accepted; }
 
     inline void accept() { mAccept = true; }
     inline void ignore() { mAccept = false; }
@@ -83,10 +83,10 @@ private:
 class CXXKIT_KERNEL_API TimerEvent : public Event
 {
 public:
-    explicit TimerEvent(int timerId);
+    explicit TimerEvent(int timer_id);
     ~TimerEvent() override;
 
-    int timerId() const { return mTimerId; }
+    int timer_id() const { return mTimerId; }
 
 protected:
     int mTimerId{0};

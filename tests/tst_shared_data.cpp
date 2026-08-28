@@ -54,7 +54,7 @@ public:
     void setId(int id) { mId = id; }
 
     std::string name() const { return mName; }
-    void setName(const std::string &name) { mName = name; }
+    void set_name(const std::string &name) { mName = name; }
 
     void mutating() { }
 
@@ -82,10 +82,10 @@ public:
     std::string name() const { return d->name(); }
 
     void setId(int id) { d->setId(id); }
-    void setName(const std::string &name) { d->setName(name); }
+    void set_name(const std::string &name) { d->set_name(name); }
 
-    int refCount() const { return d->refCount(); }
-    bool isShared() const { return refCount() > 1; }
+    int ref_count() const { return d->ref_count(); }
+    bool isShared() const { return ref_count() > 1; }
 
 private:
     ImplicitlySharedDataPointer<MyClass> d;
@@ -112,7 +112,7 @@ TEST(SharedDataTest, ImplicitlyConstructor)
     MyClassHandler obj(100, "Test");
     EXPECT_EQ(obj.id(), 100);
     EXPECT_EQ(obj.name(), std::string("Test"));
-    EXPECT_EQ(obj.refCount(), 1);
+    EXPECT_EQ(obj.ref_count(), 1);
 }
 
 TEST(SharedDataTest, ImplicitlySharing)
@@ -121,15 +121,15 @@ TEST(SharedDataTest, ImplicitlySharing)
 
     // copy constructor-sharing
     MyClassHandler obj2 = obj1;
-    EXPECT_EQ(obj1.refCount(), 2);
-    EXPECT_EQ(obj2.refCount(), 2);
+    EXPECT_EQ(obj1.ref_count(), 2);
+    EXPECT_EQ(obj2.ref_count(), 2);
     EXPECT_TRUE(obj1.isShared());
     EXPECT_TRUE(obj2.isShared());
 
     // obj2 modify-detach
-    obj2.setName("Modified");
-    EXPECT_EQ(obj1.refCount(), 1);
-    EXPECT_EQ(obj2.refCount(), 1);
+    obj2.set_name("Modified");
+    EXPECT_EQ(obj1.ref_count(), 1);
+    EXPECT_EQ(obj2.ref_count(), 1);
     EXPECT_TRUE(!obj1.isShared());
     EXPECT_TRUE(!obj2.isShared());
 
@@ -146,8 +146,8 @@ TEST(SharedDataTest, ImplicitlyAssignment)
 
     // copy sharing
     obj2 = obj1;
-    EXPECT_EQ(obj1.refCount(), 2);
-    EXPECT_EQ(obj2.refCount(), 2);
+    EXPECT_EQ(obj1.ref_count(), 2);
+    EXPECT_EQ(obj2.ref_count(), 2);
     EXPECT_EQ(obj2.name(), std::string("Alice"));
 }
 
@@ -185,7 +185,7 @@ TEST(SharedDataTest, ImplicitlyThreadSafety)
     // verify all threads success read correct data
     EXPECT_EQ(successCount.load(), THREAD_COUNT);
     // finally ref count should be 1 (only sharedObj holds)
-    EXPECT_EQ(sharedObj.refCount(), 1);
+    EXPECT_EQ(sharedObj.ref_count(), 1);
 }
 
 TEST(SharedDataTest, ImplicitlyEdgeCases)
@@ -199,7 +199,7 @@ TEST(SharedDataTest, ImplicitlyEdgeCases)
     MyClassHandler obj(5, "Self");
     obj = obj; // should not crash or change state
     EXPECT_EQ(obj.id(), 5);
-    EXPECT_EQ(obj.refCount(), 1);
+    EXPECT_EQ(obj.ref_count(), 1);
 }
 
 TEST(SharedDataTest, ExplicitlyPointerOperatorOnConst)

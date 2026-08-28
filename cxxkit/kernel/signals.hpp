@@ -892,20 +892,20 @@ public:
 
     // method effectively responsible for calling the "slot" function with
     // supplied arguments whenever emission happens.
-    virtual void callSlot(Args...) = 0;
+    virtual void call_slot(Args...) = 0;
 
     template <typename... U>
     void operator()(U &&...u)
     {
         if (SlotState::connected() && !SlotState::blocked())
         {
-            callSlot(std::forward<U>(u)...);
+            call_slot(std::forward<U>(u)...);
         }
     }
 
     // check if we are storing callable c
     template <typename C>
-    bool hasCallable(const C &c) const
+    bool has_callable(const C &c) const
     {
         auto p = get_callable();
         return eq_function_ptr(c, p);
@@ -914,13 +914,13 @@ public:
     template <typename C>
     typename std::enable_if<function_traits<C>::must_check_object, bool>::type has_full_callable(const C &c) const
     {
-        return hasCallable(c) && check_class_type<typename std::decay<C>::type>();
+        return has_callable(c) && check_class_type<typename std::decay<C>::type>();
     }
 
     template <typename C>
     typename std::enable_if<!function_traits<C>::must_check_object, bool>::type has_full_callable(const C &c) const
     {
-        return hasCallable(c);
+        return has_callable(c);
     }
 
     // check if we are storing object o
@@ -978,7 +978,7 @@ public:
     }
 
 protected:
-    void callSlot(Args... args) override { func(args...); }
+    void call_slot(Args... args) override { func(args...); }
 
     func_ptr get_callable() const noexcept override { return get_function_ptr(func); }
 
@@ -1007,7 +1007,7 @@ public:
     Connection conn;
 
 protected:
-    void callSlot(Args... args) override { func(conn, args...); }
+    void call_slot(Args... args) override { func(conn, args...); }
 
     func_ptr get_callable() const noexcept override { return get_function_ptr(func); }
 
@@ -1037,7 +1037,7 @@ public:
     }
 
 protected:
-    void callSlot(Args... args) override { ((*ptr).*pmf)(args...); }
+    void call_slot(Args... args) override { ((*ptr).*pmf)(args...); }
 
     func_ptr get_callable() const noexcept override { return get_function_ptr(pmf); }
 
@@ -1070,7 +1070,7 @@ public:
     Connection conn;
 
 protected:
-    void callSlot(Args... args) override { ((*ptr).*pmf)(conn, args...); }
+    void call_slot(Args... args) override { ((*ptr).*pmf)(conn, args...); }
 
     func_ptr get_callable() const noexcept override { return get_function_ptr(pmf); }
     obj_ptr get_object() const noexcept override { return get_object_ptr(ptr); }
@@ -1104,7 +1104,7 @@ public:
     bool connected() const noexcept override { return !ptr.expired() && SlotState::connected(); }
 
 protected:
-    void callSlot(Args... args) override
+    void call_slot(Args... args) override
     {
         auto sp = ptr.lock();
         if (!sp)
@@ -1149,7 +1149,7 @@ public:
     bool connected() const noexcept override { return !ptr.expired() && SlotState::connected(); }
 
 protected:
-    void callSlot(Args... args) override
+    void call_slot(Args... args) override
     {
         auto sp = ptr.lock();
         if (!sp)
@@ -1196,7 +1196,7 @@ public:
     bool connected() const noexcept override { return !ptr.expired() && SlotState::connected(); }
 
 protected:
-    void callSlot(Args... args) override
+    void call_slot(Args... args) override
     {
         auto sp = ptr.lock();
         if (!sp)
@@ -1241,7 +1241,7 @@ public:
     bool connected() const noexcept override { return !ptr.expired() && SlotState::connected(); }
 
 protected:
-    void callSlot(Args... args) override
+    void call_slot(Args... args) override
     {
         auto sp = ptr.lock();
         if (!sp)
@@ -1510,7 +1510,7 @@ public:
     typename std::enable_if<!trait::detail::is_callable<arg_list, Pmf>::value && trait::is_weak_ptr_compatible<Ptr>::value, Connection>::type
     connect(Pmf &&pmf, Ptr &&ptr, GroupId gid = 0)
     {
-        auto w = utils::toWeakPtr(std::forward<Ptr>(ptr));
+        auto w = utils::to_weak_ptr(std::forward<Ptr>(ptr));
         using slot_t = detail::slot_pmf_tracked<Pmf, decltype(w), T...>;
         auto s = make_slot<slot_t>(std::forward<Pmf>(pmf), w, gid);
         Connection conn(s);
@@ -1543,7 +1543,7 @@ public:
     typename std::enable_if<!trait::detail::is_callable<ext_arg_list, Pmf>::value && trait::is_weak_ptr_compatible<Ptr>::value, Connection>::type
     connect_extended(Pmf &&pmf, Ptr &&ptr, GroupId gid = 0)
     {
-        auto w = utils::toWeakPtr(std::forward<Ptr>(ptr));
+        auto w = utils::to_weak_ptr(std::forward<Ptr>(ptr));
         using slot_t = detail::slot_pmf_tracked_extended<Pmf, decltype(w), T...>;
         auto s = make_slot<slot_t>(std::forward<Pmf>(pmf), w, gid);
         Connection conn(s);
@@ -1573,7 +1573,7 @@ public:
     typename std::enable_if<trait::detail::is_callable<arg_list, Callable>::value && trait::is_weak_ptr_compatible<Trackable>::value, Connection>::type
     connect(Callable &&c, Trackable &&ptr, GroupId gid = 0)
     {
-        auto w = utils::toWeakPtr(std::forward<Trackable>(ptr));
+        auto w = utils::to_weak_ptr(std::forward<Trackable>(ptr));
         using slot_t = detail::slot_tracked<Callable, decltype(w), T...>;
         auto s = make_slot<slot_t>(std::forward<Callable>(c), w, gid);
         Connection conn(s);
@@ -1607,7 +1607,7 @@ public:
                      Connection>::type
     connect_extended(Callable &&c, Trackable &&ptr, GroupId gid = 0)
     {
-        auto w = utils::toWeakPtr(std::forward<Trackable>(ptr));
+        auto w = utils::to_weak_ptr(std::forward<Trackable>(ptr));
         using slot_t = detail::slot_tracked_extended<Callable, decltype(w), T...>;
         auto s = make_slot<slot_t>(std::forward<Callable>(c), w, gid);
         Connection conn(s);
@@ -1687,7 +1687,7 @@ public:
     template <typename Callable, typename Obj>
     size_t disconnect(const Callable &c, const Obj &obj)
     {
-        return disconnect_if([&](const slot_ptr &s) { return s->has_object(obj) && s->hasCallable(c); });
+        return disconnect_if([&](const slot_ptr &s) { return s->has_object(obj) && s->has_callable(c); });
     }
 
     /**

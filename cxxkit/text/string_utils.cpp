@@ -36,13 +36,13 @@ CXXKIT_BEGIN_NAMESPACE
 namespace utils
 {
 
-const char *extractFileName(const char *filePath)
+const char *extract_file_name(const char *file_path)
 {
-    assert(nullptr != filePath);
+    assert(nullptr != file_path);
 
     char path[CXXKIT_PATH_MAX] = {0};
-    size_t length = std::min<size_t>(CXXKIT_PATH_MAX, strlen(filePath));
-    std::memcpy(path, filePath, length);
+    size_t length = std::min<size_t>(CXXKIT_PATH_MAX, strlen(file_path));
+    std::memcpy(path, file_path, length);
     while (length > 0 && ('/' == path[length - 1] || '\\' == path[length - 1]))
     {
         path[--length] = '\0';
@@ -62,16 +62,16 @@ const char *extractFileName(const char *filePath)
     {
         file_name = last_slash + 1;
     }
-    return filePath + (file_name - path);
+    return file_path + (file_name - path);
 }
 
-std::string extractFunctionName(const char *function, const char *suffix)
+std::string extract_function_name(const char *function, const char *suffix)
 {
-    const StringView funcStringView(function);
-    const auto end = funcStringView.find_last_of('(');
+    const StringView func_string_view(function);
+    const auto end = func_string_view.find_last_of('(');
     if (std::string::npos != end)
     {
-        const auto start = funcStringView.find_last_of(' ', end);
+        const auto start = func_string_view.find_last_of(' ', end);
         if (std::string::npos != start)
         {
             return std::string(function + start, function + end) + suffix;
@@ -80,7 +80,7 @@ std::string extractFunctionName(const char *function, const char *suffix)
     return function;
 }
 
-bool stringCompare(const char *s1, const char *s2, size_t len, bool ignoreCase)
+bool string_compare(const char *s1, const char *s2, size_t len, bool ignoreCase)
 {
     const unsigned char *us1 = reinterpret_cast<const unsigned char *>(s1);
     const unsigned char *us2 = reinterpret_cast<const unsigned char *>(s2);
@@ -107,7 +107,7 @@ bool stringCompare(const char *s1, const char *s2, size_t len, bool ignoreCase)
     return true;
 }
 
-int stringCaseCmp(const char *s1, const char *s2, size_t len)
+int string_case_cmp(const char *s1, const char *s2, size_t len)
 {
     const unsigned char *us1 = reinterpret_cast<const unsigned char *>(s1);
     const unsigned char *us2 = reinterpret_cast<const unsigned char *>(s2);
@@ -132,11 +132,11 @@ int stringCaseCmp(const char *s1, const char *s2, size_t len)
     return 0;
 }
 
-bool stringContainsIgnoreCase(StringView haystack, StringView needle) noexcept
+bool string_contains_ignore_case(StringView haystack, StringView needle) noexcept
 {
     while (haystack.size() >= needle.size())
     {
-        if (utils::stringStartsWithIgnoreCase(haystack, needle))
+        if (utils::string_starts_with_ignore_case(haystack, needle))
         {
             return true;
         }
@@ -145,13 +145,13 @@ bool stringContainsIgnoreCase(StringView haystack, StringView needle) noexcept
     return false;
 }
 
-bool stringContainsIgnoreCase(StringView haystack, char needle) noexcept
+bool string_contains_ignore_case(StringView haystack, char needle) noexcept
 {
     char upper_needle = ascii_toupper(static_cast<unsigned char>(needle));
     char lower_needle = ascii_tolower(static_cast<unsigned char>(needle));
     if (upper_needle == lower_needle)
     {
-        return stringContains(haystack, needle);
+        return string_contains(haystack, needle);
     }
     else
     {
@@ -160,7 +160,7 @@ bool stringContainsIgnoreCase(StringView haystack, char needle) noexcept
     }
 }
 
-std::vector<StringView> stringSplit(StringView source, char delimiter)
+std::vector<StringView> string_split(StringView source, char delimiter)
 {
     std::vector<StringView> fields;
     size_t last = 0;
@@ -183,7 +183,7 @@ namespace
 constexpr int kMaxSize = 512;
 } // namespace
 
-std::string stringFormat(const char *format, ...)
+std::string string_format(const char *format, ...)
 {
     char buffer[kMaxSize];
     va_list args;

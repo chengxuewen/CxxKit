@@ -173,8 +173,8 @@ protected:
     template <int64_t Factor, typename T = int64_t>
     CXXKIT_CXX14_CONSTEXPR typename std::enable_if<std::is_integral<T>::value, T>::type ToMultiple() const
     {
-        CXXKIT_DCHECK_GE(ToValue(), utils::numericMin<T>() / Factor);
-        CXXKIT_DCHECK_LE(ToValue(), utils::numericMax<T>() / Factor);
+        CXXKIT_DCHECK_GE(ToValue(), utils::numeric_min<T>() / Factor);
+        CXXKIT_DCHECK_LE(ToValue(), utils::numeric_max<T>() / Factor);
         return utils::dchecked_cast<T>(ToValue() * Factor);
     }
     template <int64_t Factor, typename T>
@@ -192,8 +192,8 @@ private:
     template <class RelativeUnit_T>
     friend class RelativeUnit;
 
-    static inline constexpr int64_t PlusInfinityVal() { return utils::numericMax<int64_t>(); }
-    static inline constexpr int64_t MinusInfinityVal() { return utils::numericMin<int64_t>(); }
+    static inline constexpr int64_t PlusInfinityVal() { return utils::numeric_max<int64_t>(); }
+    static inline constexpr int64_t MinusInfinityVal() { return utils::numeric_min<int64_t>(); }
 
     CXXKIT_CXX14_CONSTEXPR Unit_T &AsSubClassRef() { return static_cast<Unit_T &>(*this); }
     CXXKIT_CXX14_CONSTEXPR const Unit_T &AsSubClassRef() const { return static_cast<const Unit_T &>(*this); }
@@ -210,7 +210,7 @@ class RelativeUnit : public UnitBase<Unit_T>
 public:
     constexpr Unit_T Clamped(Unit_T min_value, Unit_T max_value) const
     {
-        return utils::mathMax(min_value, utils::mathMin(UnitBase<Unit_T>::AsSubClassRef(), max_value));
+        return utils::math_max(min_value, utils::math_min(UnitBase<Unit_T>::AsSubClassRef(), max_value));
     }
     CXXKIT_CXX14_CONSTEXPR void Clamp(Unit_T min_value, Unit_T max_value) { *this = Clamped(min_value, max_value); }
     CXXKIT_CXX14_CONSTEXPR Unit_T operator+(const Unit_T other) const

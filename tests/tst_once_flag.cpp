@@ -34,14 +34,14 @@ using namespace cxxkit;
 TEST(OnceFlag, LocalAccessorSameThreadStable)
 {
     // thread_local singleton: same pointer within a thread.
-    EXPECT_EQ(OnceFlag::localOnceFlag(), OnceFlag::localOnceFlag());
+    EXPECT_EQ(OnceFlag::local_once_flag(), OnceFlag::local_once_flag());
 }
 
 TEST(OnceFlag, LocalAccessorPerThread)
 {
-    void *mainPtr = OnceFlag::localOnceFlag();
+    void *mainPtr = OnceFlag::local_once_flag();
     void *otherPtr = nullptr;
-    std::thread t([&otherPtr]() { otherPtr = OnceFlag::localOnceFlag(); });
+    std::thread t([&otherPtr]() { otherPtr = OnceFlag::local_once_flag(); });
     t.join();
     EXPECT_NE(mainPtr, otherPtr); // different thread => different thread_local instance
 }
@@ -49,16 +49,16 @@ TEST(OnceFlag, LocalAccessorPerThread)
 TEST(OnceFlag, StateTransitions)
 {
     OnceFlag flag;
-    EXPECT_TRUE(flag.isNeverCalled());
-    EXPECT_FALSE(flag.isDone());
-    EXPECT_FALSE(flag.isInProcess());
+    EXPECT_TRUE(flag.is_never_called());
+    EXPECT_FALSE(flag.is_done());
+    EXPECT_FALSE(flag.is_in_process());
 
     EXPECT_TRUE(flag.enter());
-    EXPECT_TRUE(flag.isInProcess());
-    EXPECT_FALSE(flag.isDone());
+    EXPECT_TRUE(flag.is_in_process());
+    EXPECT_FALSE(flag.is_done());
 
     flag.leave();
-    EXPECT_TRUE(flag.isDone());
+    EXPECT_TRUE(flag.is_done());
     EXPECT_FALSE(flag.enter()); // cannot re-enter after done
 }
 

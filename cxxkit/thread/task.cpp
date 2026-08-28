@@ -79,7 +79,7 @@ Task::SharedPtr Task::create(UniqueFunc function)
     return SharedPtr(new detail::UniqueFunctionTask(std::move(function)), detail::TaskDeleter{true});
 }
 
-Task::SharedPtr Task::makeShared(Task *task, bool autoDelete)
+Task::SharedPtr Task::make_shared(Task *task, bool autoDelete)
 {
     return SharedPtr(task, detail::TaskDeleter{autoDelete});
 }

@@ -35,14 +35,14 @@ using namespace cxxkit;
 TEST(MakeMoveWrapperTest, Empty)
 {
     // checks for crashes
-    auto p = utils::makeMoveWrapper(std::unique_ptr<int>());
+    auto p = utils::make_move_wrapper(std::unique_ptr<int>());
 }
 
 TEST(MakeMoveWrapperTest, NonEmpty)
 {
     auto u = utils::make_unique<int>(5);
     EXPECT_EQ(*u, 5);
-    auto p = utils::makeMoveWrapper(std::move(u));
+    auto p = utils::make_move_wrapper(std::move(u));
     EXPECT_TRUE(!u);
     EXPECT_EQ(**p, 5);
 }
@@ -50,25 +50,25 @@ TEST(MakeMoveWrapperTest, NonEmpty)
 TEST(MakeMoveWrapperTest, rvalue)
 {
     std::unique_ptr<int> p;
-    utils::makeMoveWrapper(std::move(p));
+    utils::make_move_wrapper(std::move(p));
 }
 
 TEST(MakeMoveWrapperTest, lvalue)
 {
     std::unique_ptr<int> p;
-    utils::makeMoveWrapper(p);
+    utils::make_move_wrapper(p);
 }
 
 TEST(MakeMoveWrapperTest, lvalueCopyable)
 {
     std::shared_ptr<int> p;
-    utils::makeMoveWrapper(p);
+    utils::make_move_wrapper(p);
 }
 
 TEST(MakeMoveWrapperTest, lambda)
 {
     auto u = utils::make_unique<int>(5);
-    auto moveU = utils::makeMoveWrapper(std::move(u));
+    auto moveU = utils::make_move_wrapper(std::move(u));
     EXPECT_TRUE(!u);
     EXPECT_TRUE((*moveU).get());
     [moveU]() { EXPECT_TRUE((*moveU).get()); }();
@@ -78,7 +78,7 @@ TEST(MakeMoveWrapperTest, lambda)
 TEST(MakeMoveWrapperTest, lambdaRef)
 {
     auto u = utils::make_unique<int>(5);
-    auto moveU = utils::makeMoveWrapper(std::move(u));
+    auto moveU = utils::make_move_wrapper(std::move(u));
     EXPECT_TRUE(!u);
     EXPECT_TRUE(moveU.ref().get());
     [moveU]() { EXPECT_TRUE(moveU.ref().get()); }();
@@ -88,7 +88,7 @@ TEST(MakeMoveWrapperTest, lambdaRef)
 TEST(MakeMoveWrapperTest, lambdaGet)
 {
     auto u = utils::make_unique<int>(5);
-    auto moveU = utils::makeMoveWrapper(std::move(u));
+    auto moveU = utils::make_move_wrapper(std::move(u));
     EXPECT_TRUE(!u);
     EXPECT_TRUE(moveU.get()->get());
     [moveU]() { EXPECT_TRUE(moveU.get()->get()); }();
@@ -98,7 +98,7 @@ TEST(MakeMoveWrapperTest, lambdaGet)
 TEST(MakeMoveWrapperTest, lambdaMove)
 {
     auto u = utils::make_unique<int>(5);
-    auto moveU = utils::makeMoveWrapper(std::move(u));
+    auto moveU = utils::make_move_wrapper(std::move(u));
     EXPECT_TRUE(!u);
     EXPECT_TRUE((*moveU).get());
     [moveU]() mutable { EXPECT_TRUE(moveU.move().get()); }();

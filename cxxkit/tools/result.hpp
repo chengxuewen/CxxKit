@@ -249,7 +249,7 @@ public:
      * Alias for ok().
      * @return true if the Result contains a value, false otherwise.
      */
-    CXXKIT_CONSTEXPR bool isOk() const { return this->ok(); }
+    CXXKIT_CONSTEXPR bool is_ok() const { return this->ok(); }
 
     /**
      * @brief Checks if the Result contains a value (success).
@@ -265,7 +265,7 @@ public:
      * Alias for ok().
      * @return true if the Result contains a value, false otherwise.
      */
-    CXXKIT_CONSTEXPR bool isSuccess() const { return this->ok(); }
+    CXXKIT_CONSTEXPR bool is_success() const { return this->ok(); }
 
     /**
      * @brief Converts the Result to a boolean value.
@@ -318,7 +318,7 @@ public:
      * @return The stored value if present, otherwise defaultValue.
      */
     template <typename U>
-    T valueOr(U &&defaultValue) const &
+    T value_or(U &&defaultValue) const &
     {
         if (this->ok())
         {
@@ -335,7 +335,7 @@ public:
      * @return The stored value if present, otherwise defaultValue.
      */
     template <typename U>
-    T valueOr(U &&defaultValue) &&
+    T value_or(U &&defaultValue) &&
     {
         if (this->ok())
         {
@@ -352,7 +352,7 @@ public:
      * @return The stored value if present, otherwise the result of invoking f().
      */
     template <typename F>
-    T valueOrElse(F &&f) const &
+    T value_or_else(F &&f) const &
     {
         if (this->ok())
         {
@@ -369,7 +369,7 @@ public:
      * @return The stored value if present, otherwise the result of invoking f().
      */
     template <typename F>
-    T valueOrElse(F &&f) &&
+    T value_or_else(F &&f) &&
     {
         if (this->ok())
         {
@@ -411,11 +411,11 @@ public:
      *
      * @return String representation of the error if present, otherwise an empty string.
      */
-    std::string errorString() const
+    std::string error_string() const
     {
         if (const Error *err = this->error())
         {
-            return err->toString();
+            return err->to_string();
         }
         return "";
     }

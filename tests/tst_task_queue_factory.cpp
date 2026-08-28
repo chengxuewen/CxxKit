@@ -49,7 +49,7 @@ TEST(TaskQueueFactory, CreateTaskQueueRunsPostedTask)
     ASSERT_TRUE(queue != nullptr);
 
     std::atomic<bool> ran{false};
-    queue->postTask([&ran]() { ran.store(true); });
+    queue->post_task([&ran]() { ran.store(true); });
     // Give the worker a moment to pick the task up (task queue is async).
     for (int i = 0; i < 1000 && !ran.load(); ++i)
     {

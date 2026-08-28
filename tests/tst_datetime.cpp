@@ -62,10 +62,10 @@ TEST(DateTime, SystemTimeMonotonic)
 {
     // Values are indistinguishable from each other and increasing; we just
     // validate the ordering relationships between the unit derivatives.
-    const int64_t secs = DateTime::systemTimeSecs();
-    const int64_t ms = DateTime::systemTimeMSecs();
-    const int64_t us = DateTime::systemTimeUSecs();
-    const int64_t ns = DateTime::systemTimeNSecs();
+    const int64_t secs = DateTime::system_time_secs();
+    const int64_t ms = DateTime::system_time_m_secs();
+    const int64_t us = DateTime::system_time_u_secs();
+    const int64_t ns = DateTime::system_time_n_secs();
 
     EXPECT_GT(ms, secs * 1000);
     EXPECT_GT(us, ms * 1000);
@@ -76,32 +76,32 @@ TEST(DateTime, SystemTimeMonotonic)
 
 TEST(DateTime, SteadyTimeMonotonic)
 {
-    const int64_t secs = DateTime::steadyTimeSecs();
-    const int64_t ms = DateTime::steadyTimeMSecs();
-    const int64_t us = DateTime::steadyTimeUSecs();
-    const int64_t ns = DateTime::steadyTimeNSecs();
+    const int64_t secs = DateTime::steady_time_secs();
+    const int64_t ms = DateTime::steady_time_m_secs();
+    const int64_t us = DateTime::steady_time_u_secs();
+    const int64_t ns = DateTime::steady_time_n_secs();
 
     EXPECT_GT(ms, secs * 1000);
     EXPECT_GT(us, ms * 1000);
     EXPECT_GT(ns, us * 1000);
 
     // Steady time advances (a later call is >= an earlier one).
-    const int64_t before = DateTime::steadyTimeNSecs();
-    EXPECT_GE(DateTime::steadyTimeNSecs(), before);
+    const int64_t before = DateTime::steady_time_n_secs();
+    EXPECT_GE(DateTime::steady_time_n_secs(), before);
 }
 
 TEST(DateTime, SystemSteadyConversions)
 {
-    // systemTimeFromSteadyNSecs maps the current steady clock onto the system
+    // system_time_from_steady_n_secs maps the current steady clock onto the system
     // (Unix-epoch) timeline, so it should be within a couple seconds of the real
     // system time.
-    const int64_t nowSys = DateTime::systemTimeNSecs();
-    const int64_t steadyNow = DateTime::steadyTimeNSecs();
+    const int64_t nowSys = DateTime::system_time_n_secs();
+    const int64_t steadyNow = DateTime::steady_time_n_secs();
     // PIT-23 regression: steady<->system mapping must be symmetric now
     // (was ~1e18 ns drift from epoch-basis mismatch). Small window covers the
     // two clock-sample instants.
-    EXPECT_NEAR(DateTime::systemTimeFromSteadyNSecs(steadyNow), nowSys, (int64_t)2e9);
-    EXPECT_NEAR(DateTime::steadyTimeFromSystemNSecs(nowSys), steadyNow, (int64_t)2e9);
+    EXPECT_NEAR(DateTime::system_time_from_steady_n_secs(steadyNow), nowSys, (int64_t)2e9);
+    EXPECT_NEAR(DateTime::steady_time_from_system_n_secs(nowSys), steadyNow, (int64_t)2e9);
 }
 
 TEST(DateTime, LocalTimeFromSystem)
@@ -109,7 +109,7 @@ TEST(DateTime, LocalTimeFromSystem)
     // LocalTime fields must fall in their documented ranges for a recent
     // instant. (Time zone and the ms-vs-sec interpretation both vary, so we
     // only assert the structural ranges are respected.)
-    DateTime::LocalTime lt = DateTime::localTimeFromSystemTimeMSecs(DateTime::systemTimeMSecs());
+    DateTime::LocalTime lt = DateTime::local_time_from_system_time_m_secs(DateTime::system_time_m_secs());
     EXPECT_GE(lt.sec, 0);
     EXPECT_LE(lt.sec, 60);
     EXPECT_GE(lt.min, 0);
@@ -125,7 +125,7 @@ TEST(DateTime, LocalTimeFromSystem)
     EXPECT_LT(lt.mil, 1000);
 
     // Milliseconds variant retains the fractional millisecond.
-    DateTime::LocalTime ltm = DateTime::localTimeFromSystemTimeMSecs(1577836800123LL);
+    DateTime::LocalTime ltm = DateTime::local_time_from_system_time_m_secs(1577836800123LL);
     EXPECT_GE(ltm.mil, 0);
     EXPECT_LT(ltm.mil, 1000);
 }
@@ -133,7 +133,7 @@ TEST(DateTime, LocalTimeFromSystem)
 TEST(DateTime, LocalTimeString)
 {
     const int64_t secs = 1577836800;
-    std::string s = DateTime::localTimeStringFromSystemTimeSecs(secs);
+    std::string s = DateTime::local_time_string_from_system_time_secs(secs);
     // Format "%Y-%m-%d %H:%M:%S" of a known UTC instant; timezone-dependent,
     // so we only check the structural shape.
     EXPECT_EQ(s.size(), 19u);
@@ -142,7 +142,7 @@ TEST(DateTime, LocalTimeString)
     EXPECT_EQ(s[13], ':');
 
     // MSecs variant appends ".mmm".
-    std::string sm = DateTime::localTimeStringFromSystemTimeMSecs(1577836800123LL);
+    std::string sm = DateTime::local_time_string_from_system_time_m_secs(1577836800123LL);
     EXPECT_EQ(sm.size(), 23u);
     EXPECT_EQ(sm[19], '.');
 }

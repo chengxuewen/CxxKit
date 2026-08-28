@@ -125,7 +125,7 @@ public:
     T *data() const { return mData; }
 
 protected:
-    static constexpr bool fixedSize() { return true; }
+    static constexpr bool fixed_size() { return true; }
 
 private:
     T *mData;
@@ -143,7 +143,7 @@ public:
     T *data() const { return nullptr; }
 
 protected:
-    static constexpr bool fixedSize() { return true; }
+    static constexpr bool fixed_size() { return true; }
 };
 
 // Specialized base class for ArrayViews of variable size.
@@ -162,7 +162,7 @@ public:
     T *data() const { return mData; }
 
 protected:
-    static constexpr bool fixedSize() { return false; }
+    static constexpr bool fixed_size() { return false; }
 
 private:
     T *mData;
@@ -304,15 +304,15 @@ public:
     T *end() const { return this->data() + this->size(); }
     const T *cbegin() const { return this->data(); }
     const T *cend() const { return this->data() + this->size(); }
-    std::reverse_iterator<T *> rbegin() const { return utils::makeReverseIterator(this->end()); }
-    std::reverse_iterator<T *> rend() const { return utils::makeReverseIterator(this->begin()); }
-    std::reverse_iterator<const T *> crbegin() const { return utils::makeReverseIterator(this->cend()); }
-    std::reverse_iterator<const T *> crend() const { return utils::makeReverseIterator(this->cbegin()); }
+    std::reverse_iterator<T *> rbegin() const { return utils::make_reverse_iterator(this->end()); }
+    std::reverse_iterator<T *> rend() const { return utils::make_reverse_iterator(this->begin()); }
+    std::reverse_iterator<const T *> crbegin() const { return utils::make_reverse_iterator(this->cend()); }
+    std::reverse_iterator<const T *> crend() const { return utils::make_reverse_iterator(this->cbegin()); }
 
     /// @brief Returns a subview starting at @p offset with at most @p size elements.
     ArrayView<T> subview(size_t offset, size_t size) const
     {
-        return offset < this->size() ? ArrayView<T>(this->data() + offset, utils::mathMin(size, this->size() - offset))
+        return offset < this->size() ? ArrayView<T>(this->data() + offset, utils::math_min(size, this->size() - offset))
                                      : ArrayView<T>();
     }
     ArrayView<T> subview(size_t offset) const { return subview(offset, this->size()); }
@@ -369,7 +369,7 @@ namespace utils
 {
 template <typename T>
 /// @brief Factory: creates an ArrayView from a raw pointer and size.
-inline ArrayView<T> makeArrayView(T *data, size_t size)
+inline ArrayView<T> make_array_view(T *data, size_t size)
 {
     return ArrayView<T>(data, size);
 }
@@ -389,7 +389,7 @@ inline ArrayView<T> makeArrayView(T *data, size_t size)
  * @return ArrayView<U, Size> over the same memory region.
  */
 template <typename U, typename T, std::ptrdiff_t Size>
-inline ArrayView<U, Size> reinterpretArrayView(ArrayView<T, Size> view)
+inline ArrayView<U, Size> reinterpret_array_view(ArrayView<T, Size> view)
 {
     static_assert(sizeof(U) == sizeof(T) && alignof(U) == alignof(T),
                   "ArrayView reinterpret_cast is only supported for casting "

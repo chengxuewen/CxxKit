@@ -47,7 +47,7 @@ public:
     // used in SharedDataPointer::clone() must implement
     inline SharedData(const SharedData &) noexcept { }
 
-    inline int refCount() const { return ReferenceCounter::loadAcquire(mRefCount); }
+    inline int ref_count() const { return ReferenceCounter::load_acquire(mRefCount); }
 
     // using the assignment operator would lead to corruption in the ref-counting
     SharedData &operator=(const SharedData &) = delete;
@@ -68,7 +68,7 @@ struct SharedDataRefCounter final
     inline bool ref() noexcept { return ReferenceCounter::ref(mRefCount); }
     inline bool deref() noexcept { return ReferenceCounter::deref(mRefCount); }
     inline int load() const noexcept { return ReferenceCounter::load(mRefCount); }
-    inline int loadAcquire() const noexcept { return ReferenceCounter::loadAcquire(mRefCount); }
+    inline int load_acquire() const noexcept { return ReferenceCounter::load_acquire(mRefCount); }
 };
 } // namespace detail
 
@@ -86,9 +86,9 @@ public:
 
     inline void detach()
     {
-        if (mData && RefCounter{mData}.loadAcquire() != 1)
+        if (mData && RefCounter{mData}.load_acquire() != 1)
         {
-            this->detachHelper();
+            this->detach_helper();
         }
     }
     inline T &operator*()
@@ -115,7 +115,7 @@ public:
         return mData;
     }
     inline const T *data() const { return mData; }
-    inline const T *constData() const { return mData; }
+    inline const T *const_data() const { return mData; }
 
     inline bool operator==(const Self &other) const { return mData == other.mData; }
     inline bool operator!=(const Self &other) const { return mData != other.mData; }
@@ -199,7 +199,7 @@ protected:
     T *clone() { return new T(*mData); }
 
 private:
-    void detachHelper()
+    void detach_helper()
     {
         T *data = this->clone();
         RefCounter{data}.ref();
@@ -245,7 +245,7 @@ public:
     inline T *operator->() { return mData; }
     inline T *operator->() const { return mData; }
     inline T *data() const { return mData; }
-    inline const T *constData() const { return mData; }
+    inline const T *const_data() const { return mData; }
 
     inline T *take()
     {
@@ -256,9 +256,9 @@ public:
 
     inline void detach()
     {
-        if (mData && RefCounter{mData}.loadAcquire() != 1)
+        if (mData && RefCounter{mData}.load_acquire() != 1)
         {
-            this->detachHelper();
+            this->detach_helper();
         }
     }
 
@@ -368,7 +368,7 @@ protected:
     T *clone() { return new T(*mData); }
 
 private:
-    void detachHelper()
+    void detach_helper()
     {
         T *data = this->clone();
         RefCounter{data}.ref();

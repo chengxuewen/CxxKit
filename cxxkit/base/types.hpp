@@ -94,7 +94,7 @@ using pointer_t = void *;
 using const_pointer_t = const void *;
 
 /** @brief Binary buffer aliases: `Binary`, `TSBinary` (timestamped), `BinarySharedPtr`.
- * @see makeBinary
+ * @see make_binary
  */
 using Binary = std::vector<byte_t>;
 using TSBinary = std::pair<int64_t, Binary>;
@@ -106,7 +106,7 @@ using BinarySharedPtr = std::shared_ptr<Binary>;
  * @return `Binary` with same byte content as @p data.
  */
 template <typename T>
-Binary makeBinary(const std::vector<T> &data)
+Binary make_binary(const std::vector<T> &data)
 {
     return {reinterpret_cast<const byte_t *>(data.data()), reinterpret_cast<const byte_t *>(data.data()) + data.size()};
 }

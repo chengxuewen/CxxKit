@@ -39,13 +39,13 @@ namespace {
 
 std::atomic<bool> g_installedGuard(false);
 
-bool isDumpFile(const char *name)
+bool is_dump_file(const char *name)
 {
     const size_t len = std::strlen(name);
     return len > 4 && std::strcmp(name + len - 4, ".dmp") == 0;
 }
 
-void printStackTraceFromUcontext(void *ucontext)
+void print_stack_trace_from_ucontext(void *ucontext)
 {
 #if defined(CXXKIT_OS_LINUX)
     backward::StackTrace stackTrace;
@@ -83,7 +83,7 @@ CrashHandler &CrashHandler::instance()
     return instance;
 }
 
-bool CrashHandler::isHandlerInstalled() const
+bool CrashHandler::is_handler_installed() const
 {
     return g_installedGuard.load();
 }
@@ -98,15 +98,15 @@ bool CrashHandler::install()
                    stderr);
         return false;
     }
-    CXXKIT_CHECK(!mDPtr->mDumpPath.empty()) << "CrashHandler::install() requires setDumpPath() first.";
+    CXXKIT_CHECK(!mDPtr->mDumpPath.empty()) << "CrashHandler::install() requires set_dump_path() first.";
 
 #if defined(CXXKIT_OS_MACOS)
     mDPtr->mHandler.reset(new google_breakpad::ExceptionHandler(
-        mDPtr->mDumpPath, nullptr, &CrashHandlerPrivate::onMinidump, this, true, NULL));
+        mDPtr->mDumpPath, nullptr, &CrashHandlerPrivate::on_minidump, this, true, NULL));
 #elif defined(CXXKIT_OS_LINUX)
     mDPtr->mHandler.reset(new google_breakpad::ExceptionHandler(
         google_breakpad::MinidumpDescriptor(mDPtr->mDumpPath),
-        nullptr, &CrashHandlerPrivate::onMinidump, this, true, -1));
+        nullptr, &CrashHandlerPrivate::on_minidump, this, true, -1));
 #else
 #    error "cxxkit::crash supports macOS and Linux only (Windows needs a crash-deps-x64-windows export first)."
 #endif
@@ -122,9 +122,9 @@ void CrashHandler::uninstall()
     g_installedGuard.store(false);
 }
 
-bool CrashHandler::setDumpPath(const char *path)
+bool CrashHandler::set_dump_path(const char *path)
 {
-    CXXKIT_CHECK(!isHandlerInstalled()) << "CrashHandler::setDumpPath() must be called before install().";
+    CXXKIT_CHECK(!is_handler_installed()) << "CrashHandler::set_dump_path() must be called before install().";
     if (!path || !path[0]) {
         return false;
     }
@@ -140,22 +140,22 @@ bool CrashHandler::setDumpPath(const char *path)
     return true;
 }
 
-bool CrashHandler::setStackTraceOnCrash(bool enable)
+bool CrashHandler::set_stack_trace_on_crash(bool enable)
 {
-    CXXKIT_CHECK(!isHandlerInstalled()) << "CrashHandler::setStackTraceOnCrash() must be called before install().";
+    CXXKIT_CHECK(!is_handler_installed()) << "CrashHandler::set_stack_trace_on_crash() must be called before install().";
     mDPtr->mStackTraceOnCrash = enable;
     return true;
 }
 
-bool CrashHandler::setCallback(CrashCallback callback, void *context)
+bool CrashHandler::set_callback(CrashCallback callback, void *context)
 {
-    CXXKIT_CHECK(!isHandlerInstalled()) << "CrashHandler::setCallback() must be called before install().";
+    CXXKIT_CHECK(!is_handler_installed()) << "CrashHandler::set_callback() must be called before install().";
     mDPtr->mCallback = callback;
     mDPtr->mCallbackContext = context;
     return true;
 }
 
-bool CrashHandler::writeMinidump()
+bool CrashHandler::write_minidump()
 {
     if (!mDPtr->mHandler) {
         return false; // not installed — manual dump without a handler is unsupported in v1
@@ -163,7 +163,7 @@ bool CrashHandler::writeMinidump()
     return mDPtr->mHandler->WriteMinidump();
 }
 
-std::vector<std::string> CrashHandler::dumpFileList() const
+std::vector<std::string> CrashHandler::dump_file_list() const
 {
     std::vector<std::string> result;
     DIR *dir = ::opendir(mDPtr->mDumpPath.c_str());
@@ -172,7 +172,7 @@ std::vector<std::string> CrashHandler::dumpFileList() const
     }
     struct dirent *entry = nullptr;
     while ((entry = ::readdir(dir)) != nullptr) {
-        if (isDumpFile(entry->d_name)) {
+        if (is_dump_file(entry->d_name)) {
             result.push_back(entry->d_name);
         }
     }
@@ -180,9 +180,9 @@ std::vector<std::string> CrashHandler::dumpFileList() const
     return result;
 }
 
-void CrashHandler::clearDumps()
+void CrashHandler::clear_dumps()
 {
-    const std::vector<std::string> files = dumpFileList();
+    const std::vector<std::string> files = dump_file_list();
     for (std::vector<std::string>::const_iterator it = files.begin(); it != files.end(); ++it) {
         const std::string full = mDPtr->mDumpPath + "/" + *it;
         ::unlink(full.c_str());
@@ -193,7 +193,7 @@ CXXKIT_END_NAMESPACE
 
 // ---- CrashHandlerPrivate (friend of CrashHandler — reaches the private pimpl) -------------------------------
 #if defined(CXXKIT_OS_MACOS)
-bool cxxkit::CrashHandlerPrivate::onMinidump(const char *dumpPath, const char *minidumpId, void *context,
+bool cxxkit::CrashHandlerPrivate::on_minidump(const char *dumpPath, const char *minidumpId, void *context,
                                              bool succeeded)
 {
     (void)minidumpId;
@@ -201,7 +201,7 @@ bool cxxkit::CrashHandlerPrivate::onMinidump(const char *dumpPath, const char *m
     const char *path = dumpPath;
     void *ucontext = nullptr;
 #else
-bool cxxkit::CrashHandlerPrivate::onMinidump(const google_breakpad::MinidumpDescriptor &descriptor, void *context,
+bool cxxkit::CrashHandlerPrivate::on_minidump(const google_breakpad::MinidumpDescriptor &descriptor, void *context,
                                              bool succeeded)
 {
     CrashHandler *self = static_cast<CrashHandler *>(context);
@@ -211,10 +211,10 @@ bool cxxkit::CrashHandlerPrivate::onMinidump(const google_breakpad::MinidumpDesc
 #endif
     CXXKIT_ASSERT(self);
 
-    if (succeeded && self->isHandlerInstalled()) {
-        CrashHandlerPrivate *d = self->dFunc();
+    if (succeeded && self->is_handler_installed()) {
+        CrashHandlerPrivate *d = self->d_func();
         if (d->mStackTraceOnCrash) {
-            printStackTraceFromUcontext(ucontext);
+            print_stack_trace_from_ucontext(ucontext);
         }
         if (d->mCallback) {
             d->mCallback(path, d->mCallbackContext, succeeded);

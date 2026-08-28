@@ -492,12 +492,12 @@ constexpr bool is_invocable_r_v = is_invocable_r<R, F, Args...>::value;
 namespace detail
 {
 template <typename T>
-std::weak_ptr<T> toWeakPtr(const std::shared_ptr<T> &ptr)
+std::weak_ptr<T> to_weak_ptr(const std::shared_ptr<T> &ptr)
 {
     return ptr;
 }
 template <typename T>
-std::weak_ptr<T> toWeakPtr(const std::weak_ptr<T> &ptr)
+std::weak_ptr<T> to_weak_ptr(const std::weak_ptr<T> &ptr)
 {
     return ptr;
 }
@@ -522,8 +522,8 @@ struct is_weak_ptr_compatible : std::false_type
 {
 };
 template <typename T>
-struct is_weak_ptr_compatible<T, void_t<decltype(detail::toWeakPtr(std::declval<T>()))>>
-    : is_weak_ptr<decltype(detail::toWeakPtr(std::declval<T>()))>
+struct is_weak_ptr_compatible<T, void_t<decltype(detail::to_weak_ptr(std::declval<T>()))>>
+    : is_weak_ptr<decltype(detail::to_weak_ptr(std::declval<T>()))>
 {
 };
 #if CXXKIT_CC_CPP14_OR_GREATER

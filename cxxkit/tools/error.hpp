@@ -38,7 +38,7 @@
 #define CXXKIT_DEFINE_ERROR_DOMAIN(Type, Name, Description)                                                            \
     const cxxkit::Error::Domain &Name()                                                                                \
     {                                                                                                                  \
-        static const Type domain(cxxkit::Error::Domain::Registry::registerDomain(#Type, #Name, Description));          \
+        static const Type domain(cxxkit::Error::Domain::Registry::register_domain(#Type, #Name, Description));          \
         return domain;                                                                                                 \
     }
 
@@ -63,7 +63,7 @@ public:
     public:
         struct CXXKIT_TOOLS_API Registry
         {
-            static ErrorId registerDomain(StringView type, StringView name, StringView description = "");
+            static ErrorId register_domain(StringView type, StringView name, StringView description = "");
         };
 
         Domain() = default;
@@ -84,7 +84,7 @@ public:
         }
 
         ErrorId id() const { return mId; }
-        bool isValid() const { return kInvalidId != mId; }
+        bool is_valid() const { return kInvalidId != mId; }
 
         StringView type() const { return mType; }
         StringView name() const { return mName; }
@@ -93,14 +93,14 @@ public:
         bool operator==(const Domain &other) const { return mId == other.mId; }
         bool operator!=(const Domain &other) const { return mId != other.mId; }
 
-        virtual StringView codeString(ErrorId /*code*/) const { return ""; }
-        virtual std::string toString(ErrorId code, StringView message = "") const
+        virtual StringView code_string(ErrorId /*code*/) const { return ""; }
+        virtual std::string to_string(ErrorId code, StringView message = "") const
         {
-            if (!this->isValid())
+            if (!this->is_valid())
             {
                 return std::string(message);
             }
-            auto codeMessage = std::string(this->codeString(code));
+            auto codeMessage = std::string(this->code_string(code));
             if (!codeMessage.empty())
             {
                 codeMessage = "<" + codeMessage + ">";
@@ -137,16 +137,16 @@ public:
     const Domain &domain() const { return mDomain; }
     const Error *cause() const { return mCause.data(); }
 
-    std::string toString() const
+    std::string to_string() const
     {
-        std::string string = mDomain.toString(mCode, mMessage);
+        std::string string = mDomain.to_string(mCode, mMessage);
         const Error *current = this;
         const int maxDepth = 10;
         int depth = 0;
         while (current->mCause && depth < maxDepth)
         {
             current = current->mCause.data();
-            string += "\nCaused by: " + current->mDomain.toString(current->mCode, current->mMessage);
+            string += "\nCaused by: " + current->mDomain.to_string(current->mCode, current->mMessage);
             ++depth;
         }
         if (current->mCause && depth >= maxDepth)
@@ -175,10 +175,10 @@ private:
 
 inline std::ostream &operator<<(std::ostream &os, const Error &error)
 {
-    os << error.toString();
+    os << error.to_string();
     return os;
 }
 
-CXXKIT_DECLARE_ERROR_DOMAIN(CXXKIT_TOOLS_API, invalidDomain)
+CXXKIT_DECLARE_ERROR_DOMAIN(CXXKIT_TOOLS_API, invalid_domain)
 
 CXXKIT_END_NAMESPACE

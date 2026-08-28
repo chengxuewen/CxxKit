@@ -35,12 +35,12 @@ ElapsedTimer::~ElapsedTimer()
 
 #if CXXKIT_FEATURE_USE_STD_STEADY_CLOCK
 
-ElapsedTimer::ClockType ElapsedTimer::clockType() noexcept
+ElapsedTimer::ClockType ElapsedTimer::clock_type() noexcept
 {
     return ClockType::kStdSteadyClock;
 }
 
-bool ElapsedTimer::isMonotonic() noexcept
+bool ElapsedTimer::is_monotonic() noexcept
 {
     return true;
 }
@@ -65,7 +65,7 @@ void ElapsedTimer::start() noexcept
     this->restart();
 }
 
-int64_t ElapsedTimer::nsecsElapsed() const noexcept
+int64_t ElapsedTimer::nsecs_elapsed() const noexcept
 {
     const auto now = std::chrono::steady_clock::now();
     return std::chrono::duration_cast<std::chrono::nanoseconds>(now.time_since_epoch()).count() - mStart;
@@ -73,20 +73,20 @@ int64_t ElapsedTimer::nsecsElapsed() const noexcept
 
 int64_t ElapsedTimer::elapsed() const noexcept
 {
-    return this->nsecsElapsed() / 1000000;
+    return this->nsecs_elapsed() / 1000000;
 }
 
-int64_t ElapsedTimer::msecsTo(const ElapsedTimer &other) const noexcept
+int64_t ElapsedTimer::msecs_to(const ElapsedTimer &other) const noexcept
 {
     return (other.mStart - mStart) / 1000000;
 }
 
-int64_t ElapsedTimer::secsTo(const ElapsedTimer &other) const noexcept
+int64_t ElapsedTimer::secs_to(const ElapsedTimer &other) const noexcept
 {
-    return this->msecsTo(other) / 1000;
+    return this->msecs_to(other) / 1000;
 }
 
-int64_t ElapsedTimer::msecsSinceReference() const noexcept
+int64_t ElapsedTimer::msecs_since_reference() const noexcept
 {
     return mStart / 1000000;
 }

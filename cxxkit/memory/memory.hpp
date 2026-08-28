@@ -35,22 +35,22 @@ namespace utils
 {
 
 template <typename T>
-std::shared_ptr<T> toSharedPtr(const std::weak_ptr<T> &ptr)
+std::shared_ptr<T> to_shared_ptr(const std::weak_ptr<T> &ptr)
 {
     return ptr.lock();
 }
 template <typename T>
-std::shared_ptr<T> toSharedPtr(const std::shared_ptr<T> &ptr)
+std::shared_ptr<T> to_shared_ptr(const std::shared_ptr<T> &ptr)
 {
     return ptr;
 }
 template <typename T>
-std::weak_ptr<T> toWeakPtr(const std::shared_ptr<T> &ptr)
+std::weak_ptr<T> to_weak_ptr(const std::shared_ptr<T> &ptr)
 {
     return ptr;
 }
 template <typename T>
-std::weak_ptr<T> toWeakPtr(const std::weak_ptr<T> &ptr)
+std::weak_ptr<T> to_weak_ptr(const std::weak_ptr<T> &ptr)
 {
     return ptr;
 }

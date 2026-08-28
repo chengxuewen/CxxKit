@@ -66,19 +66,19 @@ struct ExceptionWhat final
     std::string what;
 };
 
-static inline const char *getCStrHelper(const char *string)
+static inline const char *get_c_str_helper(const char *string)
 {
     return string;
 }
-static inline const char *getCStrHelper(const StringView &string)
+static inline const char *get_c_str_helper(const StringView &string)
 {
     return string.data();
 }
-static inline const char *getCStrHelper(const std::string &string)
+static inline const char *get_c_str_helper(const std::string &string)
 {
     return string.data();
 }
-static inline const char *getCStrHelper(const ExceptionWhat &exceptionWhat)
+static inline const char *get_c_str_helper(const ExceptionWhat &exceptionWhat)
 {
     return exceptionWhat.what.c_str();
 }
@@ -87,7 +87,7 @@ static inline const char *getCStrHelper(const ExceptionWhat &exceptionWhat)
 namespace utils
 {
 template <typename R>
-Expected<R, std::string> tryCatchCall(const std::function<R()> func)
+Expected<R, std::string> try_catch_call(const std::function<R()> func)
 {
 #if CXXKIT_HAS_EXCEPTIONS
     try
@@ -96,7 +96,7 @@ Expected<R, std::string> tryCatchCall(const std::function<R()> func)
     }
     catch (std::exception &e)
     {
-        return makeUnexpected(e.what());
+        return make_unexpected(e.what());
     }
 #else
     return func();
@@ -110,13 +110,13 @@ CXXKIT_END_NAMESPACE
 #    define CXXKIT_TRY                              try
 #    define CXXKIT_CATCH(A)                         catch (A)
 #    define CXXKIT_RETHROW                          throw
-#    define CXXKIT_THROW_DELEGATE(Exception, what)  throw Exception(cxxkit::detail::getCStrHelper(what))
+#    define CXXKIT_THROW_DELEGATE(Exception, what)  throw Exception(cxxkit::detail::get_c_str_helper(what))
 #    define CXXKIT_THROW_NO_MSG_DELEGATE(Exception) throw Exception()
 #else
 #    define CXXKIT_TRY                              if (true)
 #    define CXXKIT_CATCH(A)                         else
 #    define CXXKIT_RETHROW                          cxxkit::detail::noop()
-#    define CXXKIT_THROW_DELEGATE(Exception, what)  CXXKIT_FATAL("%s", detail::getCStrHelper(what))
+#    define CXXKIT_THROW_DELEGATE(Exception, what)  CXXKIT_FATAL("%s", detail::get_c_str_helper(what))
 #    define CXXKIT_THROW_NO_MSG_DELEGATE(Exception) CXXKIT_FATAL("%s", #Exception)
 #endif
 #define CXXKIT_THROW(Exception, ...)   CXXKIT_THROW_DELEGATE(Exception, cxxkit::detail::ExceptionWhat(__VA_ARGS__))

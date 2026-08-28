@@ -26,10 +26,10 @@
 
 CXXKIT_BEGIN_NAMESPACE
 
-RaceChecker::Scope::Scope(const RaceChecker *raceChecker)
+RaceChecker::Scope::Scope(const RaceChecker *race_checker)
 #if CXXKIT_DCHECK_IS_ON
-    : mRaceChecker(raceChecker)
-    , mRacecheckOk(raceChecker->acquire())
+    : mRaceChecker(race_checker)
+    , mRacecheckOk(race_checker->acquire())
 #endif
 {
 }
@@ -41,7 +41,7 @@ RaceChecker::Scope::~Scope()
 #endif
 }
 
-bool RaceChecker::Scope::isDetected() const
+bool RaceChecker::Scope::is_detected() const
 {
 #if CXXKIT_DCHECK_IS_ON
     return !mRacecheckOk;
@@ -52,19 +52,19 @@ bool RaceChecker::Scope::isDetected() const
 
 bool RaceChecker::acquire() const
 {
-    const auto currentThreadId = PlatformThread::currentThreadId();
+    const auto current_thread_id = PlatformThread::current_thread_id();
     // Set new accessing thread if this is a new use.
     const int currentAccessCount = mAccessCount;
     mAccessCount = mAccessCount + 1;
     if (currentAccessCount == 0)
     {
-        mAccessingThreadId = currentThreadId;
+        mAccessingThreadId = current_thread_id;
     }
     // If this is being used concurrently this check will fail for the second thread entering
     // since it won't set the thread.
     // Recursive use of checked methods are OK since the accessing thread remains the same.
     const auto accessingThreadId = mAccessingThreadId;
-    return accessingThreadId == currentThreadId;
+    return accessingThreadId == current_thread_id;
 }
 
 void RaceChecker::release() const

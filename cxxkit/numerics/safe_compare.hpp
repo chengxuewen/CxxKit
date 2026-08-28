@@ -65,7 +65,7 @@ struct LargerInt : LargerIntImpl<sizeof(T1) < sizeof(T2) || sizeof(T1) < sizeof(
 };
 
 template <typename T>
-constexpr typename std::make_unsigned<T>::type makeUnsigned(T a)
+constexpr typename std::make_unsigned<T>::type make_unsigned(T a)
 {
     return static_cast<typename std::make_unsigned<T>::type>(a);
 }
@@ -113,7 +113,7 @@ template <typename Op,
                                   !LargerInt<T2, T1>::value>::type * = nullptr>
 constexpr bool cmp(T1 a, T2 b)
 {
-    return a < 0 ? Op::Op(-1, 0) : Op::Op(safe_cmp_impl::makeUnsigned(a), b);
+    return a < 0 ? Op::Op(-1, 0) : Op::Op(safe_cmp_impl::make_unsigned(a), b);
 }
 
 // Overload for unsigned - signed comparison that can't be promoted to a bigger
@@ -125,7 +125,7 @@ template <typename Op,
                                   !LargerInt<T1, T2>::value>::type * = nullptr>
 constexpr bool cmp(T1 a, T2 b)
 {
-    return b < 0 ? Op::Op(0, -1) : Op::Op(a, safe_cmp_impl::makeUnsigned(b));
+    return b < 0 ? Op::Op(0, -1) : Op::Op(a, safe_cmp_impl::make_unsigned(b));
 }
 
 #define CXXKIT_SAFECMP_MAKE_OP(name, op)                                                                               \

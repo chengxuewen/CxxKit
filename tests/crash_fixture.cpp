@@ -41,11 +41,11 @@ int main(int argc, char **argv)
     const bool stacktrace = argc > 2 && std::strcmp(argv[2], "--stacktrace") == 0;
 
     cxxkit::CrashHandler &handler = cxxkit::CrashHandler::instance();
-    if (!handler.setDumpPath(argv[1])) {
-        std::fprintf(stderr, "setDumpPath failed\n");
+    if (!handler.set_dump_path(argv[1])) {
+        std::fprintf(stderr, "set_dump_path failed\n");
         return 3;
     }
-    handler.setStackTraceOnCrash(stacktrace);
+    handler.set_stack_trace_on_crash(stacktrace);
     if (!handler.install()) {
         std::fprintf(stderr, "install failed\n");
         return 4;

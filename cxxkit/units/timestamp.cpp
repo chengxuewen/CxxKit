@@ -42,7 +42,7 @@ CXXKIT_BEGIN_NAMESPACE
 //     return Timestamp::Micros(std::chrono::duration_cast<std::chrono::microseconds>(now.time_since_epoch()).count());
 // }
 
-std::string toString(Timestamp value)
+std::string to_string(Timestamp value)
 {
     std::stringstream ss;
     if (value.IsPlusInfinity())

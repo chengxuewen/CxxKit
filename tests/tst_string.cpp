@@ -40,7 +40,7 @@ TEST(String, DefaultAndBuffer)
     EXPECT_EQ(s.size(), 0u);
     EXPECT_EQ(s.length(), 0u);
     EXPECT_EQ(s.c_str()[0], '\0');
-    EXPECT_FALSE(s.isDynamic());
+    EXPECT_FALSE(s.is_dynamic());
 }
 
 TEST(String, ShortStringIsInlined)
@@ -48,7 +48,7 @@ TEST(String, ShortStringIsInlined)
     String s("hello");
     EXPECT_EQ(s.size(), 5u);
     EXPECT_STREQ(s.c_str(), "hello");
-    EXPECT_FALSE(s.isDynamic()); // fits in the 48-byte inline buffer
+    EXPECT_FALSE(s.is_dynamic()); // fits in the 48-byte inline buffer
 }
 
 TEST(String, LongStringIsDynamic)
@@ -56,7 +56,7 @@ TEST(String, LongStringIsDynamic)
     std::string longStr(100, 'x');
     String s(longStr);
     EXPECT_EQ(s.size(), longStr.size());
-    EXPECT_FALSE(s.isDynamic() == false); // longer than inline buffer -> dynamic
+    EXPECT_FALSE(s.is_dynamic() == false); // longer than inline buffer -> dynamic
     EXPECT_EQ(std::string(s.c_str(), s.size()), longStr);
 }
 

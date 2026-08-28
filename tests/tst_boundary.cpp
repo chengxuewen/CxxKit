@@ -368,7 +368,7 @@ TEST(BoundaryRefcount, ResetDropsReferences)
 
 TEST(BoundaryRefcount, DoubleReleaseOfRefCountedObjectFailsSafely)
 {
-    // SharedRefPtr owns one addRef/Release pair; releasing the same raw
+    // SharedRefPtr owns one add_ref/Release pair; releasing the same raw
     // pointer twice would double-free. Sharing through SharedRefPtr copies is
     // the safe path: each copy adds one reference, and each destruction drops
     // exactly one. The observable count is exercised via RefCountedBase.

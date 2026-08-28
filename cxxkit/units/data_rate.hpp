@@ -154,12 +154,12 @@ inline CXXKIT_CXX14_CONSTEXPR DataRate operator*(const Frequency frequency, cons
 
 namespace utils
 {
-CXXKIT_UNITS_API std::string toString(DataRate value);
+CXXKIT_UNITS_API std::string to_string(DataRate value);
 
 // template <typename Sink>
 // void stringify(Sink &sink, DataRate value)
 // {
-//     sink.Append(toString(value));
+//     sink.Append(to_string(value));
 // }
 } // namespace utils
 

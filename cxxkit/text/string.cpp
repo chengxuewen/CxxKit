@@ -72,7 +72,7 @@ size_t String::size() const
     return d->mLength;
 }
 
-bool String::isDynamic() const
+bool String::is_dynamic() const
 {
     CXXKIT_D(const String);
     return d->mDynamic != nullptr;
