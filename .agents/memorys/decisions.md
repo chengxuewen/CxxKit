@@ -113,3 +113,9 @@ sanitizer（ASAN/LSAN/UBSan）与 coverage 用**独立 build 目录**（build-as
 - **决策**: question 工具列选项时，有推荐项则第一项标注"(推荐)"；用户对照推荐决策，不确定项会问"你的推荐？"
 - **理由**: 用户 3 次（FixedArray/Hash/AlwaysValidPointer）要求先给推荐——平行选项无导向性，交互效率低
 - **参考**: 2026-08-25 移植候选交互式讨论（18 项逐项）
+
+## D25: CXX 标准机制（2026-08-28，commit 97bf4d9）
+- **决策**: OpenCTK 式三级优先链 `INPUT_CXXKIT_FEATURE_CXX_STANDARD`（父项目注入，FORCE）> `CMAKE_CXX_STANDARD`（FORCE）> 默认 11（CACHE STRING，GUI 可编辑 + STRINGS 下拉 {11,14,17,20,23,26}）。非法值 FATAL_ERROR（精确匹配校验）。阶梯变量 `CXXKIT_CXX_STANDARD_11..26`（0/1，`>=` 向上）供 CMake 侧按标准条件启用逻辑。
+- **理由**: 用户要求 GUI 可配 + 有效性校验 + 子项目外部传入；OpenCTK 机制完整（QExt 无 INPUT_ 通道且无校验，QExt 阶梯仅向上 ON 不便 if() 双向使用）。**变量名保留 `CXXKIT_FEATURE_CXX_STANDARD` 不重命名**（CXXKIT_CMAKE_CXX_STANDARD 式重命名会静默打断 ConfigureHelpers core_config defines 生成——消费方零改动是硬约束）。测试 target 跟随主标准（原硬编码 11）。
+- **已知语义**: INPUT_ 经 -D 传入后残留在 CMakeCache，重配置持续 FORCE 生效（GUI 编辑被覆盖）——OpenCTK 同款；清除需 rm build/CMakeCache.txt。
+- **验证**: default=11 / -DINPUT_=14 / 非法 13→FATAL 三态 + 63/63 tests。
