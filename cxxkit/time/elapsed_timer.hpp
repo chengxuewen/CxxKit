@@ -132,7 +132,7 @@ public:
      * @return Returns the number of milliseconds since this ElapsedTimer was last started.
      *
      * Calling this function on a ElapsedTimer that is invalid results in undefined behavior.
-     * 
+     *
      * @sa start(), restart(), hasExpired(), isValid(), invalidate()
      */
     int64_t elapsed() const noexcept;
@@ -162,7 +162,7 @@ public:
     /**
      * @return Returns the number of milliseconds between last time this ElapsedTimer object was started
      * and its reference clock's start.
-     * 
+     *
      * This number is usually arbitrary for all clocks except the ElapsedTimer::SystemTime clock.
      * For that clock type, this number is the number of milliseconds since January 1st, 1970 at 0:00 UTC
      * (that is, it is the Unix time expressed in milliseconds).

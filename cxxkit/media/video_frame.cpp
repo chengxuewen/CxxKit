@@ -23,7 +23,7 @@
 **
 ***********************************************************************************************************************/
 
-#include "video_frame.hpp"
+#include <cxxkit/media/video_frame.hpp>
 
 #include <algorithm>
 

@@ -22,7 +22,7 @@
 **
 ***********************************************************************************************************************/
 
-#include "framerate_controller.hpp"
+#include <cxxkit/media/framerate_controller.hpp>
 
 #include <cstdlib>
 #include <limits>

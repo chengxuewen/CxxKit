@@ -51,7 +51,7 @@ enum class LogLevel : int
     Fatal = 6,
 };
 
-static constexpr int LogLevelNum = 7;
+static constexpr int kLogLevelNum = 7;
 
 class LoggerPrivate;
 

@@ -184,7 +184,7 @@ void Logger::setNoSource(bool noSource)
 void Logger::switchLevel(LogLevel level)
 {
     CXXKIT_D(Logger);
-    for (size_t i = 0; i < LogLevelNum; i++)
+    for (size_t i = 0; i < kLogLevelNum; i++)
     {
         d->mLevelEnabled[i].store(i >= (int)level);
     }

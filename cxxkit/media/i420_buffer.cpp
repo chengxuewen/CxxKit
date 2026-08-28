@@ -23,7 +23,7 @@
 **
 ***********************************************************************************************************************/
 
-#include "i420_buffer.hpp"
+#include <cxxkit/media/i420_buffer.hpp>
 
 #include <cxxkit/tools/checks.hpp>
 

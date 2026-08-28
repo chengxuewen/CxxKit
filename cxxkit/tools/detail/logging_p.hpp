@@ -60,7 +60,7 @@ public:
     const int mIdNumber;
     const char *const mName;
     std::shared_ptr<spdlog::logger> mLogger;
-    std::atomic_bool mLevelEnabled[LogLevelNum];
+    std::atomic_bool mLevelEnabled[kLogLevelNum];
     std::atomic_bool mMessageHandleUniqueOwnership;
     std::atomic<MessageHandlerWraper *> mMessageHandlerWraper{nullptr};
 

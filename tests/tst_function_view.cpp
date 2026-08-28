@@ -1,9 +1,8 @@
 /***********************************************************************************************************************
 **
-** Library: OpenCTK
+** Library: CxxKit
 **
 ** Copyright (C) 2025~Present ChengXueWen.
-** Copyright 2016 The WebRTC Project Authors.
 **
 ** License: MIT License
 **
@@ -22,7 +21,6 @@
 ** IN THE SOFTWARE.
 **
 ***********************************************************************************************************************/
-
 #include <cxxkit/functional/function_view.hpp>
 
 #include <memory>

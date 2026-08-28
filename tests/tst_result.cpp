@@ -2,7 +2,7 @@
 **
 ** Library: CxxKit
 **
-** Copyright (C) 2026~Present ChengXueWen.
+** Copyright (C) 2025~Present ChengXueWen.
 **
 ** License: MIT License
 **

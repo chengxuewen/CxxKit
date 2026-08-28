@@ -55,7 +55,7 @@ public:
     bool isCurrent() const;
 
     /**
-     * Detaches checker from sequence to which it is attached. Next attempt to do a check with this 
+     * Detaches checker from sequence to which it is attached. Next attempt to do a check with this
      * checker will result in attaching this checker to the sequence on which check was performed.
      */
     void detach();

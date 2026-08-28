@@ -23,7 +23,7 @@
 **
 ***********************************************************************************************************************/
 
-#include "frame_generator_capturer.hpp"
+#include <cxxkit/media/frame_generator_capturer.hpp>
 
 #include <cxxkit/tools/checks.hpp>
 

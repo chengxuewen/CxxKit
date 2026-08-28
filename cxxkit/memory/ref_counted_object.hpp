@@ -92,22 +92,22 @@ public:
     FinalRefCountedObject(const FinalRefCountedObject &) = delete;
     FinalRefCountedObject &operator=(const FinalRefCountedObject &) = delete;
 
-    void addRef() const { ref_count_.incRef(); }
+    void addRef() const { mRefCount.incRef(); }
     RefCountReleaseStatus Release() const
     {
-        const auto status = ref_count_.DecRef();
+        const auto status = mRefCount.DecRef();
         if (status == RefCountReleaseStatus::kDroppedLastRef)
         {
             delete this;
         }
         return status;
     }
-    bool HasOneRef() const { return ref_count_.HasOneRef(); }
+    bool HasOneRef() const { return mRefCount.HasOneRef(); }
 
 private:
     ~FinalRefCountedObject() = default;
 
-    mutable detail::RefCounter ref_count_{0};
+    mutable detail::RefCounter mRefCount{0};
 };
 
 namespace utils

@@ -24,7 +24,7 @@
 **
 ***********************************************************************************************************************/
 
-#include "video_frame_buffer_pool.hpp"
+#include <cxxkit/media/video_frame_buffer_pool.hpp>
 
 #include <cxxkit/tools/checks.hpp>
 

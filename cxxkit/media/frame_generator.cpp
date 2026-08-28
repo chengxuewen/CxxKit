@@ -23,7 +23,7 @@
 **
 ***********************************************************************************************************************/
 
-#include "frame_generator.hpp"
+#include <cxxkit/media/frame_generator.hpp>
 
 #include <cxxkit/media/i420_buffer.hpp>
 #include <cxxkit/tools/checks.hpp>

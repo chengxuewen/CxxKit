@@ -240,8 +240,8 @@ public:
     /**
      * Removes the specified @a runnable from the queue if it is not yet started.
      * The tasks for which autoDelete set true are deleted.
-     * @param task 
-     * @return 
+     * @param task
+     * @return
      */
     bool cancel(Task *task);
     /**
