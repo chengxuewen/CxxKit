@@ -145,3 +145,11 @@ cxxkit 是 OpenCTK（an open cpp toolkit）的成功重构版本 —— 精简�
 - [x] **media 安装功能修复**（`cf9e1e9`）：media CMakeLists 补 install(TARGETS)+install(DIRECTORY)+install_public_wrap_headers(Libyuv)；CxxKitPkgConfigHelpers 补 -lyuv 映射；**cxxkitConfig 导出 stub 链接缺陷修复**——libyuv/spdlog/fmt 空 stub 无链接库导致消费方缺 -lyuv/-lspdlog/-lfmt（C11 消费验证暴露的既有缺陷），stub 补 INTERFACE_LINK_LIBRARIES 指向安装树 .a
 - 验证：/tmp 消费方 find_package(cxxkit COMPONENTS media) + I420Buffer + ScaleVideoFrameBuffer 构建/链接/运行全通；link.txt 含 yuv+spdlog+fmt；**find_dependency(fmt/spdlog) 与 stub 双轨并存，stub 负责真链接**
 - 备注：消费方需 C++14（function2 vendored 头依赖 C++14 语法，thread 引入）
+
+### 2026-08-28 CXX 标准机制落地（D25）
+
+- [x] **OpenCTK 式 C++ 标准选择机制**（`97bf4d9`，团队模式分析 OpenCTK/QExt 后设计）：三级优先链 `INPUT_CXXKIT_FEATURE_CXX_STANDARD`（父项目注入 FORCE）> `CMAKE_CXX_STANDARD`（FORCE）> 默认 11（CACHE STRING + STRINGS 下拉 {11,14,17,20,23,26}，GUI 可编辑）；非法值 FATAL_ERROR；阶梯变量 `CXXKIT_CXX_STANDARD_11..26`（0/1 向上）供 CMake 侧按标准条件启用；STATUS 打印 `Using C++: <std> (<source>)`
+- [x] **变量名保留 `CXXKIT_FEATURE_CXX_STANDARD`**（用户裁定）——ConfigureHelpers/LibraryHelpers/ExecutableHelpers/core_config defines 零改动（重命名为 CXXKIT_CMAKE_CXX_STANDARD 式会静默打断 core_config 生成）
+- [x] **测试 target 跟随主标准**（原硬编码 11）；Library/ExecutableHelpers 已有 CXX_EXTENSIONS OFF（团队报告误报，实际已存在）
+- 已知语义：INPUT_ 经 -D 传入后残留 CMakeCache 持续 FORCE（GUI 编辑被覆盖，OpenCTK 同款，清 CMakeCache 解除）
+- 验证：default=11 / -DINPUT_=14 / 非法 13→FATAL 三态 + 构建 + 63/63 tests；决策记录 decisions.md D25（`30592d5`）
