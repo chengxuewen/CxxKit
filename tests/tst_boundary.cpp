@@ -85,48 +85,48 @@ TEST(BoundaryNumeric, SaturatedCastOverflowBothDirections)
               utils::saturated_cast<int32_t>(std::numeric_limits<int64_t>::min()));
 }
 
-TEST(BoundaryNumeric, IsValueInRangeForNumericType)
+TEST(BoundaryNumeric, is_value_in_range_for_numeric_type)
 {
-    EXPECT_TRUE(utils::IsValueInRangeForNumericType<int8_t>(static_cast<int>(127)));
-    EXPECT_FALSE(utils::IsValueInRangeForNumericType<int8_t>(static_cast<int>(128)));
-    EXPECT_FALSE(utils::IsValueInRangeForNumericType<int8_t>(static_cast<int>(-129)));
-    EXPECT_TRUE(utils::IsValueInRangeForNumericType<int8_t>(static_cast<int>(-128)));
+    EXPECT_TRUE(utils::is_value_in_range_for_numeric_type<int8_t>(static_cast<int>(127)));
+    EXPECT_FALSE(utils::is_value_in_range_for_numeric_type<int8_t>(static_cast<int>(128)));
+    EXPECT_FALSE(utils::is_value_in_range_for_numeric_type<int8_t>(static_cast<int>(-129)));
+    EXPECT_TRUE(utils::is_value_in_range_for_numeric_type<int8_t>(static_cast<int>(-128)));
 
     // Unsigned destination cannot hold negatives.
-    EXPECT_FALSE(utils::IsValueInRangeForNumericType<uint8_t>(static_cast<int>(-1)));
-    EXPECT_TRUE(utils::IsValueInRangeForNumericType<uint8_t>(static_cast<int>(255)));
-    EXPECT_FALSE(utils::IsValueInRangeForNumericType<uint8_t>(static_cast<int>(256)));
+    EXPECT_FALSE(utils::is_value_in_range_for_numeric_type<uint8_t>(static_cast<int>(-1)));
+    EXPECT_TRUE(utils::is_value_in_range_for_numeric_type<uint8_t>(static_cast<int>(255)));
+    EXPECT_FALSE(utils::is_value_in_range_for_numeric_type<uint8_t>(static_cast<int>(256)));
 }
 
 TEST(BoundaryNumeric, SafeCompareSignedUnsigned)
 {
     // Naive `-1 < 0u` is false because -1 is converted to a huge unsigned.
-    // SafeLt must yield the mathematically correct result.
-    EXPECT_TRUE(SafeLt(-1, 0u));
-    EXPECT_TRUE(SafeLt(-5, static_cast<uint8_t>(3)));
-    EXPECT_FALSE(SafeLt(1u, -1));
-    EXPECT_TRUE(SafeGt(1u, -1));
-    EXPECT_TRUE(SafeLe(0, 0u));
-    EXPECT_TRUE(SafeGe(0, 0u));
-    EXPECT_TRUE(SafeEq(0, 0u));
+    // safe_lt must yield the mathematically correct result.
+    EXPECT_TRUE(safe_lt(-1, 0u));
+    EXPECT_TRUE(safe_lt(-5, static_cast<uint8_t>(3)));
+    EXPECT_FALSE(safe_lt(1u, -1));
+    EXPECT_TRUE(safe_gt(1u, -1));
+    EXPECT_TRUE(safe_le(0, 0u));
+    EXPECT_TRUE(safe_ge(0, 0u));
+    EXPECT_TRUE(safe_eq(0, 0u));
 }
 
 TEST(BoundaryNumeric, SafeMinMaxNoWrap)
 {
     // Different-sign widths; must not wrap / promote wrongly.
-    EXPECT_EQ(-5, SafeMin(-5, static_cast<uint8_t>(3)));
-    EXPECT_EQ(3, SafeMax(-5, static_cast<uint8_t>(3)));
-    EXPECT_EQ(-1, SafeMin(0u, -1));
-    EXPECT_EQ(0, SafeMax(0u, -1));
+    EXPECT_EQ(-5, safe_min(-5, static_cast<uint8_t>(3)));
+    EXPECT_EQ(3, safe_max(-5, static_cast<uint8_t>(3)));
+    EXPECT_EQ(-1, safe_min(0u, -1));
+    EXPECT_EQ(0, safe_max(0u, -1));
 }
 
-TEST(BoundaryNumeric, SafeClamp)
+TEST(BoundaryNumeric, safe_clamp)
 {
-    EXPECT_EQ(0, SafeClamp(-100, 0, 10));  // below min clamps to min
-    EXPECT_EQ(5, SafeClamp(5, 0, 10));  // in range unchanged
-    EXPECT_EQ(10, SafeClamp(100, 0, 10));
+    EXPECT_EQ(0, safe_clamp(-100, 0, 10));  // below min clamps to min
+    EXPECT_EQ(5, safe_clamp(5, 0, 10));  // in range unchanged
+    EXPECT_EQ(10, safe_clamp(100, 0, 10));
     // Mixed signedness clamp.
-    EXPECT_EQ(0, SafeClamp(-1, 0u, static_cast<uint8_t>(3)));  // clamps to 0u min
+    EXPECT_EQ(0, safe_clamp(-1, 0u, static_cast<uint8_t>(3)));  // clamps to 0u min
 }
 
 // ---------------------------------------------------------------------------
@@ -231,7 +231,7 @@ TEST(BoundaryArrayView, EmptyViewIsSafe)
 // ---------------------------------------------------------------------------
 // BitBuffer boundary reads.
 // Contract: reads that exhaust the buffer flip the reader into a failure
-// state (RemainingBitCount() < 0 / Ok() == false) rather than reading
+// state (remaining_bit_count() < 0 / Ok() == false) rather than reading
 // out-of-bounds. The writer returns false when there is not enough room.
 // ---------------------------------------------------------------------------
 
@@ -242,29 +242,29 @@ TEST(BoundaryBitBuffer, ReadPastEndFailsCleanly)
     cxxkit::BitBufferReader rdr(cxxkit::ArrayView<const uint8_t>(raw, 1));
 
     EXPECT_TRUE(rdr.Ok());
-    // Read all 8 bits.
-    EXPECT_EQ(0xFFu, rdr.ReadBits(8));
+    // read all 8 bits.
+    EXPECT_EQ(0xFFu, rdr.read_bits(8));
     EXPECT_TRUE(rdr.Ok());
-    EXPECT_EQ(0, rdr.RemainingBitCount());
+    EXPECT_EQ(0, rdr.remaining_bit_count());
 
     // Reading more than the remaining bits must not over-read; it enters the
     // failure state and returns 0.
-    uint64_t val = rdr.ReadBits(16);
+    uint64_t val = rdr.read_bits(16);
     EXPECT_EQ(0u, val);
     EXPECT_FALSE(rdr.Ok());
-    EXPECT_LT(rdr.RemainingBitCount(), 0);
+    EXPECT_LT(rdr.remaining_bit_count(), 0);
 }
 
 TEST(BoundaryBitBuffer, RemainingBitCountEdge)
 {
-    // Empty buffer: RemainingBitCount() starts at 0 and Ok() is true; any read fails.
+    // Empty buffer: remaining_bit_count() starts at 0 and Ok() is true; any read fails.
     const uint8_t raw[] = {};
     cxxkit::BitBufferReader rdr(cxxkit::ArrayView<const uint8_t>(raw, 0));
     EXPECT_TRUE(rdr.Ok());
-    EXPECT_EQ(0, rdr.RemainingBitCount());
+    EXPECT_EQ(0, rdr.remaining_bit_count());
 
     // A single read past the end pushes into failure state.
-    EXPECT_EQ(0u, rdr.ReadBits(1));
+    EXPECT_EQ(0u, rdr.read_bits(1));
     EXPECT_FALSE(rdr.Ok());
 }
 
@@ -274,18 +274,18 @@ TEST(BoundaryBitBuffer, WriterReturnsFalseWhenFull)
     cxxkit::BitBufferWriter wr(storage, sizeof(storage));
 
     // 8 bits fills the buffer.
-    EXPECT_TRUE(wr.WriteBits(0xA5u, 8));
-    EXPECT_EQ(0u, wr.RemainingBitCount());
+    EXPECT_TRUE(wr.write_bits(0xA5u, 8));
+    EXPECT_EQ(0u, wr.remaining_bit_count());
 
     // Any further write that doesn't fit must return false, not overflow.
-    EXPECT_FALSE(wr.WriteBits(1u, 1));
-    EXPECT_FALSE(wr.WriteUInt8(0x01));
-    EXPECT_FALSE(wr.ConsumeBits(1));
-    EXPECT_FALSE(wr.ConsumeBytes(1));
+    EXPECT_FALSE(wr.write_bits(1u, 1));
+    EXPECT_FALSE(wr.write_u_int8(0x01));
+    EXPECT_FALSE(wr.consume_bits(1));
+    EXPECT_FALSE(wr.consume_bytes(1));
 
     // Writes that fit on the boundary still succeed after a seek back.
-    EXPECT_TRUE(wr.Seek(0, 0));
-    EXPECT_TRUE(wr.WriteUInt8(0x7E));
+    EXPECT_TRUE(wr.seek(0, 0));
+    EXPECT_TRUE(wr.write_u_int8(0x7E));
 }
 
 // ---------------------------------------------------------------------------
@@ -368,7 +368,7 @@ TEST(BoundaryRefcount, ResetDropsReferences)
 
 TEST(BoundaryRefcount, DoubleReleaseOfRefCountedObjectFailsSafely)
 {
-    // SharedRefPtr owns one add_ref/Release pair; releasing the same raw
+    // SharedRefPtr owns one add_ref/release pair; releasing the same raw
     // pointer twice would double-free. Sharing through SharedRefPtr copies is
     // the safe path: each copy adds one reference, and each destruction drops
     // exactly one. The observable count is exercised via RefCountedBase.

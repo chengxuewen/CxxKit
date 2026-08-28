@@ -43,13 +43,13 @@ Random::Random(uint64_t seed)
     mState = seed;
 }
 
-uint32_t Random::Rand(uint32_t t)
+uint32_t Random::rand(uint32_t t)
 {
     // Casting the output to 32 bits will give an almost uniform number.
     // Pr[x=0] = (2^32-1) / (2^64-1)
     // Pr[x=k] = 2^32 / (2^64-1) for k!=0
     // Uniform would be Pr[x=k] = 2^32 / 2^64 for all 32-bit integers k.
-    uint32_t x = NextOutput();
+    uint32_t x = next_output();
     // If x / 2^32 is uniform on [0,1), then x / 2^32 * (t+1) is uniform on
     // the interval [0,t+1), so the integer part is uniform on [0,t].
     uint64_t result = x * (static_cast<uint64_t>(t) + 1);
@@ -57,57 +57,57 @@ uint32_t Random::Rand(uint32_t t)
     return result;
 }
 
-uint32_t Random::Rand(uint32_t low, uint32_t high)
+uint32_t Random::rand(uint32_t low, uint32_t high)
 {
     CXXKIT_DCHECK(low <= high);
-    return Rand(high - low) + low;
+    return rand(high - low) + low;
 }
 
-int32_t Random::Rand(int32_t low, int32_t high)
+int32_t Random::rand(int32_t low, int32_t high)
 {
     CXXKIT_DCHECK(low <= high);
     const int64_t low_i64{low};
-    return utils::dchecked_cast<int32_t>(Rand(utils::dchecked_cast<uint32_t>(high - low_i64)) + low_i64);
+    return utils::dchecked_cast<int32_t>(rand(utils::dchecked_cast<uint32_t>(high - low_i64)) + low_i64);
 }
 
 template <>
-float Random::Rand<float>()
+float Random::rand<float>()
 {
-    double result = NextOutput() - 1;
+    double result = next_output() - 1;
     result = result / static_cast<double>(0xFFFFFFFFFFFFFFFFull);
     return static_cast<float>(result);
 }
 
 template <>
-double Random::Rand<double>()
+double Random::rand<double>()
 {
-    double result = NextOutput() - 1;
+    double result = next_output() - 1;
     result = result / static_cast<double>(0xFFFFFFFFFFFFFFFFull);
     return result;
 }
 
 template <>
-bool Random::Rand<bool>()
+bool Random::rand<bool>()
 {
-    return Rand(0, 1) == 1;
+    return rand(0, 1) == 1;
 }
 
-double Random::Gaussian(double mean, double standard_deviation)
+double Random::gaussian(double mean, double standard_deviation)
 {
     // Creating a Normal distribution variable from two independent uniform
     // variables based on the Box-Muller transform, which is defined on the
-    // interval (0, 1]. Note that we rely on NextOutput to generate integers
+    // interval (0, 1]. Note that we rely on next_output to generate integers
     // in the range [1, 2^64-1]. Normally this behavior is a bit frustrating,
     // but here it is exactly what we need.
     const double kPi = 3.14159265358979323846;
-    double u1 = static_cast<double>(NextOutput()) / static_cast<double>(0xFFFFFFFFFFFFFFFFull);
-    double u2 = static_cast<double>(NextOutput()) / static_cast<double>(0xFFFFFFFFFFFFFFFFull);
+    double u1 = static_cast<double>(next_output()) / static_cast<double>(0xFFFFFFFFFFFFFFFFull);
+    double u2 = static_cast<double>(next_output()) / static_cast<double>(0xFFFFFFFFFFFFFFFFull);
     return mean + standard_deviation * sqrt(-2 * log(u1)) * cos(2 * kPi * u2);
 }
 
-double Random::Exponential(double lambda)
+double Random::exponential(double lambda)
 {
-    double uniform = Rand<double>();
+    double uniform = rand<double>();
     return -log(uniform) / lambda;
 }
 
@@ -135,8 +135,8 @@ class SecureRandomGenerator : public RandomGenerator
 public:
     SecureRandomGenerator() { }
     ~SecureRandomGenerator() override { }
-    bool Init(const void * /* seed */, size_t /* len */) override { return true; }
-    bool Generate(void *buf, size_t len) override
+    bool init(const void * /* seed */, size_t /* len */) override { return true; }
+    bool generate(void *buf, size_t len) override
     {
         // return (RAND_bytes(reinterpret_cast<unsigned char *>(buf), len) > 0);
         return (detail::std_secure_random(reinterpret_cast<unsigned char *>(buf), len) > 0);
@@ -152,18 +152,18 @@ public:
     {
     }
     ~TestRandomGenerator() override { }
-    bool Init(const void * /* seed */, size_t /* len */) override { return true; }
-    bool Generate(void *buf, size_t len) override
+    bool init(const void * /* seed */, size_t /* len */) override { return true; }
+    bool generate(void *buf, size_t len) override
     {
         for (size_t i = 0; i < len; ++i)
         {
-            static_cast<uint8_t *>(buf)[i] = static_cast<uint8_t>(GetRandom());
+            static_cast<uint8_t *>(buf)[i] = static_cast<uint8_t>(get_random());
         }
         return true;
     }
 
 private:
-    int GetRandom() { return ((mSeed = mSeed * 214013L + 2531011L) >> 16) & 0x7fff; }
+    int get_random() { return ((mSeed = mSeed * 214013L + 2531011L) >> 16) & 0x7fff; }
     int mSeed;
 };
 
@@ -178,7 +178,7 @@ static const char kHex[16] = {'0', '1', '2', '3', '4', '5', '6', '7', '8', '9', 
 static const char kUuidDigit17[4] = {'8', '9', 'a', 'b'};
 
 // Lock for the global random generator, only needed to serialize changing the generator.
-Mutex &GetRandomGeneratorLock()
+Mutex &get_random_generator_lock()
 {
     static Mutex &mutex = *new Mutex();
     return mutex;
@@ -186,53 +186,53 @@ Mutex &GetRandomGeneratorLock()
 
 // This round about way of creating a global RNG is to safe-guard against
 // indeterminant static initialization order.
-std::unique_ptr<RandomGenerator> &GetGlobalRng()
+std::unique_ptr<RandomGenerator> &get_global_rng()
 {
     static std::unique_ptr<RandomGenerator> &rng = *new std::unique_ptr<RandomGenerator>(new SecureRandomGenerator());
     return rng;
 }
 
-RandomGenerator &Rng()
+RandomGenerator &rng()
 {
-    return *GetGlobalRng();
+    return *get_global_rng();
 }
 } // namespace
 
 namespace utils
 {
-void SetDefaultRandomGenerator()
+void set_default_random_generator()
 {
-    Mutex::UniqueLock locker(GetRandomGeneratorLock());
-    GetGlobalRng().reset(new SecureRandomGenerator());
+    Mutex::UniqueLock locker(get_random_generator_lock());
+    get_global_rng().reset(new SecureRandomGenerator());
 }
 
-void SetRandomGenerator(std::unique_ptr<RandomGenerator> generator)
+void set_random_generator(std::unique_ptr<RandomGenerator> generator)
 {
-    Mutex::UniqueLock locker(GetRandomGeneratorLock());
-    GetGlobalRng() = std::move(generator);
+    Mutex::UniqueLock locker(get_random_generator_lock());
+    get_global_rng() = std::move(generator);
 }
 
-void SetRandomTestMode(bool test)
+void set_random_test_mode(bool test)
 {
-    Mutex::UniqueLock locker(GetRandomGeneratorLock());
+    Mutex::UniqueLock locker(get_random_generator_lock());
     if (!test)
     {
-        GetGlobalRng().reset(new SecureRandomGenerator());
+        get_global_rng().reset(new SecureRandomGenerator());
     }
     else
     {
-        GetGlobalRng().reset(new TestRandomGenerator());
+        get_global_rng().reset(new TestRandomGenerator());
     }
 }
 
-bool InitRandom(int seed)
+bool init_random(int seed)
 {
-    return InitRandom(reinterpret_cast<const char *>(&seed), sizeof(seed));
+    return init_random(reinterpret_cast<const char *>(&seed), sizeof(seed));
 }
 
-bool InitRandom(const char *seed, size_t len)
+bool init_random(const char *seed, size_t len)
 {
-    if (!Rng().Init(seed, len))
+    if (!rng().init(seed, len))
     {
         CXXKIT_ERROR() << "Failed to init random generator!";
         return false;
@@ -240,14 +240,14 @@ bool InitRandom(const char *seed, size_t len)
     return true;
 }
 
-std::string CreateRandomString(size_t len)
+std::string create_random_string(size_t len)
 {
     std::string str;
-    CXXKIT_CHECK(CreateRandomString(len, &str));
+    CXXKIT_CHECK(create_random_string(len, &str));
     return str;
 }
 
-static bool CreateRandomString(size_t len, const char *table, int table_size, std::string *str)
+static bool create_random_string(size_t len, const char *table, int table_size, std::string *str)
 {
     str->clear();
     // Avoid biased modulo division below.
@@ -257,7 +257,7 @@ static bool CreateRandomString(size_t len, const char *table, int table_size, st
         return false;
     }
     std::unique_ptr<uint8_t[]> bytes(new uint8_t[len]);
-    if (!Rng().Generate(bytes.get(), len))
+    if (!rng().generate(bytes.get(), len))
     {
         CXXKIT_ERROR() << "Failed to generate random string!";
         return false;
@@ -270,32 +270,32 @@ static bool CreateRandomString(size_t len, const char *table, int table_size, st
     return true;
 }
 
-bool CreateRandomString(size_t len, std::string *str)
+bool create_random_string(size_t len, std::string *str)
 {
-    return CreateRandomString(len, kBase64, 64, str);
+    return create_random_string(len, kBase64, 64, str);
 }
 
-bool CreateRandomString(size_t len, StringView table, std::string *str)
+bool create_random_string(size_t len, StringView table, std::string *str)
 {
-    return CreateRandomString(len, table.data(), static_cast<int>(table.size()), str);
+    return create_random_string(len, table.data(), static_cast<int>(table.size()), str);
 }
 
-bool CreateRandomData(size_t length, std::string *data)
+bool create_random_data(size_t length, std::string *data)
 {
     data->resize(length);
     // std::string is guaranteed to use contiguous memory in c++11 so we can
     // safely write directly to it.
-    return Rng().Generate(&data->at(0), length);
+    return rng().generate(&data->at(0), length);
 }
 
 // Version 4 UUID is of the form:
 // xxxxxxxx-xxxx-4xxx-yxxx-xxxxxxxxxxxx
 // Where 'x' is a hex digit, and 'y' is 8, 9, a or b.
-std::string CreateRandomUuid()
+std::string create_random_uuid()
 {
     std::string str;
     std::unique_ptr<uint8_t[]> bytes(new uint8_t[31]);
-    CXXKIT_CHECK(Rng().Generate(bytes.get(), 31));
+    CXXKIT_CHECK(rng().generate(bytes.get(), 31));
     str.reserve(36);
     for (size_t i = 0; i < 8; ++i)
     {
@@ -326,31 +326,31 @@ std::string CreateRandomUuid()
     return str;
 }
 
-uint32_t CreateRandomId()
+uint32_t create_random_id()
 {
     uint32_t id;
-    CXXKIT_CHECK(Rng().Generate(&id, sizeof(id)));
+    CXXKIT_CHECK(rng().generate(&id, sizeof(id)));
     return id;
 }
 
-uint64_t CreateRandomId64()
+uint64_t create_random_id64()
 {
-    return static_cast<uint64_t>(CreateRandomId()) << 32 | CreateRandomId();
+    return static_cast<uint64_t>(create_random_id()) << 32 | create_random_id();
 }
 
-uint32_t CreateRandomNonZeroId()
+uint32_t create_random_non_zero_id()
 {
     uint32_t id;
     do
     {
-        id = CreateRandomId();
+        id = create_random_id();
     } while (id == 0);
     return id;
 }
 
-double CreateRandomDouble()
+double create_random_double()
 {
-    return CreateRandomId() / (std::numeric_limits<uint32_t>::max() + std::numeric_limits<double>::epsilon());
+    return create_random_id() / (std::numeric_limits<uint32_t>::max() + std::numeric_limits<double>::epsilon());
 }
 } // namespace utils
 

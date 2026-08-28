@@ -53,9 +53,9 @@ public:
 
     void add_ref() const override { mRefCount.inc_ref(); }
 
-    RefCountReleaseStatus Release() const override
+    RefCountReleaseStatus release() const override
     {
-        const auto status = mRefCount.DecRef();
+        const auto status = mRefCount.dec_ref();
         if (status == RefCountReleaseStatus::kDroppedLastRef)
         {
             delete this;
@@ -69,7 +69,7 @@ public:
     // performs the test for a reference count of one, and performs the memory
     // barrier needed for the owning thread to act on the object, knowing that it
     // has exclusive access to the object.
-    virtual bool HasOneRef() const { return mRefCount.HasOneRef(); }
+    virtual bool has_one_ref() const { return mRefCount.has_one_ref(); }
 
 protected:
     ~RefCountedObject() override { }
@@ -93,16 +93,16 @@ public:
     FinalRefCountedObject &operator=(const FinalRefCountedObject &) = delete;
 
     void add_ref() const { mRefCount.inc_ref(); }
-    RefCountReleaseStatus Release() const
+    RefCountReleaseStatus release() const
     {
-        const auto status = mRefCount.DecRef();
+        const auto status = mRefCount.dec_ref();
         if (status == RefCountReleaseStatus::kDroppedLastRef)
         {
             delete this;
         }
         return status;
     }
-    bool HasOneRef() const { return mRefCount.HasOneRef(); }
+    bool has_one_ref() const { return mRefCount.has_one_ref(); }
 
 private:
     ~FinalRefCountedObject() = default;
@@ -115,20 +115,20 @@ namespace utils
 
 namespace detail
 {
-// Determines if the given class has add_ref and Release methods.
+// Determines if the given class has add_ref and release methods.
 template <typename T>
 class HasaddRefAndRelease
 {
 private:
     template <typename C,
               decltype(std::declval<C>().add_ref()) * = nullptr,
-              decltype(std::declval<C>().Release()) * = nullptr>
-    static int Test(int);
+              decltype(std::declval<C>().release()) * = nullptr>
+    static int test(int);
     template <typename>
-    static char Test(...);
+    static char test(...);
 
 public:
-    static constexpr bool value = std::is_same<decltype(Test<T>(0)), int>::value;
+    static constexpr bool value = std::is_same<decltype(test<T>(0)), int>::value;
 };
 } // namespace detail
 
@@ -151,7 +151,7 @@ public:
 //   auto p = SharedRefPtr<Foo>(new RefCountedObject<Foo>("bar", 123));
 //
 // If the class does not inherit from RefCountInterface, but does have
-// add_ref/Release methods (so a T* is convertible to rtc::SharedRefPtr), this
+// add_ref/release methods (so a T* is convertible to rtc::SharedRefPtr), this
 // is equivalent to just
 //
 //   auto p = SharedRefPtr<Foo>(new Foo("bar", 123));

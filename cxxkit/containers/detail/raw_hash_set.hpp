@@ -54,11 +54,11 @@ enum Ctrl : int8_t {
     kSentinel = -1,    // 0xFF
 };
 
-inline bool IsEmpty(Ctrl c)    { return c == kEmpty; }
-inline bool IsDeleted(Ctrl c)  { return c == kDeleted; }
-inline bool IsFull(Ctrl c)     { return c >= 0; }          // 0..127 = occupied
-inline bool IsSentinel(Ctrl c) { return c == kSentinel; }
-inline bool IsEmptyOrDeleted(Ctrl c) { return c < kSentinel; }  // < -1
+inline bool is_empty(Ctrl c)    { return c == kEmpty; }
+inline bool is_deleted(Ctrl c)  { return c == kDeleted; }
+inline bool is_full(Ctrl c)     { return c >= 0; }          // 0..127 = occupied
+inline bool is_sentinel(Ctrl c) { return c == kSentinel; }
+inline bool is_empty_or_deleted(Ctrl c) { return c < kSentinel; }  // < -1
 
 // ---------------------------------------------------------------------------
 // H1 / H2 hash split
@@ -99,30 +99,30 @@ private:
 static constexpr size_t kMinCapacity = 16;
 
 // Growth threshold: 7/8 for capacity >= 16, 1 (full) for small tables
-inline size_t GrowthThreshold(size_t capacity) {
+inline size_t growth_threshold(size_t capacity) {
     return capacity - capacity / 8;   // capacity * 7/8
 }
 
-inline size_t NextCapacity(size_t capacity) {
+inline size_t next_capacity(size_t capacity) {
     return capacity == 0 ? kMinCapacity : capacity * 2;
 }
 
-inline bool IsValidCapacity(size_t n) {
+inline bool is_valid_capacity(size_t n) {
     return n == 0 || ((n & (n - 1)) == 0);   // power of 2
 }
 
 // ---------------------------------------------------------------------------
 // Slot + ctrl layout helpers
 // ---------------------------------------------------------------------------
-inline Ctrl*  SlotToCtrl(void* slot_array) {
+inline Ctrl*  slot_to_ctrl(void* slot_array) {
     return static_cast<Ctrl*>(slot_array);
 }
-inline void* CtrlToSlot(Ctrl* ctrl, size_t capacity) {
+inline void* ctrl_to_slot(Ctrl* ctrl, size_t capacity) {
     // ctrl array occupies capacity + 1 + (kWidth - 1) bytes, aligned to slot alignment
     return ctrl + capacity + 1 + (kWidth - 1);
 }
 
-inline size_t AllocSize(size_t capacity, size_t slot_size) {
+inline size_t alloc_size(size_t capacity, size_t slot_size) {
     // ctrl[capacity] + sentinel(1) + clones[kWidth-1] + slots[capacity]
     size_t ctrl_bytes = (capacity + 1 + (kWidth - 1)) * sizeof(Ctrl);
     // align slot start to alignof(void*)
@@ -181,7 +181,7 @@ public:
             : mSet(set), mCtrl(ctrl) { skip_empty_or_deleted(); }
 
         void skip_empty_or_deleted() {
-            while (IsEmptyOrDeleted(*mCtrl)) ++mCtrl;
+            while (is_empty_or_deleted(*mCtrl)) ++mCtrl;
         }
 
         raw_hash_set* mSet;
@@ -219,7 +219,7 @@ public:
             : mSet(set), mCtrl(ctrl) { skip_empty_or_deleted(); }
 
         void skip_empty_or_deleted() {
-            while (IsEmptyOrDeleted(*mCtrl)) ++mCtrl;
+            while (is_empty_or_deleted(*mCtrl)) ++mCtrl;
         }
 
         const raw_hash_set* mSet;
@@ -302,10 +302,10 @@ public:
         while (true) {
             Ctrl* g = mCtrl + seq.pos();
             // check group (scalar: 1 byte at a time)
-            if (IsFull(*g) && H2(h) == *g && Eq{}(key, Policy::key(slot_at(g)))) {
+            if (is_full(*g) && H2(h) == *g && Eq{}(key, Policy::key(slot_at(g)))) {
                 return iterator(this, g);
             }
-            if (IsEmpty(*g)) return end();
+            if (is_empty(*g)) return end();
             seq.next();
         }
     }
@@ -317,10 +317,10 @@ public:
         ProbeSeq seq(h, mCapacity - 1);
         while (true) {
             const Ctrl* g = mCtrl + seq.pos();
-            if (IsFull(*g) && H2(h) == *g && Eq{}(key, Policy::key(slot_at(g)))) {
+            if (is_full(*g) && H2(h) == *g && Eq{}(key, Policy::key(slot_at(g)))) {
                 return const_iterator(this, const_cast<Ctrl*>(g));
             }
-            if (IsEmpty(*g)) return end();
+            if (is_empty(*g)) return end();
             seq.next();
         }
     }
@@ -359,7 +359,7 @@ public:
     void clear() {
         if (mCapacity == 0) return;
         for (size_t i = 0; i < mCapacity; ++i) {
-            if (IsFull(mCtrl[i])) {
+            if (is_full(mCtrl[i])) {
                 destroy_slot(reinterpret_cast<value_type*>(mSlots) + i);
                 mCtrl[i] = kEmpty;
             }
@@ -371,9 +371,9 @@ public:
 
     // --- reserve --------------------------------------------------------
     void reserve(size_type n) {
-        if (n > GrowthThreshold(mCapacity)) {
+        if (n > growth_threshold(mCapacity)) {
             size_t cap = mCapacity == 0 ? kMinCapacity : mCapacity;
-            while (GrowthThreshold(cap) < n) cap *= 2;
+            while (growth_threshold(cap) < n) cap *= 2;
             resize(cap);
         }
     }
@@ -408,7 +408,7 @@ private:
     }
 
     void resize(size_t new_cap) {
-        assert(IsValidCapacity(new_cap));
+        assert(is_valid_capacity(new_cap));
         Ctrl*  old_ctrl = mCtrl;
         void*  old_slots = mSlots;
         size_t old_cap = mCapacity;
@@ -428,7 +428,7 @@ private:
         // re-insert old elements
         if (old_cap > 0) {
             for (size_t i = 0; i < old_cap; ++i) {
-                if (IsFull(old_ctrl[i])) {
+                if (is_full(old_ctrl[i])) {
                     unchecked_insert(std::move(reinterpret_cast<value_type*>(static_cast<char*>(old_slots))[i]));
                     destroy_slot(reinterpret_cast<value_type*>(static_cast<char*>(old_slots)) + i);
                 }
@@ -480,16 +480,16 @@ private:
         while (true) {
             size_t pos = seq.pos();
             Ctrl c = mCtrl[pos];
-            if (IsFull(c)) {
+            if (is_full(c)) {
                 if (c == H2(h) && Eq{}(key, Policy::key(reinterpret_cast<value_type*>(mSlots)[pos]))) {
                     return {pos, false};  // key already present
                 }
             } else {  // empty or deleted
-                if (IsEmpty(c)) {
+                if (is_empty(c)) {
                     // use first deleted slot if any, otherwise this empty slot
                     size_t target = first_deleted != mCapacity ? first_deleted : pos;
-                    if (mSize + 1 > GrowthThreshold(mCapacity)) {
-                        resize(NextCapacity(mCapacity));
+                    if (mSize + 1 > growth_threshold(mCapacity)) {
+                        resize(next_capacity(mCapacity));
                         return find_or_prepare_insert(key);  // re-probe after resize
                     }
                     mCtrl[target] = H2(h);
@@ -520,7 +520,7 @@ private:
         destroy_slot(reinterpret_cast<value_type*>(mSlots) + idx);
         // try to convert to empty (if group has no full slots after this, it was never full)
         size_t next = (idx + 1) & (mCapacity - 1);
-        if (IsEmpty(mCtrl[next])) {
+        if (is_empty(mCtrl[next])) {
             mCtrl[idx] = kEmpty;
         } else {
             mCtrl[idx] = kDeleted;
@@ -531,7 +531,7 @@ private:
     void destroy_all() {
         if (mCapacity == 0) return;
         for (size_t i = 0; i < mCapacity; ++i) {
-            if (IsFull(mCtrl[i])) {
+            if (is_full(mCtrl[i])) {
                 destroy_slot(reinterpret_cast<value_type*>(mSlots) + i);
             }
         }

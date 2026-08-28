@@ -87,7 +87,7 @@ private:
     MockClosure *mMock;
 };
 
-CXXKIT_CXX14_CONSTEXPR TimeDelta kTimeout = TimeDelta::Millis(1000);
+CXXKIT_CXX14_CONSTEXPR TimeDelta kTimeout = TimeDelta::millis(1000);
 } // namespace
 
 TEST(TaskQueueThreadTest, PostDelayedTask)
@@ -103,7 +103,7 @@ TEST(TaskQueueThreadTest, PostDelayedTask)
             EXPECT_TRUE(taskQueueThread->is_current());
             condition.notify_one();
         },
-        TimeDelta::Millis(3));
+        TimeDelta::millis(3));
     std::unique_lock<std::mutex> lock(mutex);
     EXPECT_EQ(std::cv_status::no_timeout, condition.wait_for(lock, std::chrono::seconds(1)));
     const auto elapsed = timer.elapsed();
@@ -119,7 +119,7 @@ TEST(RepeatingTaskTest, CancelDelayedTaskBeforeItRuns)
     EXPECT_CALL(mock, Delete).WillOnce(Invoke([&done] { done.release(); }));
     auto taskQueueThread = TaskQueueThread::make_shared();
     auto handle = RepeatingTaskHandle::delayed_start(taskQueueThread.get(),
-                                                    TimeDelta::Millis(100),
+                                                    TimeDelta::millis(100),
                                                     MoveOnlyClosure(&mock));
     {
         auto handleMove = utils::make_move_wrapper(std::move(handle));
@@ -132,7 +132,7 @@ TEST(RepeatingTaskTest, CancelTaskAfterItRuns)
 {
     Semaphore done;
     MockClosure mock;
-    EXPECT_CALL(mock, Call).WillOnce(Return(TimeDelta::Millis(100)));
+    EXPECT_CALL(mock, Call).WillOnce(Return(TimeDelta::millis(100)));
     EXPECT_CALL(mock, Delete).WillOnce(Invoke([&done] { done.release(); }));
     auto taskQueueThread = TaskQueueThread::make_shared();
     auto handle = RepeatingTaskHandle::start(taskQueueThread.get(), MoveOnlyClosure(&mock));
@@ -154,7 +154,7 @@ TEST(RepeatingTaskTest, ZeroReturnValueRepostsTheTask)
             [&]
             {
                 done.release();
-                return TimeDelta::PlusInfinity();
+                return TimeDelta::plus_infinity();
             }));
     auto taskQueueThread = TaskQueueThread::make_shared();
     timer.start();
@@ -167,13 +167,13 @@ TEST(RepeatingTaskTest, StartPeriodicTask)
     MockFunction<TimeDelta()> closure;
     Semaphore done;
     EXPECT_CALL(closure, Call())
-        .WillOnce(Return(TimeDelta::Millis(20)))
-        .WillOnce(Return(TimeDelta::Millis(20)))
+        .WillOnce(Return(TimeDelta::millis(20)))
+        .WillOnce(Return(TimeDelta::millis(20)))
         .WillOnce(Invoke(
             [&]
             {
                 done.release();
-                return TimeDelta::PlusInfinity();
+                return TimeDelta::plus_infinity();
             }));
     auto taskQueueThread = TaskQueueThread::make_shared();
     RepeatingTaskHandle::start(taskQueueThread.get(), closure.AsStdFunction());
@@ -186,7 +186,7 @@ TEST(RepeatingTaskTest, Example)
     {
     public:
         void DoPeriodicTask() { }
-        TimeDelta TimeUntilNextRun() { return TimeDelta::Millis(100); }
+        TimeDelta TimeUntilNextRun() { return TimeDelta::millis(100); }
         void StartPeriodicTask(RepeatingTaskHandle *handle, TaskQueueBase *taskQueueThread)
         {
             *handle = RepeatingTaskHandle::start(taskQueueThread,
@@ -199,7 +199,7 @@ TEST(RepeatingTaskTest, Example)
     };
     auto taskQueueThread = TaskQueueThread::make_shared();
     auto object = utils::make_unique<ObjectOnTaskQueue>();
-    // Create and start the periodic task.
+    // create and start the periodic task.
     RepeatingTaskHandle handle;
     object->StartPeriodicTask(&handle, taskQueueThread.get());
     // Restart the task
@@ -403,7 +403,7 @@ TEST(SafetyFlagTest, PendingTaskNotAliveInitialized)
 {
     auto tq = TaskQueueThread::make_shared();
 
-    // Create a new flag that initially not `alive`.
+    // create a new flag that initially not `alive`.
     auto flag = TaskQueueThread::SafetyFlag::create_detached_inactive();
     tq->post_task([flag]() { EXPECT_FALSE(flag->is_alive()); });
 
@@ -433,7 +433,7 @@ TEST(SafetyFlagTest, PendingTaskInitializedForTaskQueue)
 {
     auto tq = TaskQueueThread::make_shared();
 
-    // Create a new flag that initially `alive`, attached to a specific TQ.
+    // create a new flag that initially `alive`, attached to a specific TQ.
     auto flag = TaskQueueThread::SafetyFlag::create_attached_to_task_queue(true, tq.get());
     tq->post_task([flag]() { EXPECT_TRUE(flag->is_alive()); });
     // Repeat the same steps but initialize as inactive.
@@ -441,12 +441,12 @@ TEST(SafetyFlagTest, PendingTaskInitializedForTaskQueue)
     tq->post_task([flag]() { EXPECT_FALSE(flag->is_alive()); });
 }
 
-TEST(SafetyFlagTest, SafeTask)
+TEST(SafetyFlagTest, safe_task)
 {
     TaskQueueBase::SafetyFlag::SharedPtr flag = TaskQueueBase::SafetyFlag::create();
 
     int count = 0;
-    // Create two identical tasks that increment the `count`.
+    // create two identical tasks that increment the `count`.
     auto task1 = TaskQueueBase::create_safe_task(flag, [&count] { ++count; });
     auto task2 = TaskQueueBase::create_safe_task(flag, [&count] { ++count; });
 

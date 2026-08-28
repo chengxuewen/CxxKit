@@ -105,7 +105,7 @@ public:
 
     ~SharedBuffer();
 
-    // Get a pointer to the data. Just .data() will give you a (const) uint8_t*,
+    // get a pointer to the data. Just .data() will give you a (const) uint8_t*,
     // but you may also use .data<int8_t>() and .data<char>().
     template <typename T = uint8_t, typename std::enable_if<detail::BufferCompat<uint8_t, T>::value>::type * = nullptr>
     const T *data() const
@@ -113,26 +113,26 @@ public:
         return cdata<T>();
     }
 
-    // Get writable pointer to the data. This will create a copy of the underlying
+    // get writable pointer to the data. This will create a copy of the underlying
     // data if it is shared with other buffers.
     template <typename T = uint8_t, typename std::enable_if<detail::BufferCompat<uint8_t, T>::value>::type * = nullptr>
-    T *MutableData()
+    T *mutable_data()
     {
-        CXXKIT_DCHECK(IsConsistent());
+        CXXKIT_DCHECK(is_consistent());
         if (!mBuffer)
         {
             return nullptr;
         }
-        UnshareAndEnsureCapacity(capacity());
+        unshare_and_ensure_capacity(capacity());
         return mBuffer->data<T>() + mOffset;
     }
 
-    // Get const pointer to the data. This will not create a copy of the
+    // get const pointer to the data. This will not create a copy of the
     // underlying data if it is shared with other buffers.
     template <typename T = uint8_t, typename std::enable_if<detail::BufferCompat<uint8_t, T>::value>::type * = nullptr>
     const T *cdata() const
     {
-        CXXKIT_DCHECK(IsConsistent());
+        CXXKIT_DCHECK(is_consistent());
         if (!mBuffer)
         {
             return nullptr;
@@ -144,13 +144,13 @@ public:
 
     size_t size() const
     {
-        CXXKIT_DCHECK(IsConsistent());
+        CXXKIT_DCHECK(is_consistent());
         return mSize;
     }
 
     size_t capacity() const
     {
-        CXXKIT_DCHECK(IsConsistent());
+        CXXKIT_DCHECK(is_consistent());
         return mBuffer ? mBuffer->capacity() - mOffset : 0;
     }
 
@@ -159,8 +159,8 @@ public:
 
     SharedBuffer &operator=(const SharedBuffer &buf)
     {
-        CXXKIT_DCHECK(IsConsistent());
-        CXXKIT_DCHECK(buf.IsConsistent());
+        CXXKIT_DCHECK(is_consistent());
+        CXXKIT_DCHECK(buf.is_consistent());
         if (&buf != this)
         {
             mBuffer = buf.mBuffer;
@@ -172,8 +172,8 @@ public:
 
     SharedBuffer &operator=(SharedBuffer &&buf)
     {
-        CXXKIT_DCHECK(IsConsistent());
-        CXXKIT_DCHECK(buf.IsConsistent());
+        CXXKIT_DCHECK(is_consistent());
+        CXXKIT_DCHECK(buf.is_consistent());
         mBuffer = std::move(buf.mBuffer);
         mOffset = buf.mOffset;
         mSize = buf.mSize;
@@ -195,37 +195,37 @@ public:
     // Replace the contents of the buffer. Accepts the same types as the
     // constructors.
     template <typename T, typename std::enable_if<detail::BufferCompat<uint8_t, T>::value>::type * = nullptr>
-    void SetData(const T *data, size_t size)
+    void set_data(const T *data, size_t size)
     {
-        CXXKIT_DCHECK(IsConsistent());
+        CXXKIT_DCHECK(is_consistent());
         if (!mBuffer)
         {
             mBuffer = size > 0 ? new RefCountedBuffer(data, size) : nullptr;
         }
-        else if (!mBuffer->HasOneRef())
+        else if (!mBuffer->has_one_ref())
         {
             mBuffer = new RefCountedBuffer(data, size, capacity());
         }
         else
         {
-            mBuffer->SetData(data, size);
+            mBuffer->set_data(data, size);
         }
         mOffset = 0;
         mSize = size;
 
-        CXXKIT_DCHECK(IsConsistent());
+        CXXKIT_DCHECK(is_consistent());
     }
 
     template <typename T, size_t N, typename std::enable_if<detail::BufferCompat<uint8_t, T>::value>::type * = nullptr>
-    void SetData(const T (&array)[N])
+    void set_data(const T (&array)[N])
     {
-        SetData(array, N);
+        set_data(array, N);
     }
 
-    void SetData(const SharedBuffer &buf)
+    void set_data(const SharedBuffer &buf)
     {
-        CXXKIT_DCHECK(IsConsistent());
-        CXXKIT_DCHECK(buf.IsConsistent());
+        CXXKIT_DCHECK(is_consistent());
+        CXXKIT_DCHECK(buf.is_consistent());
         if (&buf != this)
         {
             mBuffer = buf.mBuffer;
@@ -234,58 +234,58 @@ public:
         }
     }
 
-    // Append data to the buffer. Accepts the same types as the constructors.
+    // append data to the buffer. Accepts the same types as the constructors.
     template <typename T, typename std::enable_if<detail::BufferCompat<uint8_t, T>::value>::type * = nullptr>
-    void AppendData(const T *data, size_t size)
+    void append_data(const T *data, size_t size)
     {
-        CXXKIT_DCHECK(IsConsistent());
+        CXXKIT_DCHECK(is_consistent());
         if (!mBuffer)
         {
             mBuffer = new RefCountedBuffer(data, size);
             mOffset = 0;
             mSize = size;
-            CXXKIT_DCHECK(IsConsistent());
+            CXXKIT_DCHECK(is_consistent());
             return;
         }
 
-        UnshareAndEnsureCapacity(std::max(capacity(), mSize + size));
+        unshare_and_ensure_capacity(std::max(capacity(), mSize + size));
 
-        mBuffer->SetSize(mOffset + mSize); // Remove data to the right of the slice.
-        mBuffer->AppendData(data, size);
+        mBuffer->set_size(mOffset + mSize); // Remove data to the right of the slice.
+        mBuffer->append_data(data, size);
         mSize += size;
 
-        CXXKIT_DCHECK(IsConsistent());
+        CXXKIT_DCHECK(is_consistent());
     }
 
     template <typename T, size_t N, typename std::enable_if<detail::BufferCompat<uint8_t, T>::value>::type * = nullptr>
-    void AppendData(const T (&array)[N])
+    void append_data(const T (&array)[N])
     {
-        AppendData(array, N);
+        append_data(array, N);
     }
 
     template <typename VecT,
               typename ElemT = typename std::remove_pointer<decltype(std::declval<VecT>().data())>::type,
               typename std::enable_if<HasDataAndSize<VecT, ElemT>::value &&
                                       detail::BufferCompat<uint8_t, ElemT>::value>::type * = nullptr>
-    void AppendData(const VecT &v)
+    void append_data(const VecT &v)
     {
-        AppendData(v.data(), v.size());
+        append_data(v.data(), v.size());
     }
 
     // Sets the size of the buffer. If the new size is smaller than the old, the
     // buffer contents will be kept but truncated; if the new size is greater,
     // the existing contents will be kept and the new space will be
     // uninitialized.
-    void SetSize(size_t size);
+    void set_size(size_t size);
 
     // Ensure that the buffer size can be increased to at least capacity without
     // further reallocation. (Of course, this operation might need to reallocate
     // the buffer.)
-    void EnsureCapacity(size_t capacity);
+    void ensure_capacity(size_t capacity);
 
     // Resets the buffer to zero size without altering capacity. Works even if the
     // buffer has been moved from.
-    void Clear();
+    void clear();
 
     // Swaps two buffers.
     friend void swap(SharedBuffer &a, SharedBuffer &b)
@@ -295,7 +295,7 @@ public:
         std::swap(a.mSize, b.mSize);
     }
 
-    SharedBuffer Slice(size_t offset, size_t length) const
+    SharedBuffer slice(size_t offset, size_t length) const
     {
         SharedBuffer slice(*this);
         CXXKIT_DCHECK_LE(offset, mSize);
@@ -307,12 +307,12 @@ public:
 
 private:
     using RefCountedBuffer = FinalRefCountedObject<Buffer>;
-    // Create a copy of the underlying data if it is referenced from other Buffer
+    // create a copy of the underlying data if it is referenced from other Buffer
     // objects or there is not enough capacity.
-    void UnshareAndEnsureCapacity(size_t new_capacity);
+    void unshare_and_ensure_capacity(size_t new_capacity);
 
     // Pre- and postcondition of all methods.
-    bool IsConsistent() const
+    bool is_consistent() const
     {
         if (mBuffer)
         {

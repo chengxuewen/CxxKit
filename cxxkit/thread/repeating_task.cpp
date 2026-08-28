@@ -65,7 +65,7 @@ RepeatingTaskClosure::RepeatingTaskClosure(TaskQueueBase *taskQueue,
     , mClock(clock)
     , mLocation(location)
     , mClosure(std::move(closure))
-    , mNextRunTime(mClock->CurrentTime() + firstDelay)
+    , mNextRunTime(mClock->current_time() + firstDelay)
     , mAliveFlag(aliveFlag)
 {
     CXXKIT_LOGGING_TRACE(CXXKIT_TASK_QUEUE_LOGGER(),
@@ -97,7 +97,7 @@ void RepeatingTaskClosure::operator()() &&
 
     // A delay of +infinity means that the task should not be run again.
     // Alternatively, the closure might have stopped this task.
-    if (delay.IsPlusInfinity() || !mAliveFlag->is_alive())
+    if (delay.is_plus_infinity() || !mAliveFlag->is_alive())
     {
         CXXKIT_LOGGING_TRACE(CXXKIT_TASK_QUEUE_LOGGER(),
                              "RepeatingTaskHandle::operator() not be run again {}",
@@ -105,7 +105,7 @@ void RepeatingTaskClosure::operator()() &&
         return;
     }
 
-    TimeDelta lost_time = mClock->CurrentTime() - mNextRunTime;
+    TimeDelta lost_time = mClock->current_time() - mNextRunTime;
     mNextRunTime += delay;
     delay -= lost_time;
     delay = std::max(delay, TimeDelta::Zero());

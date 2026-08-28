@@ -27,17 +27,17 @@
 
 CXXKIT_BEGIN_NAMESPACE
 
-int64_t NtpOffsetUsCalledOnce()
+int64_t ntp_offset_us_called_once()
 {
     constexpr int64_t kNtpJan1970Sec = 2208988800;
-    int64_t clock_time = DateTime::TimeMicros();
-    int64_t utc_time = DateTime::TimeUTCMicros();
+    int64_t clock_time = DateTime::time_micros();
+    int64_t utc_time = DateTime::time_utc_micros();
     return utc_time - clock_time + kNtpJan1970Sec * DateTime::kUSecsPerSec;
 }
 
-NtpTime TimeMicrosToNtp(int64_t time_us)
+NtpTime time_micros_to_ntp(int64_t time_us)
 {
-    static int64_t ntp_offset_us = NtpOffsetUsCalledOnce();
+    static int64_t ntp_offset_us = ntp_offset_us_called_once();
 
     int64_t time_ntp_us = time_us + ntp_offset_us;
     CXXKIT_DCHECK_GE(time_ntp_us, 0); // Time before year 1900 is unsupported.
@@ -46,7 +46,7 @@ NtpTime TimeMicrosToNtp(int64_t time_us)
     // A wrap around, which will happen in 2036, is expected for NTP time.
     uint32_t ntp_seconds = static_cast<uint64_t>(time_ntp_us / DateTime::kUSecsPerSec);
 
-    // Scale fractions of the second to NTP resolution.
+    // scale fractions of the second to NTP resolution.
     constexpr int64_t kNtpFractionsInSecond = 1LL << 32;
     int64_t us_fractions = time_ntp_us % DateTime::kUSecsPerSec;
     uint32_t ntp_fractions = us_fractions * kNtpFractionsInSecond / DateTime::kUSecsPerSec;
@@ -59,12 +59,12 @@ class RealTimeClock : public Clock
 public:
     RealTimeClock() = default;
 
-    Timestamp CurrentTime() override { return Timestamp::Micros(DateTime::TimeMicros()); }
+    Timestamp current_time() override { return Timestamp::micros(DateTime::time_micros()); }
 
-    NtpTime ConvertTimestampToNtpTime(Timestamp timestamp) override { return TimeMicrosToNtp(timestamp.us()); }
+    NtpTime convert_timestamp_to_ntp_time(Timestamp timestamp) override { return time_micros_to_ntp(timestamp.us()); }
 };
 
-Clock *Clock::GetRealTimeClock()
+Clock *Clock::get_real_time_clock()
 {
     static Clock *const clock = new RealTimeClock();
     return clock;
@@ -84,12 +84,12 @@ SimulatedClock::~SimulatedClock()
 {
 }
 
-Timestamp SimulatedClock::CurrentTime()
+Timestamp SimulatedClock::current_time()
 {
-    return Timestamp::Micros(mTimeUs.load(std::memory_order_relaxed));
+    return Timestamp::micros(mTimeUs.load(std::memory_order_relaxed));
 }
 
-NtpTime SimulatedClock::ConvertTimestampToNtpTime(Timestamp timestamp)
+NtpTime SimulatedClock::convert_timestamp_to_ntp_time(Timestamp timestamp)
 {
     int64_t now_us = timestamp.us();
     uint32_t seconds = (now_us / 1000000) + kNtpJan1970;
@@ -97,14 +97,14 @@ NtpTime SimulatedClock::ConvertTimestampToNtpTime(Timestamp timestamp)
     return NtpTime(seconds, fractions);
 }
 
-void SimulatedClock::AdvanceTimeMilliseconds(int64_t milliseconds)
+void SimulatedClock::advance_time_milliseconds(int64_t milliseconds)
 {
-    AdvanceTime(TimeDelta::Millis(milliseconds));
+    advance_time(TimeDelta::millis(milliseconds));
 }
 
-void SimulatedClock::AdvanceTimeMicroseconds(int64_t microseconds)
+void SimulatedClock::advance_time_microseconds(int64_t microseconds)
 {
-    AdvanceTime(TimeDelta::Micros(microseconds));
+    advance_time(TimeDelta::micros(microseconds));
 }
 
 // TODO(bugs.webrtc.org(12102): It's desirable to let a single thread own
@@ -112,7 +112,7 @@ void SimulatedClock::AdvanceTimeMicroseconds(int64_t microseconds)
 // operation with just a thread checker. But currently, that breaks a couple of
 // tests, in particular, RepeatingTaskTest.ClockIntegration and
 // CallStatsTest.LastProcessedRtt.
-void SimulatedClock::AdvanceTime(TimeDelta delta)
+void SimulatedClock::advance_time(TimeDelta delta)
 {
     mTimeUs.fetch_add(delta.us(), std::memory_order_relaxed);
 }

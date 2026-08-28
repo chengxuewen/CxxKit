@@ -30,7 +30,7 @@ SharedBuffer::SharedBuffer()
     : mOffset(0)
     , mSize(0)
 {
-    CXXKIT_DCHECK(IsConsistent());
+    CXXKIT_DCHECK(is_consistent());
 }
 
 SharedBuffer::SharedBuffer(const SharedBuffer &buf)
@@ -47,7 +47,7 @@ SharedBuffer::SharedBuffer(SharedBuffer &&buf) noexcept
 {
     buf.mOffset = 0;
     buf.mSize = 0;
-    CXXKIT_DCHECK(IsConsistent());
+    CXXKIT_DCHECK(is_consistent());
 }
 
 SharedBuffer::SharedBuffer(StringView s)
@@ -60,7 +60,7 @@ SharedBuffer::SharedBuffer(size_t size)
     , mOffset(0)
     , mSize(size)
 {
-    CXXKIT_DCHECK(IsConsistent());
+    CXXKIT_DCHECK(is_consistent());
 }
 
 SharedBuffer::SharedBuffer(size_t size, size_t capacity)
@@ -68,7 +68,7 @@ SharedBuffer::SharedBuffer(size_t size, size_t capacity)
     , mOffset(0)
     , mSize(size)
 {
-    CXXKIT_DCHECK(IsConsistent());
+    CXXKIT_DCHECK(is_consistent());
 }
 
 SharedBuffer::~SharedBuffer() = default;
@@ -76,14 +76,14 @@ SharedBuffer::~SharedBuffer() = default;
 bool SharedBuffer::operator==(const SharedBuffer &buf) const
 {
     // Must either be the same view of the same buffer or have the same contents.
-    CXXKIT_DCHECK(IsConsistent());
-    CXXKIT_DCHECK(buf.IsConsistent());
+    CXXKIT_DCHECK(is_consistent());
+    CXXKIT_DCHECK(buf.is_consistent());
     return mSize == buf.mSize && (cdata() == buf.cdata() || memcmp(cdata(), buf.cdata(), mSize) == 0);
 }
 
-void SharedBuffer::SetSize(size_t size)
+void SharedBuffer::set_size(size_t size)
 {
-    CXXKIT_DCHECK(IsConsistent());
+    CXXKIT_DCHECK(is_consistent());
     if (!mBuffer)
     {
         if (size > 0)
@@ -92,7 +92,7 @@ void SharedBuffer::SetSize(size_t size)
             mOffset = 0;
             mSize = size;
         }
-        CXXKIT_DCHECK(IsConsistent());
+        CXXKIT_DCHECK(is_consistent());
         return;
     }
 
@@ -102,15 +102,15 @@ void SharedBuffer::SetSize(size_t size)
         return;
     }
 
-    UnshareAndEnsureCapacity(std::max(capacity(), size));
-    mBuffer->SetSize(size + mOffset);
+    unshare_and_ensure_capacity(std::max(capacity(), size));
+    mBuffer->set_size(size + mOffset);
     mSize = size;
-    CXXKIT_DCHECK(IsConsistent());
+    CXXKIT_DCHECK(is_consistent());
 }
 
-void SharedBuffer::EnsureCapacity(size_t new_capacity)
+void SharedBuffer::ensure_capacity(size_t new_capacity)
 {
-    CXXKIT_DCHECK(IsConsistent());
+    CXXKIT_DCHECK(is_consistent());
     if (!mBuffer)
     {
         if (new_capacity > 0)
@@ -119,7 +119,7 @@ void SharedBuffer::EnsureCapacity(size_t new_capacity)
             mOffset = 0;
             mSize = 0;
         }
-        CXXKIT_DCHECK(IsConsistent());
+        CXXKIT_DCHECK(is_consistent());
         return;
     }
     else if (new_capacity <= capacity())
@@ -127,20 +127,20 @@ void SharedBuffer::EnsureCapacity(size_t new_capacity)
         return;
     }
 
-    UnshareAndEnsureCapacity(new_capacity);
-    CXXKIT_DCHECK(IsConsistent());
+    unshare_and_ensure_capacity(new_capacity);
+    CXXKIT_DCHECK(is_consistent());
 }
 
-void SharedBuffer::Clear()
+void SharedBuffer::clear()
 {
     if (!mBuffer)
     {
         return;
     }
 
-    if (mBuffer->HasOneRef())
+    if (mBuffer->has_one_ref())
     {
-        mBuffer->Clear();
+        mBuffer->clear();
     }
     else
     {
@@ -148,18 +148,18 @@ void SharedBuffer::Clear()
     }
     mOffset = 0;
     mSize = 0;
-    CXXKIT_DCHECK(IsConsistent());
+    CXXKIT_DCHECK(is_consistent());
 }
 
-void SharedBuffer::UnshareAndEnsureCapacity(size_t new_capacity)
+void SharedBuffer::unshare_and_ensure_capacity(size_t new_capacity)
 {
-    if (mBuffer->HasOneRef() && new_capacity <= capacity())
+    if (mBuffer->has_one_ref() && new_capacity <= capacity())
     {
         return;
     }
 
     mBuffer = new RefCountedBuffer(mBuffer->data() + mOffset, mSize, new_capacity);
     mOffset = 0;
-    CXXKIT_DCHECK(IsConsistent());
+    CXXKIT_DCHECK(is_consistent());
 }
 CXXKIT_END_NAMESPACE

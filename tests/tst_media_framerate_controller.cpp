@@ -33,17 +33,17 @@ namespace {
 
 TEST(FramerateController, SetGet) {
     cxxkit::FramerateController fc;
-    fc.SetFrameRate(30.0);
-    EXPECT_DOUBLE_EQ(fc.GetFrameRate(), 30.0);
+    fc.set_frame_rate(30.0);
+    EXPECT_DOUBLE_EQ(fc.get_frame_rate(), 30.0);
 }
 
-TEST(FramerateController, ShouldDropFrame) {
+TEST(FramerateController, should_drop_frame) {
     cxxkit::FramerateController fc(30.0);  // 30fps → 帧间隔 ~33.3ms
     // 同一时间戳连续查询：第二帧必然丢帧（未到间隔）
-    EXPECT_FALSE(fc.ShouldDropFrame(0));
-    EXPECT_TRUE(fc.ShouldDropFrame(0));  // 距上帧 0ms < 33ms → 丢
+    EXPECT_FALSE(fc.should_drop_frame(0));
+    EXPECT_TRUE(fc.should_drop_frame(0));  // 距上帧 0ms < 33ms → 丢
     // 时间推进到下一帧间隔后：不丢
-    EXPECT_FALSE(fc.ShouldDropFrame(40000000));  // +40ms > 33.3ms → 保留
+    EXPECT_FALSE(fc.should_drop_frame(40000000));  // +40ms > 33.3ms → 保留
 }
 
 TEST(FramerateController, NoThrottleByDefault) {
@@ -51,23 +51,23 @@ TEST(FramerateController, NoThrottleByDefault) {
     cxxkit::FramerateController fc;
     for (int i = 0; i < 100; ++i)
     {
-        EXPECT_FALSE(fc.ShouldDropFrame(static_cast<int64_t>(i) * 1000));
+        EXPECT_FALSE(fc.should_drop_frame(static_cast<int64_t>(i) * 1000));
     }
 }
 
-TEST(FramerateController, Reset) {
+TEST(FramerateController, reset) {
     cxxkit::FramerateController fc(30.0);
-    EXPECT_FALSE(fc.ShouldDropFrame(0));
-    EXPECT_TRUE(fc.ShouldDropFrame(0));
-    fc.Reset();
-    EXPECT_EQ(fc.GetFrameRate(), std::numeric_limits<double>::max());
-    EXPECT_FALSE(fc.ShouldDropFrame(0));  // reset 后首帧不丢
+    EXPECT_FALSE(fc.should_drop_frame(0));
+    EXPECT_TRUE(fc.should_drop_frame(0));
+    fc.reset();
+    EXPECT_EQ(fc.get_frame_rate(), std::numeric_limits<double>::max());
+    EXPECT_FALSE(fc.should_drop_frame(0));  // reset 后首帧不丢
 }
 
 TEST(FramerateController, BelowMinFpsDropsAll) {
     cxxkit::FramerateController fc(0.1);  // < kMinFramerate(0.5)
-    EXPECT_TRUE(fc.ShouldDropFrame(0));
-    EXPECT_TRUE(fc.ShouldDropFrame(1000000000));
+    EXPECT_TRUE(fc.should_drop_frame(0));
+    EXPECT_TRUE(fc.should_drop_frame(1000000000));
 }
 
 }  // namespace

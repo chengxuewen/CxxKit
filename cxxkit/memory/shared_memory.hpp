@@ -83,7 +83,7 @@ public:
     SharedMemoryFactory(const SharedMemoryFactory &) = delete;
     SharedMemoryFactory &operator=(const SharedMemoryFactory &) = delete;
 
-    virtual std::unique_ptr<SharedMemory> CreateSharedMemory(size_t size) = 0;
+    virtual std::unique_ptr<SharedMemory> create_shared_memory(size_t size) = 0;
 };
 CXXKIT_END_NAMESPACE
 

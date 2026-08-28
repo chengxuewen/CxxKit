@@ -59,12 +59,12 @@ public:
         UpdateRect Union(const UpdateRect& other) const;
 
         // Returns the intersection of this and other rect (empty if disjoint).
-        UpdateRect Intersect(const UpdateRect& other) const;
+        UpdateRect intersect(const UpdateRect& other) const;
 
         // Sets everything to 0, making this UpdateRect a zero-size (empty) update.
-        void MakeEmptyUpdate();
+        void make_empty_update();
 
-        bool IsEmpty() const;
+        bool is_empty() const;
 
         // Per-member equality check. Empty rectangles with different offsets would
         // be considered different.
@@ -78,7 +78,7 @@ public:
         // possible scaling artifacts.
         // Note, close but not equal update_rects on original frame may result in
         // the same scaled update rects.
-        UpdateRect ScaleWithFrame(int frame_width,
+        UpdateRect scale_with_frame(int frame_width,
                                   int frame_height,
                                   int crop_x,
                                   int crop_y,
@@ -153,23 +153,23 @@ public:
                const Optional<ColorSpace>& color_space,
                const Optional<UpdateRect>& update_rect);
 
-    // System monotonic clock, same timebase as rtc::TimeMicros().
+    // System monotonic clock, same timebase as rtc::time_micros().
     int64_t timestamp_us() const { return mTimestampUs; }
     void set_timestamp_us(int64_t timestamp_us) { mTimestampUs = timestamp_us; }
 
-    // Set frame timestamp (90kHz).
+    // set frame timestamp (90kHz).
     void set_timestamp_rtp(uint32_t rtp_timestamp) { mTimestampRtp = rtp_timestamp; }
-    // Get frame timestamp (90kHz).
+    // get frame timestamp (90kHz).
     uint32_t timestamp_rtp() const { return mTimestampRtp; }
 
-    // Get frame ID. Returns `kNotSetId` if ID is not set.
+    // get frame ID. Returns `kNotSetId` if ID is not set.
     uint16_t id() const { return mId; }
     void set_id(uint16_t id) { mId = id; }
 
     VideoRotation rotation() const { return mRotation; }
     void set_rotation(VideoRotation rotation) { mRotation = rotation; }
 
-    // Get color space when available.
+    // get color space when available.
     const Optional<ColorSpace>& color_space() const { return mColorSpace; }
     void set_color_space(const Optional<ColorSpace>& color_space) { mColorSpace = color_space; }
 
@@ -179,7 +179,7 @@ public:
 
     int width() const;
     int height() const;
-    uint32_t size() const;  // Get frame size in pixels.
+    uint32_t size() const;  // get frame size in pixels.
 
     bool has_update_rect() const { return mUpdateRect.has_value(); }
 

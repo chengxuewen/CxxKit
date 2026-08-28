@@ -36,7 +36,7 @@ namespace
 // Try to convert `enum_value` into the enum class T. `enum_bitmask` is created
 // by the funciton below. Returns true if conversion was successful, false
 // otherwise.
-template <typename T> bool SetFromUint8(uint8_t enum_value, uint64_t enum_bitmask, T *out)
+template <typename T> bool set_from_uint8(uint8_t enum_value, uint64_t enum_bitmask, T *out)
 {
     if ((enum_value < 64) && ((enum_bitmask >> enum_value) & 1))
     {
@@ -50,29 +50,29 @@ template <typename T> bool SetFromUint8(uint8_t enum_value, uint64_t enum_bitmas
 // purpose not declared as constexpr so that it causes a build problem if enum
 // values of 64 or above are used. The bitmask and the code generating it would
 // have to be extended if the standard is updated to include enum values >= 64.
-int EnumMustBeLessThan64() { return -1; }
+int enum_must_be_less_than64() { return -1; }
 
-template <typename T, size_t N> constexpr int MakeMask(const int index, const int length, T (&values)[N])
+template <typename T, size_t N> constexpr int make_mask(const int index, const int length, T (&values)[N])
 {
-    return length > 1 ? (MakeMask(index, 1, values) + MakeMask(index + 1, length - 1, values))
+    return length > 1 ? (make_mask(index, 1, values) + make_mask(index + 1, length - 1, values))
                       : (static_cast<uint8_t>(values[index]) < 64 ? (uint64_t{1} << static_cast<uint8_t>(values[index]))
-                                                                  : EnumMustBeLessThan64());
+                                                                  : enum_must_be_less_than64());
 }
 
-// Create a bitmask where each bit corresponds to one potential enum value.
+// create a bitmask where each bit corresponds to one potential enum value.
 // `values` should be an array listing all possible enum values. The bit is set
 // to one if the corresponding enum exists. Only works for enums with values
 // less than 64.
-template <typename T, size_t N> constexpr uint64_t CreateEnumBitmask(T (&values)[N]) { return MakeMask(0, N, values); }
+template <typename T, size_t N> constexpr uint64_t create_enum_bitmask(T (&values)[N]) { return make_mask(0, N, values); }
 
-bool SetChromaSitingFromUint8(uint8_t enum_value, ColorSpace::ChromaSiting *chroma_siting)
+bool set_chroma_siting_from_uint8(uint8_t enum_value, ColorSpace::ChromaSiting *chroma_siting)
 {
     constexpr ColorSpace::ChromaSiting kChromaSitings[] = {ColorSpace::ChromaSiting::kUnspecified,
                                                            ColorSpace::ChromaSiting::kCollocated,
                                                            ColorSpace::ChromaSiting::kHalf};
-    constexpr uint64_t enum_bitmask = CreateEnumBitmask(kChromaSitings);
+    constexpr uint64_t enum_bitmask = create_enum_bitmask(kChromaSitings);
 
-    return SetFromUint8(enum_value, enum_bitmask, chroma_siting);
+    return set_from_uint8(enum_value, enum_bitmask, chroma_siting);
 }
 } // namespace
 
@@ -122,7 +122,7 @@ const HdrMetadata *ColorSpace::hdr_metadata() const { return mHdrMetadata ? &*mH
 #define PRINT_ENUM_CASE(TYPE, NAME)                                                                                    \
     case TYPE::NAME: ss << #NAME; break;
 
-std::string ColorSpace::AsString() const
+std::string ColorSpace::as_string() const
 {
     //    char buf[1024];
     //    rtc::SimpleStringBuilder ss(buf);
@@ -211,9 +211,9 @@ bool ColorSpace::set_primaries_from_uint8(uint8_t enum_value)
                                          PrimaryID::kSMPTEST431,
                                          PrimaryID::kSMPTEST432,
                                          PrimaryID::kJEDECP22};
-    constexpr uint64_t enum_bitmask = CreateEnumBitmask(kPrimaryIds);
+    constexpr uint64_t enum_bitmask = create_enum_bitmask(kPrimaryIds);
 
-    return SetFromUint8(enum_value, enum_bitmask, &mPrimaries);
+    return set_from_uint8(enum_value, enum_bitmask, &mPrimaries);
 }
 
 bool ColorSpace::set_transfer_from_uint8(uint8_t enum_value)
@@ -235,9 +235,9 @@ bool ColorSpace::set_transfer_from_uint8(uint8_t enum_value)
                                            TransferID::kSMPTEST2084,
                                            TransferID::kSMPTEST428,
                                            TransferID::kARIB_STD_B67};
-    constexpr uint64_t enum_bitmask = CreateEnumBitmask(kTransferIds);
+    constexpr uint64_t enum_bitmask = create_enum_bitmask(kTransferIds);
 
-    return SetFromUint8(enum_value, enum_bitmask, &mTransfer);
+    return set_from_uint8(enum_value, enum_bitmask, &mTransfer);
 }
 
 bool ColorSpace::set_matrix_from_uint8(uint8_t enum_value)
@@ -256,27 +256,27 @@ bool ColorSpace::set_matrix_from_uint8(uint8_t enum_value)
                                        MatrixID::kCDNCLS,
                                        MatrixID::kCDCLS,
                                        MatrixID::kBT2100_ICTCP};
-    constexpr uint64_t enum_bitmask = CreateEnumBitmask(kMatrixIds);
+    constexpr uint64_t enum_bitmask = create_enum_bitmask(kMatrixIds);
 
-    return SetFromUint8(enum_value, enum_bitmask, &mMatrix);
+    return set_from_uint8(enum_value, enum_bitmask, &mMatrix);
 }
 
 bool ColorSpace::set_range_from_uint8(uint8_t enum_value)
 {
     constexpr RangeID kRangeIds[] = {RangeID::kInvalid, RangeID::kLimited, RangeID::kFull, RangeID::kDerived};
-    constexpr uint64_t enum_bitmask = CreateEnumBitmask(kRangeIds);
+    constexpr uint64_t enum_bitmask = create_enum_bitmask(kRangeIds);
 
-    return SetFromUint8(enum_value, enum_bitmask, &mRange);
+    return set_from_uint8(enum_value, enum_bitmask, &mRange);
 }
 
 bool ColorSpace::set_chroma_siting_horizontal_from_uint8(uint8_t enum_value)
 {
-    return SetChromaSitingFromUint8(enum_value, &mChromaSitingHorizontal);
+    return set_chroma_siting_from_uint8(enum_value, &mChromaSitingHorizontal);
 }
 
 bool ColorSpace::set_chroma_siting_vertical_from_uint8(uint8_t enum_value)
 {
-    return SetChromaSitingFromUint8(enum_value, &mChromaSitingVertical);
+    return set_chroma_siting_from_uint8(enum_value, &mChromaSitingVertical);
 }
 
 void ColorSpace::set_hdr_metadata(const HdrMetadata *hdr_metadata)

@@ -50,10 +50,10 @@ struct CrashHandlerPrivate
 #if defined(CXXKIT_OS_MACOS)
     static bool on_minidump(const char *dumpPath, const char *minidumpId, void *context, bool succeeded);
 #else
-    static bool on_minidump(const google_breakpad::MinidumpDescriptor &descriptor, void *context, bool succeeded);
+    static bool on_minidump(const google_breakpad::minidump_descriptor &descriptor, void *context, bool succeeded);
 #endif
 
-    std::unique_ptr<google_breakpad::ExceptionHandler> mHandler; // armed by install(), released by uninstall()
+    std::unique_ptr<google_breakpad::exception_handler> mHandler; // armed by install(), released by uninstall()
     std::string mDumpPath;
     CrashHandler::CrashCallback mCallback = nullptr;
     void *mCallbackContext = nullptr;

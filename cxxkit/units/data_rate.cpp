@@ -35,11 +35,11 @@ std::string to_string(DataRate value)
 {
     char buf[64];
     std::stringstream ss;
-    if (value.IsPlusInfinity())
+    if (value.is_plus_infinity())
     {
         ss << "+inf bps";
     }
-    else if (value.IsMinusInfinity())
+    else if (value.is_minus_infinity())
     {
         ss << "-inf bps";
     }

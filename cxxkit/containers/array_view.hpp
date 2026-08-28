@@ -403,21 +403,21 @@ inline ArrayView<U, Size> reinterpret_array_view(ArrayView<T, Size> view)
 
 /// @brief Factory: creates a mutable ArrayView from a raw pointer and size.
 template <typename T>
-inline ArrayView<T> MakeArrayView(T *data, size_t size)
+inline ArrayView<T> make_array_view(T *data, size_t size)
 {
     return ArrayView<T>(data, size);
 }
 
 /// @brief Factory: creates a const ArrayView from a raw pointer and size.
 template <typename T>
-inline ArrayView<const T> MakeConstArrayView(const T *data, size_t size)
+inline ArrayView<const T> make_const_array_view(const T *data, size_t size)
 {
     return ArrayView<const T>(data, size);
 }
 
 /// @brief Factory: creates a const ArrayView from an initializer_list.
 template <typename T>
-inline ArrayView<const T> MakeConstArrayView(std::initializer_list<T> il)
+inline ArrayView<const T> make_const_array_view(std::initializer_list<T> il)
 {
     return ArrayView<const T>(il.begin(), il.size());
 }

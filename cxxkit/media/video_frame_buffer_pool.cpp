@@ -34,7 +34,7 @@ namespace cxxkit {
 
 namespace {
 
-bool HasOneRef(const SharedRefPtr<VideoFrameBuffer>& buffer)
+bool has_one_ref(const SharedRefPtr<VideoFrameBuffer>& buffer)
 {
     // Cast to RefCountedObject is safe because this function is only called
     // on locally created VideoFrameBuffers, which are always
@@ -42,7 +42,7 @@ bool HasOneRef(const SharedRefPtr<VideoFrameBuffer>& buffer)
     switch (buffer->type())
     {
         case VideoType::kI420:
-            return static_cast<RefCountedObject<I420Buffer>*>(buffer.get())->HasOneRef();
+            return static_cast<RefCountedObject<I420Buffer>*>(buffer.get())->has_one_ref();
         default:
             CXXKIT_DCHECK_NOTREACHED();
     }
@@ -69,12 +69,12 @@ VideoFrameBufferPool::VideoFrameBufferPool(bool zero_initialize, size_t max_numb
 
 VideoFrameBufferPool::~VideoFrameBufferPool() = default;
 
-void VideoFrameBufferPool::Release()
+void VideoFrameBufferPool::release()
 {
     mBuffers.clear();
 }
 
-bool VideoFrameBufferPool::Resize(size_t max_number_of_buffers)
+bool VideoFrameBufferPool::resize(size_t max_number_of_buffers)
 {
     CXXKIT_DCHECK_RUNS_SERIALIZED(&mRaceChecker);
     size_t used_buffers_count = 0;
@@ -84,7 +84,7 @@ bool VideoFrameBufferPool::Resize(size_t max_number_of_buffers)
         // list we are looping over and one from the application. If the ref
         // count is 1, then the list we are looping over holds the only
         // reference and it's safe to reuse.
-        if (!HasOneRef(buffer))
+        if (!has_one_ref(buffer))
         {
             used_buffers_count++;
         }
@@ -99,7 +99,7 @@ bool VideoFrameBufferPool::Resize(size_t max_number_of_buffers)
     auto iter = mBuffers.begin();
     while (iter != mBuffers.end() && buffers_to_purge > 0)
     {
-        if (HasOneRef(*iter))
+        if (has_one_ref(*iter))
         {
             iter = mBuffers.erase(iter);
             buffers_to_purge--;
@@ -112,11 +112,11 @@ bool VideoFrameBufferPool::Resize(size_t max_number_of_buffers)
     return true;
 }
 
-SharedRefPtr<I420Buffer> VideoFrameBufferPool::CreateI420Buffer(int width, int height)
+SharedRefPtr<I420Buffer> VideoFrameBufferPool::create_i420_buffer(int width, int height)
 {
     CXXKIT_DCHECK_RUNS_SERIALIZED(&mRaceChecker);
 
-    SharedRefPtr<VideoFrameBuffer> existing_buffer = GetExistingBuffer(width, height, VideoType::kI420);
+    SharedRefPtr<VideoFrameBuffer> existing_buffer = get_existing_buffer(width, height, VideoType::kI420);
     if (existing_buffer)
     {
         // Cast is safe because the only way a kI420 buffer is created is in
@@ -135,19 +135,19 @@ SharedRefPtr<I420Buffer> VideoFrameBufferPool::CreateI420Buffer(int width, int h
     }
 
     // Allocate a new buffer.
-    SharedRefPtr<I420Buffer> buffer = I420Buffer::Create(width, height);
+    SharedRefPtr<I420Buffer> buffer = I420Buffer::create(width, height);
     if (mZeroInitialize)
     {
-        buffer->InitializeData();
+        buffer->initialize_data();
     }
 
     mBuffers.push_back(buffer);
     return buffer;
 }
 
-SharedRefPtr<VideoFrameBuffer> VideoFrameBufferPool::GetExistingBuffer(int width, int height, VideoType type)
+SharedRefPtr<VideoFrameBuffer> VideoFrameBufferPool::get_existing_buffer(int width, int height, VideoType type)
 {
-    // Release buffers with wrong resolution or different type.
+    // release buffers with wrong resolution or different type.
     for (auto it = mBuffers.begin(); it != mBuffers.end();)
     {
         const SharedRefPtr<VideoFrameBuffer>& buffer = *it;
@@ -168,7 +168,7 @@ SharedRefPtr<VideoFrameBuffer> VideoFrameBufferPool::GetExistingBuffer(int width
         // list we are looping over and one from the application. If the ref
         // count is 1, then the list we are looping over holds the only
         // reference and it's safe to reuse.
-        if (HasOneRef(buffer))
+        if (has_one_ref(buffer))
         {
             CXXKIT_CHECK(buffer->type() == type);
             return buffer;

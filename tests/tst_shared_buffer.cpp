@@ -36,7 +36,7 @@ TEST(SharedBuffer, DefaultEmpty)
     EXPECT_EQ(buf.size(), 0u);
 }
 
-TEST(SharedBuffer, FromString)
+TEST(SharedBuffer, from_string)
 {
     SharedBuffer buf(StringView("hello"));
     EXPECT_EQ(buf.size(), 5u);
@@ -54,7 +54,7 @@ TEST(SharedBuffer, Sizing)
     EXPECT_EQ(sized.size(), 10u);
     EXPECT_GE(sized.capacity(), 64u);
 
-    sized.SetSize(20);
+    sized.set_size(20);
     EXPECT_EQ(sized.size(), 20u);
 }
 
@@ -69,7 +69,7 @@ TEST(SharedBuffer, CopyOnWriteDetach)
     {
         // ...and after a mutating operation on b, it detaches (COW) so the two
         // ranges no longer alias the same storage.
-        b.EnsureCapacity(1024);
+        b.ensure_capacity(1024);
         EXPECT_NE(a.cdata(), b.cdata());
     }
     else
@@ -82,9 +82,9 @@ TEST(SharedBuffer, CopyOnWriteDetach)
 TEST(SharedBuffer, ClearAndEnsure)
 {
     SharedBuffer buf(StringView("0123456789"));
-    buf.Clear();
+    buf.clear();
     EXPECT_EQ(buf.size(), 0u);
 
-    buf.EnsureCapacity(128);
+    buf.ensure_capacity(128);
     EXPECT_GE(buf.capacity(), 128u);
 }

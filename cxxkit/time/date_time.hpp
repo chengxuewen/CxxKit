@@ -35,11 +35,11 @@ CXXKIT_BEGIN_NAMESPACE
 struct CXXKIT_TIME_API ClockInterface
 {
     virtual ~ClockInterface() { }
-    virtual int64_t TimeNanos() const = 0;
+    virtual int64_t time_nanos() const = 0;
 
-    static ClockInterface *SetClockForTesting(ClockInterface *clock);
+    static ClockInterface *set_clock_for_testing(ClockInterface *clock);
     // Returns previously set clock, or nullptr if no custom clock is being used.
-    static ClockInterface *GetClockForTesting();
+    static ClockInterface *get_clock_for_testing();
 };
 
 class CXXKIT_TIME_API DateTime
@@ -128,31 +128,31 @@ public:
     }
     static CXXKIT_FORCE_INLINE std::string local_time_string() { return local_time_string_from_steady_time_m_secs(); }
 
-    static CXXKIT_FORCE_INLINE int64_t TimeUTCNanos()
+    static CXXKIT_FORCE_INLINE int64_t time_utc_nanos()
     {
-        auto clock = ClockInterface::GetClockForTesting();
-        return clock ? clock->TimeNanos() : system_time_n_secs();
+        auto clock = ClockInterface::get_clock_for_testing();
+        return clock ? clock->time_nanos() : system_time_n_secs();
     }
-    static CXXKIT_FORCE_INLINE int64_t TimeUTCMicros() { return TimeUTCNanos() / kNSecsPerUSec; }
-    static CXXKIT_FORCE_INLINE int64_t TimeUTCMillis() { return TimeUTCNanos() / kNSecsPerMSec; }
+    static CXXKIT_FORCE_INLINE int64_t time_utc_micros() { return time_utc_nanos() / kNSecsPerUSec; }
+    static CXXKIT_FORCE_INLINE int64_t time_utc_millis() { return time_utc_nanos() / kNSecsPerMSec; }
 
-    static CXXKIT_FORCE_INLINE int64_t TimeNanos()
+    static CXXKIT_FORCE_INLINE int64_t time_nanos()
     {
-        auto clock = ClockInterface::GetClockForTesting();
-        return clock ? clock->TimeNanos() : steady_time_n_secs();
+        auto clock = ClockInterface::get_clock_for_testing();
+        return clock ? clock->time_nanos() : steady_time_n_secs();
     }
-    static CXXKIT_FORCE_INLINE int64_t TimeMicros() { return TimeNanos() / kNSecsPerUSec; }
-    static CXXKIT_FORCE_INLINE int64_t TimeMillis() { return TimeNanos() / kNSecsPerMSec; }
-    static CXXKIT_FORCE_INLINE int64_t TimeAfter(int64_t elapsed)
+    static CXXKIT_FORCE_INLINE int64_t time_micros() { return time_nanos() / kNSecsPerUSec; }
+    static CXXKIT_FORCE_INLINE int64_t time_millis() { return time_nanos() / kNSecsPerMSec; }
+    static CXXKIT_FORCE_INLINE int64_t time_after(int64_t elapsed)
     {
         CXXKIT_DCHECK_GE(elapsed, 0);
-        return TimeMillis() + elapsed;
+        return time_millis() + elapsed;
     }
-    static CXXKIT_FORCE_INLINE int64_t TimeSince(int64_t earlier) { return DateTime::TimeMillis() - earlier; }
-    static CXXKIT_FORCE_INLINE int32_t TimeDiff32(uint32_t later, uint32_t earlier) { return later - earlier; }
-    static CXXKIT_FORCE_INLINE int64_t TimeDiff(int64_t later, int64_t earlier) { return later - earlier; }
-    static CXXKIT_FORCE_INLINE int64_t TimeUntil(int64_t later) { return later - TimeMillis(); }
-    static CXXKIT_FORCE_INLINE uint32_t Time32() { return static_cast<uint32_t>(TimeNanos() / kNSecsPerMSec); }
+    static CXXKIT_FORCE_INLINE int64_t time_since(int64_t earlier) { return DateTime::time_millis() - earlier; }
+    static CXXKIT_FORCE_INLINE int32_t time_diff32(uint32_t later, uint32_t earlier) { return later - earlier; }
+    static CXXKIT_FORCE_INLINE int64_t time_diff(int64_t later, int64_t earlier) { return later - earlier; }
+    static CXXKIT_FORCE_INLINE int64_t time_until(int64_t later) { return later - time_millis(); }
+    static CXXKIT_FORCE_INLINE uint32_t Time32() { return static_cast<uint32_t>(time_nanos() / kNSecsPerMSec); }
 
     static CXXKIT_FORCE_INLINE int64_t time_after_m_secs(int64_t elapsed)
     {
@@ -170,7 +170,7 @@ public:
         return later - DateTime::steady_time_m_secs();
     }
 
-    static int64_t TmToSeconds(const tm &tm);
+    static int64_t tm_to_seconds(const tm &tm);
 };
 CXXKIT_END_NAMESPACE
 

@@ -36,16 +36,16 @@ using namespace cxxkit;
 
 TEST(TaskQueueFactory, CreateDefaultReturnsFactory)
 {
-    auto factory = TaskQueueFactory::CreateDefault();
+    auto factory = TaskQueueFactory::create_default();
     EXPECT_TRUE(factory != nullptr);
 }
 
 TEST(TaskQueueFactory, CreateTaskQueueRunsPostedTask)
 {
-    auto factory = TaskQueueFactory::CreateDefault();
+    auto factory = TaskQueueFactory::create_default();
     ASSERT_TRUE(factory != nullptr);
 
-    auto queue = factory->CreateTaskQueue("factory-test", TaskQueueFactory::Priority::kNormal);
+    auto queue = factory->create_task_queue("factory-test", TaskQueueFactory::Priority::kNormal);
     ASSERT_TRUE(queue != nullptr);
 
     std::atomic<bool> ran{false};

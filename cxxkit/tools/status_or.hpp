@@ -72,7 +72,7 @@ public:
         CXXKIT_CHECK(!mStatus.is_ok()) << "StatusOr constructed with ok Status";
     }
 
-    /// @brief Copy constructor.
+    /// @brief copy constructor.
     StatusOr(const StatusOr &other) : mHasValue(other.mHasValue), mStatus(other.mStatus)
     {
         if (mHasValue)
@@ -99,7 +99,7 @@ public:
         }
     }
 
-    /// @brief Copy assignment.
+    /// @brief copy assignment.
     StatusOr &operator=(const StatusOr &other)
     {
         if (this == &other)
@@ -161,14 +161,14 @@ public:
     T value_or(T default_value) const { return mHasValue ? value_ref() : default_value; }
 
     /// @brief Returns the value; aborts via CXXKIT_CHECK if error.
-    T &OrDie()
+    T &or_die()
     {
-        CXXKIT_CHECK(mHasValue) << "StatusOr::OrDie(): " << mStatus.error_message();
+        CXXKIT_CHECK(mHasValue) << "StatusOr::or_die(): " << mStatus.error_message();
         return value_ref();
     }
-    const T &OrDie() const
+    const T &or_die() const
     {
-        CXXKIT_CHECK(mHasValue) << "StatusOr::OrDie(): " << mStatus.error_message();
+        CXXKIT_CHECK(mHasValue) << "StatusOr::or_die(): " << mStatus.error_message();
         return value_ref();
     }
 
@@ -183,7 +183,7 @@ private:
 
 /// @brief Factory function: creates a StatusOr<T> holding a value.
 template <class T>
-StatusOr<T> MakeStatusOr(T value)
+StatusOr<T> make_status_or(T value)
 {
     return StatusOr<T>(std::move(value));
 }

@@ -31,11 +31,11 @@ CXXKIT_BEGIN_NAMESPACE
 std::string to_string(Frequency value)
 {
     std::stringstream ss;
-    if (value.IsPlusInfinity())
+    if (value.is_plus_infinity())
     {
         ss << "+inf Hz";
     }
-    else if (value.IsMinusInfinity())
+    else if (value.is_minus_infinity())
     {
         ss << "-inf Hz";
     }

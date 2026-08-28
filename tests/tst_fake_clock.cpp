@@ -35,27 +35,27 @@ using namespace cxxkit;
 TEST(FakeClock, SetGetAdvance)
 {
     FakeClock clock;
-    EXPECT_EQ(clock.TimeNanos(), 0);
+    EXPECT_EQ(clock.time_nanos(), 0);
 
-    clock.SetTime(Timestamp::Micros(1));
-    EXPECT_EQ(clock.TimeNanos(), 1000);
+    clock.set_time(Timestamp::micros(1));
+    EXPECT_EQ(clock.time_nanos(), 1000);
 
-    clock.AdvanceTime(TimeDelta::Micros(500));
-    EXPECT_EQ(clock.TimeNanos(), 501000); // 1us + 500us in ns
+    clock.advance_time(TimeDelta::micros(500));
+    EXPECT_EQ(clock.time_nanos(), 501000); // 1us + 500us in ns
 }
 
 TEST(FakeClock, ScopedClockInterceptsDateTime)
 {
-    const int64_t realBefore = DateTime::TimeNanos();
+    const int64_t realBefore = DateTime::time_nanos();
     {
         ScopedFakeClock fake; // becomes the global clock for this scope
-        fake.SetTime(Timestamp::Micros(123456));
-        EXPECT_EQ(DateTime::TimeNanos(), 123456000);
-        fake.AdvanceTime(TimeDelta::Millis(1));
-        EXPECT_EQ(DateTime::TimeNanos(), 124456000); // +1ms
+        fake.set_time(Timestamp::micros(123456));
+        EXPECT_EQ(DateTime::time_nanos(), 123456000);
+        fake.advance_time(TimeDelta::millis(1));
+        EXPECT_EQ(DateTime::time_nanos(), 124456000); // +1ms
     }
     // After scope exit, real clock is restored.
-    EXPECT_NE(DateTime::TimeNanos(), 124456000);
-    EXPECT_GT(DateTime::TimeNanos(), 0);
+    EXPECT_NE(DateTime::time_nanos(), 124456000);
+    EXPECT_GT(DateTime::time_nanos(), 0);
     (void)realBefore;
 }

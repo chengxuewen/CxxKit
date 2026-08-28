@@ -115,7 +115,7 @@ void aligned_free(void *mem_block)
     uintptr_t aligned_pos = reinterpret_cast<uintptr_t>(mem_block);
     uintptr_t header_pos = aligned_pos - sizeof(uintptr_t);
 
-    // Read out the address of the AlignedMemory struct from the header.
+    // read out the address of the AlignedMemory struct from the header.
     uintptr_t memory_start_pos = *reinterpret_cast<uintptr_t *>(header_pos);
     void *memory_start = reinterpret_cast<void *>(memory_start_pos);
     free(memory_start);

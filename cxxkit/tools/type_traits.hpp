@@ -288,9 +288,9 @@ namespace detail
 /**
  * The five classes below each implement one of the clauses from the definition of INVOKE.
  * The inner class template Accept<F, Args...> checks whether the clause is applicable;
- * static function template Invoke(f, args...) does the invocation.
+ * static function template invoke(f, args...) does the invocation.
  *
- * By separating the clause selection logic from invocation we make sure that Invoke() does exactly
+ * By separating the clause selection logic from invocation we make sure that invoke() does exactly
  * what the standard says.
  */
 template <typename Derived>
@@ -320,7 +320,7 @@ struct MemFunAndRef : StrippedAccept<MemFunAndRef>
     };
 
     template <typename MemFun, typename Obj, typename... Args>
-    static decltype((std::declval<Obj>().*std::declval<MemFun>())(std::declval<Args>()...)) Invoke(MemFun &&mem_fun,
+    static decltype((std::declval<Obj>().*std::declval<MemFun>())(std::declval<Args>()...)) invoke(MemFun &&mem_fun,
                                                                                                    Obj &&obj,
                                                                                                    Args &&...args)
     {
@@ -349,7 +349,7 @@ struct MemFunAndPtr : StrippedAccept<MemFunAndPtr>
     };
 
     template <typename MemFun, typename Ptr, typename... Args>
-    static decltype(((*std::declval<Ptr>()).*std::declval<MemFun>())(std::declval<Args>()...)) Invoke(MemFun &&mem_fun,
+    static decltype(((*std::declval<Ptr>()).*std::declval<MemFun>())(std::declval<Args>()...)) invoke(MemFun &&mem_fun,
                                                                                                       Ptr &&ptr,
                                                                                                       Args &&...args)
     {
@@ -375,7 +375,7 @@ struct DataMemAndRef : StrippedAccept<DataMemAndRef>
     };
 
     template <typename DataMem, typename Ref>
-    static decltype(std::declval<Ref>().*std::declval<DataMem>()) Invoke(DataMem &&data_mem, Ref &&ref)
+    static decltype(std::declval<Ref>().*std::declval<DataMem>()) invoke(DataMem &&data_mem, Ref &&ref)
     {
         return std::forward<Ref>(ref).*std::forward<DataMem>(data_mem);
     }
@@ -398,7 +398,7 @@ struct DataMemAndPtr : StrippedAccept<DataMemAndPtr>
     };
 
     template <typename DataMem, typename Ptr>
-    static decltype((*std::declval<Ptr>()).*std::declval<DataMem>()) Invoke(DataMem &&data_mem, Ptr &&ptr)
+    static decltype((*std::declval<Ptr>()).*std::declval<DataMem>()) invoke(DataMem &&data_mem, Ptr &&ptr)
     {
         return (*std::forward<Ptr>(ptr)).*std::forward<DataMem>(data_mem);
     }
@@ -413,7 +413,7 @@ struct Callable
      * when none of the previous clauses are applicable.
      */
     template <typename F, typename... Args>
-    static decltype(std::declval<F>()(std::declval<Args>()...)) Invoke(F &&f, Args &&...args)
+    static decltype(std::declval<F>()(std::declval<Args>()...)) invoke(F &&f, Args &&...args)
     {
         return std::forward<F>(f)(std::forward<Args>(args)...);
     }
@@ -437,14 +437,14 @@ struct Invoker
                 type>::type>::type type;
 };
 } // namespace detail
-// The result type of Invoke<F, Args...>.
+// The result type of invoke<F, Args...>.
 template <typename F, typename... Args>
-using invoke_result_t = decltype(detail::Invoker<F, Args...>::type::Invoke(std::declval<F>(), std::declval<Args>()...));
-// Invoke(f, args...) is an implementation of INVOKE(f, args...) from section [func.require] of the C++ standard.
+using invoke_result_t = decltype(detail::Invoker<F, Args...>::type::invoke(std::declval<F>(), std::declval<Args>()...));
+// invoke(f, args...) is an implementation of INVOKE(f, args...) from section [func.require] of the C++ standard.
 template <typename F, typename... Args>
 invoke_result_t<F, Args...> invoke(F &&f, Args &&...args)
 {
-    return detail::Invoker<F, Args...>::type::Invoke(std::forward<F>(f), std::forward<Args>(args)...);
+    return detail::Invoker<F, Args...>::type::invoke(std::forward<F>(f), std::forward<Args>(args)...);
 }
 #endif
 
@@ -575,7 +575,7 @@ using decay_except_array_t = typename decay_except_array<T>::type;
 /***********************************************************************************************************************
  * This trait will removes cv-qualifiers, pointers and reference from type T.
 ***********************************************************************************************************************/
-template <typename T, typename Enable = void>
+template <typename T, typename enable = void>
 struct raw_type
 {
     using type = remove_cv_t<T>;
@@ -596,7 +596,7 @@ using raw_type_t = typename raw_type<T>::type;
 /***********************************************************************************************************************
  * this trait will remove the cv-qualifier, pointer types, reference type and also the array dimension
 ***********************************************************************************************************************/
-template <typename T, typename Enable = void>
+template <typename T, typename enable = void>
 struct raw_array_type
 {
     using type = raw_type_t<T>;
@@ -674,13 +674,13 @@ private:
               typename std::enable_if<std::is_convertible<decltype(std::declval<C>().data()), T *>::value &&
                                       std::is_convertible<decltype(std::declval<C>().size()), std::size_t>::value>::type
                   * = nullptr>
-    static int Test(int);
+    static int test(int);
 
     template <typename>
-    static char Test(...);
+    static char test(...);
 
 public:
-    static constexpr bool value = std::is_same<decltype(Test<DS>(0)), int>::value;
+    static constexpr bool value = std::is_same<decltype(test<DS>(0)), int>::value;
 };
 
 namespace test_has_data_and_size
@@ -735,14 +735,14 @@ private:
     template <typename X,
               typename std::enable_if<std::is_enum<X>::value &&
                                       std::is_integral<decltype(+std::declval<X>())>::value>::type * = nullptr>
-    static int Test(int);
+    static int test(int);
 
     // Otherwise, this overload is used.
     template <typename>
-    static char Test(...);
+    static char test(...);
 
 public:
-    static constexpr bool value = std::is_same<decltype(Test<typename std::remove_reference<T>::type>(0)), int>::value;
+    static constexpr bool value = std::is_same<decltype(test<typename std::remove_reference<T>::type>(0)), int>::value;
 };
 } // namespace detail
 // Determines if the given type is integral, or an enum that converts implicitly to an integral type.

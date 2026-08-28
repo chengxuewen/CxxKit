@@ -83,8 +83,8 @@ public:
      *      SafetyFlag::SharedPtr safety_flag = SafetyFlag::create();
      *    }
      *
-     * SafeTask makes this check automatic:
-     *    task_queue->post_task(SafeTask(safety_flag, [this] { MyMethod(); }));
+     * safe_task makes this check automatic:
+     *    task_queue->post_task(safe_task(safety_flag, [this] { MyMethod(); }));
      */
     class SafetyFlagPrivate;
     class CXXKIT_THREAD_API SafetyFlag final
@@ -103,8 +103,8 @@ public:
          * The ScopedTaskSafety makes using PendingTaskSafetyFlag very simple. It does automatic PTSF creation and
          * signalling of destruction when the ScopedTaskSafety instance goes out of scope.
          * Example usage:
-         *  my_task_queue->post_task(SafeTask(scoped_task_safety.flag(),
-         *     my_task_queue->post_task(SafeTask(scoped_task_safety.flag(),
+         *  my_task_queue->post_task(safe_task(scoped_task_safety.flag(),
+         *     my_task_queue->post_task(safe_task(scoped_task_safety.flag(),
          *        [this] {
          *             // task goes here
          *        }
@@ -180,14 +180,14 @@ public:
         void set_not_alive();
         /**
          * The SetAlive method is intended to support Start/Stop/Restart usecases.
-         * When a class has called SetNotAlive on a flag used for posted tasks, and decides it wants to post new
+         * When a class has called set_not_alive on a flag used for posted tasks, and decides it wants to post new
          * tasks and have them run, there are two reasonable ways to do that:
          *
-         * (i) Use the below SetAlive method. One subtlety is that any task posted prior to SetNotAlive, and still
+         * (i) Use the below SetAlive method. One subtlety is that any task posted prior to set_not_alive, and still
          *    in the queue, is resurrected and will run.
          *
-         * (ii) Create a fresh flag, and just drop the reference to the old one. This avoids the above problem, and
-         *    ensures that tasks poster prior to SetNotAlive stay cancelled. Instead, there's a potential data race
+         * (ii) create a fresh flag, and just drop the reference to the old one. This avoids the above problem, and
+         *    ensures that tasks poster prior to set_not_alive stay cancelled. Instead, there's a potential data race
          *    on the flag pointer itself. Some synchronization is required between the thread overwriting the flag
          *    pointer, and the threads that want to post tasks and therefore read that same pointer.
          */

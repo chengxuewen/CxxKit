@@ -39,7 +39,7 @@ protected:
     {
         bool finalTask{false};
         Task::SharedPtr runTask;
-        TimeDelta sleepTime{TimeDelta::PlusInfinity()};
+        TimeDelta sleepTime{TimeDelta::plus_infinity()};
     };
 
     TaskQueueThread();

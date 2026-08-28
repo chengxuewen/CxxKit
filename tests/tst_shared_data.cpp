@@ -109,9 +109,9 @@ public:
 
 TEST(SharedDataTest, ImplicitlyConstructor)
 {
-    MyClassHandler obj(100, "Test");
+    MyClassHandler obj(100, "test");
     EXPECT_EQ(obj.id(), 100);
-    EXPECT_EQ(obj.name(), std::string("Test"));
+    EXPECT_EQ(obj.name(), std::string("test"));
     EXPECT_EQ(obj.ref_count(), 1);
 }
 
@@ -267,7 +267,7 @@ TEST(SharedDataTest, ExplicitlyPointerClone)
 
 TEST(SharedDataTest, ExplicitlyPointerData)
 {
-    /* Check default value. */
+    /* check default value. */
     {
         ExplicitlySharedDataPointer<const MyClass> pointer;
         EXPECT_EQ(pointer.data(), static_cast<const MyClass *>(0));
@@ -280,7 +280,7 @@ TEST(SharedDataTest, ExplicitlyPointerData)
         const ExplicitlySharedDataPointer<const MyClass> pointer(new MyClass());
         pointer.data();
 
-        /* Check that this cast is possible. */
+        /* check that this cast is possible. */
         CXXKIT_UNUSED(static_cast<const MyClass *>(pointer.data()));
 
         EXPECT_TRUE(!(pointer == nullptr));
@@ -292,7 +292,7 @@ TEST(SharedDataTest, ExplicitlyPointerData)
         ExplicitlySharedDataPointer<const MyClass> pointer(new MyClass());
         pointer.data();
 
-        /* Check that this cast is possible. */
+        /* check that this cast is possible. */
         CXXKIT_UNUSED(static_cast<const MyClass *>(pointer.data()));
     }
 
@@ -301,7 +301,7 @@ TEST(SharedDataTest, ExplicitlyPointerData)
         const ExplicitlySharedDataPointer<MyClass> pointer(new MyClass());
         pointer.data();
 
-        /* Check that these casts are possible. */
+        /* check that these casts are possible. */
         CXXKIT_UNUSED(static_cast<MyClass *>(pointer.data()));
         CXXKIT_UNUSED(static_cast<const MyClass *>(pointer.data()));
     }
@@ -311,7 +311,7 @@ TEST(SharedDataTest, ExplicitlyPointerData)
         ExplicitlySharedDataPointer<MyClass> pointer(new MyClass());
         pointer.data();
 
-        /* Check that these casts are possible. */
+        /* check that these casts are possible. */
         CXXKIT_UNUSED(static_cast<MyClass *>(pointer.data()));
         CXXKIT_UNUSED(static_cast<const MyClass *>(pointer.data()));
     }

@@ -91,7 +91,7 @@ using DivideRoundResultType = typename DivideRoundResult<T1, T2>::Type;
  */
 template <typename Dividend, typename Divisor>
 // inline detail::DivideRoundResultType<Dividend, Divisor> CXXKIT_CXX14_CONSTEXPR
-inline auto CXXKIT_CXX14_CONSTEXPR DivideRoundUp(Dividend dividend, Divisor divisor) -> decltype(dividend / divisor)
+inline auto CXXKIT_CXX14_CONSTEXPR divide_round_up(Dividend dividend, Divisor divisor) -> decltype(dividend / divisor)
 {
     static_assert(std::is_integral<Dividend>(), "");
     static_assert(std::is_integral<Divisor>(), "");
@@ -112,7 +112,7 @@ inline auto CXXKIT_CXX14_CONSTEXPR DivideRoundUp(Dividend dividend, Divisor divi
  */
 template <typename Dividend, typename Divisor>
 // inline detail::DivideRoundResultType<Dividend, Divisor> CXXKIT_CXX14_CONSTEXPR
-inline auto CXXKIT_CXX14_CONSTEXPR DivideRoundToNearest(Dividend dividend, Divisor divisor)
+inline auto CXXKIT_CXX14_CONSTEXPR divide_round_to_nearest(Dividend dividend, Divisor divisor)
     -> decltype(dividend / divisor)
 {
     static_assert(std::is_integral<Dividend>(), "");
@@ -124,7 +124,7 @@ inline auto CXXKIT_CXX14_CONSTEXPR DivideRoundToNearest(Dividend dividend, Divis
         auto half_of_divisor = divisor / 2;
         auto quotient = dividend / divisor;
         auto remainder = dividend % divisor;
-        if (SafeGt(-remainder, half_of_divisor))
+        if (safe_gt(-remainder, half_of_divisor))
         {
             --quotient;
         }
@@ -134,7 +134,7 @@ inline auto CXXKIT_CXX14_CONSTEXPR DivideRoundToNearest(Dividend dividend, Divis
     auto half_of_divisor = (divisor - 1) / 2;
     auto quotient = dividend / divisor;
     auto remainder = dividend % divisor;
-    if (SafeGt(remainder, half_of_divisor))
+    if (safe_gt(remainder, half_of_divisor))
     {
         ++quotient;
     }

@@ -68,7 +68,7 @@ TEST(ColorSpace, Equality) {
     EXPECT_NE(a, c);
 }
 
-TEST(ColorSpace, SetFromUint8) {
+TEST(ColorSpace, set_from_uint8) {
     ColorSpace cs;
     EXPECT_TRUE(cs.set_primaries_from_uint8(9));    // kBT2020
     EXPECT_TRUE(cs.set_matrix_from_uint8(9));       // kBT2020_NCL
@@ -80,12 +80,12 @@ TEST(ColorSpace, SetFromUint8) {
     EXPECT_FALSE(cs.set_primaries_from_uint8(255));
 }
 
-TEST(VideoType, CalcBufferSize) {
-    EXPECT_EQ(cxxkit::CalcBufferSize(cxxkit::VideoType::kI420, 2, 2), 6u);   // 1.5 * w * h
-    EXPECT_EQ(cxxkit::CalcBufferSize(cxxkit::VideoType::kNV12, 2, 2), 6u);
-    EXPECT_EQ(cxxkit::CalcBufferSize(cxxkit::VideoType::kARGB, 2, 2), 16u);  // 4 * w * h
-    EXPECT_EQ(cxxkit::CalcBufferSize(cxxkit::VideoType::kRGB24, 2, 2), 12u); // 3 * w * h
-    EXPECT_EQ(cxxkit::CalcBufferSize(cxxkit::VideoType::kI420, 0, 2), 0u);   // 无效尺寸
+TEST(VideoType, calc_buffer_size) {
+    EXPECT_EQ(cxxkit::calc_buffer_size(cxxkit::VideoType::kI420, 2, 2), 6u);   // 1.5 * w * h
+    EXPECT_EQ(cxxkit::calc_buffer_size(cxxkit::VideoType::kNV12, 2, 2), 6u);
+    EXPECT_EQ(cxxkit::calc_buffer_size(cxxkit::VideoType::kARGB, 2, 2), 16u);  // 4 * w * h
+    EXPECT_EQ(cxxkit::calc_buffer_size(cxxkit::VideoType::kRGB24, 2, 2), 12u); // 3 * w * h
+    EXPECT_EQ(cxxkit::calc_buffer_size(cxxkit::VideoType::kI420, 0, 2), 0u);   // 无效尺寸
 }
 
 TEST(VideoType, RotationValues) {
@@ -96,32 +96,32 @@ TEST(VideoType, RotationValues) {
 }
 
 }  // namespace
-// AsString 覆盖：所有枚举分支（+~70 行覆盖）
+// as_string 覆盖：所有枚举分支（+~70 行覆盖）
 TEST(ColorSpace, AsStringAllEnums) {
     using cxxkit::ColorSpace;
     // PrimaryID 各值
     EXPECT_NE(ColorSpace(ColorSpace::PrimaryID::kBT709, ColorSpace::TransferID::kBT709,
-                         ColorSpace::MatrixID::kBT709, ColorSpace::RangeID::kLimited).AsString(), "");
+                         ColorSpace::MatrixID::kBT709, ColorSpace::RangeID::kLimited).as_string(), "");
     EXPECT_NE(ColorSpace(ColorSpace::PrimaryID::kBT470M, ColorSpace::TransferID::kUnspecified,
-                         ColorSpace::MatrixID::kUnspecified, ColorSpace::RangeID::kInvalid).AsString(), "");
+                         ColorSpace::MatrixID::kUnspecified, ColorSpace::RangeID::kInvalid).as_string(), "");
     EXPECT_NE(ColorSpace(ColorSpace::PrimaryID::kBT470BG, ColorSpace::TransferID::kGAMMA22,
-                         ColorSpace::MatrixID::kFCC, ColorSpace::RangeID::kFull).AsString(), "");
+                         ColorSpace::MatrixID::kFCC, ColorSpace::RangeID::kFull).as_string(), "");
     EXPECT_NE(ColorSpace(ColorSpace::PrimaryID::kSMPTE170M, ColorSpace::TransferID::kGAMMA28,
-                         ColorSpace::MatrixID::kBT470BG, ColorSpace::RangeID::kDerived).AsString(), "");
+                         ColorSpace::MatrixID::kBT470BG, ColorSpace::RangeID::kDerived).as_string(), "");
     EXPECT_NE(ColorSpace(ColorSpace::PrimaryID::kSMPTE240M, ColorSpace::TransferID::kSMPTE170M,
-                         ColorSpace::MatrixID::kSMPTE170M, ColorSpace::RangeID::kLimited).AsString(), "");
+                         ColorSpace::MatrixID::kSMPTE170M, ColorSpace::RangeID::kLimited).as_string(), "");
     EXPECT_NE(ColorSpace(ColorSpace::PrimaryID::kFILM, ColorSpace::TransferID::kSMPTE240M,
-                         ColorSpace::MatrixID::kSMPTE240M, ColorSpace::RangeID::kFull).AsString(), "");
+                         ColorSpace::MatrixID::kSMPTE240M, ColorSpace::RangeID::kFull).as_string(), "");
     EXPECT_NE(ColorSpace(ColorSpace::PrimaryID::kBT2020, ColorSpace::TransferID::kLINEAR,
-                         ColorSpace::MatrixID::kYCOCG, ColorSpace::RangeID::kInvalid).AsString(), "");
+                         ColorSpace::MatrixID::kYCOCG, ColorSpace::RangeID::kInvalid).as_string(), "");
     EXPECT_NE(ColorSpace(ColorSpace::PrimaryID::kSMPTEST428, ColorSpace::TransferID::kLOG,
-                         ColorSpace::MatrixID::kBT2020_NCL, ColorSpace::RangeID::kLimited).AsString(), "");
+                         ColorSpace::MatrixID::kBT2020_NCL, ColorSpace::RangeID::kLimited).as_string(), "");
     EXPECT_NE(ColorSpace(ColorSpace::PrimaryID::kSMPTEST431, ColorSpace::TransferID::kLOG_SQRT,
-                         ColorSpace::MatrixID::kBT2020_CL, ColorSpace::RangeID::kFull).AsString(), "");
+                         ColorSpace::MatrixID::kBT2020_CL, ColorSpace::RangeID::kFull).as_string(), "");
     EXPECT_NE(ColorSpace(ColorSpace::PrimaryID::kSMPTEST432, ColorSpace::TransferID::kIEC61966_2_4,
-                         ColorSpace::MatrixID::kSMPTE2085, ColorSpace::RangeID::kDerived).AsString(), "");
+                         ColorSpace::MatrixID::kSMPTE2085, ColorSpace::RangeID::kDerived).as_string(), "");
     EXPECT_NE(ColorSpace(ColorSpace::PrimaryID::kJEDECP22, ColorSpace::TransferID::kBT1361_ECG,
-                         ColorSpace::MatrixID::kCDNCLS, ColorSpace::RangeID::kLimited).AsString(), "");
+                         ColorSpace::MatrixID::kCDNCLS, ColorSpace::RangeID::kLimited).as_string(), "");
 }
 
 // from_uint8 覆盖所有枚举分支
@@ -202,29 +202,29 @@ TEST(ColorSpace, ChromaSitingCtor) {
     EXPECT_FALSE(cs.set_chroma_siting_vertical_from_uint8(3));
 }
 
-// HdrMetadata Validate + 比较
+// HdrMetadata validate + 比较
 TEST(HdrMetadata, ValidateAndCompare) {
     cxxkit::HdrMetadata md;
-    EXPECT_TRUE(md.Validate());  // 默认全 0 合法
+    EXPECT_TRUE(md.validate());  // 默认全 0 合法
     md.max_content_light_level = 1000;
     md.max_frame_average_light_level = 400;
-    EXPECT_TRUE(md.Validate());
+    EXPECT_TRUE(md.validate());
     md.max_content_light_level = 999999;  // 超范围
-    EXPECT_FALSE(md.Validate());
+    EXPECT_FALSE(md.validate());
     md.max_content_light_level = 1000;
-    EXPECT_TRUE(md.Validate());
-    // mastering metadata Validate
+    EXPECT_TRUE(md.validate());
+    // mastering metadata validate
     cxxkit::HdrMasteringMetadata mm;
-    EXPECT_TRUE(mm.Validate());
+    EXPECT_TRUE(mm.validate());
     mm.luminance_max = 10000;  // 合法上限
-    EXPECT_TRUE(mm.Validate());
+    EXPECT_TRUE(mm.validate());
     mm.luminance_min = 10.0f;  // 非法（>5）
-    EXPECT_FALSE(mm.Validate());
+    EXPECT_FALSE(mm.validate());
     // Chromaticity
     cxxkit::HdrMasteringMetadata::Chromaticity ch;
-    EXPECT_TRUE(ch.Validate());
+    EXPECT_TRUE(ch.validate());
     ch.x = 2.0f;  // 非法
-    EXPECT_FALSE(ch.Validate());
+    EXPECT_FALSE(ch.validate());
     // operator==
     cxxkit::HdrMetadata other;             // 默认构造，全 0
     cxxkit::HdrMetadata md_default;        // 对照

@@ -594,7 +594,7 @@ TEST(ThreadPoolTest, ReserveAndStart)
         }
     };
 
-    // Set up
+    // set up
     ThreadPool &threadpool = ThreadPool::instance();
     int savedLimit = threadpool.max_thread_count();
     threadpool.set_max_thread_count(1);
@@ -888,7 +888,7 @@ TEST(ThreadPoolTest, WaitForDoneTimeout)
     EXPECT_TRUE(threadPool.wait_for_done(400));
 }
 
-TEST(ThreadPoolTest, Clear)
+TEST(ThreadPoolTest, clear)
 {
     Semaphore sem(0);
     class BlockingTask : public Task
@@ -1228,7 +1228,7 @@ TEST(ThreadPoolTest, WaitForDoneAfterCancel)
 
     EXPECT_TRUE(manager.active_thread_count() == manager.max_thread_count());
 
-    // Add tasks that are immediately removed from the pool queue.
+    // add tasks that are immediately removed from the pool queue.
     // This sets the queue elements to nullptr in ThreadPool and we want to test that
     // the threads keep going through the queue after encountering a nullptr.
     for (int i = 0; i < threadCount; i++)
@@ -1239,7 +1239,7 @@ TEST(ThreadPoolTest, WaitForDoneAfterCancel)
         delete runnable;
     }
 
-    // Add another runnable that will not be removed
+    // add another runnable that will not be removed
     manager.start(createTask(emptyFunct));
 
     // Wait for the first tasks to start
@@ -1248,7 +1248,7 @@ TEST(ThreadPoolTest, WaitForDoneAfterCancel)
     EXPECT_TRUE(mainBarrier.available() == 0);
     EXPECT_TRUE(threadBarrier.available() == 0);
 
-    // Release tasks that are waiting and expect all tasks to complete
+    // release tasks that are waiting and expect all tasks to complete
     threadBarrier.release(threadCount);
 
     if (!manager.wait_for_done(5 * 60 * 1000))

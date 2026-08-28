@@ -22,7 +22,7 @@
 **
 ***********************************************************************************************************************/
 
-// cxxkit::thread RaceChecker tests — coverage for race_checker.cpp (DCHECK-ON Scope paths).
+// cxxkit::thread race_checker tests — coverage for race_checker.cpp (DCHECK-ON Scope paths).
 #include <cxxkit/thread/race_checker.hpp>
 
 #include <gtest/gtest.h>
@@ -31,36 +31,36 @@
 
 using namespace cxxkit;
 
-TEST(RaceChecker, SingleScopeNoDetection)
+TEST(race_checker, SingleScopeNoDetection)
 {
-    RaceChecker checker;
+    race_checker checker;
     {
-        RaceChecker::Scope scope(&checker);
+        race_checker::Scope scope(&checker);
         EXPECT_FALSE(scope.is_detected());
     }
 }
 
-TEST(RaceChecker, NestedScopeDetectsReentry)
+TEST(race_checker, NestedScopeDetectsReentry)
 {
-    RaceChecker checker;
-    RaceChecker::Scope outer(&checker);
+    race_checker checker;
+    race_checker::Scope outer(&checker);
     EXPECT_FALSE(outer.is_detected());
     {
         // Second Scope on the same checker before the first is destroyed = reentrant use.
-        RaceChecker::Scope inner(&checker);
+        race_checker::Scope inner(&checker);
         // The inner scope may flag (implementation uses a count); either way it must not crash.
         (void)inner.is_detected();
     }
     (void)outer.is_detected();
 }
 
-TEST(RaceChecker, CrossThreadScopeDetects)
+TEST(race_checker, CrossThreadScopeDetects)
 {
-    RaceChecker checker;
-    RaceChecker::Scope mainScope(&checker);
+    race_checker checker;
+    race_checker::Scope mainScope(&checker);
     bool otherDetected = false;
     std::thread t([&otherDetected, &checker]() {
-        RaceChecker::Scope other(&checker); // concurrent access from another thread while held
+        race_checker::Scope other(&checker); // concurrent access from another thread while held
         otherDetected = other.is_detected();
     });
     t.join();

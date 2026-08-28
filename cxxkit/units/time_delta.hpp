@@ -41,61 +41,61 @@ class CXXKIT_UNITS_API TimeDelta final : public RelativeUnit<TimeDelta>
 {
 public:
     template <typename T>
-    static CXXKIT_CXX14_CONSTEXPR TimeDelta Minutes(T value)
+    static CXXKIT_CXX14_CONSTEXPR TimeDelta minutes(T value)
     {
         static_assert(std::is_arithmetic<T>::value, "");
-        return Seconds(value * 60);
+        return seconds(value * 60);
     }
     template <typename T>
-    static CXXKIT_CXX14_CONSTEXPR TimeDelta Seconds(T value)
+    static CXXKIT_CXX14_CONSTEXPR TimeDelta seconds(T value)
     {
         static_assert(std::is_arithmetic<T>::value, "");
-        return FromFraction(1000000, value);
+        return from_fraction(1000000, value);
     }
     template <typename T>
-    static CXXKIT_CXX14_CONSTEXPR TimeDelta Millis(T value)
+    static CXXKIT_CXX14_CONSTEXPR TimeDelta millis(T value)
     {
         static_assert(std::is_arithmetic<T>::value, "");
-        return FromFraction(1000, value);
+        return from_fraction(1000, value);
     }
     template <typename T>
-    static CXXKIT_CXX14_CONSTEXPR TimeDelta Micros(T value)
+    static CXXKIT_CXX14_CONSTEXPR TimeDelta micros(T value)
     {
         static_assert(std::is_arithmetic<T>::value, "");
-        return FromValue(value);
+        return from_value(value);
     }
 
     constexpr TimeDelta() = default;
 
     template <typename Sink>
-    friend void AbslStringify(Sink &sink, TimeDelta value);
+    friend void absl_stringify(Sink &sink, TimeDelta value);
 
     template <typename T = int64_t>
     constexpr T seconds() const
     {
-        return ToFraction<1000000, T>();
+        return to_fraction<1000000, T>();
     }
     template <typename T = int64_t>
     constexpr T ms() const
     {
-        return ToFraction<1000, T>();
+        return to_fraction<1000, T>();
     }
     template <typename T = int64_t>
     constexpr T us() const
     {
-        return ToValue<T>();
+        return to_value<T>();
     }
     template <typename T = int64_t>
     constexpr T ns() const
     {
-        return ToMultiple<1000, T>();
+        return to_multiple<1000, T>();
     }
 
-    constexpr int64_t seconds_or(int64_t fallback_value) const { return ToFractionOr<1000000>(fallback_value); }
-    constexpr int64_t ms_or(int64_t fallback_value) const { return ToFractionOr<1000>(fallback_value); }
-    constexpr int64_t us_or(int64_t fallback_value) const { return ToValueOr(fallback_value); }
+    constexpr int64_t seconds_or(int64_t fallback_value) const { return to_fraction_or<1000000>(fallback_value); }
+    constexpr int64_t ms_or(int64_t fallback_value) const { return to_fraction_or<1000>(fallback_value); }
+    constexpr int64_t us_or(int64_t fallback_value) const { return to_value_or(fallback_value); }
 
-    constexpr TimeDelta Abs() const { return us() < 0 ? TimeDelta::Micros(-us()) : *this; }
+    constexpr TimeDelta abs() const { return us() < 0 ? TimeDelta::micros(-us()) : *this; }
 
 
 private:
@@ -112,7 +112,7 @@ CXXKIT_UNITS_API std::string to_string(TimeDelta value);
 // template <typename Sink>
 // void stringify(Sink &sink, TimeDelta value)
 // {
-//     sink.Append(to_string(value));
+//     sink.append(to_string(value));
 // }
 } // namespace utils
 

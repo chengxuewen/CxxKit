@@ -32,14 +32,14 @@
 CXXKIT_BEGIN_NAMESPACE
 
 ClockInterface *g_clock = nullptr;
-ClockInterface *ClockInterface::SetClockForTesting(ClockInterface *clock)
+ClockInterface *ClockInterface::set_clock_for_testing(ClockInterface *clock)
 {
     ClockInterface *prev = g_clock;
     g_clock = clock;
     return prev;
 }
 
-ClockInterface *ClockInterface::GetClockForTesting()
+ClockInterface *ClockInterface::get_clock_for_testing()
 {
     return g_clock;
 }
@@ -182,7 +182,7 @@ std::string DateTime::local_time_string_from_system_time_m_secs(int64_t msecs)
     return ss.str();
 }
 
-int64_t DateTime::TmToSeconds(const tm &tm)
+int64_t DateTime::tm_to_seconds(const tm &tm)
 {
     static short int mdays[12] = {31, 28, 31, 30, 31, 30, 31, 31, 30, 31, 30, 31};
     static short int cumul_mdays[12] = {0, 31, 59, 90, 120, 151, 181, 212, 243, 273, 304, 334};
@@ -222,7 +222,7 @@ int64_t DateTime::TmToSeconds(const tm &tm)
 
     day += cumul_mdays[month];
 
-    // Add number of leap days between 1970 and the expiration year, inclusive.
+    // add number of leap days between 1970 and the expiration year, inclusive.
     day += ((year / 4 - 1970 / 4) - (year / 100 - 1970 / 100) + (year / 400 - 1970 / 400));
 
     // We will have added one day too much above if expiration is during a leap

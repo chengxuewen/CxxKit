@@ -57,7 +57,7 @@ void create_tls()
         std::lock_guard<std::mutex> lock(mutex);
         if (TLS_OUT_OF_INDEXES == currentThreadDataTLSIndex)
         {
-            currentThreadDataTLSIndex = TlsAlloc();
+            currentThreadDataTLSIndex = tls_alloc();
         }
     }
 }
@@ -65,7 +65,7 @@ static void free_tls()
 {
     if (TLS_OUT_OF_INDEXES != currentThreadDataTLSIndex)
     {
-        TlsFree(currentThreadDataTLSIndex);
+        tls_free(currentThreadDataTLSIndex);
         currentThreadDataTLSIndex = TLS_OUT_OF_INDEXES;
     }
 }
@@ -74,15 +74,15 @@ CXXKIT_DESTRUCTOR_FUNCTION(free_tls)
 // Utility functions for getting, setting and clearing thread specific data.
 static PlatformThreadData *get_thread_data()
 {
-    return reinterpret_cast<PlatformThreadData *>(TlsGetValue(tls::currentThreadDataTLSIndex));
+    return reinterpret_cast<PlatformThreadData *>(tls_get_value(tls::currentThreadDataTLSIndex));
 }
 static void set_thread_data(PlatformThreadData *data)
 {
-    TlsSetValue(tls::currentThreadDataTLSIndex, data);
+    tls_set_value(tls::currentThreadDataTLSIndex, data);
 }
 static void clear_thread_data()
 {
-    TlsSetValue(tls::currentThreadDataTLSIndex, 0);
+    tls_set_value(tls::currentThreadDataTLSIndex, 0);
 }
 
 namespace thread
@@ -197,9 +197,9 @@ DWORD WINAPI adopted_thread_watcher_function(LPVOID)
             offset = 0;
             count = handlesCopy.size();
 #    ifndef CXXKIT_OS_WINRT
-            ret = WaitForMultipleObjects(handlesCopy.size(), handlesCopy.data(), false, INFINITE);
+            ret = wait_for_multiple_objects(handlesCopy.size(), handlesCopy.data(), false, INFINITE);
 #    else
-            ret = WaitForMultipleObjectsEx(handlesCopy.size(), handlesCopy.data(), false, INFINITE, false);
+            ret = wait_for_multiple_objects_ex(handlesCopy.size(), handlesCopy.data(), false, INFINITE, false);
 #    endif
         }
         else
@@ -210,9 +210,9 @@ DWORD WINAPI adopted_thread_watcher_function(LPVOID)
                 offset = loop * MAXIMUM_WAIT_OBJECTS;
                 count = std::min((int)handlesCopy.size() - offset, MAXIMUM_WAIT_OBJECTS);
 #    ifndef CXXKIT_OS_WINRT
-                ret = WaitForMultipleObjects(count, handlesCopy.data() + offset, false, 100);
+                ret = wait_for_multiple_objects(count, handlesCopy.data() + offset, false, 100);
 #    else
-                ret = WaitForMultipleObjectsEx(count, handlesCopy.data() + offset, false, 100, false);
+                ret = wait_for_multiple_objects_ex(count, handlesCopy.data() + offset, false, 100, false);
 #    endif
                 loop = (loop + 1) % loops;
             } while (ret == WAIT_TIMEOUT);
@@ -220,7 +220,7 @@ DWORD WINAPI adopted_thread_watcher_function(LPVOID)
 
         if (ret == WAIT_FAILED || ret >= WAIT_OBJECT_0 + uint_t(count))
         {
-            CXXKIT_WARNING("PlatformThread internal error while waiting for adopted threads: %d", int(GetLastError()));
+            CXXKIT_WARNING("PlatformThread internal error while waiting for adopted threads: %d", int(get_last_error()));
             continue;
         }
 
@@ -246,7 +246,7 @@ DWORD WINAPI adopted_thread_watcher_function(LPVOID)
         data->deref();
 
         lock.lock();
-        CloseHandle(adoptedThreadHandles.at(handleIndex));
+        close_handle(adoptedThreadHandles.at(handleIndex));
         adoptedThreadHandles.erase(adoptedThreadHandles.begin() + handleIndex);
         adoptedPlatformThreads.erase(adoptedPlatformThreads.begin() + platformThreadIndex);
     }
@@ -266,9 +266,9 @@ DWORD WINAPI adopted_thread_watcher_function(LPVOID)
 static void watch_adopted(const HANDLE adoptedThreadHandle, PlatformThread *platformThread)
 {
     std::lock_guard<std::mutex> lock(adoptedThreadWatcherMutex);
-    if (GetCurrentThreadId() == adoptedThreadWatcherId)
+    if (get_current_thread_id() == adoptedThreadWatcherId)
     {
-        CloseHandle(adoptedThreadHandle);
+        close_handle(adoptedThreadHandle);
         return;
     }
 
@@ -281,18 +281,18 @@ static void watch_adopted(const HANDLE adoptedThreadHandle, PlatformThread *plat
         if (adoptedThreadWakeup == 0)
         {
 #    ifndef CXXKIT_OS_WINRT
-            adoptedThreadWakeup = CreateEvent(0, false, false, 0);
+            adoptedThreadWakeup = create_event(0, false, false, 0);
 #    else
-            adoptedThreadWakeup = CreateEventEx(0, NULL, 0, EVENT_ALL_ACCESS);
+            adoptedThreadWakeup = create_event_ex(0, NULL, 0, EVENT_ALL_ACCESS);
 #    endif
             adoptedThreadHandles.insert(adoptedThreadHandles.begin(), adoptedThreadWakeup);
         }
 
-        CloseHandle(CreateThread(0, 0, adopted_thread_watcher_function, 0, 0, &adoptedThreadWatcherId));
+        close_handle(create_thread(0, 0, adopted_thread_watcher_function, 0, 0, &adoptedThreadWatcherId));
     }
     else
     {
-        SetEvent(adoptedThreadWakeup);
+        set_event(adoptedThreadWakeup);
     }
 }
 } // namespace thread
@@ -323,9 +323,9 @@ PlatformThreadData *PlatformThreadData::current(bool createIfNecessary)
         // CoreApplicationPrivate::theMainThread.storeRelease(data->thread.loadRelaxed());
 
         HANDLE realHandle = INVALID_HANDLE_VALUE;
-        DuplicateHandle(GetCurrentProcess(),
-                        GetCurrentThread(),
-                        GetCurrentProcess(),
+        duplicate_handle(get_current_process(),
+                        get_current_thread(),
+                        get_current_process(),
                         &realHandle,
                         0,
                         FALSE,
@@ -384,12 +384,12 @@ void PlatformThreadPrivate::set_priority(Priority priority)
         case Priority::kInherit:
         default:
         {
-            prio = GetThreadPriority(GetCurrentThread());
+            prio = get_thread_priority(get_current_thread());
             break;
         }
     }
 
-    if (!SetThreadPriority(mThreadHandle, prio))
+    if (!set_thread_priority(mThreadHandle, prio))
     {
         CXXKIT_WARNING("PlatformThread::set_priority: Failed to set thread priority");
     }
@@ -421,7 +421,7 @@ bool PlatformThreadPrivate::start(Priority priority)
     mThreadHandle = _beginthreadex(NULL, mStackSize, detail::thread::start, this, CREATE_SUSPENDED, &id);
 #    else
     // MSVC -MD or -MDd or MinGW build
-    mThreadHandle = CreateThread(nullptr,
+    mThreadHandle = create_thread(nullptr,
                                  mStackSize,
                                  reinterpret_cast<LPTHREAD_START_ROUTINE>(detail::thread::start),
                                  this,
@@ -480,16 +480,16 @@ bool PlatformThreadPrivate::start(Priority priority)
         case Priority::kInherit:
         default:
         {
-            prio = GetThreadPriority(GetCurrentThread());
+            prio = get_thread_priority(get_current_thread());
             break;
         }
     }
-    if (!SetThreadPriority(mThreadHandle, prio))
+    if (!set_thread_priority(mThreadHandle, prio))
     {
         CXXKIT_WARNING("PlatformThread::start: Failed to set thread priority");
     }
 
-    if (ResumeThread(mThreadHandle) == (DWORD)-1)
+    if (resume_thread(mThreadHandle) == (DWORD)-1)
     {
         CXXKIT_WARNING("PlatformThread::start: Failed to resume new thread");
     }
@@ -504,9 +504,9 @@ Status PlatformThreadPrivate::terminate()
         return "Termination Disabled";
     }
 
-    // Calling ExitThread() in set_termination_enabled is all we can do on WinRT
+    // Calling exit_thread() in set_termination_enabled is all we can do on WinRT
 #    ifndef CXXKIT_OS_WINRT
-    TerminateThread(mThreadHandle, 0);
+    terminate_thread(mThreadHandle, 0);
 #    endif
     detail::thread::finish(this, false);
     return Status::ok;
@@ -524,7 +524,7 @@ void PlatformThread::set_current_thread_name(const StringView name)
 
     __try
     {
-        RaiseException(0x406D1388, 0, sizeof(info) / sizeof(DWORD), reinterpret_cast<const ULONG_PTR *>(&info));
+        raise_exception(0x406D1388, 0, sizeof(info) / sizeof(DWORD), reinterpret_cast<const ULONG_PTR *>(&info));
     }
     __except (EXCEPTION_CONTINUE_EXECUTION)
     {
@@ -535,16 +535,16 @@ int PlatformThread::ideal_concurrency_thread_count() noexcept
 {
     SYSTEM_INFO sysinfo;
 #    ifndef CXXKIT_OS_WINRT
-    GetSystemInfo(&sysinfo);
+    get_system_info(&sysinfo);
 #    else
-    GetNativeSystemInfo(&sysinfo);
+    get_native_system_info(&sysinfo);
 #    endif
     return sysinfo.dwNumberOfProcessors;
 }
 
 PlatformThread::Id PlatformThread::current_thread_id() noexcept
 {
-    return GetCurrentThreadId();
+    return get_current_thread_id();
 }
 
 void PlatformThread::set_termination_enabled(bool enabled)
@@ -565,15 +565,15 @@ void PlatformThread::set_termination_enabled(bool enabled)
 #    ifndef CXXKIT_OS_WINRT
         _endthreadex(0);
 #    else
-        ExitThread(0);
+        exit_thread(0);
 #    endif
     }
 }
 
 void AdoptedPlatformThread::init()
 {
-    this->d_func()->mData->thread_id.store(GetCurrentThreadId());
-    this->d_func()->mThreadHandle = GetCurrentThread();
+    this->d_func()->mData->thread_id.store(get_current_thread_id());
+    this->d_func()->mThreadHandle = get_current_thread();
 }
 
 CXXKIT_END_NAMESPACE

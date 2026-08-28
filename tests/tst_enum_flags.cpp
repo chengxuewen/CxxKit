@@ -112,7 +112,7 @@ CXXKIT_DECLARE_ENUM_FLAGS(MyStrictNoOpFlags, MyStrictNoOpEnum)
 
 TEST(EnumFlagsTest, DefaultConstructor)
 {
-    // Test with enum_testFlags
+    // test with enum_testFlags
     enum_testFlags f1;
     enum_testFlags f2;
     EXPECT_EQ(f1, f2);
@@ -121,7 +121,7 @@ TEST(EnumFlagsTest, DefaultConstructor)
 
 TEST(EnumFlagsTest, EnumConstructor)
 {
-    // Test with enum_testFlags
+    // test with enum_testFlags
     enum_testFlags f1(enum_testFlag::value_1);
     enum_testFlags f2(enum_testFlag::value_1);
     EXPECT_EQ(f1, f2);
@@ -129,7 +129,7 @@ TEST(EnumFlagsTest, EnumConstructor)
 
 TEST(EnumFlagsTest, CopyConstructor)
 {
-    // Test with enum_testFlags
+    // test with enum_testFlags
     enum_testFlags f1(enum_testFlag::value_1);
     enum_testFlags f2(f1);
     EXPECT_EQ(f1, f2);
@@ -345,7 +345,7 @@ TEST(EnumFlagsTest, ConstExpr)
 
 TEST(EnumFlagsTest, Signedness)
 {
-    // Check that the relative signedness of the types matches
+    // check that the relative signedness of the types matches
     static_assert((std::is_unsigned<typename std::underlying_type<MockMouseButton>::type>::value ==
                    std::is_unsigned<MockMouseButtons::Value>::value),
                   "Signedness mismatch for MockMouseButtons");

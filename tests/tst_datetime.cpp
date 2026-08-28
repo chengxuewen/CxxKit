@@ -39,7 +39,7 @@ class FakeClock final : public ClockInterface
 {
 public:
     explicit FakeClock(int64_t nanos) : mNanos(nanos) {}
-    int64_t TimeNanos() const override { return mNanos; }
+    int64_t time_nanos() const override { return mNanos; }
 
 private:
     int64_t mNanos;
@@ -147,45 +147,45 @@ TEST(DateTime, LocalTimeString)
     EXPECT_EQ(sm[19], '.');
 }
 
-TEST(DateTime, TmToSeconds)
+TEST(DateTime, tm_to_seconds)
 {
     std::tm tm = {};
     tm.tm_year = 70;  // 1970
     tm.tm_mon = 0;    // January
     tm.tm_mday = 1;
-    EXPECT_EQ(DateTime::TmToSeconds(tm), 0);
+    EXPECT_EQ(DateTime::tm_to_seconds(tm), 0);
 
     // One day later.
     tm.tm_mday = 2;
-    EXPECT_EQ(DateTime::TmToSeconds(tm), 86400);
+    EXPECT_EQ(DateTime::tm_to_seconds(tm), 86400);
 
     // 2000-01-01 (epoch offset already known).
     std::tm y2k = {};
     y2k.tm_year = 100; // 2000
     y2k.tm_mon = 0;
     y2k.tm_mday = 1;
-    EXPECT_EQ(DateTime::TmToSeconds(y2k), 946684800);
+    EXPECT_EQ(DateTime::tm_to_seconds(y2k), 946684800);
 
     // Leap day in a leap year 2000-02-29 -> valid.
     std::tm leap = {};
     leap.tm_year = 100; // 2000
     leap.tm_mon = 1;    // Feb
     leap.tm_mday = 29;
-    EXPECT_GT(DateTime::TmToSeconds(leap), 946684800);
+    EXPECT_GT(DateTime::tm_to_seconds(leap), 946684800);
 
     // Invalid month.
     std::tm badMonth = {};
     badMonth.tm_year = 100;
     badMonth.tm_mon = 12;
     badMonth.tm_mday = 1;
-    EXPECT_EQ(DateTime::TmToSeconds(badMonth), -1);
+    EXPECT_EQ(DateTime::tm_to_seconds(badMonth), -1);
 
     // Invalid day (Feb 30 in non-leap 2001).
     std::tm badDay = {};
     badDay.tm_year = 101; // 2001
     badDay.tm_mon = 1;    // Feb
     badDay.tm_mday = 30;
-    EXPECT_EQ(DateTime::TmToSeconds(badDay), -1);
+    EXPECT_EQ(DateTime::tm_to_seconds(badDay), -1);
 
     // Invalid hour.
     std::tm badHour = {};
@@ -193,41 +193,41 @@ TEST(DateTime, TmToSeconds)
     badHour.tm_mon = 0;
     badHour.tm_mday = 1;
     badHour.tm_hour = 24;
-    EXPECT_EQ(DateTime::TmToSeconds(badHour), -1);
+    EXPECT_EQ(DateTime::tm_to_seconds(badHour), -1);
 
     // Year before 1970.
     std::tm preEpoch = {};
     preEpoch.tm_year = 69;
     preEpoch.tm_mon = 0;
     preEpoch.tm_mday = 1;
-    EXPECT_EQ(DateTime::TmToSeconds(preEpoch), -1);
+    EXPECT_EQ(DateTime::tm_to_seconds(preEpoch), -1);
 }
 
 TEST(DateTime, ClockInterfaceOverride)
 {
-    // Set a fake clock, verify TimeNanos path uses it, then restore.
+    // set a fake clock, verify time_nanos path uses it, then restore.
     FakeClock fake(123456789000LL); // some fixed nanos
-    ClockInterface *prev = ClockInterface::SetClockForTesting(&fake);
-    EXPECT_EQ(ClockInterface::GetClockForTesting(), &fake);
+    ClockInterface *prev = ClockInterface::set_clock_for_testing(&fake);
+    EXPECT_EQ(ClockInterface::get_clock_for_testing(), &fake);
 
-    // TimeNanos reflects the fake clock.
-    EXPECT_EQ(DateTime::TimeNanos(), fake.TimeNanos());
-    EXPECT_EQ(DateTime::TimeUTCNanos(), fake.TimeNanos());
+    // time_nanos reflects the fake clock.
+    EXPECT_EQ(DateTime::time_nanos(), fake.time_nanos());
+    EXPECT_EQ(DateTime::time_utc_nanos(), fake.time_nanos());
 
     // Derived functions are consistent.
-    EXPECT_EQ(DateTime::TimeMicros(), fake.TimeNanos() / 1000);
-    EXPECT_EQ(DateTime::TimeMillis(), fake.TimeNanos() / 1000000);
+    EXPECT_EQ(DateTime::time_micros(), fake.time_nanos() / 1000);
+    EXPECT_EQ(DateTime::time_millis(), fake.time_nanos() / 1000000);
 
-    // TimeAfter/TimeSince/TimeUntil arithmetic.
-    const int64_t now = DateTime::TimeMillis();
-    EXPECT_EQ(DateTime::TimeAfter(50), now + 50);
-    EXPECT_EQ(DateTime::TimeSince(now), 0);
-    EXPECT_EQ(DateTime::TimeUntil(now + 60), 60);
+    // time_after/time_since/time_until arithmetic.
+    const int64_t now = DateTime::time_millis();
+    EXPECT_EQ(DateTime::time_after(50), now + 50);
+    EXPECT_EQ(DateTime::time_since(now), 0);
+    EXPECT_EQ(DateTime::time_until(now + 60), 60);
 
     // Restore the previous clock so we don't leak state to other tests.
-    ClockInterface *restored = ClockInterface::SetClockForTesting(prev);
+    ClockInterface *restored = ClockInterface::set_clock_for_testing(prev);
     EXPECT_EQ(restored, &fake);
-    EXPECT_EQ(ClockInterface::GetClockForTesting(), prev);
+    EXPECT_EQ(ClockInterface::get_clock_for_testing(), prev);
 }
 
 CXXKIT_END_NAMESPACE

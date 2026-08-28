@@ -100,7 +100,7 @@ using Binary = std::vector<byte_t>;
 using TSBinary = std::pair<int64_t, Binary>;
 using BinarySharedPtr = std::shared_ptr<Binary>;
 
-/** @brief Copy a vector of any trivial type @p T into a `Binary` byte buffer.
+/** @brief copy a vector of any trivial type @p T into a `Binary` byte buffer.
  * @tparam T Trivially copyable element type.
  * @param data Source vector.
  * @return `Binary` with same byte content as @p data.

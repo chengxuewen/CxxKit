@@ -1742,7 +1742,7 @@ public:
     bool blocked() const noexcept { return m_block.load(); }
 
     /**
-     * Get number of connected slots
+     * get number of connected slots
      * Safety: thread safe
      */
     size_t slot_count() noexcept

@@ -45,7 +45,7 @@ int Add33(int x)
 
 } // namespace
 
-// Test the main use case of FunctionView: implicitly converting a callable argument.
+// test the main use case of FunctionView: implicitly converting a callable argument.
 TEST(FunctionViewTest, ImplicitConversion)
 {
     EXPECT_EQ(38, CallWith33([](int x) { return x + 5; }));

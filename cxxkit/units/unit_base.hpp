@@ -49,14 +49,14 @@ class UnitBase
 public:
     UnitBase() = delete;
     static constexpr Unit_T Zero() { return Unit_T(0); }
-    static constexpr Unit_T PlusInfinity() { return Unit_T(PlusInfinityVal()); }
-    static constexpr Unit_T MinusInfinity() { return Unit_T(MinusInfinityVal()); }
+    static constexpr Unit_T plus_infinity() { return Unit_T(plus_infinity_val()); }
+    static constexpr Unit_T minus_infinity() { return Unit_T(minus_infinity_val()); }
 
-    constexpr bool IsZero() const { return mValue == 0; }
-    constexpr bool IsFinite() const { return !IsInfinite(); }
-    constexpr bool IsInfinite() const { return mValue == PlusInfinityVal() || mValue == MinusInfinityVal(); }
-    constexpr bool IsPlusInfinity() const { return mValue == PlusInfinityVal(); }
-    constexpr bool IsMinusInfinity() const { return mValue == MinusInfinityVal(); }
+    constexpr bool is_zero() const { return mValue == 0; }
+    constexpr bool is_finite() const { return !is_infinite(); }
+    constexpr bool is_infinite() const { return mValue == plus_infinity_val() || mValue == minus_infinity_val(); }
+    constexpr bool is_plus_infinity() const { return mValue == plus_infinity_val(); }
+    constexpr bool is_minus_infinity() const { return mValue == minus_infinity_val(); }
 
     constexpr bool operator==(const UnitBase<Unit_T> &other) const { return mValue == other.mValue; }
     constexpr bool operator!=(const UnitBase<Unit_T> &other) const { return mValue != other.mValue; }
@@ -64,123 +64,123 @@ public:
     constexpr bool operator>=(const UnitBase<Unit_T> &other) const { return mValue >= other.mValue; }
     constexpr bool operator>(const UnitBase<Unit_T> &other) const { return mValue > other.mValue; }
     constexpr bool operator<(const UnitBase<Unit_T> &other) const { return mValue < other.mValue; }
-    CXXKIT_CXX14_CONSTEXPR Unit_T RoundTo(const Unit_T &resolution) const
+    CXXKIT_CXX14_CONSTEXPR Unit_T round_to(const Unit_T &resolution) const
     {
-        CXXKIT_DCHECK(IsFinite());
-        CXXKIT_DCHECK(resolution.IsFinite());
+        CXXKIT_DCHECK(is_finite());
+        CXXKIT_DCHECK(resolution.is_finite());
         CXXKIT_DCHECK_GT(resolution.mValue, 0);
         return Unit_T((mValue + resolution.mValue / 2) / resolution.mValue) * resolution.mValue;
     }
-    CXXKIT_CXX14_CONSTEXPR Unit_T RoundUpTo(const Unit_T &resolution) const
+    CXXKIT_CXX14_CONSTEXPR Unit_T round_up_to(const Unit_T &resolution) const
     {
-        CXXKIT_DCHECK(IsFinite());
-        CXXKIT_DCHECK(resolution.IsFinite());
-        CXXKIT_DCHECK(resolution.IsFinite());
+        CXXKIT_DCHECK(is_finite());
+        CXXKIT_DCHECK(resolution.is_finite());
+        CXXKIT_DCHECK(resolution.is_finite());
         CXXKIT_DCHECK_GT(resolution.mValue, 0);
         return Unit_T((mValue + resolution.mValue - 1) / resolution.mValue) * resolution.mValue;
     }
-    CXXKIT_CXX14_CONSTEXPR Unit_T RoundDownTo(const Unit_T &resolution) const
+    CXXKIT_CXX14_CONSTEXPR Unit_T round_down_to(const Unit_T &resolution) const
     {
-        CXXKIT_DCHECK(IsFinite());
-        CXXKIT_DCHECK(resolution.IsFinite());
+        CXXKIT_DCHECK(is_finite());
+        CXXKIT_DCHECK(resolution.is_finite());
         CXXKIT_DCHECK_GT(resolution.mValue, 0);
         return Unit_T(mValue / resolution.mValue) * resolution.mValue;
     }
 
 protected:
     template <typename T, typename std::enable_if<std::is_integral<T>::value>::type * = nullptr>
-    static CXXKIT_CXX14_CONSTEXPR Unit_T FromValue(T value)
+    static CXXKIT_CXX14_CONSTEXPR Unit_T from_value(T value)
     {
         if (Unit_T::kOneSided)
         {
             CXXKIT_DCHECK_GE(value, 0);
         }
-        CXXKIT_DCHECK_GT(value, MinusInfinityVal());
-        CXXKIT_DCHECK_LT(value, PlusInfinityVal());
+        CXXKIT_DCHECK_GT(value, minus_infinity_val());
+        CXXKIT_DCHECK_LT(value, plus_infinity_val());
         return Unit_T(utils::dchecked_cast<int64_t>(value));
     }
 
     template <typename T, typename std::enable_if<std::is_floating_point<T>::value>::type * = nullptr>
-    static CXXKIT_CXX14_CONSTEXPR Unit_T FromValue(T value)
+    static CXXKIT_CXX14_CONSTEXPR Unit_T from_value(T value)
     {
         if (value == std::numeric_limits<T>::infinity())
         {
-            return PlusInfinity();
+            return plus_infinity();
         }
         else if (value == -std::numeric_limits<T>::infinity())
         {
-            return MinusInfinity();
+            return minus_infinity();
         }
         else
         {
-            return FromValue(utils::dchecked_cast<int64_t>(value));
+            return from_value(utils::dchecked_cast<int64_t>(value));
         }
     }
 
     template <typename T, typename std::enable_if<std::is_integral<T>::value>::type * = nullptr>
-    static CXXKIT_CXX14_CONSTEXPR Unit_T FromFraction(int64_t denominator, T value)
+    static CXXKIT_CXX14_CONSTEXPR Unit_T from_fraction(int64_t denominator, T value)
     {
         if (Unit_T::kOneSided)
         {
             CXXKIT_DCHECK_GE(value, 0);
         }
-        CXXKIT_DCHECK_GT(value, MinusInfinityVal() / denominator);
-        CXXKIT_DCHECK_LT(value, PlusInfinityVal() / denominator);
+        CXXKIT_DCHECK_GT(value, minus_infinity_val() / denominator);
+        CXXKIT_DCHECK_LT(value, plus_infinity_val() / denominator);
         return Unit_T(utils::dchecked_cast<int64_t>(value * denominator));
     }
     template <typename T, typename std::enable_if<std::is_floating_point<T>::value>::type * = nullptr>
-    static constexpr Unit_T FromFraction(int64_t denominator, T value)
+    static constexpr Unit_T from_fraction(int64_t denominator, T value)
     {
-        return FromValue(value * denominator);
+        return from_value(value * denominator);
     }
 
     template <typename T = int64_t>
-    CXXKIT_CXX14_CONSTEXPR typename std::enable_if<std::is_integral<T>::value, T>::type ToValue() const
+    CXXKIT_CXX14_CONSTEXPR typename std::enable_if<std::is_integral<T>::value, T>::type to_value() const
     {
         return utils::dchecked_cast<T>(mValue);
     }
     template <typename T>
-    constexpr typename std::enable_if<std::is_floating_point<T>::value, T>::type ToValue() const
+    constexpr typename std::enable_if<std::is_floating_point<T>::value, T>::type to_value() const
     {
-        return IsPlusInfinity()    ? std::numeric_limits<T>::infinity()
-               : IsMinusInfinity() ? -std::numeric_limits<T>::infinity()
+        return is_plus_infinity()    ? std::numeric_limits<T>::infinity()
+               : is_minus_infinity() ? -std::numeric_limits<T>::infinity()
                                    : mValue;
     }
     template <typename T>
-    constexpr T ToValueOr(T fallbackValue) const
+    constexpr T to_value_or(T fallbackValue) const
     {
-        return IsFinite() ? mValue : fallbackValue;
+        return is_finite() ? mValue : fallbackValue;
     }
 
     template <int64_t Denominator, typename T = int64_t>
-    CXXKIT_CXX14_CONSTEXPR typename std::enable_if<std::is_integral<T>::value, T>::type ToFraction() const
+    CXXKIT_CXX14_CONSTEXPR typename std::enable_if<std::is_integral<T>::value, T>::type to_fraction() const
     {
-        CXXKIT_DCHECK(IsFinite());
-        return utils::dchecked_cast<T>(DivideRoundToNearest(mValue, Denominator));
+        CXXKIT_DCHECK(is_finite());
+        return utils::dchecked_cast<T>(divide_round_to_nearest(mValue, Denominator));
     }
     template <int64_t Denominator, typename T>
-    constexpr typename std::enable_if<std::is_floating_point<T>::value, T>::type ToFraction() const
+    constexpr typename std::enable_if<std::is_floating_point<T>::value, T>::type to_fraction() const
     {
-        return ToValue<T>() * (1 / static_cast<T>(Denominator));
+        return to_value<T>() * (1 / static_cast<T>(Denominator));
     }
 
     template <int64_t Denominator>
-    constexpr int64_t ToFractionOr(int64_t fallbackValue) const
+    constexpr int64_t to_fraction_or(int64_t fallbackValue) const
     {
-        return IsFinite() ? DivideRoundToNearest(mValue, Denominator) : fallbackValue;
+        return is_finite() ? divide_round_to_nearest(mValue, Denominator) : fallbackValue;
     }
 
     template <int64_t Factor, typename T = int64_t>
-    CXXKIT_CXX14_CONSTEXPR typename std::enable_if<std::is_integral<T>::value, T>::type ToMultiple() const
+    CXXKIT_CXX14_CONSTEXPR typename std::enable_if<std::is_integral<T>::value, T>::type to_multiple() const
     {
-        CXXKIT_DCHECK_GE(ToValue(), utils::numeric_min<T>() / Factor);
-        CXXKIT_DCHECK_LE(ToValue(), utils::numeric_max<T>() / Factor);
-        return utils::dchecked_cast<T>(ToValue() * Factor);
+        CXXKIT_DCHECK_GE(to_value(), utils::numeric_min<T>() / Factor);
+        CXXKIT_DCHECK_LE(to_value(), utils::numeric_max<T>() / Factor);
+        return utils::dchecked_cast<T>(to_value() * Factor);
     }
     template <int64_t Factor, typename T>
-    constexpr typename std::enable_if<std::is_floating_point<T>::value, T>::type ToMultiple() const
+    constexpr typename std::enable_if<std::is_floating_point<T>::value, T>::type to_multiple() const
     {
-        return ToValue<T>() * Factor;
+        return to_value<T>() * Factor;
     }
 
     explicit constexpr UnitBase(int64_t value)
@@ -192,11 +192,11 @@ private:
     template <class RelativeUnit_T>
     friend class RelativeUnit;
 
-    static inline constexpr int64_t PlusInfinityVal() { return utils::numeric_max<int64_t>(); }
-    static inline constexpr int64_t MinusInfinityVal() { return utils::numeric_min<int64_t>(); }
+    static inline constexpr int64_t plus_infinity_val() { return utils::numeric_max<int64_t>(); }
+    static inline constexpr int64_t minus_infinity_val() { return utils::numeric_min<int64_t>(); }
 
-    CXXKIT_CXX14_CONSTEXPR Unit_T &AsSubClassRef() { return static_cast<Unit_T &>(*this); }
-    CXXKIT_CXX14_CONSTEXPR const Unit_T &AsSubClassRef() const { return static_cast<const Unit_T &>(*this); }
+    CXXKIT_CXX14_CONSTEXPR Unit_T &as_sub_class_ref() { return static_cast<Unit_T &>(*this); }
+    CXXKIT_CXX14_CONSTEXPR const Unit_T &as_sub_class_ref() const { return static_cast<const Unit_T &>(*this); }
 
     int64_t mValue;
 };
@@ -208,74 +208,74 @@ template <class Unit_T>
 class RelativeUnit : public UnitBase<Unit_T>
 {
 public:
-    constexpr Unit_T Clamped(Unit_T min_value, Unit_T max_value) const
+    constexpr Unit_T clamped(Unit_T min_value, Unit_T max_value) const
     {
-        return utils::math_max(min_value, utils::math_min(UnitBase<Unit_T>::AsSubClassRef(), max_value));
+        return utils::math_max(min_value, utils::math_min(UnitBase<Unit_T>::as_sub_class_ref(), max_value));
     }
-    CXXKIT_CXX14_CONSTEXPR void Clamp(Unit_T min_value, Unit_T max_value) { *this = Clamped(min_value, max_value); }
+    CXXKIT_CXX14_CONSTEXPR void clamp(Unit_T min_value, Unit_T max_value) { *this = clamped(min_value, max_value); }
     CXXKIT_CXX14_CONSTEXPR Unit_T operator+(const Unit_T other) const
     {
-        if (this->IsPlusInfinity() || other.IsPlusInfinity())
+        if (this->is_plus_infinity() || other.is_plus_infinity())
         {
-            CXXKIT_DCHECK(!this->IsMinusInfinity());
-            CXXKIT_DCHECK(!other.IsMinusInfinity());
-            return this->PlusInfinity();
+            CXXKIT_DCHECK(!this->is_minus_infinity());
+            CXXKIT_DCHECK(!other.is_minus_infinity());
+            return this->plus_infinity();
         }
-        else if (this->IsMinusInfinity() || other.IsMinusInfinity())
+        else if (this->is_minus_infinity() || other.is_minus_infinity())
         {
-            CXXKIT_DCHECK(!this->IsPlusInfinity());
-            CXXKIT_DCHECK(!other.IsPlusInfinity());
-            return this->MinusInfinity();
+            CXXKIT_DCHECK(!this->is_plus_infinity());
+            CXXKIT_DCHECK(!other.is_plus_infinity());
+            return this->minus_infinity();
         }
-        return UnitBase<Unit_T>::FromValue(this->ToValue() + other.ToValue());
+        return UnitBase<Unit_T>::from_value(this->to_value() + other.to_value());
     }
     CXXKIT_CXX14_CONSTEXPR Unit_T operator-(const Unit_T other) const
     {
-        if (this->IsPlusInfinity() || other.IsMinusInfinity())
+        if (this->is_plus_infinity() || other.is_minus_infinity())
         {
-            CXXKIT_DCHECK(!this->IsMinusInfinity());
-            CXXKIT_DCHECK(!other.IsPlusInfinity());
-            return this->PlusInfinity();
+            CXXKIT_DCHECK(!this->is_minus_infinity());
+            CXXKIT_DCHECK(!other.is_plus_infinity());
+            return this->plus_infinity();
         }
-        else if (this->IsMinusInfinity() || other.IsPlusInfinity())
+        else if (this->is_minus_infinity() || other.is_plus_infinity())
         {
-            CXXKIT_DCHECK(!this->IsPlusInfinity());
-            CXXKIT_DCHECK(!other.IsMinusInfinity());
-            return this->MinusInfinity();
+            CXXKIT_DCHECK(!this->is_plus_infinity());
+            CXXKIT_DCHECK(!other.is_minus_infinity());
+            return this->minus_infinity();
         }
-        return UnitBase<Unit_T>::FromValue(this->ToValue() - other.ToValue());
+        return UnitBase<Unit_T>::from_value(this->to_value() - other.to_value());
     }
     CXXKIT_CXX14_CONSTEXPR Unit_T &operator+=(const Unit_T other)
     {
         *this = *this + other;
-        return this->AsSubClassRef();
+        return this->as_sub_class_ref();
     }
     CXXKIT_CXX14_CONSTEXPR Unit_T &operator-=(const Unit_T other)
     {
         *this = *this - other;
-        return this->AsSubClassRef();
+        return this->as_sub_class_ref();
     }
     constexpr double operator/(const Unit_T other) const
     {
-        return UnitBase<Unit_T>::template ToValue<double>() / other.template ToValue<double>();
+        return UnitBase<Unit_T>::template to_value<double>() / other.template to_value<double>();
     }
     template <typename T, typename std::enable_if<std::is_floating_point<T>::value>::type * = nullptr>
     constexpr Unit_T operator/(T scalar) const
     {
-        return UnitBase<Unit_T>::FromValue(std::llround(this->ToValue() / scalar));
+        return UnitBase<Unit_T>::from_value(std::llround(this->to_value() / scalar));
     }
     template <typename T, typename std::enable_if<std::is_integral<T>::value>::type * = nullptr>
     constexpr Unit_T operator/(T scalar) const
     {
-        return UnitBase<Unit_T>::FromValue(this->ToValue() / scalar);
+        return UnitBase<Unit_T>::from_value(this->to_value() / scalar);
     }
     constexpr Unit_T operator*(double scalar) const
     {
-        return UnitBase<Unit_T>::FromValue(std::llround(this->ToValue() * scalar));
+        return UnitBase<Unit_T>::from_value(std::llround(this->to_value() * scalar));
     }
-    constexpr Unit_T operator*(int64_t scalar) const { return UnitBase<Unit_T>::FromValue(this->ToValue() * scalar); }
-    constexpr Unit_T operator*(int32_t scalar) const { return UnitBase<Unit_T>::FromValue(this->ToValue() * scalar); }
-    constexpr Unit_T operator*(size_t scalar) const { return UnitBase<Unit_T>::FromValue(this->ToValue() * scalar); }
+    constexpr Unit_T operator*(int64_t scalar) const { return UnitBase<Unit_T>::from_value(this->to_value() * scalar); }
+    constexpr Unit_T operator*(int32_t scalar) const { return UnitBase<Unit_T>::from_value(this->to_value() * scalar); }
+    constexpr Unit_T operator*(size_t scalar) const { return UnitBase<Unit_T>::from_value(this->to_value() * scalar); }
 
 protected:
     using UnitBase<Unit_T>::UnitBase;
@@ -309,13 +309,13 @@ inline constexpr Unit_T operator*(size_t scalar, RelativeUnit<Unit_T> other)
 template <class Unit_T>
 inline CXXKIT_CXX14_CONSTEXPR Unit_T operator-(RelativeUnit<Unit_T> other)
 {
-    if (other.IsPlusInfinity())
+    if (other.is_plus_infinity())
     {
-        return UnitBase<Unit_T>::MinusInfinity();
+        return UnitBase<Unit_T>::minus_infinity();
     }
-    if (other.IsMinusInfinity())
+    if (other.is_minus_infinity())
     {
-        return UnitBase<Unit_T>::PlusInfinity();
+        return UnitBase<Unit_T>::plus_infinity();
     }
     return -1 * other;
 }

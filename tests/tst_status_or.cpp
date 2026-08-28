@@ -50,16 +50,16 @@ TEST(StatusOr, ValueOr)
     EXPECT_EQ(err.value_or(0), 0);
 }
 
-TEST(StatusOr, OrDie)
+TEST(StatusOr, or_die)
 {
     cxxkit::StatusOr<int> ok = 42;
-    EXPECT_EQ(ok.OrDie(), 42);
-    // err.OrDie() would trigger CXXKIT_CHECK failure (fatal)
+    EXPECT_EQ(ok.or_die(), 42);
+    // err.or_die() would trigger CXXKIT_CHECK failure (fatal)
 }
 
-TEST(StatusOr, MakeStatusOr)
+TEST(StatusOr, make_status_or)
 {
-    auto sor = cxxkit::MakeStatusOr(42);
+    auto sor = cxxkit::make_status_or(42);
     EXPECT_TRUE(sor.ok());
     EXPECT_EQ(sor.value(), 42);
 }

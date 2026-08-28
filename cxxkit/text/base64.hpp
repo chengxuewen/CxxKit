@@ -63,64 +63,64 @@ public:
     };
     typedef int DecodeFlags;
 
-    static bool IsBase64Char(char ch);
+    static bool is_base64_char(char ch);
 
-    // Get the char next to the `ch` from the Base64Table.
+    // get the char next to the `ch` from the Base64Table.
     // If the `ch` is the last one in the Base64Table then returns
     // the first one from the table.
     // Expects the `ch` be a base64 char.
     // The result will be saved in `next_ch`.
     // Returns true on success.
-    static bool GetNextBase64Char(char ch, char *next_ch);
+    static bool get_next_base64_char(char ch, char *next_ch);
 
     // Determines whether the given string consists entirely of valid base64
     // encoded characters.
-    static bool IsBase64Encoded(StringView str);
+    static bool is_base64_encoded(StringView str);
 
-    static void EncodeFromArray(const void *data, size_t len, std::string *result);
-    static bool DecodeFromArray(const char *data,
+    static void encode_from_array(const void *data, size_t len, std::string *result);
+    static bool decode_from_array(const char *data,
                                 size_t len,
                                 DecodeFlags flags,
                                 std::string *result,
                                 size_t *data_used);
-    static bool DecodeFromArray(const char *data,
+    static bool decode_from_array(const char *data,
                                 size_t len,
                                 DecodeFlags flags,
                                 std::vector<char> *result,
                                 size_t *data_used);
-    static bool DecodeFromArray(const char *data,
+    static bool decode_from_array(const char *data,
                                 size_t len,
                                 DecodeFlags flags,
                                 std::vector<uint8_t> *result,
                                 size_t *data_used);
 
     // Convenience Methods
-    static inline std::string Encode(StringView data)
+    static inline std::string encode(StringView data)
     {
         std::string result;
-        EncodeFromArray(data.data(), data.size(), &result);
+        encode_from_array(data.data(), data.size(), &result);
         return result;
     }
-    static inline std::string Decode(StringView data, DecodeFlags flags)
+    static inline std::string decode(StringView data, DecodeFlags flags)
     {
         std::string result;
-        DecodeFromArray(data.data(), data.size(), flags, &result, nullptr);
+        decode_from_array(data.data(), data.size(), flags, &result, nullptr);
         return result;
     }
-    static inline bool Decode(StringView data, DecodeFlags flags, std::string *result, size_t *data_used)
+    static inline bool decode(StringView data, DecodeFlags flags, std::string *result, size_t *data_used)
     {
-        return DecodeFromArray(data.data(), data.size(), flags, result, data_used);
+        return decode_from_array(data.data(), data.size(), flags, result, data_used);
     }
-    static inline bool Decode(StringView data, DecodeFlags flags, std::vector<char> *result, size_t *data_used)
+    static inline bool decode(StringView data, DecodeFlags flags, std::vector<char> *result, size_t *data_used)
     {
-        return DecodeFromArray(data.data(), data.size(), flags, result, data_used);
+        return decode_from_array(data.data(), data.size(), flags, result, data_used);
     }
 
 private:
     static const char Base64Table[];
     static const unsigned char DecodeTable[];
 
-    static size_t GetNextQuantum(DecodeFlags parse_flags,
+    static size_t get_next_quantum(DecodeFlags parse_flags,
                                  bool illegal_pads,
                                  const char *data,
                                  size_t len,
@@ -128,7 +128,7 @@ private:
                                  unsigned char qbuf[4],
                                  bool *padded);
     template <typename T>
-    static bool DecodeFromArrayTemplate(const char *data, size_t len, DecodeFlags flags, T *result, size_t *data_used);
+    static bool decode_from_array_template(const char *data, size_t len, DecodeFlags flags, T *result, size_t *data_used);
 };
 CXXKIT_END_NAMESPACE
 

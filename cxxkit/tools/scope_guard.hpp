@@ -77,18 +77,18 @@ private:
 } // namespace detail
 
 template <typename F>
-class [[nodiscard]] ScopeGuard
+class [[nodiscard]] scope_guard
 {
     static_assert(ReturnsVoid<F>::value, "Callbacks that return values are not supported.");
 
 public:
-    ScopeGuard(F f) noexcept
+    scope_guard(F f) noexcept
         : mStorage(std::move(f))
     {
     }
-    ScopeGuard(ScopeGuard &&other) = default;
+    scope_guard(scope_guard &&other) = default;
 
-    ~ScopeGuard() noexcept
+    ~scope_guard() noexcept
     {
         if (mStorage.is_callback_engaged())
         {
@@ -111,23 +111,23 @@ public:
 
 private:
     detail::ScopeGuardStorage<F> mStorage;
-    CXXKIT_DECLARE_DISABLE_COPY(ScopeGuard)
+    CXXKIT_DECLARE_DISABLE_COPY(scope_guard)
 };
 
 #if CXXKIT_CC_FEATURE_CLASS_TEMPLATE_ARGUMENT_DEDUCTION
 template <typename F>
-ScopeGuard(F (&)()) -> ScopeGuard<F (*)()>;
+scope_guard(F (&)()) -> scope_guard<F (*)()>;
 #endif
 
 namespace utils
 {
 template <typename F>
-[[nodiscard]] ScopeGuard<F> make_scope_guard(F f)
+[[nodiscard]] scope_guard<F> make_scope_guard(F f)
 {
     return {std::move(f)};
 }
 template <typename FC, typename F>
-[[nodiscard]] ScopeGuard<F> make_scope_guard(const FC &fc, F f)
+[[nodiscard]] scope_guard<F> make_scope_guard(const FC &fc, F f)
 {
     fc();
     return {std::move(f)};

@@ -32,10 +32,10 @@ CXXKIT_BEGIN_NAMESPACE
 // Refcounted objects should implement the following informal interface:
 //
 // void add_ref() const ;
-// RefCountReleaseStatus Release() const;
+// RefCountReleaseStatus release() const;
 //
 // You may access members of a reference-counted object, including the add_ref()
-// and Release() methods, only if you already own a reference to it, or if
+// and release() methods, only if you already own a reference to it, or if
 // you're borrowing someone else's reference. (A newly created object is a
 // special case: the reference count is zero on construction, and the code that
 // creates the object should immediately call add_ref(), bringing the reference
@@ -43,21 +43,21 @@ CXXKIT_BEGIN_NAMESPACE
 //
 // add_ref() creates a new reference to the object.
 //
-// Release() releases a reference to the object; the caller now has one less
+// release() releases a reference to the object; the caller now has one less
 // reference than before the call. Returns kDroppedLastRef if the number of
 // references dropped to zero because of this (in which case the object destroys
 // itself). Otherwise, returns kOtherRefsRemained, to signal that at the precise
 // time the caller's reference was dropped, other references still remained (but
 // if other threads own references, this may of course have changed by the time
-// Release() returns).
+// release() returns).
 //
-// The caller of Release() must treat it in the same way as a delete operation:
-// Regardless of the return value from Release(), the caller mustn't access the
+// The caller of release() must treat it in the same way as a delete operation:
+// Regardless of the return value from release(), the caller mustn't access the
 // object. The object might still be alive, due to references held by other
 // users of the object, but the object can go away at any time, e.g., as the
-// result of another thread calling Release().
+// result of another thread calling release().
 //
-// Calling add_ref() and Release() manually is discouraged. It's recommended to
+// Calling add_ref() and release() manually is discouraged. It's recommended to
 // use SharedRefPtr to manage all pointers to reference counted objects.
 // Note that SharedRefPtr depends on compile-time duck-typing; formally
 // implementing the below RefCountInterface is not required.
@@ -76,9 +76,9 @@ class RefCountInterface
 {
 public:
     virtual void add_ref() const = 0;
-    virtual RefCountReleaseStatus Release() const = 0;
+    virtual RefCountReleaseStatus release() const = 0;
 
-    // Non-public destructor, because Release() has exclusive responsibility for
+    // Non-public destructor, because release() has exclusive responsibility for
     // destroying the object.
 protected:
     virtual ~RefCountInterface() { }
@@ -108,7 +108,7 @@ public:
     // Otherwise, returns kOtherRefsRemained (note that in case of multithreading,
     // some other caller may have dropped the last reference by the time this call
     // returns; all we know is that we didn't do it).
-    RefCountReleaseStatus DecRef()
+    RefCountReleaseStatus dec_ref()
     {
         // Use release-acquire barrier to ensure all actions on the protected
         // resource are finished before the resource can be freed.
@@ -117,7 +117,7 @@ public:
         // When ref_count_after_subtract == 0, this function require
         // std::memory_order_acquire part of the barrier.
         // In addition std::memory_order_release is used for synchronization with
-        // the HasOneRef function to make sure all actions on the protected resource
+        // the has_one_ref function to make sure all actions on the protected resource
         // are finished before the resource is assumed to have exclusive access.
         int ref_count_after_subtract = mRefCount.fetch_sub(1, std::memory_order_acq_rel) - 1;
         return ref_count_after_subtract == 0 ? RefCountReleaseStatus::kDroppedLastRef
@@ -130,12 +130,12 @@ public:
     // the test for a reference count of one, and performs the memory barrier
     // needed for the owning thread to act on the resource protected by the
     // reference counter, knowing that it has exclusive access.
-    bool HasOneRef() const
+    bool has_one_ref() const
     {
         // To ensure resource protected by the reference counter has exclusive
         // access, all changes to the resource before it was released by other
         // threads must be visible by current thread. That is provided by release
-        // (in DecRef) and acquire (in this function) ordering.
+        // (in dec_ref) and acquire (in this function) ordering.
         return mRefCount.load(std::memory_order_acquire) == 1;
     }
 
@@ -153,9 +153,9 @@ public:
     RefCountedBase &operator=(const RefCountedBase &) = delete;
 
     void add_ref() const { mRefCount.inc_ref(); }
-    RefCountReleaseStatus Release() const
+    RefCountReleaseStatus release() const
     {
-        const auto status = mRefCount.DecRef();
+        const auto status = mRefCount.dec_ref();
         if (status == RefCountReleaseStatus::kDroppedLastRef)
         {
             delete this;
@@ -166,7 +166,7 @@ public:
 protected:
     // Provided for internal webrtc subclasses for corner cases where it's
     // necessary to know whether or not a reference is exclusively held.
-    bool HasOneRef() const { return mRefCount.HasOneRef(); }
+    bool has_one_ref() const { return mRefCount.has_one_ref(); }
 
     virtual ~RefCountedBase() = default;
 
@@ -197,7 +197,7 @@ public:
     RefCountedNonVirtual &operator=(const RefCountedNonVirtual &) = delete;
 
     void add_ref() const { mRefCount.inc_ref(); }
-    RefCountReleaseStatus Release() const
+    RefCountReleaseStatus release() const
     {
         // If you run into this assert, T has virtual methods. There are two
         // options:
@@ -207,7 +207,7 @@ public:
         //    case you can consider using `RefCountedBase` instead or alternatively
         //    use `rtc::RefCountedObject`.
         static_assert(!std::is_polymorphic<T>::value, "T has virtual methods. RefCountedBase is a better fit.");
-        const auto status = mRefCount.DecRef();
+        const auto status = mRefCount.dec_ref();
         if (status == RefCountReleaseStatus::kDroppedLastRef)
         {
             delete static_cast<const T *>(this);
@@ -218,7 +218,7 @@ public:
 protected:
     // Provided for internal webrtc subclasses for corner cases where it's
     // necessary to know whether or not a reference is exclusively held.
-    bool HasOneRef() const { return mRefCount.HasOneRef(); }
+    bool has_one_ref() const { return mRefCount.has_one_ref(); }
 
     ~RefCountedNonVirtual() = default;
 

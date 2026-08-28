@@ -44,13 +44,13 @@ public:
 
     static RepeatingTaskHandle start(TaskQueueBase *taskQueue,
                                      UniqueFunction<TimeDelta()> closure,
-                                     Clock *clock = Clock::GetRealTimeClock(),
+                                     Clock *clock = Clock::get_real_time_clock(),
                                      const SourceLocation &location = SourceLocation::current());
 
     static RepeatingTaskHandle delayed_start(TaskQueueBase *taskQueue,
                                             TimeDelta firstDelay,
                                             UniqueFunction<TimeDelta()> closure,
-                                            Clock *clock = Clock::GetRealTimeClock(),
+                                            Clock *clock = Clock::get_real_time_clock(),
                                             const SourceLocation &location = SourceLocation::current());
 
     /**

@@ -99,7 +99,7 @@ struct StaticRangeCheck<Dst, Src, DST_UNSIGNED, SRC_SIGNED>
 };
 
 /** @brief Numeric cast safety utilities (range-checked casts).
- * @see RangeCheckResult, IsValueInRangeForNumericType, checked_cast, saturated_cast
+ * @see RangeCheckResult, is_value_in_range_for_numeric_type, checked_cast, saturated_cast
  */
 enum RangeCheckResult
 {
@@ -132,14 +132,14 @@ struct RangeCheckImpl
 template <typename Dst, typename Src, DstSign IsDstSigned, SrcSign IsSrcSigned>
 struct RangeCheckImpl<Dst, Src, IsDstSigned, IsSrcSigned, CONTAINS_RANGE>
 {
-    static constexpr RangeCheckResult Check(Src /* value */) { return TYPE_VALID; }
+    static constexpr RangeCheckResult check(Src /* value */) { return TYPE_VALID; }
 };
 
 // Signed to signed narrowing.
 template <typename Dst, typename Src>
 struct RangeCheckImpl<Dst, Src, DST_SIGNED, SRC_SIGNED, OVERLAPS_RANGE>
 {
-    static constexpr RangeCheckResult Check(Src value)
+    static constexpr RangeCheckResult check(Src value)
     {
         typedef std::numeric_limits<Dst> DstLimits;
         return DstLimits::is_iec559
@@ -154,7 +154,7 @@ struct RangeCheckImpl<Dst, Src, DST_SIGNED, SRC_SIGNED, OVERLAPS_RANGE>
 template <typename Dst, typename Src>
 struct RangeCheckImpl<Dst, Src, DST_UNSIGNED, SRC_UNSIGNED, OVERLAPS_RANGE>
 {
-    static constexpr RangeCheckResult Check(Src value)
+    static constexpr RangeCheckResult check(Src value)
     {
         return BASE_NUMERIC_RANGE_CHECK_RESULT(value <= static_cast<Src>(utils::numeric_max<Dst>()), true);
     }
@@ -164,7 +164,7 @@ struct RangeCheckImpl<Dst, Src, DST_UNSIGNED, SRC_UNSIGNED, OVERLAPS_RANGE>
 template <typename Dst, typename Src>
 struct RangeCheckImpl<Dst, Src, DST_SIGNED, SRC_UNSIGNED, OVERLAPS_RANGE>
 {
-    static constexpr RangeCheckResult Check(Src value)
+    static constexpr RangeCheckResult check(Src value)
     {
         return sizeof(Dst) > sizeof(Src)
                    ? TYPE_VALID
@@ -178,14 +178,14 @@ struct RangeCheckImpl<Dst, Src, DST_UNSIGNED, SRC_SIGNED, OVERLAPS_RANGE>
 {
     typedef std::numeric_limits<Src> SrcLimits;
     // Compare based on max_exponent, which we must compute for integrals.
-    static constexpr size_t DstMaxExponent() { return sizeof(Dst) * 8; }
-    static constexpr size_t SrcMaxExponent()
+    static constexpr size_t dst_max_exponent() { return sizeof(Dst) * 8; }
+    static constexpr size_t src_max_exponent()
     {
         return SrcLimits::is_iec559 ? SrcLimits::max_exponent : (sizeof(Src) * 8 - 1);
     }
-    static constexpr RangeCheckResult Check(Src value)
+    static constexpr RangeCheckResult check(Src value)
     {
-        return (DstMaxExponent() >= SrcMaxExponent())
+        return (dst_max_exponent() >= src_max_exponent())
                    ? BASE_NUMERIC_RANGE_CHECK_RESULT(true, value >= static_cast<Src>(0))
                    : BASE_NUMERIC_RANGE_CHECK_RESULT(value <= static_cast<Src>(utils::numeric_max<Dst>()),
                                                      value >= static_cast<Src>(0));
@@ -193,11 +193,11 @@ struct RangeCheckImpl<Dst, Src, DST_UNSIGNED, SRC_SIGNED, OVERLAPS_RANGE>
 };
 
 template <typename Dst, typename Src>
-inline constexpr RangeCheckResult RangeCheck(Src value)
+inline constexpr RangeCheckResult range_check(Src value)
 {
     static_assert(std::numeric_limits<Src>::is_specialized, "argument must be numeric");
     static_assert(std::numeric_limits<Dst>::is_specialized, "result must be numeric");
-    return RangeCheckImpl<Dst, Src>::Check(value);
+    return RangeCheckImpl<Dst, Src>::check(value);
 }
 } // namespace detail
 
@@ -210,9 +210,9 @@ inline constexpr RangeCheckResult RangeCheck(Src value)
 // Convenience function that returns true if the supplied value is in range
 // for the destination type.
 template <typename Dst, typename Src>
-inline constexpr bool IsValueInRangeForNumericType(Src value)
+inline constexpr bool is_value_in_range_for_numeric_type(Src value)
 {
-    return detail::RangeCheck<Dst>(value) == detail::TYPE_VALID;
+    return detail::range_check<Dst>(value) == detail::TYPE_VALID;
 }
 
 // checked_cast<> and dchecked_cast<> are analogous to static_cast<> for
@@ -229,13 +229,13 @@ inline constexpr bool IsValueInRangeForNumericType(Src value)
 template <typename Dst, typename Src>
 inline constexpr Dst checked_cast(Src value)
 {
-    // CXXKIT_CHECK(IsValueInRangeForNumericType<Dst>(value)); // TODO
+    // CXXKIT_CHECK(is_value_in_range_for_numeric_type<Dst>(value)); // TODO
     return static_cast<Dst>(value);
 }
 template <typename Dst, typename Src>
 inline constexpr Dst dchecked_cast(Src value)
 {
-    // CXXKIT_DCHECK(IsValueInRangeForNumericType<Dst>(value)); // TODO
+    // CXXKIT_DCHECK(is_value_in_range_for_numeric_type<Dst>(value)); // TODO
     return static_cast<Dst>(value);
 }
 
@@ -258,7 +258,7 @@ inline Dst saturated_cast(Src value)
         return static_cast<Dst>(value);
     }
 
-    switch (detail::RangeCheck<Dst>(value))
+    switch (detail::range_check<Dst>(value))
     {
         case detail::TYPE_VALID: return static_cast<Dst>(value);
         case detail::TYPE_UNDERFLOW: return utils::numeric_min<Dst>();

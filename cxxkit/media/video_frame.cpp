@@ -32,12 +32,12 @@ namespace cxxkit {
 // Out-of-line definition for the C++11 ODR-used static constexpr member.
 constexpr uint16_t VideoFrame::kNotSetId;
 
-void VideoFrame::UpdateRect::MakeEmptyUpdate()
+void VideoFrame::UpdateRect::make_empty_update()
 {
     width = height = x = y = 0;
 }
 
-bool VideoFrame::UpdateRect::IsEmpty() const
+bool VideoFrame::UpdateRect::is_empty() const
 {
     return width == 0 && height == 0;
 }
@@ -49,11 +49,11 @@ VideoFrame::UpdateRect::UpdateRect(int x, int y, int width, int height)
 
 VideoFrame::UpdateRect VideoFrame::UpdateRect::Union(const UpdateRect& other) const
 {
-    if (other.IsEmpty())
+    if (other.is_empty())
     {
         return *this;
     }
-    if (IsEmpty())
+    if (is_empty())
     {
         return other;
     }
@@ -64,9 +64,9 @@ VideoFrame::UpdateRect VideoFrame::UpdateRect::Union(const UpdateRect& other) co
     return UpdateRect(left, top, right - left, bottom - top);
 }
 
-VideoFrame::UpdateRect VideoFrame::UpdateRect::Intersect(const UpdateRect& other) const
+VideoFrame::UpdateRect VideoFrame::UpdateRect::intersect(const UpdateRect& other) const
 {
-    if (other.IsEmpty() || IsEmpty())
+    if (other.is_empty() || is_empty())
     {
         return UpdateRect();
     }
@@ -89,7 +89,7 @@ bool VideoFrame::UpdateRect::operator==(const UpdateRect& other) const
     return other.x == x && other.y == y && other.width == width && other.height == height;
 }
 
-VideoFrame::UpdateRect VideoFrame::UpdateRect::ScaleWithFrame(int frame_width,
+VideoFrame::UpdateRect VideoFrame::UpdateRect::scale_with_frame(int frame_width,
                                                               int frame_height,
                                                               int crop_x,
                                                               int crop_y,
@@ -107,7 +107,7 @@ VideoFrame::UpdateRect VideoFrame::UpdateRect::ScaleWithFrame(int frame_width,
     CXXKIT_DCHECK_GT(scaled_width, 0);
     CXXKIT_DCHECK_GT(scaled_height, 0);
 
-    // Check if update rect is out of the cropped area.
+    // check if update rect is out of the cropped area.
     if (x + width < crop_x || x > crop_x + crop_width || y + height < crop_y || y > crop_y + crop_height)
     {
         return UpdateRect();

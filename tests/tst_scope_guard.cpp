@@ -67,7 +67,7 @@ struct IdentityFactory
     }
 };
 
-// `FunctorClass` is a type used for testing `ScopeGuard`. It is intended to
+// `FunctorClass` is a type used for testing `scope_guard`. It is intended to
 // represent users that make their own move-only callback types outside of
 // `std::function` and lambda literals.
 class FunctorClass
@@ -140,15 +140,15 @@ TYPED_TEST(CleanupTest, FactoryProducesCorrectType)
     {
         auto callback = TypeParam::AsCallback([] {});
         auto scopeGuard = utils::make_scope_guard(std::move(callback));
-        static_assert(IsSame<ScopeGuard<decltype(callback)>, decltype(scopeGuard)>(), "");
+        static_assert(IsSame<scope_guard<decltype(callback)>, decltype(scopeGuard)>(), "");
     }
     {
         auto scopeGuard = utils::make_scope_guard(&FnPtrFunction);
-        static_assert(IsSame<ScopeGuard<void (*)()>, decltype(scopeGuard)>(), "");
+        static_assert(IsSame<scope_guard<void (*)()>, decltype(scopeGuard)>(), "");
     }
     {
         auto scopeGuard = utils::make_scope_guard(FnPtrFunction);
-        static_assert(IsSame<ScopeGuard<void (*)()>, decltype(scopeGuard)>(), "");
+        static_assert(IsSame<scope_guard<void (*)()>, decltype(scopeGuard)>(), "");
     }
 }
 
@@ -157,16 +157,16 @@ TYPED_TEST(CleanupTest, CTADProducesCorrectType)
 {
     {
         auto callback = TypeParam::AsCallback([] {});
-        ScopeGuard scopeGuard = std::move(callback);
-        static_assert(IsSame<ScopeGuard<decltype(callback)>, decltype(scopeGuard)>(), "");
+        scope_guard scopeGuard = std::move(callback);
+        static_assert(IsSame<scope_guard<decltype(callback)>, decltype(scopeGuard)>(), "");
     }
     {
-        ScopeGuard scopeGuard = &FnPtrFunction;
-        static_assert(IsSame<ScopeGuard<void (*)()>, decltype(scopeGuard)>(), "");
+        scope_guard scopeGuard = &FnPtrFunction;
+        static_assert(IsSame<scope_guard<void (*)()>, decltype(scopeGuard)>(), "");
     }
     {
-        ScopeGuard scopeGuard = FnPtrFunction;
-        static_assert(IsSame<ScopeGuard<void (*)()>, decltype(scopeGuard)>(), "");
+        scope_guard scopeGuard = FnPtrFunction;
+        static_assert(IsSame<scope_guard<void (*)()>, decltype(scopeGuard)>(), "");
     }
 }
 
@@ -175,27 +175,27 @@ TYPED_TEST(CleanupTest, FactoryAndCTADProduceSameType)
     {
         auto callback = IdentityFactory::AsCallback([] {});
         auto factory_cleanup = utils::make_scope_guard(callback);
-        ScopeGuard deduction_cleanup = callback;
+        scope_guard deduction_cleanup = callback;
         static_assert(IsSame<decltype(factory_cleanup), decltype(deduction_cleanup)>(), "");
     }
     {
         auto factory_cleanup = utils::make_scope_guard(FunctorClassFactory::AsCallback([] {}));
-        ScopeGuard deduction_cleanup = FunctorClassFactory::AsCallback([] {});
+        scope_guard deduction_cleanup = FunctorClassFactory::AsCallback([] {});
         static_assert(IsSame<decltype(factory_cleanup), decltype(deduction_cleanup)>(), "");
     }
     {
         auto factory_cleanup = utils::make_scope_guard(StdFunctionFactory::AsCallback([] {}));
-        ScopeGuard deduction_cleanup = StdFunctionFactory::AsCallback([] {});
+        scope_guard deduction_cleanup = StdFunctionFactory::AsCallback([] {});
         static_assert(IsSame<decltype(factory_cleanup), decltype(deduction_cleanup)>(), "");
     }
     {
         auto factory_cleanup = utils::make_scope_guard(&FnPtrFunction);
-        ScopeGuard deduction_cleanup = &FnPtrFunction;
+        scope_guard deduction_cleanup = &FnPtrFunction;
         static_assert(IsSame<decltype(factory_cleanup), decltype(deduction_cleanup)>(), "");
     }
     {
         auto factory_cleanup = utils::make_scope_guard(FnPtrFunction);
-        ScopeGuard deduction_cleanup = FnPtrFunction;
+        scope_guard deduction_cleanup = FnPtrFunction;
         static_assert(IsSame<decltype(factory_cleanup), decltype(deduction_cleanup)>(), "");
     }
 }
@@ -240,7 +240,7 @@ TYPED_TEST(CleanupTest, Cancel)
     EXPECT_FALSE(called); // Destructor shouldn't invoke the callback
 }
 
-TYPED_TEST(CleanupTest, Invoke)
+TYPED_TEST(CleanupTest, invoke)
 {
     bool called = false;
 
@@ -249,9 +249,9 @@ TYPED_TEST(CleanupTest, Invoke)
         EXPECT_FALSE(called); // Constructor shouldn't invoke the callback
 
         std::move(scopeGuard).invoke();
-        EXPECT_TRUE(called); // Invoke should invoke the callback
+        EXPECT_TRUE(called); // invoke should invoke the callback
 
-        called = false; // Reset tracker before destructor runs
+        called = false; // reset tracker before destructor runs
     }
 
     EXPECT_FALSE(called); // Destructor shouldn't invoke the callback
@@ -272,7 +272,7 @@ TYPED_TEST(CleanupTest, Move)
 
         EXPECT_TRUE(called); // Destructor should invoke the callback
 
-        called = false; // Reset tracker before destructor runs
+        called = false; // reset tracker before destructor runs
     }
 
     EXPECT_FALSE(called); // Destructor shouldn't invoke the callback
@@ -317,7 +317,7 @@ TYPED_TEST(CleanupTest, InvokeDestroys)
         DestructionCount = 0;
 
         std::move(scopeGuard).invoke();
-        EXPECT_EQ(DestructionCount, 1); // Invoke destroys
+        EXPECT_EQ(DestructionCount, 1); // invoke destroys
     }
 
     EXPECT_EQ(DestructionCount, 1); // Invoked scopeGuard does not double destroy

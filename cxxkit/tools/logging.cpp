@@ -263,7 +263,7 @@ void Logger::install_message_handler(const MessageHandler &handler, bool uniqueO
 void Logger::fatal_abort()
 {
 #ifdef CXXKIT_OS_WIN32
-    DebugBreak();
+    debug_break();
 #endif
     abort();
 }

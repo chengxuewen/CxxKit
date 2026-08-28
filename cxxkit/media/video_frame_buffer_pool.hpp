@@ -38,11 +38,11 @@ namespace cxxkit {
 
 // Simple buffer pool to avoid unnecessary allocations of video frame buffers.
 // The pool manages the memory of the I420Buffer returned from
-// CreateI420Buffer. When the buffer is destructed, the memory is returned to
-// the pool for use by subsequent calls to CreateI420Buffer. If the resolution
-// passed to CreateI420Buffer changes, old buffers will be purged from the
+// create_i420_buffer. When the buffer is destructed, the memory is returned to
+// the pool for use by subsequent calls to create_i420_buffer. If the resolution
+// passed to create_i420_buffer changes, old buffers will be purged from the
 // pool.
-// Note that CreateI420Buffer will return nullptr if more than
+// Note that create_i420_buffer will return nullptr if more than
 // `max_number_of_buffers` are created. This is to prevent memory leaks where
 // frames are not returned.
 class CXXKIT_MEDIA_API VideoFrameBufferPool
@@ -56,21 +56,21 @@ public:
     // Returns a buffer from the pool. If no suitable buffer exists in the pool
     // and there are fewer than `max_number_of_buffers` pending, a buffer is
     // created. Returns null otherwise.
-    SharedRefPtr<I420Buffer> CreateI420Buffer(int width, int height);
+    SharedRefPtr<I420Buffer> create_i420_buffer(int width, int height);
 
     // Changes the max amount of buffers in the pool to the new value.
     // Returns true if the change was successful and false if the amount of
     // already allocated buffers is bigger than the new value.
-    bool Resize(size_t max_number_of_buffers);
+    bool resize(size_t max_number_of_buffers);
 
     // Clears mBuffers and detaches the thread checker so that it can be reused
     // later from another thread.
-    void Release();
+    void release();
 
 private:
-    SharedRefPtr<VideoFrameBuffer> GetExistingBuffer(int width, int height, VideoType type);
+    SharedRefPtr<VideoFrameBuffer> get_existing_buffer(int width, int height, VideoType type);
 
-    RaceChecker mRaceChecker;
+    race_checker mRaceChecker;
     std::list<SharedRefPtr<VideoFrameBuffer>> mBuffers;
     // If true, newly allocated buffers are zero-initialized. Note that
     // recycled buffers are not zero'd before reuse.

@@ -121,25 +121,25 @@ static inline void cxxkit_msan_check_initialized(const volatile void *ptr, size_
 CXXKIT_BEGIN_NAMESPACE
 
 template <typename T>
-inline void AsanPoison(const T &mem)
+inline void asan_poison(const T &mem)
 {
     cxxkit_asan_poison(mem.data(), sizeof(mem.data()[0]), mem.size());
 }
 
 template <typename T>
-inline void AsanUnpoison(const T &mem)
+inline void asan_unpoison(const T &mem)
 {
     cxxkit_asan_unpoison(mem.data(), sizeof(mem.data()[0]), mem.size());
 }
 
 template <typename T>
-inline void MsanMarkUninitialized(const T &mem)
+inline void msan_mark_uninitialized(const T &mem)
 {
     cxxkit_msan_mark_uninitialized(mem.data(), sizeof(mem.data()[0]), mem.size());
 }
 
 template <typename T>
-inline T MsanUninitialized(T t)
+inline T msan_uninitialized(T t)
 {
 #if CXXKIT_HAS_MSAN
     // becomes available in downstream projects.
@@ -150,7 +150,7 @@ inline T MsanUninitialized(T t)
 }
 
 template <typename T>
-inline void MsanCheckInitialized(const T &mem)
+inline void msan_check_initialized(const T &mem)
 {
     cxxkit_msan_check_initialized(mem.data(), sizeof(mem.data()[0]), mem.size());
 }

@@ -45,96 +45,96 @@ public:
     // static Timestamp untilSystemTime(const TimeDelta delta) { return nowSystemTime() + delta; }
 
     template <typename T>
-    static CXXKIT_CXX14_CONSTEXPR Timestamp Seconds(T value)
+    static CXXKIT_CXX14_CONSTEXPR Timestamp seconds(T value)
     {
         static_assert(std::is_arithmetic<T>::value, "");
-        return FromFraction(1000000, value);
+        return from_fraction(1000000, value);
     }
     template <typename T>
-    static CXXKIT_CXX14_CONSTEXPR Timestamp Millis(T value)
+    static CXXKIT_CXX14_CONSTEXPR Timestamp millis(T value)
     {
         static_assert(std::is_arithmetic<T>::value, "");
-        return FromFraction(1000, value);
+        return from_fraction(1000, value);
     }
     template <typename T>
-    static CXXKIT_CXX14_CONSTEXPR Timestamp Micros(T value)
+    static CXXKIT_CXX14_CONSTEXPR Timestamp micros(T value)
     {
         static_assert(std::is_arithmetic<T>::value, "");
-        return FromValue(value);
+        return from_value(value);
     }
 
     Timestamp() = delete;
 
     template <typename Sink>
-    friend void AbslStringify(Sink &sink, Timestamp value);
+    friend void absl_stringify(Sink &sink, Timestamp value);
 
     template <typename T = int64_t>
     constexpr T seconds() const
     {
-        return ToFraction<1000000, T>();
+        return to_fraction<1000000, T>();
     }
     template <typename T = int64_t>
     constexpr T ms() const
     {
-        return ToFraction<1000, T>();
+        return to_fraction<1000, T>();
     }
     template <typename T = int64_t>
     constexpr T us() const
     {
-        return ToValue<T>();
+        return to_value<T>();
     }
 
-    constexpr int64_t seconds_or(int64_t fallback_value) const { return ToFractionOr<1000000>(fallback_value); }
-    constexpr int64_t ms_or(int64_t fallback_value) const { return ToFractionOr<1000>(fallback_value); }
-    constexpr int64_t us_or(int64_t fallback_value) const { return ToValueOr(fallback_value); }
+    constexpr int64_t seconds_or(int64_t fallback_value) const { return to_fraction_or<1000000>(fallback_value); }
+    constexpr int64_t ms_or(int64_t fallback_value) const { return to_fraction_or<1000>(fallback_value); }
+    constexpr int64_t us_or(int64_t fallback_value) const { return to_value_or(fallback_value); }
 
     CXXKIT_CXX14_CONSTEXPR Timestamp operator+(const TimeDelta delta) const
     {
-        if (IsPlusInfinity() || delta.IsPlusInfinity())
+        if (is_plus_infinity() || delta.is_plus_infinity())
         {
-            CXXKIT_DCHECK(!IsMinusInfinity());
-            CXXKIT_DCHECK(!delta.IsMinusInfinity());
-            return PlusInfinity();
+            CXXKIT_DCHECK(!is_minus_infinity());
+            CXXKIT_DCHECK(!delta.is_minus_infinity());
+            return plus_infinity();
         }
-        else if (IsMinusInfinity() || delta.IsMinusInfinity())
+        else if (is_minus_infinity() || delta.is_minus_infinity())
         {
-            CXXKIT_DCHECK(!IsPlusInfinity());
-            CXXKIT_DCHECK(!delta.IsPlusInfinity());
-            return MinusInfinity();
+            CXXKIT_DCHECK(!is_plus_infinity());
+            CXXKIT_DCHECK(!delta.is_plus_infinity());
+            return minus_infinity();
         }
-        return Timestamp::Micros(us() + delta.us());
+        return Timestamp::micros(us() + delta.us());
     }
     CXXKIT_CXX14_CONSTEXPR Timestamp operator-(const TimeDelta delta) const
     {
-        if (IsPlusInfinity() || delta.IsMinusInfinity())
+        if (is_plus_infinity() || delta.is_minus_infinity())
         {
-            CXXKIT_DCHECK(!IsMinusInfinity());
-            CXXKIT_DCHECK(!delta.IsPlusInfinity());
-            return PlusInfinity();
+            CXXKIT_DCHECK(!is_minus_infinity());
+            CXXKIT_DCHECK(!delta.is_plus_infinity());
+            return plus_infinity();
         }
-        else if (IsMinusInfinity() || delta.IsPlusInfinity())
+        else if (is_minus_infinity() || delta.is_plus_infinity())
         {
-            CXXKIT_DCHECK(!IsPlusInfinity());
-            CXXKIT_DCHECK(!delta.IsMinusInfinity());
-            return MinusInfinity();
+            CXXKIT_DCHECK(!is_plus_infinity());
+            CXXKIT_DCHECK(!delta.is_minus_infinity());
+            return minus_infinity();
         }
-        return Timestamp::Micros(us() - delta.us());
+        return Timestamp::micros(us() - delta.us());
     }
     CXXKIT_CXX14_CONSTEXPR TimeDelta operator-(const Timestamp other) const
     {
-        if (IsPlusInfinity() || other.IsMinusInfinity())
+        if (is_plus_infinity() || other.is_minus_infinity())
         {
-            CXXKIT_DCHECK(!IsMinusInfinity());
-            CXXKIT_DCHECK(!other.IsPlusInfinity());
-            return TimeDelta::PlusInfinity();
+            CXXKIT_DCHECK(!is_minus_infinity());
+            CXXKIT_DCHECK(!other.is_plus_infinity());
+            return TimeDelta::plus_infinity();
         }
-        else if (IsMinusInfinity() || other.IsPlusInfinity())
+        else if (is_minus_infinity() || other.is_plus_infinity())
         {
-            CXXKIT_DCHECK(!IsPlusInfinity());
-            CXXKIT_DCHECK(!other.IsMinusInfinity());
-            return TimeDelta::MinusInfinity();
+            CXXKIT_DCHECK(!is_plus_infinity());
+            CXXKIT_DCHECK(!other.is_minus_infinity());
+            return TimeDelta::minus_infinity();
         }
-        return TimeDelta::Micros(us() - other.us());
+        return TimeDelta::micros(us() - other.us());
     }
     CXXKIT_CXX14_CONSTEXPR Timestamp &operator-=(const TimeDelta delta)
     {
@@ -156,9 +156,9 @@ private:
 CXXKIT_UNITS_API std::string to_string(Timestamp value);
 
 template <typename Sink>
-void AbslStringify(Sink &sink, Timestamp value)
+void absl_stringify(Sink &sink, Timestamp value)
 {
-    sink.Append(to_string(value));
+    sink.append(to_string(value));
 }
 
 CXXKIT_END_NAMESPACE

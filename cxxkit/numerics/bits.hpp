@@ -85,26 +85,26 @@ namespace utils
 namespace detail
 {
 
-constexpr bool IsPowerOf2(unsigned int x) noexcept
+constexpr bool is_power_of2(unsigned int x) noexcept
 {
     return x != 0 && (x & (x - 1)) == 0;
 }
 
 template <class T>
-CXXKIT_ATTRIBUTE_MUST_USE_RESULT CXXKIT_FORCE_INLINE constexpr T RotateRight(T x, int s) noexcept
+CXXKIT_ATTRIBUTE_MUST_USE_RESULT CXXKIT_FORCE_INLINE constexpr T rotate_right(T x, int s) noexcept
 {
     static_assert(std::is_unsigned<T>::value, "T must be unsigned");
-    static_assert(IsPowerOf2(std::numeric_limits<T>::digits), "T must have a power-of-2 size");
+    static_assert(is_power_of2(std::numeric_limits<T>::digits), "T must have a power-of-2 size");
 
     return static_cast<T>(x >> (s & (std::numeric_limits<T>::digits - 1))) |
            static_cast<T>(x << ((-s) & (std::numeric_limits<T>::digits - 1)));
 }
 
 template <class T>
-CXXKIT_ATTRIBUTE_MUST_USE_RESULT CXXKIT_FORCE_INLINE constexpr T RotateLeft(T x, int s) noexcept
+CXXKIT_ATTRIBUTE_MUST_USE_RESULT CXXKIT_FORCE_INLINE constexpr T rotate_left(T x, int s) noexcept
 {
     static_assert(std::is_unsigned<T>::value, "T must be unsigned");
-    static_assert(IsPowerOf2(std::numeric_limits<T>::digits), "T must have a power-of-2 size");
+    static_assert(is_power_of2(std::numeric_limits<T>::digits), "T must have a power-of-2 size");
 
     return static_cast<T>(x << (s & (std::numeric_limits<T>::digits - 1))) |
            static_cast<T>(x >> ((-s) & (std::numeric_limits<T>::digits - 1)));
@@ -136,15 +136,15 @@ CXXKIT_FORCE_INLINE CXXKIT__BITS_CONSTEXPR_POPCOUNT int Popcount64(uint64_t x) n
 }
 
 template <class T>
-CXXKIT_FORCE_INLINE CXXKIT__BITS_CONSTEXPR_POPCOUNT int Popcount(T x) noexcept
+CXXKIT_FORCE_INLINE CXXKIT__BITS_CONSTEXPR_POPCOUNT int popcount(T x) noexcept
 {
     static_assert(std::is_unsigned<T>::value, "T must be unsigned");
-    static_assert(IsPowerOf2(std::numeric_limits<T>::digits), "T must have a power-of-2 size");
+    static_assert(is_power_of2(std::numeric_limits<T>::digits), "T must have a power-of-2 size");
     static_assert(sizeof(x) <= sizeof(uint64_t), "T is too large");
     return sizeof(x) <= sizeof(uint32_t) ? Popcount32(x) : Popcount64(x);
 }
 
-CXXKIT_FORCE_INLINE CXXKIT__BITS_CONSTEXPR_CLZ int CountLeadingZeroes32(uint32_t x)
+CXXKIT_FORCE_INLINE CXXKIT__BITS_CONSTEXPR_CLZ int count_leading_zeroes32(uint32_t x)
 {
 #if CXXKIT__BITS_HAS_BUILTIN_OR_GCC(__builtin_clz)
     // Use __builtin_clz, which uses the following instructions:
@@ -183,18 +183,18 @@ CXXKIT_FORCE_INLINE CXXKIT__BITS_CONSTEXPR_CLZ int CountLeadingZeroes32(uint32_t
 #endif
 }
 
-CXXKIT_FORCE_INLINE CXXKIT__BITS_CONSTEXPR_CLZ int CountLeadingZeroes16(uint16_t x)
+CXXKIT_FORCE_INLINE CXXKIT__BITS_CONSTEXPR_CLZ int count_leading_zeroes16(uint16_t x)
 {
 #if CXXKIT_CC_HAS_BUILTIN(__builtin_clzs)
     static_assert(sizeof(unsigned short) == sizeof(x), // NOLINT(runtime/int)
                   "__builtin_clzs does not take 16-bit arg");
     return x == 0 ? 16 : __builtin_clzs(x);
 #else
-    return CountLeadingZeroes32(x) - 16;
+    return count_leading_zeroes32(x) - 16;
 #endif
 }
 
-CXXKIT_FORCE_INLINE CXXKIT__BITS_CONSTEXPR_CLZ int CountLeadingZeroes64(uint64_t x)
+CXXKIT_FORCE_INLINE CXXKIT__BITS_CONSTEXPR_CLZ int count_leading_zeroes64(uint64_t x)
 {
 #if CXXKIT__BITS_HAS_BUILTIN_OR_GCC(__builtin_clzll)
     // Use __builtin_clzll, which uses the following instructions:
@@ -253,21 +253,21 @@ CXXKIT_FORCE_INLINE CXXKIT__BITS_CONSTEXPR_CLZ int CountLeadingZeroes64(uint64_t
 }
 
 template <typename T>
-CXXKIT_FORCE_INLINE CXXKIT__BITS_CONSTEXPR_CLZ int CountLeadingZeroes(T x)
+CXXKIT_FORCE_INLINE CXXKIT__BITS_CONSTEXPR_CLZ int count_leading_zeroes(T x)
 {
     static_assert(std::is_unsigned<T>::value, "T must be unsigned");
-    static_assert(IsPowerOf2(std::numeric_limits<T>::digits), "T must have a power-of-2 size");
+    static_assert(is_power_of2(std::numeric_limits<T>::digits), "T must have a power-of-2 size");
     static_assert(sizeof(T) <= sizeof(uint64_t), "T too large");
     return sizeof(T) <= sizeof(uint16_t)
-               ? CountLeadingZeroes16(static_cast<uint16_t>(x)) -
+               ? count_leading_zeroes16(static_cast<uint16_t>(x)) -
                      (std::numeric_limits<uint16_t>::digits - std::numeric_limits<T>::digits)
                : (sizeof(T) <= sizeof(uint32_t)
-                      ? CountLeadingZeroes32(static_cast<uint32_t>(x)) -
+                      ? count_leading_zeroes32(static_cast<uint32_t>(x)) -
                             (std::numeric_limits<uint32_t>::digits - std::numeric_limits<T>::digits)
-                      : CountLeadingZeroes64(x));
+                      : count_leading_zeroes64(x));
 }
 
-CXXKIT_FORCE_INLINE CXXKIT__BITS_CONSTEXPR_CTZ int CountTrailingZeroesNonzero32(uint32_t x)
+CXXKIT_FORCE_INLINE CXXKIT__BITS_CONSTEXPR_CTZ int count_trailing_zeroes_nonzero32(uint32_t x)
 {
 #if CXXKIT__BITS_HAS_BUILTIN_OR_GCC(__builtin_ctz)
     static_assert(sizeof(unsigned int) == sizeof(x), "__builtin_ctz does not take 32-bit arg");
@@ -293,7 +293,7 @@ CXXKIT_FORCE_INLINE CXXKIT__BITS_CONSTEXPR_CTZ int CountTrailingZeroesNonzero32(
 #endif
 }
 
-CXXKIT_FORCE_INLINE CXXKIT__BITS_CONSTEXPR_CTZ int CountTrailingZeroesNonzero64(uint64_t x)
+CXXKIT_FORCE_INLINE CXXKIT__BITS_CONSTEXPR_CTZ int count_trailing_zeroes_nonzero64(uint64_t x)
 {
 #if CXXKIT__BITS_HAS_BUILTIN_OR_GCC(__builtin_ctzll)
     static_assert(sizeof(unsigned long long) == sizeof(x), // NOLINT(runtime/int)
@@ -331,28 +331,28 @@ CXXKIT_FORCE_INLINE CXXKIT__BITS_CONSTEXPR_CTZ int CountTrailingZeroesNonzero64(
 #endif
 }
 
-CXXKIT_FORCE_INLINE CXXKIT__BITS_CONSTEXPR_CTZ int CountTrailingZeroesNonzero16(uint16_t x)
+CXXKIT_FORCE_INLINE CXXKIT__BITS_CONSTEXPR_CTZ int count_trailing_zeroes_nonzero16(uint16_t x)
 {
 #if CXXKIT_CC_HAS_BUILTIN(__builtin_ctzs)
     static_assert(sizeof(unsigned short) == sizeof(x), // NOLINT(runtime/int)
                   "__builtin_ctzs does not take 16-bit arg");
     return __builtin_ctzs(x);
 #else
-    return CountTrailingZeroesNonzero32(x);
+    return count_trailing_zeroes_nonzero32(x);
 #endif
 }
 
 template <class T>
-CXXKIT_FORCE_INLINE CXXKIT__BITS_CONSTEXPR_CTZ int CountTrailingZeroes(T x) noexcept
+CXXKIT_FORCE_INLINE CXXKIT__BITS_CONSTEXPR_CTZ int count_trailing_zeroes(T x) noexcept
 {
     static_assert(std::is_unsigned<T>::value, "T must be unsigned");
-    static_assert(IsPowerOf2(std::numeric_limits<T>::digits), "T must have a power-of-2 size");
+    static_assert(is_power_of2(std::numeric_limits<T>::digits), "T must have a power-of-2 size");
     static_assert(sizeof(T) <= sizeof(uint64_t), "T too large");
     return x == 0 ? std::numeric_limits<T>::digits
                   : (sizeof(T) <= sizeof(uint16_t)
-                         ? CountTrailingZeroesNonzero16(static_cast<uint16_t>(x))
-                         : (sizeof(T) <= sizeof(uint32_t) ? CountTrailingZeroesNonzero32(static_cast<uint32_t>(x))
-                                                          : CountTrailingZeroesNonzero64(x)));
+                         ? count_trailing_zeroes_nonzero16(static_cast<uint16_t>(x))
+                         : (sizeof(T) <= sizeof(uint32_t) ? count_trailing_zeroes_nonzero32(static_cast<uint32_t>(x))
+                                                          : count_trailing_zeroes_nonzero64(x)));
 }
 
 // If T is narrower than unsigned, T{1} << bit_width will be promoted.  We
@@ -360,24 +360,24 @@ CXXKIT_FORCE_INLINE CXXKIT__BITS_CONSTEXPR_CTZ int CountTrailingZeroes(T x) noex
 // core constant expressions.
 template <class T>
 CXXKIT_FORCE_INLINE CXXKIT__BITS_CONSTEXPR_CLZ typename std::enable_if<std::is_unsigned<T>::value, T>::type
-BitCeilPromotionHelper(T x, T promotion)
+bit_ceil_promotion_helper(T x, T promotion)
 {
     return (T{1} << (x + promotion)) >> promotion;
 }
 
 template <class T>
 CXXKIT_FORCE_INLINE CXXKIT__BITS_CONSTEXPR_CLZ typename std::enable_if<std::is_unsigned<T>::value, T>::type
-BitCeilNonPowerOf2(T x)
+bit_ceil_non_power_of2(T x)
 {
     // If T is narrower than unsigned, it undergoes promotion to unsigned when we
     // shift.  We calculate the number of bits added by the wider type.
-    return BitCeilPromotionHelper(
-        static_cast<T>(std::numeric_limits<T>::digits - CountLeadingZeroes(x)),
+    return bit_ceil_promotion_helper(
+        static_cast<T>(std::numeric_limits<T>::digits - count_leading_zeroes(x)),
         T{sizeof(T) >= sizeof(unsigned) ? 0 : std::numeric_limits<unsigned>::digits - std::numeric_limits<T>::digits});
 }
 } // namespace detail
 
-/** @brief Rotate `x` left by `s` bits. `T` must be unsigned with a power-of-2 size.
+/** @brief rotate `x` left by `s` bits. `T` must be unsigned with a power-of-2 size.
  * @tparam T Unsigned integer type.
  * @param x Value to rotate.
  * @param s Rotation amount (any signed int; negative wraps right).
@@ -390,10 +390,10 @@ CXXKIT_ATTRIBUTE_MUST_USE_RESULT constexpr typename std::enable_if<std::is_unsig
     T x,
     int s) noexcept
 {
-    return detail::RotateLeft(x, s);
+    return detail::rotate_left(x, s);
 }
 
-/** @brief Rotate `x` right by `s` bits. `T` must be unsigned with a power-of-2 size.
+/** @brief rotate `x` right by `s` bits. `T` must be unsigned with a power-of-2 size.
  * @tparam T Unsigned integer type.
  * @param x Value to rotate.
  * @param s Rotation amount.
@@ -404,7 +404,7 @@ CXXKIT_ATTRIBUTE_MUST_USE_RESULT constexpr typename std::enable_if<std::is_unsig
     T x,
     int s) noexcept
 {
-    return detail::RotateRight(x, s);
+    return detail::rotate_right(x, s);
 }
 
 // Counting functions
@@ -421,7 +421,7 @@ template <class T>
 CXXKIT__BITS_CONSTEXPR_CLZ inline typename std::enable_if<std::is_unsigned<T>::value, int>::type countl_zero(
     T x) noexcept
 {
-    return detail::CountLeadingZeroes(x);
+    return detail::count_leading_zeroes(x);
 }
 
 /** @brief Count leading one bits of `x` (alias of `countl_zero(~x)`).
@@ -446,7 +446,7 @@ template <class T>
 CXXKIT__BITS_CONSTEXPR_CTZ inline typename std::enable_if<std::is_unsigned<T>::value, int>::type countr_zero(
     T x) noexcept
 {
-    return detail::CountTrailingZeroes(x);
+    return detail::count_trailing_zeroes(x);
 }
 
 /** @brief Count trailing one bits of `x` (alias of `countr_zero(~x)`).
@@ -462,7 +462,7 @@ CXXKIT__BITS_CONSTEXPR_CTZ inline typename std::enable_if<std::is_unsigned<T>::v
     return countr_zero(static_cast<T>(~x));
 }
 
-/** @brief Popcount (number of set bits) of `x`. `T` must be unsigned, <= 64 bits.
+/** @brief popcount (number of set bits) of `x`. `T` must be unsigned, <= 64 bits.
  * @tparam T Unsigned integer type.
  * @param x Value.
  * @return Number of set bits.
@@ -471,7 +471,7 @@ template <class T>
 CXXKIT__BITS_CONSTEXPR_POPCOUNT inline typename std::enable_if<std::is_unsigned<T>::value, int>::type popcount(
     T x) noexcept
 {
-    return detail::Popcount(x);
+    return detail::popcount(x);
 }
 #else // defined(__cpp_lib_bitops) && __cpp_lib_bitops >= 201907L
 
@@ -539,10 +539,10 @@ CXXKIT__BITS_CONSTEXPR_CLZ inline typename std::enable_if<std::is_unsigned<T>::v
     // want to force it to wraparound so that bit_ceil of an invalid value are not
     // core constant expressions.
     //
-    // BitCeilNonPowerOf2 triggers an overflow in constexpr contexts if we would
+    // bit_ceil_non_power_of2 triggers an overflow in constexpr contexts if we would
     // undergo promotion to unsigned but not fit the result into T without
     // truncation.
-    return has_single_bit(x) ? T{1} << (bit_width(x) - 1) : detail::BitCeilNonPowerOf2(x);
+    return has_single_bit(x) ? T{1} << (bit_width(x) - 1) : detail::bit_ceil_non_power_of2(x);
 }
 #else // defined(__cpp_lib_int_pow2) && __cpp_lib_int_pow2 >= 202002L
 

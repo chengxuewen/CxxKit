@@ -52,7 +52,7 @@ public:
         CXXKIT_DCHECK_GT(frame_repeat_count, 0);
     }
 
-    SharedRefPtr<VideoFrameBuffer> GetNextFrame() override
+    SharedRefPtr<VideoFrameBuffer> get_next_frame() override
     {
         if (mCurrentDisplayCount == 0)
         {
@@ -73,36 +73,36 @@ private:
     {
         // The squares should have a varying order of magnitude in order to
         // simulate variation in the slides' complexity.
-        const int kSquareNum = 1 << (4 + (mRandomGenerator.Rand(0, 3) * 2));
+        const int kSquareNum = 1 << (4 + (mRandomGenerator.rand(0, 3) * 2));
 
-        mBuffer = I420Buffer::Create(mWidth, mHeight);
-        memset(mBuffer->MutableDataY(), 127, static_cast<size_t>(mHeight) * mBuffer->StrideY());
-        memset(mBuffer->MutableDataU(), 127, static_cast<size_t>(mBuffer->ChromaHeight()) * mBuffer->StrideU());
-        memset(mBuffer->MutableDataV(), 127, static_cast<size_t>(mBuffer->ChromaHeight()) * mBuffer->StrideV());
+        mBuffer = I420Buffer::create(mWidth, mHeight);
+        memset(mBuffer->mutable_data_y(), 127, static_cast<size_t>(mHeight) * mBuffer->stride_y());
+        memset(mBuffer->mutable_data_u(), 127, static_cast<size_t>(mBuffer->chroma_height()) * mBuffer->stride_u());
+        memset(mBuffer->mutable_data_v(), 127, static_cast<size_t>(mBuffer->chroma_height()) * mBuffer->stride_v());
 
         for (int i = 0; i < kSquareNum; ++i)
         {
-            const int length = mRandomGenerator.Rand(1, mWidth > 4 ? mWidth / 4 : 1);
+            const int length = mRandomGenerator.rand(1, mWidth > 4 ? mWidth / 4 : 1);
             // Limit the length of later squares so that they don't overwrite
             // the previous ones too much.
             const int capped_length = (length * (kSquareNum - i)) / kSquareNum;
 
-            const int x = mRandomGenerator.Rand(0, mWidth - capped_length);
-            const int y = mRandomGenerator.Rand(0, mHeight - capped_length);
-            const uint8_t yuv_y = static_cast<uint8_t>(mRandomGenerator.Rand(0, 255));
-            const uint8_t yuv_u = static_cast<uint8_t>(mRandomGenerator.Rand(0, 255));
-            const uint8_t yuv_v = static_cast<uint8_t>(mRandomGenerator.Rand(0, 255));
+            const int x = mRandomGenerator.rand(0, mWidth - capped_length);
+            const int y = mRandomGenerator.rand(0, mHeight - capped_length);
+            const uint8_t yuv_y = static_cast<uint8_t>(mRandomGenerator.rand(0, 255));
+            const uint8_t yuv_u = static_cast<uint8_t>(mRandomGenerator.rand(0, 255));
+            const uint8_t yuv_v = static_cast<uint8_t>(mRandomGenerator.rand(0, 255));
 
             for (int yy = y; yy < y + capped_length; ++yy)
             {
-                uint8_t* pos_y = mBuffer->MutableDataY() + x + yy * mBuffer->StrideY();
+                uint8_t* pos_y = mBuffer->mutable_data_y() + x + yy * mBuffer->stride_y();
                 memset(pos_y, yuv_y, static_cast<size_t>(capped_length));
             }
             for (int yy = y; yy < y + capped_length; yy += 2)
             {
-                uint8_t* pos_u = mBuffer->MutableDataU() + x / 2 + yy / 2 * mBuffer->StrideU();
+                uint8_t* pos_u = mBuffer->mutable_data_u() + x / 2 + yy / 2 * mBuffer->stride_u();
                 memset(pos_u, yuv_u, static_cast<size_t>(capped_length) / 2);
-                uint8_t* pos_v = mBuffer->MutableDataV() + x / 2 + yy / 2 * mBuffer->StrideV();
+                uint8_t* pos_v = mBuffer->mutable_data_v() + x / 2 + yy / 2 * mBuffer->stride_v();
                 memset(pos_v, yuv_v, static_cast<size_t>(capped_length) / 2);
             }
         }
@@ -118,7 +118,7 @@ private:
 
 }  // namespace
 
-std::unique_ptr<FrameGenerator> FrameGenerator::CreateSlideShow(std::vector<std::string> filenames,
+std::unique_ptr<FrameGenerator> FrameGenerator::create_slide_show(std::vector<std::string> filenames,
                                                                 OutputType type,
                                                                 int width,
                                                                 int height,

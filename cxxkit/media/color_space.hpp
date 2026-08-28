@@ -169,7 +169,7 @@ public:
     ChromaSiting chroma_siting_horizontal() const;
     ChromaSiting chroma_siting_vertical() const;
     const HdrMetadata *hdr_metadata() const;
-    std::string AsString() const;
+    std::string as_string() const;
 
     bool set_primaries_from_uint8(uint8_t enum_value);
     bool set_transfer_from_uint8(uint8_t enum_value);

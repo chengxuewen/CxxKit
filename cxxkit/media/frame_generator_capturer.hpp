@@ -50,17 +50,17 @@ public:
     FrameGeneratorCapturer(std::unique_ptr<FrameGenerator> generator, double framerate);
     ~FrameGeneratorCapturer() = default;
 
-    void SetFrameCallback(FrameCallback callback);
-    void SetFrameRate(double fps);
-    double GetFrameRate() const;
+    void set_frame_callback(FrameCallback callback);
+    void set_frame_rate(double fps);
+    double get_frame_rate() const;
 
     // Synchronously generate one frame at the given monotonic timestamp (ns)
     // and, if the framerate throttle keeps it, build a VideoFrame and invoke
     // the callback. The frame's timestamp_us is `timestamp_ns / 1000`.
-    // ponytail: no capture thread — tests/drivers call this directly. Add a
+    // ponytail: no capture thread — tests/drivers call this directly. add a
     // threaded Start()/Stop() emission loop when a real-time capturer is
     // needed.
-    void GenerateOneFrame(int64_t timestamp_ns);
+    void generate_one_frame(int64_t timestamp_ns);
 
     int width() const;
     int height() const;
@@ -73,7 +73,7 @@ private:
 
 // Factory: creates a FrameGeneratorCapturer backed by a synthetic slideshow
 // FrameGenerator of the given resolution.
-CXXKIT_MEDIA_API std::unique_ptr<FrameGeneratorCapturer> CreateFrameGeneratorCapturer(
+CXXKIT_MEDIA_API std::unique_ptr<FrameGeneratorCapturer> create_frame_generator_capturer(
     double framerate,
     int width,
     int height,

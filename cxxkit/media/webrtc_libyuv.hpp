@@ -46,7 +46,7 @@ const double kPerfectPSNR = 48.0;
 //                   returned.
 //   - buffer      : Pointer to destination buffer.
 // Return value: length of buffer if OK, < 0 otherwise.
-int ExtractBuffer(const I420BufferInterface& input_frame, size_t size, uint8_t* buffer);
+int extract_buffer(const I420BufferInterface& input_frame, size_t size, uint8_t* buffer);
 
 // Convert From I420.
 // Input:
@@ -57,7 +57,7 @@ int ExtractBuffer(const I420BufferInterface& input_frame, size_t size, uint8_t* 
 //   - dst_height       : Height of the destination frame.
 //   - dst_frame        : Pointer to a destination frame.
 // Return value: 0 if OK, < 0 otherwise.
-int ConvertFromI420(const VideoFrame& src_frame,
+int convert_from_i420(const VideoFrame& src_frame,
                     VideoType dst_video_type,
                     int dst_width,
                     int dst_height,
@@ -65,7 +65,7 @@ int ConvertFromI420(const VideoFrame& src_frame,
 
 // Scales an I420 frame to a new resolution. Uses libyuv::I420Scale with box
 // filtering.
-SharedRefPtr<I420BufferInterface> ScaleVideoFrameBuffer(const I420BufferInterface& source,
+SharedRefPtr<I420BufferInterface> scale_video_frame_buffer(const I420BufferInterface& source,
                                                         int dst_width,
                                                         int dst_height);
 

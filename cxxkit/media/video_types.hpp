@@ -54,8 +54,8 @@ enum class CXXKIT_MEDIA_API VideoType : uint8_t {
     kI444,
 };
 
-// CalcBufferSize: 单一归属（inline 定义，M6），webrtc_libyuv 复用不重定义
-inline size_t CalcBufferSize(VideoType type, int width, int height) {
+// calc_buffer_size: 单一归属（inline 定义，M6），webrtc_libyuv 复用不重定义
+inline size_t calc_buffer_size(VideoType type, int width, int height) {
     if (width <= 0 || height <= 0) return 0;
     switch (type) {
         case VideoType::kI420: case VideoType::kIYUV: case VideoType::kYV12:

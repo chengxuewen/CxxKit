@@ -34,7 +34,7 @@ CXXKIT_BEGIN_NAMESPACE
  * @defgroup cxxkit_tools_variant Variant (type-safe discriminated union)
  * @{
  *
- * @brief Exception-free, vendor-free variant type wrapping mpark::variant.
+ * @brief exception-free, vendor-free variant type wrapping mpark::variant.
  *
  * Provides C++17-style `std::variant` semantics for C++11 builds. The variant
  * holds exactly one of its alternative types at a time, identified by an index.
@@ -57,7 +57,7 @@ CXXKIT_BEGIN_NAMESPACE
 using VariantMonostate = mpark::monostate;
 
 /**
- * @brief Exception thrown by @c get<T>() when the variant holds a different type.
+ * @brief exception thrown by @c get<T>() when the variant holds a different type.
  *
  * Derived from @c std::exception. Never thrown by non-throwing accessors
  * such as @c holds_alternative or @c get_if.

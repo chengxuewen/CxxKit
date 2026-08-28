@@ -22,7 +22,7 @@
 **
 ***********************************************************************************************************************/
 
-// cxxkit::text string_encode tests — coverage for string_encode.cpp (hex/tokenize/FromString).
+// cxxkit::text string_encode tests — coverage for string_encode.cpp (hex/tokenize/from_string).
 #include <cxxkit/text/string_encode.hpp>
 #include <cxxkit/containers/array_view.hpp>
 
@@ -76,11 +76,11 @@ TEST(StringEncode, TokenizeFirst)
     EXPECT_EQ(rest, "b,c");
 }
 
-TEST(StringEncode, FromString)
+TEST(StringEncode, from_string)
 {
     bool b = false;
-    EXPECT_TRUE(FromString(StringView("true"), &b));
+    EXPECT_TRUE(from_string(StringView("true"), &b));
     EXPECT_TRUE(b);
-    EXPECT_TRUE(FromString(StringView("false"), &b));
+    EXPECT_TRUE(from_string(StringView("false"), &b));
     EXPECT_FALSE(b);
 }

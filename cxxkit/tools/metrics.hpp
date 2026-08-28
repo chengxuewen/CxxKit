@@ -48,7 +48,7 @@ namespace metrics
 namespace detail
 {
 template <typename... Ts>
-void NoOp(const Ts &...)
+void no_op(const Ts &...)
 {
 }
 } // namespace detail
@@ -61,22 +61,22 @@ class Histogram;
 // Functions for getting pointer to histogram (constructs or finds the named
 // histogram).
 
-// Get histogram for counters.
-Histogram *HistogramFactoryGetCounts(StringView name, int min, int max, int bucket_count);
+// get histogram for counters.
+Histogram *histogram_factory_get_counts(StringView name, int min, int max, int bucket_count);
 
-// Get histogram for counters with linear bucket spacing.
-Histogram *HistogramFactoryGetCountsLinear(StringView name, int min, int max, int bucket_count);
+// get histogram for counters with linear bucket spacing.
+Histogram *histogram_factory_get_counts_linear(StringView name, int min, int max, int bucket_count);
 
-// Get histogram for enumerators.
+// get histogram for enumerators.
 // `boundary` should be above the max enumerator sample.
-Histogram *HistogramFactoryGetEnumeration(StringView name, int boundary);
+Histogram *histogram_factory_get_enumeration(StringView name, int boundary);
 
-// Get sparse histogram for enumerators.
+// get sparse histogram for enumerators.
 // `boundary` should be above the max enumerator sample.
-Histogram *SparseHistogramFactoryGetEnumeration(StringView name, int boundary);
+Histogram *sparse_histogram_factory_get_enumeration(StringView name, int boundary);
 
 // Function for adding a `sample` to a histogram.
-void HistogramAdd(Histogram *histogram_pointer, int sample);
+void histogram_add(Histogram *histogram_pointer, int sample);
 
 struct SampleInfo
 {
@@ -92,28 +92,28 @@ struct SampleInfo
 
 // Enables collection of samples.
 // This method should be called before any other call into webrtc.
-void Enable();
+void enable();
 
 // Gets histograms and clears all samples.
-void GetAndReset(std::map<std::string, std::unique_ptr<SampleInfo>, StringViewCmp> *histograms);
+void get_and_reset(std::map<std::string, std::unique_ptr<SampleInfo>, StringViewCmp> *histograms);
 
 // Functions below are mainly for testing.
 
 // Clears all samples.
-void Reset();
+void reset();
 
 // Returns the number of times the `sample` has been added to the histogram.
-int NumEvents(StringView name, int sample);
+int num_events(StringView name, int sample);
 
 // Returns the total number of added samples to the histogram.
-int NumSamples(StringView name);
+int num_samples(StringView name);
 
 // Returns the minimum sample value (or -1 if the histogram has no samples).
-int MinSample(StringView name);
+int min_sample(StringView name);
 
 // Returns a map with keys the samples with at least one event and values the
 // number of events for that sample.
-std::map<int, int> Samples(StringView name);
+std::map<int, int> samples(StringView name);
 } // namespace metrics
 
 #if CXXKIT_METRICS_ENABLED
@@ -125,13 +125,13 @@ std::map<int, int> Samples(StringView name);
 #    define CXXKIT_METRIC_EXPECT_FALSE(conditon)              EXPECT_FALSE(conditon)
 #    define CXXKIT_METRIC_EXPECT_THAT(value, matcher)         EXPECT_THAT(value, matcher)
 #else
-#    define CXXKIT_METRIC_EXPECT_EQ(val1, val2)               cxxkit::metrics::detail::NoOp(val1, val2)
-#    define CXXKIT_METRIC_EXPECT_EQ_WAIT(val1, val2, timeout) cxxkit::metrics::detail::NoOp(val1, val2, timeout)
-#    define CXXKIT_METRIC_EXPECT_GT(val1, val2)               cxxkit::metrics::detail::NoOp(val1, val2)
-#    define CXXKIT_METRIC_EXPECT_LE(val1, val2)               cxxkit::metrics::detail::NoOp(val1, val2)
-#    define CXXKIT_METRIC_EXPECT_TRUE(condition)              cxxkit::metrics::detail::NoOp(condition || true)
-#    define CXXKIT_METRIC_EXPECT_FALSE(condition)             cxxkit::metrics::detail::NoOp(condition && false)
-#    define CXXKIT_METRIC_EXPECT_THAT(value, matcher)         cxxkit::metrics::detail::NoOp(value, testing::_)
+#    define CXXKIT_METRIC_EXPECT_EQ(val1, val2)               cxxkit::metrics::detail::no_op(val1, val2)
+#    define CXXKIT_METRIC_EXPECT_EQ_WAIT(val1, val2, timeout) cxxkit::metrics::detail::no_op(val1, val2, timeout)
+#    define CXXKIT_METRIC_EXPECT_GT(val1, val2)               cxxkit::metrics::detail::no_op(val1, val2)
+#    define CXXKIT_METRIC_EXPECT_LE(val1, val2)               cxxkit::metrics::detail::no_op(val1, val2)
+#    define CXXKIT_METRIC_EXPECT_TRUE(condition)              cxxkit::metrics::detail::no_op(condition || true)
+#    define CXXKIT_METRIC_EXPECT_FALSE(condition)             cxxkit::metrics::detail::no_op(condition && false)
+#    define CXXKIT_METRIC_EXPECT_THAT(value, matcher)         cxxkit::metrics::detail::no_op(value, testing::_)
 #endif
 
 #if CXXKIT_METRICS_ENABLED
@@ -145,8 +145,8 @@ std::map<int, int> Samples(StringView name);
 // CXXKIT_HISTOGRAM_ENUMERATION(name, sample, boundary);
 //
 //
-// The macros use the methods HistogramFactoryGetCounts,
-// HistogramFactoryGetEnumeration and HistogramAdd.
+// The macros use the methods histogram_factory_get_counts,
+// histogram_factory_get_enumeration and histogram_add.
 //
 // By default kit provides implementations of the aforementioned methods
 // that can be found in system_wrappers/source/metrics.cc. If clients want to
@@ -156,9 +156,9 @@ std::map<int, int> Samples(StringView name);
 //    WEBOCTK_EXCLUDE_METRICS_DEFAULT (if GN is used this can be achieved
 //    by setting the GN arg rtc_exclude_metrics_default to true).
 // 2. Provide implementations of:
-//    Histogram* cxxkit::metrics::HistogramFactoryGetCounts(StringView name, int sample, int min, int max, int bucket_count);
-//    Histogram* cxxkit::metrics::HistogramFactoryGetEnumeration(StringView name, int sample, int boundary);
-//    void cxxkit::metrics::HistogramAdd(Histogram* histogram_pointer, StringView name, int sample);
+//    Histogram* cxxkit::metrics::histogram_factory_get_counts(StringView name, int sample, int min, int max, int bucket_count);
+//    Histogram* cxxkit::metrics::histogram_factory_get_enumeration(StringView name, int sample, int boundary);
+//    void cxxkit::metrics::histogram_add(Histogram* histogram_pointer, StringView name, int sample);
 //
 // Example usage:
 //
@@ -189,12 +189,12 @@ std::map<int, int> Samples(StringView name);
 #    define CXXKIT_HISTOGRAM_COUNTS(name, sample, min, max, bucket_count)                                              \
         CXXKIT_HISTOGRAM_COMMON_BLOCK(name,                                                                            \
                                       sample,                                                                          \
-                                      cxxkit::metrics::HistogramFactoryGetCounts(name, min, max, bucket_count))
+                                      cxxkit::metrics::histogram_factory_get_counts(name, min, max, bucket_count))
 
 #    define CXXKIT_HISTOGRAM_COUNTS_LINEAR(name, sample, min, max, bucket_count)                                       \
         CXXKIT_HISTOGRAM_COMMON_BLOCK(name,                                                                            \
                                       sample,                                                                          \
-                                      cxxkit::metrics::HistogramFactoryGetCountsLinear(name, min, max, bucket_count))
+                                      cxxkit::metrics::histogram_factory_get_counts_linear(name, min, max, bucket_count))
 
 // Slow metrics: pointer to metric is acquired at each call and is not cached.
 #    define CXXKIT_HISTOGRAM_COUNTS_SPARSE_100(name, sample)  CXXKIT_HISTOGRAM_COUNTS_SPARSE(name, sample, 1, 100, 50)
@@ -208,7 +208,7 @@ std::map<int, int> Samples(StringView name);
 #    define CXXKIT_HISTOGRAM_COUNTS_SPARSE(name, sample, min, max, bucket_count)                                       \
         CXXKIT_HISTOGRAM_COMMON_BLOCK_SLOW(name,                                                                       \
                                            sample,                                                                     \
-                                           cxxkit::metrics::HistogramFactoryGetCounts(name, min, max, bucket_count))
+                                           cxxkit::metrics::histogram_factory_get_counts(name, min, max, bucket_count))
 
 // Histogram for percentage (evenly spaced buckets).
 #    define CXXKIT_HISTOGRAM_PERCENTAGE_SPARSE(name, sample) CXXKIT_HISTOGRAM_ENUMERATION_SPARSE(name, sample, 101)
@@ -224,7 +224,7 @@ std::map<int, int> Samples(StringView name);
 #    define CXXKIT_HISTOGRAM_ENUMERATION_SPARSE(name, sample, boundary)                                                \
         CXXKIT_HISTOGRAM_COMMON_BLOCK_SLOW(name,                                                                       \
                                            sample,                                                                     \
-                                           cxxkit::metrics::SparseHistogramFactoryGetEnumeration(name, boundary))
+                                           cxxkit::metrics::sparse_histogram_factory_get_enumeration(name, boundary))
 
 // Histogram for percentage (evenly spaced buckets).
 #    define CXXKIT_HISTOGRAM_PERCENTAGE(name, sample) CXXKIT_HISTOGRAM_ENUMERATION(name, sample, 101)
@@ -237,7 +237,7 @@ std::map<int, int> Samples(StringView name);
 #    define CXXKIT_HISTOGRAM_ENUMERATION(name, sample, boundary)                                                       \
         CXXKIT_HISTOGRAM_COMMON_BLOCK_SLOW(name,                                                                       \
                                            sample,                                                                     \
-                                           cxxkit::metrics::HistogramFactoryGetEnumeration(name, boundary))
+                                           cxxkit::metrics::histogram_factory_get_enumeration(name, boundary))
 
 // The name of the histogram should not vary.
 #    define CXXKIT_HISTOGRAM_COMMON_BLOCK(constant_name, sample, factory_get_invocation)                               \
@@ -253,7 +253,7 @@ std::map<int, int> Samples(StringView name);
             }                                                                                                          \
             if (histogram_pointer)                                                                                     \
             {                                                                                                          \
-                cxxkit::metrics::HistogramAdd(histogram_pointer, sample);                                              \
+                cxxkit::metrics::histogram_add(histogram_pointer, sample);                                              \
             }                                                                                                          \
         } while (0)
 
@@ -265,7 +265,7 @@ std::map<int, int> Samples(StringView name);
             cxxkit::metrics::Histogram *histogram_pointer = factory_get_invocation;                                    \
             if (histogram_pointer)                                                                                     \
             {                                                                                                          \
-                cxxkit::metrics::HistogramAdd(histogram_pointer, sample);                                              \
+                cxxkit::metrics::histogram_add(histogram_pointer, sample);                                              \
             }                                                                                                          \
         } while (0)
 
@@ -313,48 +313,48 @@ std::map<int, int> Samples(StringView name);
 #else
 
 // This section defines no-op alternatives to the metrics macros when CXXKIT_METRICS_ENABLED is defined.
-#    define CXXKIT_HISTOGRAM_COUNTS_100(name, sample)    cxxkit::metrics::detail::NoOp(name, sample)
-#    define CXXKIT_HISTOGRAM_COUNTS_200(name, sample)    cxxkit::metrics::detail::NoOp(name, sample)
-#    define CXXKIT_HISTOGRAM_COUNTS_500(name, sample)    cxxkit::metrics::detail::NoOp(name, sample)
-#    define CXXKIT_HISTOGRAM_COUNTS_1000(name, sample)   cxxkit::metrics::detail::NoOp(name, sample)
-#    define CXXKIT_HISTOGRAM_COUNTS_10000(name, sample)  cxxkit::metrics::detail::NoOp(name, sample)
-#    define CXXKIT_HISTOGRAM_COUNTS_100000(name, sample) cxxkit::metrics::detail::NoOp(name, sample)
-#    define CXXKIT_HISTOGRAM_COUNTS_1M(name, sample)     cxxkit::metrics::detail::NoOp(name, sample)
-#    define CXXKIT_HISTOGRAM_COUNTS_1G(name, sample)     cxxkit::metrics::detail::NoOp(name, sample)
+#    define CXXKIT_HISTOGRAM_COUNTS_100(name, sample)    cxxkit::metrics::detail::no_op(name, sample)
+#    define CXXKIT_HISTOGRAM_COUNTS_200(name, sample)    cxxkit::metrics::detail::no_op(name, sample)
+#    define CXXKIT_HISTOGRAM_COUNTS_500(name, sample)    cxxkit::metrics::detail::no_op(name, sample)
+#    define CXXKIT_HISTOGRAM_COUNTS_1000(name, sample)   cxxkit::metrics::detail::no_op(name, sample)
+#    define CXXKIT_HISTOGRAM_COUNTS_10000(name, sample)  cxxkit::metrics::detail::no_op(name, sample)
+#    define CXXKIT_HISTOGRAM_COUNTS_100000(name, sample) cxxkit::metrics::detail::no_op(name, sample)
+#    define CXXKIT_HISTOGRAM_COUNTS_1M(name, sample)     cxxkit::metrics::detail::no_op(name, sample)
+#    define CXXKIT_HISTOGRAM_COUNTS_1G(name, sample)     cxxkit::metrics::detail::no_op(name, sample)
 #    define CXXKIT_HISTOGRAM_COUNTS(name, sample, min, max, bucket_count)                                              \
-        cxxkit::metrics::detail::NoOp(name, sample, min, max, bucket_count)
+        cxxkit::metrics::detail::no_op(name, sample, min, max, bucket_count)
 #    define CXXKIT_HISTOGRAM_COUNTS_LINEAR(name, sample, min, max, bucket_count)                                       \
-        cxxkit::metrics::detail::NoOp(name, sample, min, max, bucket_count)
-#    define CXXKIT_HISTOGRAM_COUNTS_SPARSE_100(name, sample)    cxxkit::metrics::detail::NoOp(name, sample)
-#    define CXXKIT_HISTOGRAM_COUNTS_SPARSE_200(name, sample)    cxxkit::metrics::detail::NoOp(name, sample)
-#    define CXXKIT_HISTOGRAM_COUNTS_SPARSE_500(name, sample)    cxxkit::metrics::detail::NoOp(name, sample)
-#    define CXXKIT_HISTOGRAM_COUNTS_SPARSE_1000(name, sample)   cxxkit::metrics::detail::NoOp(name, sample)
-#    define CXXKIT_HISTOGRAM_COUNTS_SPARSE_10000(name, sample)  cxxkit::metrics::detail::NoOp(name, sample)
-#    define CXXKIT_HISTOGRAM_COUNTS_SPARSE_100000(name, sample) cxxkit::metrics::detail::NoOp(name, sample)
+        cxxkit::metrics::detail::no_op(name, sample, min, max, bucket_count)
+#    define CXXKIT_HISTOGRAM_COUNTS_SPARSE_100(name, sample)    cxxkit::metrics::detail::no_op(name, sample)
+#    define CXXKIT_HISTOGRAM_COUNTS_SPARSE_200(name, sample)    cxxkit::metrics::detail::no_op(name, sample)
+#    define CXXKIT_HISTOGRAM_COUNTS_SPARSE_500(name, sample)    cxxkit::metrics::detail::no_op(name, sample)
+#    define CXXKIT_HISTOGRAM_COUNTS_SPARSE_1000(name, sample)   cxxkit::metrics::detail::no_op(name, sample)
+#    define CXXKIT_HISTOGRAM_COUNTS_SPARSE_10000(name, sample)  cxxkit::metrics::detail::no_op(name, sample)
+#    define CXXKIT_HISTOGRAM_COUNTS_SPARSE_100000(name, sample) cxxkit::metrics::detail::no_op(name, sample)
 #    define CXXKIT_HISTOGRAM_COUNTS_SPARSE(name, sample, min, max, bucket_count)                                       \
-        cxxkit::metrics::detail::NoOp(name, sample, min, max, bucket_count)
-#    define CXXKIT_HISTOGRAM_PERCENTAGE_SPARSE(name, sample) cxxkit::metrics::detail::NoOp(name, sample)
-#    define CXXKIT_HISTOGRAM_BOOLEAN_SPARSE(name, sample)    cxxkit::metrics::detail::NoOp(name, sample)
+        cxxkit::metrics::detail::no_op(name, sample, min, max, bucket_count)
+#    define CXXKIT_HISTOGRAM_PERCENTAGE_SPARSE(name, sample) cxxkit::metrics::detail::no_op(name, sample)
+#    define CXXKIT_HISTOGRAM_BOOLEAN_SPARSE(name, sample)    cxxkit::metrics::detail::no_op(name, sample)
 #    define CXXKIT_HISTOGRAM_ENUMERATION_SPARSE(name, sample, boundary)                                                \
-        cxxkit::metrics::detail::NoOp(name, sample, boundary)
-#    define CXXKIT_HISTOGRAM_PERCENTAGE(name, sample)            cxxkit::metrics::detail::NoOp(name, sample)
-#    define CXXKIT_HISTOGRAM_BOOLEAN(name, sample)               cxxkit::metrics::detail::NoOp(name, sample)
-#    define CXXKIT_HISTOGRAM_ENUMERATION(name, sample, boundary) cxxkit::metrics::detail::NoOp(name, sample, boundary)
+        cxxkit::metrics::detail::no_op(name, sample, boundary)
+#    define CXXKIT_HISTOGRAM_PERCENTAGE(name, sample)            cxxkit::metrics::detail::no_op(name, sample)
+#    define CXXKIT_HISTOGRAM_BOOLEAN(name, sample)               cxxkit::metrics::detail::no_op(name, sample)
+#    define CXXKIT_HISTOGRAM_ENUMERATION(name, sample, boundary) cxxkit::metrics::detail::no_op(name, sample, boundary)
 #    define CXXKIT_HISTOGRAM_COMMON_BLOCK(constant_name, sample, factory_get_invocation)                               \
-        cxxkit::metrics::detail::NoOp(constant_name, sample, factory_get_invocation)
+        cxxkit::metrics::detail::no_op(constant_name, sample, factory_get_invocation)
 #    define CXXKIT_HISTOGRAM_COMMON_BLOCK_SLOW(name, sample, factory_get_invocation)                                   \
-        cxxkit::metrics::detail::NoOp(name, sample, factory_get_invocation)
-#    define CXXKIT_HISTOGRAMS_COUNTS_100(index, name, sample)    cxxkit::metrics::detail::NoOp(index, name, sample)
-#    define CXXKIT_HISTOGRAMS_COUNTS_200(index, name, sample)    cxxkit::metrics::detail::NoOp(index, name, sample)
-#    define CXXKIT_HISTOGRAMS_COUNTS_500(index, name, sample)    cxxkit::metrics::detail::NoOp(index, name, sample)
-#    define CXXKIT_HISTOGRAMS_COUNTS_1000(index, name, sample)   cxxkit::metrics::detail::NoOp(index, name, sample)
-#    define CXXKIT_HISTOGRAMS_COUNTS_10000(index, name, sample)  cxxkit::metrics::detail::NoOp(index, name, sample)
-#    define CXXKIT_HISTOGRAMS_COUNTS_100000(index, name, sample) cxxkit::metrics::detail::NoOp(index, name, sample)
+        cxxkit::metrics::detail::no_op(name, sample, factory_get_invocation)
+#    define CXXKIT_HISTOGRAMS_COUNTS_100(index, name, sample)    cxxkit::metrics::detail::no_op(index, name, sample)
+#    define CXXKIT_HISTOGRAMS_COUNTS_200(index, name, sample)    cxxkit::metrics::detail::no_op(index, name, sample)
+#    define CXXKIT_HISTOGRAMS_COUNTS_500(index, name, sample)    cxxkit::metrics::detail::no_op(index, name, sample)
+#    define CXXKIT_HISTOGRAMS_COUNTS_1000(index, name, sample)   cxxkit::metrics::detail::no_op(index, name, sample)
+#    define CXXKIT_HISTOGRAMS_COUNTS_10000(index, name, sample)  cxxkit::metrics::detail::no_op(index, name, sample)
+#    define CXXKIT_HISTOGRAMS_COUNTS_100000(index, name, sample) cxxkit::metrics::detail::no_op(index, name, sample)
 #    define CXXKIT_HISTOGRAMS_ENUMERATION(index, name, sample, boundary)                                               \
-        cxxkit::metrics::detail::NoOp(index, name, sample, boundary)
-#    define CXXKIT_HISTOGRAMS_PERCENTAGE(index, name, sample) cxxkit::metrics::detail::NoOp(index, name, sample)
+        cxxkit::metrics::detail::no_op(index, name, sample, boundary)
+#    define CXXKIT_HISTOGRAMS_PERCENTAGE(index, name, sample) cxxkit::metrics::detail::no_op(index, name, sample)
 #    define CXXKIT_HISTOGRAMS_COMMON(index, name, sample, macro_invocation)                                            \
-        cxxkit::metrics::detail::NoOp(index, name, sample, macro_invocation)
+        cxxkit::metrics::detail::no_op(index, name, sample, macro_invocation)
 #endif // CXXKIT_METRICS_ENABLED
 
 CXXKIT_END_NAMESPACE

@@ -247,7 +247,7 @@ public:
     {
         for (It pair = begin; pair != end; ++pair)
         {
-            Add(*pair);
+            add(*pair);
         }
     }
     Payload(const std::initializer_list<Pair> &pairs)
@@ -482,13 +482,13 @@ auto async(Fn &&fn, Args &&...args) -> std::future<decltype(fn(args...))>
 } // namespace detail
 
 /**
- * Get methods
+ * get methods
  * @tparam Ts
  * @param ts
  * @return
  */
 template <typename... Ts>
-Response::SharedPtr Get(Ts &&...ts)
+Response::SharedPtr get(Ts &&...ts)
 {
     Session session;
     detail::set_option(session, std::forward<Ts>(ts)...);
@@ -496,7 +496,7 @@ Response::SharedPtr Get(Ts &&...ts)
 }
 
 /**
- * Get async methods
+ * get async methods
  * @tparam Ts
  * @param ts
  * @return
@@ -508,7 +508,7 @@ AsyncResponse async_get(Ts... ts)
 }
 
 /**
- * Put methods
+ * put methods
  * @tparam Ts
  * @param ts
  * @return
@@ -522,7 +522,7 @@ Response::SharedPtr put(Ts &&...ts)
 }
 
 /**
- * Put async methods
+ * put async methods
  * @tparam Ts
  * @param ts
  * @return
@@ -534,7 +534,7 @@ AsyncResponse async_put(Ts... ts)
 }
 
 /**
- * Post methods
+ * post methods
  * @tparam Ts
  * @param ts
  * @return
@@ -548,7 +548,7 @@ Response::SharedPtr post(Ts &&...ts)
 }
 
 /**
- * Post async methods
+ * post async methods
  * @tparam Ts
  * @param ts
  * @return
@@ -560,7 +560,7 @@ AsyncResponse async_post(Ts... ts)
 }
 
 /**
- * Download with user callback
+ * download with user callback
  * @tparam Ts
  * @param write
  * @param ts
@@ -575,7 +575,7 @@ Response::SharedPtr download(const WriteCallback &write, Ts &&...ts)
 }
 
 /**
- * Download methods
+ * download methods
  * @tparam Ts
  * @param file
  * @param ts
@@ -590,7 +590,7 @@ Response::SharedPtr download(std::ofstream &file, Ts &&...ts)
 }
 
 /**
- * Download async method
+ * download async method
  * @tparam Ts
  * @param local_path
  * @param ts

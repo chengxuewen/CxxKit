@@ -174,7 +174,7 @@ namespace CXXKIT_NAMESPACE
 #endif
 
 
-/** @brief Copy/move inhibition macros: `CXXKIT_DECLARE_DISABLE_COPY`, `CXXKIT_DECLARE_DISABLE_MOVE`, `CXXKIT_DISABLE_COPY_MOVE`.
+/** @brief copy/move inhibition macros: `CXXKIT_DECLARE_DISABLE_COPY`, `CXXKIT_DECLARE_DISABLE_MOVE`, `CXXKIT_DISABLE_COPY_MOVE`.
  */
 /***********************************************************************************************************************
   * disable copy move macro declare

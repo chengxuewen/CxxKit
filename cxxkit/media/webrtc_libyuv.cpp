@@ -36,7 +36,7 @@ namespace cxxkit {
 namespace {
 
 // Maps a VideoType to the libyuv FourCC used by ConvertFromI420.
-int VideoTypeToFourCC(VideoType video_type)
+int video_type_to_four_cc(VideoType video_type)
 {
     switch (video_type)
     {
@@ -60,7 +60,7 @@ int VideoTypeToFourCC(VideoType video_type)
 }
 
 // Row pitch in bytes for a packed destination buffer of the given format.
-int SampleSize(VideoType video_type, int dst_width)
+int sample_size(VideoType video_type, int dst_width)
 {
     switch (video_type)
     {
@@ -83,7 +83,7 @@ int SampleSize(VideoType video_type, int dst_width)
 
 }  // namespace
 
-int ExtractBuffer(const I420BufferInterface& input_frame, size_t size, uint8_t* buffer)
+int extract_buffer(const I420BufferInterface& input_frame, size_t size, uint8_t* buffer)
 {
     CXXKIT_DCHECK(buffer);
     if (!buffer)
@@ -92,21 +92,21 @@ int ExtractBuffer(const I420BufferInterface& input_frame, size_t size, uint8_t* 
     }
     const int width = input_frame.width();
     const int height = input_frame.height();
-    const size_t length = CalcBufferSize(VideoType::kI420, width, height);
+    const size_t length = calc_buffer_size(VideoType::kI420, width, height);
     if (size < length)
     {
         return -1;
     }
 
-    const int chroma_width = input_frame.ChromaWidth();
-    const int chroma_height = input_frame.ChromaHeight();
+    const int chroma_width = input_frame.chroma_width();
+    const int chroma_height = input_frame.chroma_height();
 
-    libyuv::I420Copy(input_frame.GetDataY(),
-                     input_frame.StrideY(),
-                     input_frame.GetDataU(),
-                     input_frame.StrideU(),
-                     input_frame.GetDataV(),
-                     input_frame.StrideV(),
+    libyuv::I420Copy(input_frame.get_data_y(),
+                     input_frame.stride_y(),
+                     input_frame.get_data_u(),
+                     input_frame.stride_u(),
+                     input_frame.get_data_v(),
+                     input_frame.stride_v(),
                      buffer,
                      width,
                      buffer + width * height,
@@ -119,36 +119,36 @@ int ExtractBuffer(const I420BufferInterface& input_frame, size_t size, uint8_t* 
     return static_cast<int>(length);
 }
 
-int ConvertFromI420(const VideoFrame& src_frame,
+int convert_from_i420(const VideoFrame& src_frame,
                     VideoType dst_video_type,
                     int dst_width,
                     int dst_height,
                     uint8_t* dst_frame)
 {
-    const SharedRefPtr<I420BufferInterface> i420_buffer = src_frame.video_frame_buffer()->ToI420();
+    const SharedRefPtr<I420BufferInterface> i420_buffer = src_frame.video_frame_buffer()->to_i420();
     if (!i420_buffer)
     {
         return -1;
     }
-    return libyuv::ConvertFromI420(i420_buffer->GetDataY(),
-                                   i420_buffer->StrideY(),
-                                   i420_buffer->GetDataU(),
-                                   i420_buffer->StrideU(),
-                                   i420_buffer->GetDataV(),
-                                   i420_buffer->StrideV(),
+    return libyuv::ConvertFromI420(i420_buffer->get_data_y(),
+                                   i420_buffer->stride_y(),
+                                   i420_buffer->get_data_u(),
+                                   i420_buffer->stride_u(),
+                                   i420_buffer->get_data_v(),
+                                   i420_buffer->stride_v(),
                                    dst_frame,
-                                   SampleSize(dst_video_type, dst_width),
+                                   sample_size(dst_video_type, dst_width),
                                    dst_width,
                                    dst_height,
-                                   VideoTypeToFourCC(dst_video_type));
+                                   video_type_to_four_cc(dst_video_type));
 }
 
-SharedRefPtr<I420BufferInterface> ScaleVideoFrameBuffer(const I420BufferInterface& source,
+SharedRefPtr<I420BufferInterface> scale_video_frame_buffer(const I420BufferInterface& source,
                                                         int dst_width,
                                                         int dst_height)
 {
-    const SharedRefPtr<I420Buffer> scaled_buffer = I420Buffer::Create(dst_width, dst_height);
-    scaled_buffer->ScaleFrom(source);
+    const SharedRefPtr<I420Buffer> scaled_buffer = I420Buffer::create(dst_width, dst_height);
+    scaled_buffer->scale_from(source);
     return scaled_buffer;
 }
 
@@ -159,23 +159,23 @@ double I420Psnr(const I420BufferInterface& ref_buffer, const I420BufferInterface
     if ((ref_buffer.width() != test_buffer.width()) || (ref_buffer.height() != test_buffer.height()))
     {
         const SharedRefPtr<I420Buffer> scaled_buffer =
-            I420Buffer::Create(ref_buffer.width(), ref_buffer.height());
-        scaled_buffer->ScaleFrom(test_buffer);
+            I420Buffer::create(ref_buffer.width(), ref_buffer.height());
+        scaled_buffer->scale_from(test_buffer);
         return I420Psnr(ref_buffer, *scaled_buffer);
     }
 
-    double psnr = libyuv::I420Psnr(ref_buffer.GetDataY(),
-                                   ref_buffer.StrideY(),
-                                   ref_buffer.GetDataU(),
-                                   ref_buffer.StrideU(),
-                                   ref_buffer.GetDataV(),
-                                   ref_buffer.StrideV(),
-                                   test_buffer.GetDataY(),
-                                   test_buffer.StrideY(),
-                                   test_buffer.GetDataU(),
-                                   test_buffer.StrideU(),
-                                   test_buffer.GetDataV(),
-                                   test_buffer.StrideV(),
+    double psnr = libyuv::I420Psnr(ref_buffer.get_data_y(),
+                                   ref_buffer.stride_y(),
+                                   ref_buffer.get_data_u(),
+                                   ref_buffer.stride_u(),
+                                   ref_buffer.get_data_v(),
+                                   ref_buffer.stride_v(),
+                                   test_buffer.get_data_y(),
+                                   test_buffer.stride_y(),
+                                   test_buffer.get_data_u(),
+                                   test_buffer.stride_u(),
+                                   test_buffer.get_data_v(),
+                                   test_buffer.stride_v(),
                                    test_buffer.width(),
                                    test_buffer.height());
 
@@ -191,23 +191,23 @@ double I420Ssim(const I420BufferInterface& ref_buffer, const I420BufferInterface
     if ((ref_buffer.width() != test_buffer.width()) || (ref_buffer.height() != test_buffer.height()))
     {
         const SharedRefPtr<I420Buffer> scaled_buffer =
-            I420Buffer::Create(ref_buffer.width(), ref_buffer.height());
-        scaled_buffer->ScaleFrom(test_buffer);
+            I420Buffer::create(ref_buffer.width(), ref_buffer.height());
+        scaled_buffer->scale_from(test_buffer);
         return I420Ssim(ref_buffer, *scaled_buffer);
     }
 
-    return libyuv::I420Ssim(ref_buffer.GetDataY(),
-                            ref_buffer.StrideY(),
-                            ref_buffer.GetDataU(),
-                            ref_buffer.StrideU(),
-                            ref_buffer.GetDataV(),
-                            ref_buffer.StrideV(),
-                            test_buffer.GetDataY(),
-                            test_buffer.StrideY(),
-                            test_buffer.GetDataU(),
-                            test_buffer.StrideU(),
-                            test_buffer.GetDataV(),
-                            test_buffer.StrideV(),
+    return libyuv::I420Ssim(ref_buffer.get_data_y(),
+                            ref_buffer.stride_y(),
+                            ref_buffer.get_data_u(),
+                            ref_buffer.stride_u(),
+                            ref_buffer.get_data_v(),
+                            ref_buffer.stride_v(),
+                            test_buffer.get_data_y(),
+                            test_buffer.stride_y(),
+                            test_buffer.get_data_u(),
+                            test_buffer.stride_u(),
+                            test_buffer.get_data_v(),
+                            test_buffer.stride_v(),
                             test_buffer.width(),
                             test_buffer.height());
 }

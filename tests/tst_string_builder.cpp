@@ -38,7 +38,7 @@ TEST(SimpleStringBuilder, Limit)
     SimpleStringBuilder sb(sb_buf);
     EXPECT_EQ(0u, strlen(sb.str()));
 
-    // Test that for a SSB with a buffer size of 10, that we can write 9 chars
+    // test that for a SSB with a buffer size of 10, that we can write 9 chars
     // into it.
     sb << "012345678"; // 9 characters + '\0'.
     EXPECT_EQ(0, strcmp(sb.str(), "012345678"));
@@ -57,7 +57,7 @@ TEST(SimpleStringBuilder, Format)
     char sb_buf[100];
     SimpleStringBuilder sb(sb_buf);
     sb << "Here we go - ";
-    sb.AppendFormat("This is a hex formatted value: 0x%08llx", 3735928559ULL);
+    sb.append_format("This is a hex formatted value: 0x%08llx", 3735928559ULL);
     EXPECT_EQ(0, strcmp(sb.str(), "Here we go - This is a hex formatted value: 0xdeadbeef"));
 }
 
@@ -183,7 +183,7 @@ TEST(StringBuilder, Format)
 {
     StringBuilder sb;
     sb << "Here we go - ";
-    sb.AppendFormat("This is a hex formatted value: 0x%08llx", 3735928559ULL);
+    sb.append_format("This is a hex formatted value: 0x%08llx", 3735928559ULL);
     EXPECT_EQ(sb.str(), "Here we go - This is a hex formatted value: 0xdeadbeef");
 }
 
@@ -195,7 +195,7 @@ TEST(StringBuilder, StdString)
     EXPECT_EQ(str, sb.str());
 }
 
-TEST(StringBuilder, Release)
+TEST(StringBuilder, release)
 {
     StringBuilder sb;
     std::string str = "This string has to be of a moderate length, or we might "
@@ -204,18 +204,18 @@ TEST(StringBuilder, Release)
     sb << str;
     EXPECT_EQ(str, sb.str());
     const char *original_buffer = sb.str().c_str();
-    std::string moved = sb.Release();
+    std::string moved = sb.release();
     EXPECT_TRUE(sb.str().empty());
     EXPECT_EQ(str, moved);
     EXPECT_EQ(original_buffer, moved.c_str());
 }
 
-TEST(StringBuilder, Reset)
+TEST(StringBuilder, reset)
 {
     StringBuilder sb("abc");
     sb << "def";
     EXPECT_EQ("abcdef", sb.str());
-    sb.Clear();
+    sb.clear();
     EXPECT_TRUE(sb.str().empty());
     sb << 123 << "!";
     EXPECT_EQ("123!", sb.str());

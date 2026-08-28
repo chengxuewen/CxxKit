@@ -41,7 +41,7 @@ struct CXXKIT_MEDIA_API HdrMasteringMetadata
             return x == rhs.x && y == rhs.y;
         }
 
-        bool Validate() const
+        bool validate() const
         {
             return x >= 0.0 && x <= 1.0 && y >= 0.0 && y <= 1.0;
         }
@@ -49,7 +49,7 @@ struct CXXKIT_MEDIA_API HdrMasteringMetadata
         // xy chromaticity coordinates must be calculated as specified in ISO
         // 11664-3:2012 Section 7, and must be specified with four decimal places.
         // The x coordinate should be in the range [0.0001, 0.7400] and the y
-        // coordinate should be in the range [0.0001, 0.8400]. Valid range [0.0000,
+        // coordinate should be in the range [0.0001, 0.8400]. valid range [0.0000,
         // 1.0000].
         float x = 0.0f;
         float y = 0.0f;
@@ -65,12 +65,12 @@ struct CXXKIT_MEDIA_API HdrMasteringMetadata
                 (luminance_min == rhs.luminance_min));
     }
 
-    bool Validate() const
+    bool validate() const
     {
         return luminance_max >= 0.0 && luminance_max <= 20000.0 &&
                luminance_min >= 0.0 && luminance_min <= 5.0 &&
-               primary_r.Validate() && primary_g.Validate() &&
-               primary_b.Validate() && white_point.Validate();
+               primary_r.validate() && primary_g.validate() &&
+               primary_b.validate() && white_point.validate();
     }
 
     // The nominal primaries of the mastering display.
@@ -83,12 +83,12 @@ struct CXXKIT_MEDIA_API HdrMasteringMetadata
 
     // The nominal maximum display luminance of the mastering display. Specified
     // in the unit candela/m2. The value should be in the range [5, 10000] with
-    // zero decimal places. Valid range [0, 20000].
+    // zero decimal places. valid range [0, 20000].
     float luminance_max = 0.0f;
 
     // The nominal minimum display luminance of the mastering display. Specified
     // in the unit candela/m2. The value should be in the range [0.0001, 5.0000]
-    // with four decimal places. Valid range [0.0000, 5.0000].
+    // with four decimal places. valid range [0.0000, 5.0000].
     float luminance_min = 0.0f;
 };
 
@@ -107,20 +107,20 @@ struct CXXKIT_MEDIA_API HdrMetadata
             (mastering_metadata == rhs.mastering_metadata));
     }
 
-    bool Validate() const
+    bool validate() const
     {
         return max_content_light_level >= 0 && max_content_light_level <= 20000 &&
                max_frame_average_light_level >= 0 &&
                max_frame_average_light_level <= 20000 &&
-               mastering_metadata.Validate();
+               mastering_metadata.validate();
     }
 
     HdrMasteringMetadata mastering_metadata;
     // Max content light level (CLL), i.e. maximum brightness level present in the
-    // stream, in nits. 1 nit = 1 candela/m2. Valid range [0, 20000].
+    // stream, in nits. 1 nit = 1 candela/m2. valid range [0, 20000].
     int max_content_light_level = 0;
     // Max frame-average light level (FALL), i.e. maximum average brightness of
-    // the brightest frame in the stream, in nits. Valid range [0, 20000].
+    // the brightest frame in the stream, in nits. valid range [0, 20000].
     int max_frame_average_light_level = 0;
 };
 }  // namespace cxxkit

@@ -59,7 +59,7 @@ namespace detail
 using unsigned_type = unsigned long long; // NOLINT(runtime/int)
 using signed_type = long long;            // NOLINT(runtime/int)
 
-static Optional<signed_type> ParseSigned(StringView str, int base)
+static Optional<signed_type> parse_signed(StringView str, int base)
 {
     if (str.empty())
     {
@@ -72,7 +72,7 @@ static Optional<signed_type> ParseSigned(StringView str, int base)
         char *end = nullptr;
         errno = 0;
         const signed_type value = std::strtoll(str_str.c_str(), &end, base);
-        // Check for errors and also make sure that there were no embedded nuls in
+        // check for errors and also make sure that there were no embedded nuls in
         // the input string.
         if (end == str_str.c_str() + str_str.size() && errno == 0)
         {
@@ -81,7 +81,7 @@ static Optional<signed_type> ParseSigned(StringView str, int base)
     }
     return utils::nullopt;
 }
-static Optional<unsigned_type> ParseUnsigned(StringView str, int base)
+static Optional<unsigned_type> parse_unsigned(StringView str, int base)
 {
     if (str.empty())
     {
@@ -98,7 +98,7 @@ static Optional<unsigned_type> ParseUnsigned(StringView str, int base)
         char *end = nullptr;
         errno = 0;
         const unsigned_type value = std::strtoull(str_str.c_str(), &end, base);
-        // Check for errors and also make sure that there were no embedded nuls in
+        // check for errors and also make sure that there were no embedded nuls in
         // the input string.
         if (end == str_str.c_str() + str_str.size() && errno == 0 && (value == 0 || !is_negative))
         {
@@ -109,28 +109,28 @@ static Optional<unsigned_type> ParseUnsigned(StringView str, int base)
 }
 
 template <typename T>
-T StrToT(const char *str, char **str_end);
+T str_to_t(const char *str, char **str_end);
 
 template <>
-inline float StrToT(const char *str, char **str_end)
+inline float str_to_t(const char *str, char **str_end)
 {
     return std::strtof(str, str_end);
 }
 
 template <>
-inline double StrToT(const char *str, char **str_end)
+inline double str_to_t(const char *str, char **str_end)
 {
     return std::strtod(str, str_end);
 }
 
 template <>
-inline long double StrToT(const char *str, char **str_end)
+inline long double str_to_t(const char *str, char **str_end)
 {
     return std::strtold(str, str_end);
 }
 
 template <typename T>
-Optional<T> ParseFloatingPoint(StringView str)
+Optional<T> parse_floating_point(StringView str)
 {
     if (str.empty())
     {
@@ -144,16 +144,16 @@ Optional<T> ParseFloatingPoint(StringView str)
     std::string str_str(str);
     char *end = nullptr;
     errno = 0;
-    const T value = StrToT<T>(str_str.c_str(), &end);
+    const T value = str_to_t<T>(str_str.c_str(), &end);
     if (end == str_str.c_str() + str_str.size() && errno == 0)
     {
         return value;
     }
     return utils::nullopt;
 }
-template Optional<float> ParseFloatingPoint(StringView str);
-template Optional<double> ParseFloatingPoint(StringView str);
-template Optional<long double> ParseFloatingPoint(StringView str);
+template Optional<float> parse_floating_point(StringView str);
+template Optional<double> parse_floating_point(StringView str);
+template Optional<long double> parse_floating_point(StringView str);
 } // namespace detail
 
 template <typename T>
@@ -165,7 +165,7 @@ typename std::enable_if<std::is_integral<T>::value && std::is_signed<T>::value, 
     static_assert(std::numeric_limits<T>::max() <= std::numeric_limits<signed_type>::max() &&
                       std::numeric_limits<T>::lowest() >= std::numeric_limits<signed_type>::lowest(),
                   "string_to_number only supports signed integers as large as long long int");
-    Optional<signed_type> value = detail::ParseSigned(str, base);
+    Optional<signed_type> value = detail::parse_signed(str, base);
     if (value && *value >= std::numeric_limits<T>::lowest() && *value <= std::numeric_limits<T>::max())
     {
         return static_cast<T>(*value);
@@ -182,7 +182,7 @@ typename std::enable_if<std::is_integral<T>::value && std::is_unsigned<T>::value
     static_assert(std::numeric_limits<T>::max() <= std::numeric_limits<unsigned_type>::max(),
                   "string_to_number only supports unsigned integers as large as "
                   "unsigned long long int");
-    Optional<unsigned_type> value = detail::ParseUnsigned(str, base);
+    Optional<unsigned_type> value = detail::parse_unsigned(str, base);
     if (value && *value <= std::numeric_limits<T>::max())
     {
         return static_cast<T>(*value);
@@ -197,7 +197,7 @@ typename std::enable_if<std::is_floating_point<T>::value, Optional<T>>::type str
     static_assert(std::numeric_limits<T>::max() <= std::numeric_limits<long double>::max(),
                   "string_to_number only supports floating-point numbers as large "
                   "as long double");
-    return detail::ParseFloatingPoint<T>(str);
+    return detail::parse_floating_point<T>(str);
 }
 } // namespace utils
 

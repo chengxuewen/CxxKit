@@ -33,12 +33,12 @@
 #include <limits>
 #include <ostream>
 
-#define CXXKIT_DECLARE_ERROR_DOMAIN(Export, Name) Export const cxxkit::Error::Domain &Name();
+#define CXXKIT_DECLARE_ERROR_DOMAIN(Export, name) Export const cxxkit::Error::Domain &name();
 
-#define CXXKIT_DEFINE_ERROR_DOMAIN(Type, Name, Description)                                                            \
-    const cxxkit::Error::Domain &Name()                                                                                \
+#define CXXKIT_DEFINE_ERROR_DOMAIN(Type, name, Description)                                                            \
+    const cxxkit::Error::Domain &name()                                                                                \
     {                                                                                                                  \
-        static const Type domain(cxxkit::Error::Domain::Registry::register_domain(#Type, #Name, Description));          \
+        static const Type domain(cxxkit::Error::Domain::Registry::register_domain(#Type, #name, Description));          \
         return domain;                                                                                                 \
     }
 

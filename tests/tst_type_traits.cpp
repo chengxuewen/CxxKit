@@ -65,7 +65,7 @@ std::unique_ptr<int> Factory(int n)
     return utils::make_unique<int>(n);
 }
 
-void NoOp()
+void no_op()
 {
 }
 
@@ -190,7 +190,7 @@ TEST(InvokeTest, NonCopyableResult)
 
 TEST(InvokeTest, VoidResult)
 {
-    traits::invoke(NoOp);
+    traits::invoke(no_op);
 }
 
 TEST(InvokeTest, ConstFunctor)
@@ -303,7 +303,7 @@ TEST(InvokeTest, FlipFlop)
 
 TEST(InvokeTest, SfinaeFriendly)
 {
-    CallMaybeWithArg(NoOp);
+    CallMaybeWithArg(no_op);
     EXPECT_EQ(*CallMaybeWithArg(Factory).get(), 42);
 }
 

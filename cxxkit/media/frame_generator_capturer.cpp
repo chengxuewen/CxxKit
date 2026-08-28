@@ -36,30 +36,30 @@ FrameGeneratorCapturer::FrameGeneratorCapturer(std::unique_ptr<FrameGenerator> g
     CXXKIT_DCHECK(mGenerator);
 }
 
-void FrameGeneratorCapturer::SetFrameCallback(FrameCallback callback)
+void FrameGeneratorCapturer::set_frame_callback(FrameCallback callback)
 {
     mCallback = std::move(callback);
 }
 
-void FrameGeneratorCapturer::SetFrameRate(double fps)
+void FrameGeneratorCapturer::set_frame_rate(double fps)
 {
-    mFramerateController.SetFrameRate(fps);
+    mFramerateController.set_frame_rate(fps);
 }
 
-double FrameGeneratorCapturer::GetFrameRate() const
+double FrameGeneratorCapturer::get_frame_rate() const
 {
-    return mFramerateController.GetFrameRate();
+    return mFramerateController.get_frame_rate();
 }
 
-void FrameGeneratorCapturer::GenerateOneFrame(int64_t timestamp_ns)
+void FrameGeneratorCapturer::generate_one_frame(int64_t timestamp_ns)
 {
-    if (!mGenerator || mFramerateController.ShouldDropFrame(timestamp_ns))
+    if (!mGenerator || mFramerateController.should_drop_frame(timestamp_ns))
     {
         return;
     }
 
     VideoFrame frame = VideoFrame::Builder()
-                           .set_video_frame_buffer(mGenerator->GetNextFrame())
+                           .set_video_frame_buffer(mGenerator->get_next_frame())
                            .set_timestamp_us(timestamp_ns / 1000)
                            .build();
     if (mCallback)
@@ -78,12 +78,12 @@ int FrameGeneratorCapturer::height() const
     return mGenerator ? mGenerator->height() : 0;
 }
 
-std::unique_ptr<FrameGeneratorCapturer> CreateFrameGeneratorCapturer(double framerate,
+std::unique_ptr<FrameGeneratorCapturer> create_frame_generator_capturer(double framerate,
                                                                      int width,
                                                                      int height,
                                                                      FrameGeneratorCapturer::FrameCallback callback)
 {
-    std::unique_ptr<FrameGenerator> generator = FrameGenerator::CreateSlideShow(
+    std::unique_ptr<FrameGenerator> generator = FrameGenerator::create_slide_show(
         std::vector<std::string>(), FrameGenerator::OutputType::kI420, width, height, 1);
     if (!generator)
     {
@@ -91,7 +91,7 @@ std::unique_ptr<FrameGeneratorCapturer> CreateFrameGeneratorCapturer(double fram
     }
     std::unique_ptr<FrameGeneratorCapturer> capturer(
         new FrameGeneratorCapturer(std::move(generator), framerate));
-    capturer->SetFrameCallback(std::move(callback));
+    capturer->set_frame_callback(std::move(callback));
     return capturer;
 }
 

@@ -55,7 +55,7 @@ public:
     Status(const Ok &o = ok) { CXXKIT_UNUSED(o); }
 
     /**
-     * @brief Copy constructor.
+     * @brief copy constructor.
      */
     Status(const Status &) = default;
 
@@ -147,7 +147,7 @@ public:
     ~Status() = default;
 
     /**
-     * @brief Copy assignment operator.
+     * @brief copy assignment operator.
      * @return A reference to this Status object.
      */
     Status &operator=(const Status &) = default;

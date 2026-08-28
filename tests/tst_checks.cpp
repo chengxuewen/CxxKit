@@ -49,7 +49,7 @@ TEST(ChecksDeathTest, Checks)
                  "\n\n#\n"
                  "# Fatal error in: \\S+, line \\w+\n"
                  "# last system error: \\w+\n"
-                 "# Check failed: FATAL\\(\\)\n"
+                 "# check failed: FATAL\\(\\)\n"
                  "# message");
 
     int a = 1, b = 2;
@@ -57,7 +57,7 @@ TEST(ChecksDeathTest, Checks)
                  "\n\n#\n"
                  "# Fatal error in: \\S+, line \\w+\n"
                  "# last system error: \\w+\n"
-                 "# Check failed: a == b \\(1 vs. 2\\)\n"
+                 "# check failed: a == b \\(1 vs. 2\\)\n"
                  "# 12");
     CXXKIT_CHECK_EQ(5, 5);
 
@@ -66,7 +66,7 @@ TEST(ChecksDeathTest, Checks)
                  "\n\n#\n"
                  "# Fatal error in: \\S+, line \\w+\n"
                  "# last system error: \\w+\n"
-                 "# Check failed: false\n"
+                 "# check failed: false\n"
                  "# Hi there!");
 
     //    StructWithStringfy t;

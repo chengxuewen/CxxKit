@@ -38,44 +38,44 @@ CXXKIT_BEGIN_NAMESPACE
 namespace
 {
 
-// Functions that check that SafeMin(), SafeMax(), and SafeClamp() return the
+// Functions that check that safe_min(), safe_max(), and safe_clamp() return the
 // specified type. The functions that end in "R" use an explicitly given return
 // type.
 
 template <typename T1, typename T2, typename Tmin, typename Tmax>
 constexpr bool TypeCheckMinMax()
 {
-    return std::is_same<decltype(SafeMin(std::declval<T1>(), std::declval<T2>())), Tmin>::value &&
-           std::is_same<decltype(SafeMax(std::declval<T1>(), std::declval<T2>())), Tmax>::value;
+    return std::is_same<decltype(safe_min(std::declval<T1>(), std::declval<T2>())), Tmin>::value &&
+           std::is_same<decltype(safe_max(std::declval<T1>(), std::declval<T2>())), Tmax>::value;
 }
 
 template <typename T1, typename T2, typename R>
 constexpr bool TypeCheckMinR()
 {
-    return std::is_same<decltype(SafeMin<R>(std::declval<T1>(), std::declval<T2>())), R>::value;
+    return std::is_same<decltype(safe_min<R>(std::declval<T1>(), std::declval<T2>())), R>::value;
 }
 
 template <typename T1, typename T2, typename R>
 constexpr bool TypeCheckMaxR()
 {
-    return std::is_same<decltype(SafeMax<R>(std::declval<T1>(), std::declval<T2>())), R>::value;
+    return std::is_same<decltype(safe_max<R>(std::declval<T1>(), std::declval<T2>())), R>::value;
 }
 
 template <typename T, typename L, typename H, typename R>
 constexpr bool TypeCheckClamp()
 {
-    return std::is_same<decltype(SafeClamp(std::declval<T>(), std::declval<L>(), std::declval<H>())), R>::value;
+    return std::is_same<decltype(safe_clamp(std::declval<T>(), std::declval<L>(), std::declval<H>())), R>::value;
 }
 
 template <typename T, typename L, typename H, typename R>
 constexpr bool TypeCheckClampR()
 {
-    return std::is_same<decltype(SafeClamp<R>(std::declval<T>(), std::declval<L>(), std::declval<H>())), R>::value;
+    return std::is_same<decltype(safe_clamp<R>(std::declval<T>(), std::declval<L>(), std::declval<H>())), R>::value;
 }
 
 // clang-format off
 
-// SafeMin/SafeMax: Check that all combinations of signed/unsigned 8/64 bits
+// safe_min/safe_max: check that all combinations of signed/unsigned 8/64 bits
 // give the correct default result type.
 static_assert(TypeCheckMinMax<  int8_t,   int8_t,   int8_t,   int8_t>(), "");
 static_assert(TypeCheckMinMax<  int8_t,  uint8_t,   int8_t,  uint8_t>(), "");
@@ -94,7 +94,7 @@ static_assert(TypeCheckMinMax<uint64_t,  uint8_t,  uint8_t, uint64_t>(), "");
 static_assert(TypeCheckMinMax<uint64_t,  int64_t,  int64_t, uint64_t>(), "");
 static_assert(TypeCheckMinMax<uint64_t, uint64_t, uint64_t, uint64_t>(), "");
 
-// SafeClamp: Check that all combinations of signed/unsigned 8/64 bits give the
+// safe_clamp: check that all combinations of signed/unsigned 8/64 bits give the
 // correct result type.
 static_assert(TypeCheckClamp<  int8_t,   int8_t,   int8_t,   int8_t>(), "");
 static_assert(TypeCheckClamp<  int8_t,   int8_t,  uint8_t,   int8_t>(), "");
@@ -164,7 +164,7 @@ static_assert(TypeCheckClamp<uint64_t, uint64_t, uint64_t, uint64_t>(), "");
 enum DefaultE { kFoo = -17 };
 enum UInt8E : uint8_t { kBar = 17 };
 
-// SafeMin/SafeMax: Check that we can use enum types.
+// safe_min/safe_max: check that we can use enum types.
 static_assert(TypeCheckMinMax<unsigned, unsigned, unsigned, unsigned>(), "");
 static_assert(TypeCheckMinMax<unsigned, DefaultE,      int, unsigned>(), "");
 static_assert(TypeCheckMinMax<unsigned,   UInt8E,  uint8_t, unsigned>(), "");
@@ -175,7 +175,7 @@ static_assert(TypeCheckMinMax<  UInt8E, unsigned,  uint8_t, unsigned>(), "");
 static_assert(TypeCheckMinMax<  UInt8E, DefaultE,     int,       int>(), "");
 static_assert(TypeCheckMinMax<  UInt8E,   UInt8E,  uint8_t,  uint8_t>(), "");
 
-// SafeClamp: Check that we can use enum types.
+// safe_clamp: check that we can use enum types.
 static_assert(TypeCheckClamp<unsigned, unsigned, unsigned, unsigned>(), "");
 static_assert(TypeCheckClamp<unsigned, unsigned, DefaultE, unsigned>(), "");
 static_assert(TypeCheckClamp<unsigned, unsigned,   UInt8E,  uint8_t>(), "");
@@ -206,7 +206,7 @@ static_assert(TypeCheckClamp<  UInt8E,   UInt8E,   UInt8E,  uint8_t>(), "");
 
 using ld = long double;
 
-// SafeMin/SafeMax: Check that all floating-point combinations give the
+// safe_min/safe_max: check that all floating-point combinations give the
 // correct result type.
 static_assert(TypeCheckMinMax< float,  float,  float,  float>(), "");
 static_assert(TypeCheckMinMax< float, double, double, double>(), "");
@@ -218,7 +218,7 @@ static_assert(TypeCheckMinMax<    ld,  float,     ld,     ld>(), "");
 static_assert(TypeCheckMinMax<    ld, double,     ld,     ld>(), "");
 static_assert(TypeCheckMinMax<    ld,     ld,     ld,     ld>(), "");
 
-// SafeClamp: Check that all floating-point combinations give the correct
+// safe_clamp: check that all floating-point combinations give the correct
 // result type.
 static_assert(TypeCheckClamp< float,  float,  float,  float>(), "");
 static_assert(TypeCheckClamp< float,  float, double, double>(), "");
@@ -250,7 +250,7 @@ static_assert(TypeCheckClamp<    ld,     ld,     ld,     ld>(), "");
 
 // clang-format on
 
-// SafeMin/SafeMax: Check some cases of explicitly specified return type. The
+// safe_min/safe_max: check some cases of explicitly specified return type. The
 // commented-out lines give compilation errors due to the requested return type
 // being too small or requiring an int<->float conversion.
 static_assert(TypeCheckMinR<int8_t, int8_t, int16_t>(), "");
@@ -261,7 +261,7 @@ static_assert(TypeCheckMinR<uint32_t, uint64_t, uint32_t>(), "");
 static_assert(TypeCheckMaxR<uint32_t, int32_t, uint32_t>(), "");
 // static_assert(TypeCheckMaxR<uint32_t, int32_t, int32_t>(), "");
 
-// SafeClamp: Check some cases of explicitly specified return type. The
+// safe_clamp: check some cases of explicitly specified return type. The
 // commented-out lines give compilation errors due to the requested return type
 // being too small.
 static_assert(TypeCheckClampR<int16_t, int8_t, uint8_t, int16_t>(), "");
@@ -271,16 +271,16 @@ static_assert(TypeCheckClampR<int16_t, int8_t, uint8_t, int32_t>(), "");
 template <typename T1, typename T2, typename Tmin, typename Tmax>
 constexpr bool CheckMinMax(T1 a, T2 b, Tmin min, Tmax max)
 {
-    return TypeCheckMinMax<T1, T2, Tmin, Tmax>() && SafeMin(a, b) == min && SafeMax(a, b) == max;
+    return TypeCheckMinMax<T1, T2, Tmin, Tmax>() && safe_min(a, b) == min && safe_max(a, b) == max;
 }
 
 template <typename T, typename L, typename H, typename R>
 bool CheckClamp(T x, L min, H max, R clamped)
 {
-    return TypeCheckClamp<T, L, H, R>() && SafeClamp(x, min, max) == clamped;
+    return TypeCheckClamp<T, L, H, R>() && safe_clamp(x, min, max) == clamped;
 }
 
-// SafeMin/SafeMax: Check a few values.
+// safe_min/safe_max: check a few values.
 static_assert(CheckMinMax(int8_t{1}, int8_t{-1}, int8_t{-1}, int8_t{1}), "");
 static_assert(CheckMinMax(uint8_t{1}, int8_t{-1}, int8_t{-1}, uint8_t{1}), "");
 static_assert(CheckMinMax(uint8_t{5}, uint64_t{2}, uint8_t{2}, uint64_t{5}), "");
@@ -297,8 +297,8 @@ static_assert(CheckMinMax(std::numeric_limits<int32_t>::min(),
 // static_assert(CheckMinMax(1.f, 2, 1.f, 2.f), "");
 static_assert(CheckMinMax(1.f, 0.0, 0.0, 1.0), "");
 
-// SafeClamp: Check a few values.
-TEST(SafeMinmaxTest, Clamp)
+// safe_clamp: check a few values.
+TEST(SafeMinmaxTest, clamp)
 {
     EXPECT_TRUE(CheckClamp(int32_t{-1000000},
                            std::numeric_limits<int16_t>::min(),
@@ -315,18 +315,18 @@ TEST(SafeMinmaxTest, Clamp)
 } // namespace
 
 // These functions aren't used in the tests, but it's useful to look at the
-// compiler output for them, and verify that (1) the same-signedness Test*Safe
-// functions result in exactly the same code as their Test*Ref counterparts,
-// and that (2) the mixed-signedness Test*Safe functions have just a few extra
+// compiler output for them, and verify that (1) the same-signedness test*Safe
+// functions result in exactly the same code as their test*Ref counterparts,
+// and that (2) the mixed-signedness test*Safe functions have just a few extra
 // arithmetic and logic instructions (but no extra control flow instructions).
 
 // clang-format off
 int32_t  TestMinRef(  int32_t a,  int32_t b) { return std::min(a, b); }
 uint32_t TestMinRef( uint32_t a, uint32_t b) { return std::min(a, b); }
-int32_t  TestMinSafe( int32_t a,  int32_t b) { return SafeMin(a, b); }
-int32_t  TestMinSafe( int32_t a, uint32_t b) { return SafeMin(a, b); }
-int32_t  TestMinSafe(uint32_t a,  int32_t b) { return SafeMin(a, b); }
-uint32_t TestMinSafe(uint32_t a, uint32_t b) { return SafeMin(a, b); }
+int32_t  TestMinSafe( int32_t a,  int32_t b) { return safe_min(a, b); }
+int32_t  TestMinSafe( int32_t a, uint32_t b) { return safe_min(a, b); }
+int32_t  TestMinSafe(uint32_t a,  int32_t b) { return safe_min(a, b); }
+uint32_t TestMinSafe(uint32_t a, uint32_t b) { return safe_min(a, b); }
 // clang-format on
 
 int32_t TestClampRef(int32_t x, int32_t a, int32_t b)
@@ -339,35 +339,35 @@ uint32_t TestClampRef(uint32_t x, uint32_t a, uint32_t b)
 }
 int32_t TestClampSafe(int32_t x, int32_t a, int32_t b)
 {
-    return SafeClamp(x, a, b);
+    return safe_clamp(x, a, b);
 }
 int32_t TestClampSafe(int32_t x, int32_t a, uint32_t b)
 {
-    return SafeClamp(x, a, b);
+    return safe_clamp(x, a, b);
 }
 int32_t TestClampSafe(int32_t x, uint32_t a, int32_t b)
 {
-    return SafeClamp(x, a, b);
+    return safe_clamp(x, a, b);
 }
 uint32_t TestClampSafe(int32_t x, uint32_t a, uint32_t b)
 {
-    return SafeClamp(x, a, b);
+    return safe_clamp(x, a, b);
 }
 int32_t TestClampSafe(uint32_t x, int32_t a, int32_t b)
 {
-    return SafeClamp(x, a, b);
+    return safe_clamp(x, a, b);
 }
 uint32_t TestClampSafe(uint32_t x, int32_t a, uint32_t b)
 {
-    return SafeClamp(x, a, b);
+    return safe_clamp(x, a, b);
 }
 int32_t TestClampSafe(uint32_t x, uint32_t a, int32_t b)
 {
-    return SafeClamp(x, a, b);
+    return safe_clamp(x, a, b);
 }
 uint32_t TestClampSafe(uint32_t x, uint32_t a, uint32_t b)
 {
-    return SafeClamp(x, a, b);
+    return safe_clamp(x, a, b);
 }
 
 CXXKIT_END_NAMESPACE

@@ -33,41 +33,41 @@ TEST(Base64, EncodeDecodeRoundTrip)
 {
     const char input[] = "hello world";
     std::string encoded;
-    Base64::EncodeFromArray(input, sizeof(input) - 1, &encoded);
+    Base64::encode_from_array(input, sizeof(input) - 1, &encoded);
     EXPECT_EQ(encoded, "aGVsbG8gd29ybGQ=");
 
-    std::string decoded = Base64::Decode(StringView(encoded), Base64::DO_STRICT);
+    std::string decoded = Base64::decode(StringView(encoded), Base64::DO_STRICT);
     EXPECT_EQ(decoded, std::string(input, sizeof(input) - 1));
 }
 
 TEST(Base64, EncodeEmpty)
 {
     std::string encoded;
-    Base64::EncodeFromArray(nullptr, 0, &encoded);
+    Base64::encode_from_array(nullptr, 0, &encoded);
     EXPECT_TRUE(encoded.empty());
 }
 
-TEST(Base64, IsBase64Char)
+TEST(Base64, is_base64_char)
 {
-    EXPECT_TRUE(Base64::IsBase64Char('a'));
-    EXPECT_TRUE(Base64::IsBase64Char('Z'));
-    EXPECT_TRUE(Base64::IsBase64Char('0'));
-    EXPECT_TRUE(Base64::IsBase64Char('+'));
-    EXPECT_TRUE(Base64::IsBase64Char('/'));
-    EXPECT_FALSE(Base64::IsBase64Char('!'));
-    EXPECT_FALSE(Base64::IsBase64Char(' '));
+    EXPECT_TRUE(Base64::is_base64_char('a'));
+    EXPECT_TRUE(Base64::is_base64_char('Z'));
+    EXPECT_TRUE(Base64::is_base64_char('0'));
+    EXPECT_TRUE(Base64::is_base64_char('+'));
+    EXPECT_TRUE(Base64::is_base64_char('/'));
+    EXPECT_FALSE(Base64::is_base64_char('!'));
+    EXPECT_FALSE(Base64::is_base64_char(' '));
 }
 
-TEST(Base64, GetNextBase64Char)
+TEST(Base64, get_next_base64_char)
 {
     char next = 0;
-    EXPECT_TRUE(Base64::GetNextBase64Char('a', &next));
+    EXPECT_TRUE(Base64::get_next_base64_char('a', &next));
     EXPECT_EQ(next, 'b');
-    EXPECT_FALSE(Base64::GetNextBase64Char('!', &next));
+    EXPECT_FALSE(Base64::get_next_base64_char('!', &next));
 }
 
-TEST(Base64, IsBase64Encoded)
+TEST(Base64, is_base64_encoded)
 {
-    EXPECT_TRUE(Base64::IsBase64Encoded(StringView("aGVsbG8"))); // no padding allowed
-    EXPECT_FALSE(Base64::IsBase64Encoded(StringView("not base64!")));
+    EXPECT_TRUE(Base64::is_base64_encoded(StringView("aGVsbG8"))); // no padding allowed
+    EXPECT_FALSE(Base64::is_base64_encoded(StringView("not base64!")));
 }

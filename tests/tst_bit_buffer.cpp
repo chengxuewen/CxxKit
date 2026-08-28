@@ -39,7 +39,7 @@ TEST(BitBufferReaderTest, InDebugModeRequiresToCheckOkStatusBeforeDestruction)
     const uint8_t bytes[32] = {};
     Optional<BitBufferReader> reader(utils::in_place, bytes);
 
-    EXPECT_GE(reader->ReadBits(7), 0u);
+    EXPECT_GE(reader->read_bits(7), 0u);
 #if CXXKIT_DCHECK_IS_ON && GTEST_HAS_DEATH_TEST && !defined(CXXKIT_OS_ANDROID)
     EXPECT_DEATH(reader = utils::nullopt, "");
 #endif
@@ -52,38 +52,38 @@ TEST(BitBufferReaderTest, InDebugModeMayCheckRemainingBitsInsteadOfOkStatus)
     const uint8_t bytes[32] = {};
     Optional<BitBufferReader> reader(utils::in_place, bytes);
 
-    EXPECT_GE(reader->ReadBit(), 0);
+    EXPECT_GE(reader->read_bit(), 0);
 #if CXXKIT_DCHECK_IS_ON && GTEST_HAS_DEATH_TEST && !defined(CXXKIT_OS_ANDROID)
     EXPECT_DEATH(reader = utils::nullopt, "");
 #endif
-    EXPECT_GE(reader->RemainingBitCount(), 0);
+    EXPECT_GE(reader->remaining_bit_count(), 0);
     reader = utils::nullopt;
 }
 
-TEST(BitBufferReaderTest, ConsumeBits)
+TEST(BitBufferReaderTest, consume_bits)
 {
     const uint8_t bytes[32] = {};
     BitBufferReader reader(bytes);
 
     int total_bits = 32 * 8;
-    EXPECT_EQ(reader.RemainingBitCount(), total_bits);
-    reader.ConsumeBits(3);
+    EXPECT_EQ(reader.remaining_bit_count(), total_bits);
+    reader.consume_bits(3);
     total_bits -= 3;
-    EXPECT_EQ(reader.RemainingBitCount(), total_bits);
-    reader.ConsumeBits(3);
+    EXPECT_EQ(reader.remaining_bit_count(), total_bits);
+    reader.consume_bits(3);
     total_bits -= 3;
-    EXPECT_EQ(reader.RemainingBitCount(), total_bits);
-    reader.ConsumeBits(15);
+    EXPECT_EQ(reader.remaining_bit_count(), total_bits);
+    reader.consume_bits(15);
     total_bits -= 15;
-    EXPECT_EQ(reader.RemainingBitCount(), total_bits);
-    reader.ConsumeBits(67);
+    EXPECT_EQ(reader.remaining_bit_count(), total_bits);
+    reader.consume_bits(67);
     total_bits -= 67;
-    EXPECT_EQ(reader.RemainingBitCount(), total_bits);
+    EXPECT_EQ(reader.remaining_bit_count(), total_bits);
     EXPECT_TRUE(reader.Ok());
 
-    reader.ConsumeBits(32 * 8);
+    reader.consume_bits(32 * 8);
     EXPECT_FALSE(reader.Ok());
-    EXPECT_LT(reader.RemainingBitCount(), 0);
+    EXPECT_LT(reader.remaining_bit_count(), 0);
 }
 
 TEST(BitBufferReaderTest, ConsumeLotsOfBits)
@@ -91,41 +91,41 @@ TEST(BitBufferReaderTest, ConsumeLotsOfBits)
     const uint8_t bytes[1] = {};
     BitBufferReader reader(bytes);
 
-    reader.ConsumeBits(std::numeric_limits<int>::max());
-    reader.ConsumeBits(std::numeric_limits<int>::max());
-    EXPECT_GE(reader.ReadBit(), 0);
+    reader.consume_bits(std::numeric_limits<int>::max());
+    reader.consume_bits(std::numeric_limits<int>::max());
+    EXPECT_GE(reader.read_bit(), 0);
     EXPECT_FALSE(reader.Ok());
 }
 
-TEST(BitBufferReaderTest, ReadBit)
+TEST(BitBufferReaderTest, read_bit)
 {
     const uint8_t bytes[] = {0b0100'0001, 0b1011'0001};
     BitBufferReader reader(bytes);
     // First byte.
-    EXPECT_EQ(reader.ReadBit(), 0);
-    EXPECT_EQ(reader.ReadBit(), 1);
-    EXPECT_EQ(reader.ReadBit(), 0);
-    EXPECT_EQ(reader.ReadBit(), 0);
+    EXPECT_EQ(reader.read_bit(), 0);
+    EXPECT_EQ(reader.read_bit(), 1);
+    EXPECT_EQ(reader.read_bit(), 0);
+    EXPECT_EQ(reader.read_bit(), 0);
 
-    EXPECT_EQ(reader.ReadBit(), 0);
-    EXPECT_EQ(reader.ReadBit(), 0);
-    EXPECT_EQ(reader.ReadBit(), 0);
-    EXPECT_EQ(reader.ReadBit(), 1);
+    EXPECT_EQ(reader.read_bit(), 0);
+    EXPECT_EQ(reader.read_bit(), 0);
+    EXPECT_EQ(reader.read_bit(), 0);
+    EXPECT_EQ(reader.read_bit(), 1);
 
     // Second byte.
-    EXPECT_EQ(reader.ReadBit(), 1);
-    EXPECT_EQ(reader.ReadBit(), 0);
-    EXPECT_EQ(reader.ReadBit(), 1);
-    EXPECT_EQ(reader.ReadBit(), 1);
+    EXPECT_EQ(reader.read_bit(), 1);
+    EXPECT_EQ(reader.read_bit(), 0);
+    EXPECT_EQ(reader.read_bit(), 1);
+    EXPECT_EQ(reader.read_bit(), 1);
 
-    EXPECT_EQ(reader.ReadBit(), 0);
-    EXPECT_EQ(reader.ReadBit(), 0);
-    EXPECT_EQ(reader.ReadBit(), 0);
-    EXPECT_EQ(reader.ReadBit(), 1);
+    EXPECT_EQ(reader.read_bit(), 0);
+    EXPECT_EQ(reader.read_bit(), 0);
+    EXPECT_EQ(reader.read_bit(), 0);
+    EXPECT_EQ(reader.read_bit(), 1);
 
     EXPECT_TRUE(reader.Ok());
     // Try to read beyound the buffer.
-    EXPECT_EQ(reader.ReadBit(), 0);
+    EXPECT_EQ(reader.read_bit(), 0);
     EXPECT_FALSE(reader.Ok());
 }
 
@@ -133,9 +133,9 @@ TEST(BitBufferReaderTest, ReadBoolConsumesSingleBit)
 {
     const uint8_t bytes[] = {0b1010'1010};
     BitBufferReader reader(bytes);
-    ASSERT_EQ(reader.RemainingBitCount(), 8);
-    EXPECT_TRUE(reader.Read<bool>());
-    EXPECT_EQ(reader.RemainingBitCount(), 7);
+    ASSERT_EQ(reader.remaining_bit_count(), 8);
+    EXPECT_TRUE(reader.read<bool>());
+    EXPECT_EQ(reader.remaining_bit_count(), 7);
 }
 
 TEST(BitBufferReaderTest, ReadBytesAligned)
@@ -149,10 +149,10 @@ TEST(BitBufferReaderTest, ReadBytesAligned)
                              0x67,
                              0x89};
     BitBufferReader reader(bytes);
-    EXPECT_EQ(reader.Read<uint8_t>(), 0x0Au);
-    EXPECT_EQ(reader.Read<uint8_t>(), 0xBCu);
-    EXPECT_EQ(reader.Read<uint16_t>(), 0xDEF1u);
-    EXPECT_EQ(reader.Read<uint32_t>(), 0x23456789u);
+    EXPECT_EQ(reader.read<uint8_t>(), 0x0Au);
+    EXPECT_EQ(reader.read<uint8_t>(), 0xBCu);
+    EXPECT_EQ(reader.read<uint16_t>(), 0xDEF1u);
+    EXPECT_EQ(reader.read<uint32_t>(), 0x23456789u);
     EXPECT_TRUE(reader.Ok());
 }
 
@@ -160,12 +160,12 @@ TEST(BitBufferReaderTest, ReadBytesOffset4)
 {
     const uint8_t bytes[] = {0x0A, 0xBC, 0xDE, 0xF1, 0x23, 0x45, 0x67, 0x89, 0x0A};
     BitBufferReader reader(bytes);
-    reader.ConsumeBits(4);
+    reader.consume_bits(4);
 
-    EXPECT_EQ(reader.Read<uint8_t>(), 0xABu);
-    EXPECT_EQ(reader.Read<uint8_t>(), 0xCDu);
-    EXPECT_EQ(reader.Read<uint16_t>(), 0xEF12u);
-    EXPECT_EQ(reader.Read<uint32_t>(), 0x34567890u);
+    EXPECT_EQ(reader.read<uint8_t>(), 0xABu);
+    EXPECT_EQ(reader.read<uint8_t>(), 0xCDu);
+    EXPECT_EQ(reader.read<uint16_t>(), 0xEF12u);
+    EXPECT_EQ(reader.read<uint32_t>(), 0x34567890u);
     EXPECT_TRUE(reader.Ok());
 }
 
@@ -190,31 +190,31 @@ TEST(BitBufferReaderTest, ReadBytesOffset3)
     const uint8_t bytes[] = {0x1F, 0xDB, 0x97, 0x53, 0x0E, 0xCA, 0x86, 0x42};
 
     BitBufferReader reader(bytes);
-    reader.ConsumeBits(3);
-    EXPECT_EQ(reader.Read<uint8_t>(), 0xFEu);
-    EXPECT_EQ(reader.Read<uint16_t>(), 0xDCBAu);
-    EXPECT_EQ(reader.Read<uint32_t>(), 0x98765432u);
+    reader.consume_bits(3);
+    EXPECT_EQ(reader.read<uint8_t>(), 0xFEu);
+    EXPECT_EQ(reader.read<uint16_t>(), 0xDCBAu);
+    EXPECT_EQ(reader.read<uint32_t>(), 0x98765432u);
     EXPECT_TRUE(reader.Ok());
 
     // 5 bits left unread. Not enough to read a uint8_t.
-    EXPECT_EQ(reader.RemainingBitCount(), 5);
-    EXPECT_EQ(reader.Read<uint8_t>(), 0);
+    EXPECT_EQ(reader.remaining_bit_count(), 5);
+    EXPECT_EQ(reader.read<uint8_t>(), 0);
     EXPECT_FALSE(reader.Ok());
 }
 
-TEST(BitBufferReaderTest, ReadBits)
+TEST(BitBufferReaderTest, read_bits)
 {
     const uint8_t bytes[] = {0b010'01'101, 0b0011'00'1'0};
     BitBufferReader reader(bytes);
-    EXPECT_EQ(reader.ReadBits(3), 0b010u);
-    EXPECT_EQ(reader.ReadBits(2), 0b01u);
-    EXPECT_EQ(reader.ReadBits(7), 0b101'0011u);
-    EXPECT_EQ(reader.ReadBits(2), 0b00u);
-    EXPECT_EQ(reader.ReadBits(1), 0b1u);
-    EXPECT_EQ(reader.ReadBits(1), 0b0u);
+    EXPECT_EQ(reader.read_bits(3), 0b010u);
+    EXPECT_EQ(reader.read_bits(2), 0b01u);
+    EXPECT_EQ(reader.read_bits(7), 0b101'0011u);
+    EXPECT_EQ(reader.read_bits(2), 0b00u);
+    EXPECT_EQ(reader.read_bits(1), 0b1u);
+    EXPECT_EQ(reader.read_bits(1), 0b0u);
     EXPECT_TRUE(reader.Ok());
 
-    EXPECT_EQ(reader.ReadBits(1), 0u);
+    EXPECT_EQ(reader.read_bits(1), 0u);
     EXPECT_FALSE(reader.Ok());
 }
 
@@ -222,7 +222,7 @@ TEST(BitBufferReaderTest, ReadZeroBits)
 {
     BitBufferReader reader(ArrayView<const uint8_t>(nullptr, 0));
 
-    EXPECT_EQ(reader.ReadBits(0), 0u);
+    EXPECT_EQ(reader.read_bits(0), 0u);
     EXPECT_TRUE(reader.Ok());
 }
 
@@ -232,7 +232,7 @@ TEST(BitBufferReaderTest, ReadBitFromEmptyArray)
 
     // Trying to read from the empty array shouldn't dereference the pointer,
     // i.e. shouldn't crash.
-    EXPECT_EQ(reader.ReadBit(), 0);
+    EXPECT_EQ(reader.read_bit(), 0);
     EXPECT_FALSE(reader.Ok());
 }
 
@@ -242,7 +242,7 @@ TEST(BitBufferReaderTest, ReadBitsFromEmptyArray)
 
     // Trying to read from the empty array shouldn't dereference the pointer,
     // i.e. shouldn't crash.
-    EXPECT_EQ(reader.ReadBits(1), 0u);
+    EXPECT_EQ(reader.read_bits(1), 0u);
     EXPECT_FALSE(reader.Ok());
 }
 
@@ -252,16 +252,16 @@ TEST(BitBufferReaderTest, ReadBits64)
         {0x4D, 0x32, 0xAB, 0x54, 0x00, 0xFF, 0xFE, 0x01, 0xAB, 0xCD, 0xEF, 0x01, 0x23, 0x45, 0x67, 0x89};
     BitBufferReader reader(bytes);
 
-    EXPECT_EQ(reader.ReadBits(33), 0x4D32AB5400FFFE01u >> (64 - 33));
+    EXPECT_EQ(reader.read_bits(33), 0x4D32AB5400FFFE01u >> (64 - 33));
 
     constexpr uint64_t kMask31Bits = (1ull << 32) - 1;
-    EXPECT_EQ(reader.ReadBits(31), 0x4D32AB5400FFFE01ull & kMask31Bits);
+    EXPECT_EQ(reader.read_bits(31), 0x4D32AB5400FFFE01ull & kMask31Bits);
 
-    EXPECT_EQ(reader.ReadBits(64), 0xABCDEF0123456789ull);
+    EXPECT_EQ(reader.read_bits(64), 0xABCDEF0123456789ull);
     EXPECT_TRUE(reader.Ok());
 
     // Nothing more to read.
-    EXPECT_EQ(reader.ReadBit(), 0);
+    EXPECT_EQ(reader.read_bit(), 0);
     EXPECT_FALSE(reader.Ok());
 }
 
@@ -271,17 +271,17 @@ TEST(BitBufferReaderTest, CanPeekBitsUsingCopyConstructor)
     // cheap BitBufferReader copy constructor.
     const uint8_t bytes[] = {0x0A, 0xBC};
     BitBufferReader reader(bytes);
-    reader.ConsumeBits(4);
-    ASSERT_EQ(reader.RemainingBitCount(), 12);
+    reader.consume_bits(4);
+    ASSERT_EQ(reader.remaining_bit_count(), 12);
 
     BitBufferReader peeker = reader;
-    EXPECT_EQ(peeker.ReadBits(8), 0xABu);
-    EXPECT_EQ(peeker.RemainingBitCount(), 4);
+    EXPECT_EQ(peeker.read_bits(8), 0xABu);
+    EXPECT_EQ(peeker.remaining_bit_count(), 4);
 
-    EXPECT_EQ(reader.RemainingBitCount(), 12);
+    EXPECT_EQ(reader.remaining_bit_count(), 12);
     // Can resume reading from before peeker was created.
-    EXPECT_EQ(reader.ReadBits(4), 0xAu);
-    EXPECT_EQ(reader.RemainingBitCount(), 8);
+    EXPECT_EQ(reader.read_bits(4), 0xAu);
+    EXPECT_EQ(reader.remaining_bit_count(), 8);
 }
 
 TEST(BitBufferReaderTest, ReadNonSymmetricSameNumberOfBitsWhenNumValuesPowerOf2)
@@ -289,12 +289,12 @@ TEST(BitBufferReaderTest, ReadNonSymmetricSameNumberOfBitsWhenNumValuesPowerOf2)
     const uint8_t bytes[2] = {0xf3, 0xa0};
     BitBufferReader reader(bytes);
 
-    ASSERT_EQ(reader.RemainingBitCount(), 16);
-    EXPECT_EQ(reader.ReadNonSymmetric(/*num_values=*/1 << 4), 0xfu);
-    EXPECT_EQ(reader.ReadNonSymmetric(/*num_values=*/1 << 4), 0x3u);
-    EXPECT_EQ(reader.ReadNonSymmetric(/*num_values=*/1 << 4), 0xau);
-    EXPECT_EQ(reader.ReadNonSymmetric(/*num_values=*/1 << 4), 0x0u);
-    EXPECT_EQ(reader.RemainingBitCount(), 0);
+    ASSERT_EQ(reader.remaining_bit_count(), 16);
+    EXPECT_EQ(reader.read_non_symmetric(/*num_values=*/1 << 4), 0xfu);
+    EXPECT_EQ(reader.read_non_symmetric(/*num_values=*/1 << 4), 0x3u);
+    EXPECT_EQ(reader.read_non_symmetric(/*num_values=*/1 << 4), 0xau);
+    EXPECT_EQ(reader.read_non_symmetric(/*num_values=*/1 << 4), 0x0u);
+    EXPECT_EQ(reader.remaining_bit_count(), 0);
     EXPECT_TRUE(reader.Ok());
 }
 
@@ -303,9 +303,9 @@ TEST(BitBufferReaderTest, ReadNonSymmetricOnlyValueConsumesZeroBits)
     const uint8_t bytes[2] = {};
     BitBufferReader reader(bytes);
 
-    ASSERT_EQ(reader.RemainingBitCount(), 16);
-    EXPECT_EQ(reader.ReadNonSymmetric(/*num_values=*/1), 0u);
-    EXPECT_EQ(reader.RemainingBitCount(), 16);
+    ASSERT_EQ(reader.remaining_bit_count(), 16);
+    EXPECT_EQ(reader.read_non_symmetric(/*num_values=*/1), 0u);
+    EXPECT_EQ(reader.remaining_bit_count(), 16);
 }
 
 std::array<uint8_t, 8> GolombEncoded(uint32_t val)
@@ -323,7 +323,7 @@ std::array<uint8_t, 8> GolombEncoded(uint32_t val)
 
 TEST(BitBufferReaderTest, GolombUint32Values)
 {
-    // Test over the uint32_t range with a large enough step that the test doesn't
+    // test over the uint32_t range with a large enough step that the test doesn't
     // take forever. Around 20,000 iterations should do.
     const int kStep = std::numeric_limits<uint32_t>::max() / 20000;
     for (uint32_t i = 0; i < std::numeric_limits<uint32_t>::max() - kStep; i += kStep)
@@ -332,7 +332,7 @@ TEST(BitBufferReaderTest, GolombUint32Values)
         BitBufferReader reader(buffer);
         // Use assert instead of EXPECT to avoid spamming thousands of failed
         // expectation when this test fails.
-        ASSERT_EQ(reader.ReadExponentialGolomb(), i);
+        ASSERT_EQ(reader.read_exponential_golomb(), i);
         EXPECT_TRUE(reader.Ok());
     }
 }
@@ -350,7 +350,7 @@ TEST(BitBufferReaderTest, SignedGolombValues)
     for (size_t i = 0; i < sizeof(golomb_bits); ++i)
     {
         BitBufferReader reader(golomb_bits[i]);
-        EXPECT_EQ(reader.ReadSignedExponentialGolomb(), expected[i])
+        EXPECT_EQ(reader.read_signed_exponential_golomb(), expected[i])
             << "Mismatch in expected/decoded value for golomb_bits[" << i
             << "]: " << static_cast<int>(golomb_bits[i][0]);
         EXPECT_TRUE(reader.Ok());
@@ -363,26 +363,26 @@ TEST(BitBufferReaderTest, NoGolombOverread)
     // Make sure the bit buffer correctly enforces byte length on golomb reads.
     // If it didn't, the above buffer would be valid at 3 bytes.
     BitBufferReader reader1(utils::make_array_view(bytes, 1));
-    // When parse fails, `ReadExponentialGolomb` may return any number.
-    reader1.ReadExponentialGolomb();
+    // When parse fails, `read_exponential_golomb` may return any number.
+    reader1.read_exponential_golomb();
     EXPECT_FALSE(reader1.Ok());
 
     BitBufferReader reader2(utils::make_array_view(bytes, 2));
-    reader2.ReadExponentialGolomb();
+    reader2.read_exponential_golomb();
     EXPECT_FALSE(reader2.Ok());
 
     BitBufferReader reader3(bytes);
     // Golomb should have read 9 bits, so 0x01FF, and since it is golomb, the
     // result is 0x01FF - 1 = 0x01FE.
-    EXPECT_EQ(reader3.ReadExponentialGolomb(), 0x01FEu);
+    EXPECT_EQ(reader3.read_exponential_golomb(), 0x01FEu);
     EXPECT_TRUE(reader3.Ok());
 }
 
-TEST(BitBufferReaderTest, ReadLeb128)
+TEST(BitBufferReaderTest, read_leb128)
 {
     const uint8_t bytes[] = {0xFF, 0x7F};
     BitBufferReader reader(bytes);
-    EXPECT_EQ(reader.ReadLeb128(), 0x3FFFu);
+    EXPECT_EQ(reader.read_leb128(), 0x3FFFu);
     EXPECT_TRUE(reader.Ok());
 }
 
@@ -390,12 +390,12 @@ TEST(BitBufferReaderTest, ReadLeb128Large)
 {
     const uint8_t max_uint64[] = {0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0x1};
     BitBufferReader max_reader(max_uint64);
-    EXPECT_EQ(max_reader.ReadLeb128(), std::numeric_limits<uint64_t>::max());
+    EXPECT_EQ(max_reader.read_leb128(), std::numeric_limits<uint64_t>::max());
     EXPECT_TRUE(max_reader.Ok());
 
     const uint8_t overflow_unit64_t[] = {0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0x2};
     BitBufferReader overflow_reader(overflow_unit64_t);
-    EXPECT_EQ(overflow_reader.ReadLeb128(), uint64_t{0});
+    EXPECT_EQ(overflow_reader.read_leb128(), uint64_t{0});
     EXPECT_FALSE(overflow_reader.Ok());
 }
 
@@ -403,31 +403,31 @@ TEST(BitBufferReaderTest, ReadLeb128NoEndByte)
 {
     const uint8_t bytes[] = {0xFF, 0xFF};
     BitBufferReader reader(bytes);
-    EXPECT_EQ(reader.ReadLeb128(), uint64_t{0});
+    EXPECT_EQ(reader.read_leb128(), uint64_t{0});
     EXPECT_FALSE(reader.Ok());
 }
 
-TEST(BitBufferWriterTest, ConsumeBits)
+TEST(BitBufferWriterTest, consume_bits)
 {
     uint8_t bytes[64] = {0};
     BitBufferWriter buffer(bytes, 32);
     uint64_t total_bits = 32 * 8;
-    EXPECT_EQ(total_bits, buffer.RemainingBitCount());
-    EXPECT_TRUE(buffer.ConsumeBits(3));
+    EXPECT_EQ(total_bits, buffer.remaining_bit_count());
+    EXPECT_TRUE(buffer.consume_bits(3));
     total_bits -= 3;
-    EXPECT_EQ(total_bits, buffer.RemainingBitCount());
-    EXPECT_TRUE(buffer.ConsumeBits(3));
+    EXPECT_EQ(total_bits, buffer.remaining_bit_count());
+    EXPECT_TRUE(buffer.consume_bits(3));
     total_bits -= 3;
-    EXPECT_EQ(total_bits, buffer.RemainingBitCount());
-    EXPECT_TRUE(buffer.ConsumeBits(15));
+    EXPECT_EQ(total_bits, buffer.remaining_bit_count());
+    EXPECT_TRUE(buffer.consume_bits(15));
     total_bits -= 15;
-    EXPECT_EQ(total_bits, buffer.RemainingBitCount());
-    EXPECT_TRUE(buffer.ConsumeBits(37));
+    EXPECT_EQ(total_bits, buffer.remaining_bit_count());
+    EXPECT_TRUE(buffer.consume_bits(37));
     total_bits -= 37;
-    EXPECT_EQ(total_bits, buffer.RemainingBitCount());
+    EXPECT_EQ(total_bits, buffer.remaining_bit_count());
 
-    EXPECT_FALSE(buffer.ConsumeBits(32 * 8));
-    EXPECT_EQ(total_bits, buffer.RemainingBitCount());
+    EXPECT_FALSE(buffer.consume_bits(32 * 8));
+    EXPECT_EQ(total_bits, buffer.remaining_bit_count());
 }
 
 TEST(BitBufferWriterDeathTest, SetOffsetValues)
@@ -437,35 +437,35 @@ TEST(BitBufferWriterDeathTest, SetOffsetValues)
 
     size_t byte_offset, bit_offset;
     // Bit offsets are [0,7].
-    EXPECT_TRUE(buffer.Seek(0, 0));
-    EXPECT_TRUE(buffer.Seek(0, 7));
-    buffer.GetCurrentOffset(&byte_offset, &bit_offset);
+    EXPECT_TRUE(buffer.seek(0, 0));
+    EXPECT_TRUE(buffer.seek(0, 7));
+    buffer.get_current_offset(&byte_offset, &bit_offset);
     EXPECT_EQ(0u, byte_offset);
     EXPECT_EQ(7u, bit_offset);
-    EXPECT_FALSE(buffer.Seek(0, 8));
-    buffer.GetCurrentOffset(&byte_offset, &bit_offset);
+    EXPECT_FALSE(buffer.seek(0, 8));
+    buffer.get_current_offset(&byte_offset, &bit_offset);
     EXPECT_EQ(0u, byte_offset);
     EXPECT_EQ(7u, bit_offset);
     // Byte offsets are [0,length]. At byte offset length, the bit offset must be
     // 0.
-    EXPECT_TRUE(buffer.Seek(0, 0));
-    EXPECT_TRUE(buffer.Seek(2, 4));
-    buffer.GetCurrentOffset(&byte_offset, &bit_offset);
+    EXPECT_TRUE(buffer.seek(0, 0));
+    EXPECT_TRUE(buffer.seek(2, 4));
+    buffer.get_current_offset(&byte_offset, &bit_offset);
     EXPECT_EQ(2u, byte_offset);
     EXPECT_EQ(4u, bit_offset);
-    EXPECT_TRUE(buffer.Seek(4, 0));
-    EXPECT_FALSE(buffer.Seek(5, 0));
-    buffer.GetCurrentOffset(&byte_offset, &bit_offset);
+    EXPECT_TRUE(buffer.seek(4, 0));
+    EXPECT_FALSE(buffer.seek(5, 0));
+    buffer.get_current_offset(&byte_offset, &bit_offset);
     EXPECT_EQ(4u, byte_offset);
     EXPECT_EQ(0u, bit_offset);
-    EXPECT_FALSE(buffer.Seek(4, 1));
+    EXPECT_FALSE(buffer.seek(4, 1));
 
 // Disable death test on Android because it relies on fork() and doesn't play
 // nicely.
 #if GTEST_HAS_DEATH_TEST
 #    if !defined(WEBRTC_ANDROID)
     // Passing a null out parameter is death.
-    EXPECT_DEATH(buffer.GetCurrentOffset(&byte_offset, nullptr), "");
+    EXPECT_DEATH(buffer.get_current_offset(&byte_offset, nullptr), "");
 #    endif
 #endif
 }
@@ -475,15 +475,15 @@ TEST(BitBufferWriterTest, WriteNonSymmetricSameNumberOfBitsWhenNumValuesPowerOf2
     uint8_t bytes[2] = {};
     BitBufferWriter writer(bytes, 2);
 
-    ASSERT_EQ(writer.RemainingBitCount(), 16u);
-    EXPECT_TRUE(writer.WriteNonSymmetric(0xf, /*num_values=*/1 << 4));
-    ASSERT_EQ(writer.RemainingBitCount(), 12u);
-    EXPECT_TRUE(writer.WriteNonSymmetric(0x3, /*num_values=*/1 << 4));
-    ASSERT_EQ(writer.RemainingBitCount(), 8u);
-    EXPECT_TRUE(writer.WriteNonSymmetric(0xa, /*num_values=*/1 << 4));
-    ASSERT_EQ(writer.RemainingBitCount(), 4u);
-    EXPECT_TRUE(writer.WriteNonSymmetric(0x0, /*num_values=*/1 << 4));
-    ASSERT_EQ(writer.RemainingBitCount(), 0u);
+    ASSERT_EQ(writer.remaining_bit_count(), 16u);
+    EXPECT_TRUE(writer.write_non_symmetric(0xf, /*num_values=*/1 << 4));
+    ASSERT_EQ(writer.remaining_bit_count(), 12u);
+    EXPECT_TRUE(writer.write_non_symmetric(0x3, /*num_values=*/1 << 4));
+    ASSERT_EQ(writer.remaining_bit_count(), 8u);
+    EXPECT_TRUE(writer.write_non_symmetric(0xa, /*num_values=*/1 << 4));
+    ASSERT_EQ(writer.remaining_bit_count(), 4u);
+    EXPECT_TRUE(writer.write_non_symmetric(0x0, /*num_values=*/1 << 4));
+    ASSERT_EQ(writer.remaining_bit_count(), 0u);
 
     EXPECT_THAT(bytes, ElementsAre(0xf3, 0xa0));
 }
@@ -493,35 +493,35 @@ TEST(BitBufferWriterTest, NonSymmetricReadsMatchesWrites)
     uint8_t bytes[2] = {};
     BitBufferWriter writer(bytes, 2);
 
-    EXPECT_EQ(BitBufferWriter::SizeNonSymmetricBits(/*val=*/1, /*num_values=*/6), 2u);
-    EXPECT_EQ(BitBufferWriter::SizeNonSymmetricBits(/*val=*/2, /*num_values=*/6), 3u);
+    EXPECT_EQ(BitBufferWriter::size_non_symmetric_bits(/*val=*/1, /*num_values=*/6), 2u);
+    EXPECT_EQ(BitBufferWriter::size_non_symmetric_bits(/*val=*/2, /*num_values=*/6), 3u);
     // Values [0, 1] can fit into two bit.
-    ASSERT_EQ(writer.RemainingBitCount(), 16u);
-    EXPECT_TRUE(writer.WriteNonSymmetric(/*val=*/0, /*num_values=*/6));
-    ASSERT_EQ(writer.RemainingBitCount(), 14u);
-    EXPECT_TRUE(writer.WriteNonSymmetric(/*val=*/1, /*num_values=*/6));
-    ASSERT_EQ(writer.RemainingBitCount(), 12u);
+    ASSERT_EQ(writer.remaining_bit_count(), 16u);
+    EXPECT_TRUE(writer.write_non_symmetric(/*val=*/0, /*num_values=*/6));
+    ASSERT_EQ(writer.remaining_bit_count(), 14u);
+    EXPECT_TRUE(writer.write_non_symmetric(/*val=*/1, /*num_values=*/6));
+    ASSERT_EQ(writer.remaining_bit_count(), 12u);
     // Values [2, 5] require 3 bits.
-    EXPECT_TRUE(writer.WriteNonSymmetric(/*val=*/2, /*num_values=*/6));
-    ASSERT_EQ(writer.RemainingBitCount(), 9u);
-    EXPECT_TRUE(writer.WriteNonSymmetric(/*val=*/3, /*num_values=*/6));
-    ASSERT_EQ(writer.RemainingBitCount(), 6u);
-    EXPECT_TRUE(writer.WriteNonSymmetric(/*val=*/4, /*num_values=*/6));
-    ASSERT_EQ(writer.RemainingBitCount(), 3u);
-    EXPECT_TRUE(writer.WriteNonSymmetric(/*val=*/5, /*num_values=*/6));
-    ASSERT_EQ(writer.RemainingBitCount(), 0u);
+    EXPECT_TRUE(writer.write_non_symmetric(/*val=*/2, /*num_values=*/6));
+    ASSERT_EQ(writer.remaining_bit_count(), 9u);
+    EXPECT_TRUE(writer.write_non_symmetric(/*val=*/3, /*num_values=*/6));
+    ASSERT_EQ(writer.remaining_bit_count(), 6u);
+    EXPECT_TRUE(writer.write_non_symmetric(/*val=*/4, /*num_values=*/6));
+    ASSERT_EQ(writer.remaining_bit_count(), 3u);
+    EXPECT_TRUE(writer.write_non_symmetric(/*val=*/5, /*num_values=*/6));
+    ASSERT_EQ(writer.remaining_bit_count(), 0u);
 
     // Bit values are
     // 00.01.100.101.110.111 = 00011001|01110111 = 0x19|77
     EXPECT_THAT(bytes, ElementsAre(0x19, 0x77));
 
     BitBufferReader reader(bytes);
-    EXPECT_EQ(reader.ReadNonSymmetric(/*num_values=*/6), 0u);
-    EXPECT_EQ(reader.ReadNonSymmetric(/*num_values=*/6), 1u);
-    EXPECT_EQ(reader.ReadNonSymmetric(/*num_values=*/6), 2u);
-    EXPECT_EQ(reader.ReadNonSymmetric(/*num_values=*/6), 3u);
-    EXPECT_EQ(reader.ReadNonSymmetric(/*num_values=*/6), 4u);
-    EXPECT_EQ(reader.ReadNonSymmetric(/*num_values=*/6), 5u);
+    EXPECT_EQ(reader.read_non_symmetric(/*num_values=*/6), 0u);
+    EXPECT_EQ(reader.read_non_symmetric(/*num_values=*/6), 1u);
+    EXPECT_EQ(reader.read_non_symmetric(/*num_values=*/6), 2u);
+    EXPECT_EQ(reader.read_non_symmetric(/*num_values=*/6), 3u);
+    EXPECT_EQ(reader.read_non_symmetric(/*num_values=*/6), 4u);
+    EXPECT_EQ(reader.read_non_symmetric(/*num_values=*/6), 5u);
     EXPECT_TRUE(reader.Ok());
 }
 
@@ -529,11 +529,11 @@ TEST(BitBufferWriterTest, WriteNonSymmetricOnlyValueConsumesNoBits)
 {
     uint8_t bytes[2] = {};
     BitBufferWriter writer(bytes, 2);
-    ASSERT_EQ(writer.RemainingBitCount(), 16u);
+    ASSERT_EQ(writer.remaining_bit_count(), 16u);
 
-    EXPECT_TRUE(writer.WriteNonSymmetric(0, /*num_values=*/1));
+    EXPECT_TRUE(writer.write_non_symmetric(0, /*num_values=*/1));
 
-    EXPECT_EQ(writer.RemainingBitCount(), 16u);
+    EXPECT_EQ(writer.remaining_bit_count(), 16u);
 }
 
 TEST(BitBufferWriterTest, SymmetricReadWrite)
@@ -542,24 +542,24 @@ TEST(BitBufferWriterTest, SymmetricReadWrite)
     BitBufferWriter buffer(bytes, 4);
 
     // Write some bit data at various sizes.
-    EXPECT_TRUE(buffer.WriteBits(0x2u, 3));
-    EXPECT_TRUE(buffer.WriteBits(0x1u, 2));
-    EXPECT_TRUE(buffer.WriteBits(0x53u, 7));
-    EXPECT_TRUE(buffer.WriteBits(0x0u, 2));
-    EXPECT_TRUE(buffer.WriteBits(0x1u, 1));
-    EXPECT_TRUE(buffer.WriteBits(0x1ABCDu, 17));
+    EXPECT_TRUE(buffer.write_bits(0x2u, 3));
+    EXPECT_TRUE(buffer.write_bits(0x1u, 2));
+    EXPECT_TRUE(buffer.write_bits(0x53u, 7));
+    EXPECT_TRUE(buffer.write_bits(0x0u, 2));
+    EXPECT_TRUE(buffer.write_bits(0x1u, 1));
+    EXPECT_TRUE(buffer.write_bits(0x1ABCDu, 17));
     // That should be all that fits in the buffer.
-    EXPECT_FALSE(buffer.WriteBits(1, 1));
+    EXPECT_FALSE(buffer.write_bits(1, 1));
 
     BitBufferReader reader(utils::make_array_view(bytes, 4));
-    EXPECT_EQ(reader.ReadBits(3), 0x2u);
-    EXPECT_EQ(reader.ReadBits(2), 0x1u);
-    EXPECT_EQ(reader.ReadBits(7), 0x53u);
-    EXPECT_EQ(reader.ReadBits(2), 0x0u);
-    EXPECT_EQ(reader.ReadBits(1), 0x1u);
-    EXPECT_EQ(reader.ReadBits(17), 0x1ABCDu);
+    EXPECT_EQ(reader.read_bits(3), 0x2u);
+    EXPECT_EQ(reader.read_bits(2), 0x1u);
+    EXPECT_EQ(reader.read_bits(7), 0x53u);
+    EXPECT_EQ(reader.read_bits(2), 0x0u);
+    EXPECT_EQ(reader.read_bits(1), 0x1u);
+    EXPECT_EQ(reader.read_bits(17), 0x1ABCDu);
     // And there should be nothing left.
-    EXPECT_EQ(reader.RemainingBitCount(), 0);
+    EXPECT_EQ(reader.remaining_bit_count(), 0);
 }
 
 TEST(BitBufferWriterTest, SymmetricBytesMisaligned)
@@ -568,16 +568,16 @@ TEST(BitBufferWriterTest, SymmetricBytesMisaligned)
     BitBufferWriter buffer(bytes, 16);
 
     // Offset 3, to get things misaligned.
-    EXPECT_TRUE(buffer.ConsumeBits(3));
-    EXPECT_TRUE(buffer.WriteUInt8(0x12u));
-    EXPECT_TRUE(buffer.WriteUInt16(0x3456u));
-    EXPECT_TRUE(buffer.WriteUInt32(0x789ABCDEu));
+    EXPECT_TRUE(buffer.consume_bits(3));
+    EXPECT_TRUE(buffer.write_u_int8(0x12u));
+    EXPECT_TRUE(buffer.write_u_int16(0x3456u));
+    EXPECT_TRUE(buffer.write_u_int32(0x789ABCDEu));
 
     BitBufferReader reader(bytes);
-    reader.ConsumeBits(3);
-    EXPECT_EQ(reader.Read<uint8_t>(), 0x12u);
-    EXPECT_EQ(reader.Read<uint16_t>(), 0x3456u);
-    EXPECT_EQ(reader.Read<uint32_t>(), 0x789ABCDEu);
+    reader.consume_bits(3);
+    EXPECT_EQ(reader.read<uint8_t>(), 0x12u);
+    EXPECT_EQ(reader.read<uint16_t>(), 0x3456u);
+    EXPECT_EQ(reader.read<uint32_t>(), 0x789ABCDEu);
     EXPECT_TRUE(reader.Ok());
 }
 
@@ -588,12 +588,12 @@ TEST(BitBufferWriterTest, SymmetricGolomb)
     BitBufferWriter buffer(bytes, 64);
     for (size_t i = 0; i < CXXKIT_ARRAY_SIZE(test_string); ++i)
     {
-        EXPECT_TRUE(buffer.WriteExponentialGolomb(test_string[i]));
+        EXPECT_TRUE(buffer.write_exponential_golomb(test_string[i]));
     }
     BitBufferReader reader(bytes);
     for (size_t i = 0; i < CXXKIT_ARRAY_SIZE(test_string); ++i)
     {
-        EXPECT_EQ(int64_t{reader.ReadExponentialGolomb()}, int64_t{test_string[i]});
+        EXPECT_EQ(int64_t{reader.read_exponential_golomb()}, int64_t{test_string[i]});
     }
     EXPECT_TRUE(reader.Ok());
 }
@@ -602,26 +602,26 @@ TEST(BitBufferWriterTest, WriteClearsBits)
 {
     uint8_t bytes[] = {0xFF, 0xFF};
     BitBufferWriter buffer(bytes, 2);
-    EXPECT_TRUE(buffer.ConsumeBits(3));
-    EXPECT_TRUE(buffer.WriteBits(0, 1));
+    EXPECT_TRUE(buffer.consume_bits(3));
+    EXPECT_TRUE(buffer.write_bits(0, 1));
     EXPECT_EQ(0xEFu, bytes[0]);
-    EXPECT_TRUE(buffer.WriteBits(0, 3));
+    EXPECT_TRUE(buffer.write_bits(0, 3));
     EXPECT_EQ(0xE1u, bytes[0]);
-    EXPECT_TRUE(buffer.WriteBits(0, 2));
+    EXPECT_TRUE(buffer.write_bits(0, 2));
     EXPECT_EQ(0xE0u, bytes[0]);
     EXPECT_EQ(0x7F, bytes[1]);
 }
 
-TEST(BitBufferWriterTest, WriteLeb128)
+TEST(BitBufferWriterTest, write_leb128)
 {
     uint8_t small_number[2];
     BitBufferWriter small_buffer(small_number, sizeof(small_number));
-    EXPECT_TRUE(small_buffer.WriteLeb128(129));
+    EXPECT_TRUE(small_buffer.write_leb128(129));
     EXPECT_THAT(small_number, ElementsAre(0x81, 0x01));
 
     uint8_t large_number[10];
     BitBufferWriter large_buffer(large_number, sizeof(large_number));
-    EXPECT_TRUE(large_buffer.WriteLeb128(std::numeric_limits<uint64_t>::max()));
+    EXPECT_TRUE(large_buffer.write_leb128(std::numeric_limits<uint64_t>::max()));
     EXPECT_THAT(large_number, ElementsAre(0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0x01));
 }
 
@@ -629,14 +629,14 @@ TEST(BitBufferWriterTest, WriteLeb128TooSmallBuffer)
 {
     uint8_t bytes[1];
     BitBufferWriter buffer(bytes, sizeof(bytes));
-    EXPECT_FALSE(buffer.WriteLeb128(12345));
+    EXPECT_FALSE(buffer.write_leb128(12345));
 }
 
-TEST(BitBufferWriterTest, WriteString)
+TEST(BitBufferWriterTest, write_string)
 {
     uint8_t buffer[2];
     BitBufferWriter writer(buffer, sizeof(buffer));
-    EXPECT_TRUE(writer.WriteString("ab"));
+    EXPECT_TRUE(writer.write_string("ab"));
     EXPECT_THAT(buffer, ElementsAre('a', 'b'));
 }
 
@@ -644,7 +644,7 @@ TEST(BitBufferWriterTest, WriteStringTooSmallBuffer)
 {
     uint8_t buffer[2];
     BitBufferWriter writer(buffer, sizeof(buffer));
-    EXPECT_FALSE(writer.WriteString("abc"));
+    EXPECT_FALSE(writer.write_string("abc"));
 }
 
 CXXKIT_END_NAMESPACE

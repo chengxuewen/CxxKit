@@ -118,7 +118,7 @@ static void destroy_current_thread_data_key()
     pthread_once(&currentThreadDataOnce, create_current_thread_data_key);
     pthread_key_delete(currentThreadDataKey);
 
-    // Reset currentThreadDataOnce in case we end up recreating the thread-data in the rare case of
+    // reset currentThreadDataOnce in case we end up recreating the thread-data in the rare case of
     // PlatformThreadData construction after destroying the PlatformThreadData.
     pthread_once_t pthreadOnceInit = PTHREAD_ONCE_INIT;
     currentThreadDataOnce = pthreadOnceInit;
@@ -606,7 +606,7 @@ int PlatformThread::ideal_concurrency_thread_count() noexcept
 #        if (__INTEGRITY_MAJOR_VERSION >= 10)
     // Integrity V10+ does support multicore CPUs
     Value processorCount;
-    if (GetProcessorCount(CurrentTask(), &processorCount) == 0)
+    if (get_processor_count(current_task(), &processorCount) == 0)
     {
         cores = processorCount;
     }

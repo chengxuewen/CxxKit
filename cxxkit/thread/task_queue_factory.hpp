@@ -46,10 +46,10 @@ public:
     };
 
     virtual ~TaskQueueFactory() = default;
-    virtual std::unique_ptr<TaskQueueBase, TaskQueueBase::Deleter> CreateTaskQueue(StringView name,
+    virtual std::unique_ptr<TaskQueueBase, TaskQueueBase::Deleter> create_task_queue(StringView name,
                                                                                    Priority priority) const = 0;
 
-    static std::unique_ptr<TaskQueueFactory> CreateDefault();
+    static std::unique_ptr<TaskQueueFactory> create_default();
 };
 
 CXXKIT_END_NAMESPACE

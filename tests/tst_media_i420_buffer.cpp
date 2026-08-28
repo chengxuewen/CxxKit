@@ -31,34 +31,34 @@
 
 namespace {
 
-TEST(I420Buffer, Create) {
-    auto buf = cxxkit::I420Buffer::Create(16, 16);
+TEST(I420Buffer, create) {
+    auto buf = cxxkit::I420Buffer::create(16, 16);
     ASSERT_TRUE(buf);
     EXPECT_EQ(buf->width(), 16);
     EXPECT_EQ(buf->height(), 16);
     EXPECT_EQ(buf->type(), cxxkit::VideoType::kI420);
 }
 
-TEST(I420Buffer, Copy) {
-    auto src = cxxkit::I420Buffer::Create(4, 4);
-    src->SetBlack();  // Y=0, U=128, V=128 for black
-    auto dst = cxxkit::I420Buffer::Copy(*src);
+TEST(I420Buffer, copy) {
+    auto src = cxxkit::I420Buffer::create(4, 4);
+    src->set_black();  // Y=0, U=128, V=128 for black
+    auto dst = cxxkit::I420Buffer::copy(*src);
     ASSERT_TRUE(dst);
     EXPECT_EQ(dst->width(), 4);
     EXPECT_EQ(dst->height(), 4);
     // 校验 Y 平面为 0
-    const uint8_t* y = dst->GetDataY();
+    const uint8_t* y = dst->get_data_y();
     for (int i = 0; i < 4 * 4; ++i) EXPECT_EQ(y[i], 0);
 }
 
-TEST(I420Buffer, SetBlack) {
-    auto buf = cxxkit::I420Buffer::Create(4, 4);
-    buf->SetBlack();
-    const uint8_t* y = buf->GetDataY();
+TEST(I420Buffer, set_black) {
+    auto buf = cxxkit::I420Buffer::create(4, 4);
+    buf->set_black();
+    const uint8_t* y = buf->get_data_y();
     for (int i = 0; i < 16; ++i) EXPECT_EQ(y[i], 0);  // Y=0
     // U/V 平面为 128
-    const uint8_t* u = buf->GetDataU();
-    const uint8_t* v = buf->GetDataV();
+    const uint8_t* u = buf->get_data_u();
+    const uint8_t* v = buf->get_data_v();
     for (int i = 0; i < 4; ++i) {
         EXPECT_EQ(u[i], 128);
         EXPECT_EQ(v[i], 128);
@@ -66,32 +66,32 @@ TEST(I420Buffer, SetBlack) {
 }
 
 TEST(I420Buffer, DataLayout) {
-    auto buf = cxxkit::I420Buffer::Create(4, 4);
+    auto buf = cxxkit::I420Buffer::create(4, 4);
     // I420: Y 平面 w*h, U/V 平面 w/2*h/2，各 stride
-    EXPECT_EQ(buf->StrideY(), 4);
-    EXPECT_EQ(buf->StrideU(), 2);
-    EXPECT_EQ(buf->StrideV(), 2);
+    EXPECT_EQ(buf->stride_y(), 4);
+    EXPECT_EQ(buf->stride_u(), 2);
+    EXPECT_EQ(buf->stride_v(), 2);
 }
 
 TEST(I420Buffer, MutableDataWritable) {
-    auto buf = cxxkit::I420Buffer::Create(4, 4);
-    uint8_t* y = buf->MutableDataY();
+    auto buf = cxxkit::I420Buffer::create(4, 4);
+    uint8_t* y = buf->mutable_data_y();
     for (int i = 0; i < 16; ++i) y[i] = 42;
-    EXPECT_EQ(buf->GetDataY()[0], 42);
+    EXPECT_EQ(buf->get_data_y()[0], 42);
 }
 
 TEST(I420Buffer, Rotate90) {
-    auto src = cxxkit::I420Buffer::Create(4, 2);
-    src->InitializeData();
+    auto src = cxxkit::I420Buffer::create(4, 2);
+    src->initialize_data();
     // 填 Y 平面行号，验证 90° 旋转后宽高交换
     for (int y = 0; y < 2; ++y)
-        for (int x = 0; x < 4; ++x) src->MutableDataY()[y * 4 + x] = static_cast<uint8_t>(y);
-    auto rotated = cxxkit::I420Buffer::Rotate(*src, cxxkit::VideoRotation::kVideoRotation_90);
+        for (int x = 0; x < 4; ++x) src->mutable_data_y()[y * 4 + x] = static_cast<uint8_t>(y);
+    auto rotated = cxxkit::I420Buffer::rotate(*src, cxxkit::VideoRotation::kVideoRotation_90);
     ASSERT_TRUE(rotated);
     EXPECT_EQ(rotated->width(), 2);
     EXPECT_EQ(rotated->height(), 4);
     // 旋转后每一行都是原第 1 行（行 0 被旋转到最上）
-    for (int y = 0; y < 4; ++y) EXPECT_EQ(rotated->GetDataY()[y * 2], 1);
+    for (int y = 0; y < 4; ++y) EXPECT_EQ(rotated->get_data_y()[y * 2], 1);
 }
 
 }  // namespace

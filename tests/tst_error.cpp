@@ -48,14 +48,14 @@ public:
     {
         switch (code)
         {
-            case kTestError1: return "Test error 1";
-            case kTestError2: return "Test error 2";
-            case kTestError3: return "Test error 3";
+            case kTestError1: return "test error 1";
+            case kTestError2: return "test error 2";
+            case kTestError3: return "test error 3";
             default: return "";
         }
     }
 };
-CXXKIT_DEFINE_ERROR_DOMAIN(TestDomain, testDomain, "Test domain")
+CXXKIT_DEFINE_ERROR_DOMAIN(TestDomain, testDomain, "test domain")
 
 class AnotherDomain : public Error::Domain
 {
@@ -82,18 +82,18 @@ CXXKIT_DEFINE_ERROR_DOMAIN(AnotherDomain, anotherDomain, "Another domain")
 
 TEST(ErrorTest, CreateSuccess)
 {
-    auto error = Error::create(testDomain(), TestDomain::kTestError1, "Test message");
+    auto error = Error::create(testDomain(), TestDomain::kTestError1, "test message");
 
     ASSERT_NE(error, nullptr);
     EXPECT_EQ(&error->domain(), &testDomain());
     EXPECT_EQ(error->code(), TestDomain::kTestError1);
-    EXPECT_EQ(error->message(), "Test message");
+    EXPECT_EQ(error->message(), "test message");
     EXPECT_EQ(error->cause(), nullptr);
 }
 
 TEST(ErrorTest, CreateWithDefaultDomain)
 {
-    const auto error = Error::create("Default domain Test");
+    const auto error = Error::create("Default domain test");
     auto domain = error->domain();
     EXPECT_TRUE(domain.id() == Error::kInvalidId);
 
@@ -101,7 +101,7 @@ TEST(ErrorTest, CreateWithDefaultDomain)
     EXPECT_EQ(error->ref_count(), 2);
     EXPECT_EQ(errorShare->ref_count(), 2);
 
-    EXPECT_EQ(error->message(), "Default domain Test");
+    EXPECT_EQ(error->message(), "Default domain test");
     EXPECT_EQ(error->code(), Error::kInvalidId);
 
     EXPECT_EQ(error->ref_count(), 2);
@@ -170,14 +170,14 @@ TEST(ErrorTest, DomainBasicOperations)
 {
     auto domain = testDomain();
 
-    // Test basic domain information
+    // test basic domain information
     EXPECT_TRUE(domain.is_valid());
     EXPECT_NE(domain.id(), Error::kInvalidId);
     EXPECT_EQ(domain.type(), "TestDomain");
     EXPECT_EQ(domain.name(), "testDomain");
-    EXPECT_EQ(domain.description(), "Test domain");
+    EXPECT_EQ(domain.description(), "test domain");
 
-    // Test domain comparison operations
+    // test domain comparison operations
     auto sameDomain = testDomain();
     auto another = anotherDomain();
 
@@ -195,16 +195,16 @@ TEST(ErrorTest, InvalidDomain)
     EXPECT_EQ(invalid_domain.name(), "");
     EXPECT_EQ(invalid_domain.description(), "");
 
-    // Test creating an error with an invalid domain
-    auto error = Error::create(invalid_domain, 123, "Test");
+    // test creating an error with an invalid domain
+    auto error = Error::create(invalid_domain, 123, "test");
     EXPECT_FALSE(error->domain().is_valid()); // Should use default domain
 }
 
 TEST(ErrorTest, CopyAndMoveSemantics)
 {
-    // Test Error copy semantics
+    // test Error copy semantics
     auto cause = Error::create(testDomain(), TestDomain::kTestError2, "Cause");
-    // Create original error with cause directly
+    // create original error with cause directly
     const auto original = Error::create(testDomain(), TestDomain::kTestError1, "Original", cause);
 
     const auto copied = original;
@@ -214,7 +214,7 @@ TEST(ErrorTest, CopyAndMoveSemantics)
     EXPECT_EQ(copied->cause(), original->cause());
     EXPECT_EQ(copied->ref_count(), 2); // Should share reference count
 
-    // Test Error move semantics
+    // test Error move semantics
     auto moved = std::move(original);
     EXPECT_EQ(moved->code(), TestDomain::kTestError1);
     EXPECT_EQ(moved->message(), "Original");
@@ -224,23 +224,23 @@ TEST(ErrorTest, DomainCopyAndMoveSemantics)
 {
     auto domain = testDomain();
 
-    // Test domain copy
+    // test domain copy
     Error::Domain copied(domain);
     EXPECT_EQ(copied, domain);
     EXPECT_EQ(copied.id(), domain.id());
     EXPECT_EQ(copied.type(), domain.type());
 
-    // Test domain move
+    // test domain move
     Error::Domain moved(std::move(copied));
     EXPECT_EQ(moved, domain);
     EXPECT_EQ(moved.id(), domain.id());
 
-    // Test copy assignment
+    // test copy assignment
     Error::Domain copyAssigned;
     copyAssigned = domain;
     EXPECT_EQ(copyAssigned, domain);
 
-    // Test move assignment
+    // test move assignment
     Error::Domain moveAssigned;
     moveAssigned = std::move(copyAssigned);
     EXPECT_EQ(moveAssigned, domain);
@@ -248,12 +248,12 @@ TEST(ErrorTest, DomainCopyAndMoveSemantics)
 
 TEST(ErrorTest, DomainRegistry)
 {
-    // Test domain registration (indirectly tested via CXXKIT_DEFINE_ERROR_DOMAIN macro)
+    // test domain registration (indirectly tested via CXXKIT_DEFINE_ERROR_DOMAIN macro)
     EXPECT_TRUE(testDomain().is_valid());
     EXPECT_TRUE(anotherDomain().is_valid());
     EXPECT_NE(testDomain().id(), anotherDomain().id());
 
-    // Test domain type uniqueness
+    // test domain type uniqueness
     EXPECT_EQ(testDomain().type(), "TestDomain");
     EXPECT_EQ(anotherDomain().type(), "AnotherDomain");
 }
@@ -272,25 +272,25 @@ TEST(ErrorTest, ErrorChainMaxDepth)
     const int kMaxDepth = 10;
     auto error = Error::create(testDomain(), TestDomain::kTestError1, "Level 0");
 
-    // Create an error chain with depth 11
+    // create an error chain with depth 11
     Error::SharedDataPtr current = error;
     for (int i = 1; i <= kMaxDepth + 1; ++i)
     {
         current = Error::create(testDomain(), TestDomain::kTestError1, "Level " + std::to_string(i), current);
     }
 
-    // Check depth calculation
+    // check depth calculation
     EXPECT_EQ(current->depth(), static_cast<size_t>(kMaxDepth + 1));
 
-    // Check if string representation is truncated
+    // check if string representation is truncated
     std::string errorStr = current->to_string();
     EXPECT_TRUE(errorStr.find("error chain too deep") != std::string::npos);
 }
 
 TEST(ErrorTest, MultipleDomains)
 {
-    // Test errors from different domains
-    auto error1 = Error::create(testDomain(), TestDomain::kTestError1, "Test error");
+    // test errors from different domains
+    auto error1 = Error::create(testDomain(), TestDomain::kTestError1, "test error");
     auto error2 = Error::create(anotherDomain(), AnotherDomain::kAnotherError, "Another error");
 
     EXPECT_NE(&error1->domain(), &error2->domain());

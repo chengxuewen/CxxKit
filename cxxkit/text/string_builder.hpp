@@ -82,10 +82,10 @@ public:
     //    __attribute__((__format__(__printf__, 2, 3)))
     // #endif
     CXXKIT_ATTRIBUTE_FORMAT_PRINTF(2, 3)
-    SimpleStringBuilder &AppendFormat(const char *fmt, ...);
+    SimpleStringBuilder &append_format(const char *fmt, ...);
 
 private:
-    bool IsConsistent() const { return mSize <= mBuffer.size() - 1 && mBuffer[mSize] == '\0'; }
+    bool is_consistent() const { return mSize <= mBuffer.size() - 1 && mBuffer[mSize] == '\0'; }
 
     // An always-zero-terminated fixed-size buffer that we write to. The fixed
     // size allows the buffer to be stack allocated, which helps performance.
@@ -180,11 +180,11 @@ public:
 
     const std::string &str() const { return mString; }
 
-    void Clear() { mString.clear(); }
+    void clear() { mString.clear(); }
 
     size_t size() const { return mString.size(); }
 
-    std::string Release()
+    std::string release()
     {
         std::string ret = std::move(mString);
         mString.clear();
@@ -192,7 +192,7 @@ public:
     }
 
     // Allows appending a printf style formatted string.
-    StringBuilder &AppendFormat(const char *fmt, ...) CXXKIT_ATTRIBUTE_FORMAT_PRINTF(2, 3);
+    StringBuilder &append_format(const char *fmt, ...) CXXKIT_ATTRIBUTE_FORMAT_PRINTF(2, 3);
 
 private:
     std::string mString;

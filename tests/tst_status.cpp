@@ -48,14 +48,14 @@ public:
     {
         switch (code)
         {
-            case kTestError1: return "Test error 1";
-            case kTestError2: return "Test error 2";
-            case kTestError3: return "Test error 3";
+            case kTestError1: return "test error 1";
+            case kTestError2: return "test error 2";
+            case kTestError3: return "test error 3";
             default: return "";
         }
     }
 };
-CXXKIT_DEFINE_ERROR_DOMAIN(TestDomain, testDomain, "Test domain")
+CXXKIT_DEFINE_ERROR_DOMAIN(TestDomain, testDomain, "test domain")
 
 class AnotherDomain : public Error::Domain
 {
@@ -95,7 +95,7 @@ TEST(StatusTest, ConstructFromError)
     auto domain = testDomain();
 
     // no cause
-    const auto error = Error::create(domain, TestDomain::kTestError1, "Test error");
+    const auto error = Error::create(domain, TestDomain::kTestError1, "test error");
     Status status(error);
 
     EXPECT_FALSE(status.is_ok());
@@ -103,18 +103,18 @@ TEST(StatusTest, ConstructFromError)
     EXPECT_EQ(status.error(), error.data());
     EXPECT_EQ(&status.error()->domain(), &domain);
     EXPECT_EQ(status.error()->code(), TestDomain::kTestError1);
-    EXPECT_EQ(status.error()->message(), "Test error");
+    EXPECT_EQ(status.error()->message(), "test error");
 
     // with cause
     auto cause = Error::create(domain, TestDomain::kTestError2, "Cause");
-    const auto error2 = Error::create(domain, TestDomain::kTestError1, "Test error", cause);
+    const auto error2 = Error::create(domain, TestDomain::kTestError1, "test error", cause);
     Status status2(error2);
     EXPECT_FALSE(status2.is_ok());
     EXPECT_FALSE(static_cast<bool>(status2));
     EXPECT_EQ(status2.error(), error2.data());
     EXPECT_EQ(&status2.error()->domain(), &domain);
     EXPECT_EQ(status2.error()->code(), TestDomain::kTestError1);
-    EXPECT_EQ(status2.error()->message(), "Test error");
+    EXPECT_EQ(status2.error()->message(), "test error");
     EXPECT_EQ(status2.error()->depth(), 1);
 }
 
@@ -201,10 +201,10 @@ TEST(StatusTest, MoveAssignment)
 TEST(StatusTest, ArrowOperator)
 {
     auto domain = testDomain();
-    Status status(domain, TestDomain::kTestError1, "Test message");
+    Status status(domain, TestDomain::kTestError1, "test message");
 
     EXPECT_EQ(status.error()->code(), TestDomain::kTestError1);
-    EXPECT_EQ(status.error()->message(), "Test message");
+    EXPECT_EQ(status.error()->message(), "test message");
 
     Status ok_status;
     EXPECT_EQ(ok_status.error(), nullptr);
@@ -264,27 +264,27 @@ TEST(StatusTest, MissingConstructors)
 {
     auto domain = testDomain();
 
-    // Test Status(const StringView, const Error::SharedDataPtr &)
+    // test Status(const StringView, const Error::SharedDataPtr &)
     auto cause1 = Error::create(domain, TestDomain::kTestError1, "Cause 1");
-    Status status1(StringView("Test message"), cause1);
+    Status status1(StringView("test message"), cause1);
     EXPECT_FALSE(status1.is_ok());
-    EXPECT_EQ(status1.error()->message(), "Test message");
+    EXPECT_EQ(status1.error()->message(), "test message");
     EXPECT_NE(status1.error()->cause(), nullptr);
 
-    // Test Status(const std::string &)
+    // test Status(const std::string &)
     std::string msg = "Std string message";
     Status status2(msg);
     EXPECT_FALSE(status2.is_ok());
     EXPECT_EQ(status2.error()->message(), "Std string message");
 
-    // Test Status(const std::string &, const Error::SharedDataPtr &)
+    // test Status(const std::string &, const Error::SharedDataPtr &)
     auto cause2 = Error::create(domain, TestDomain::kTestError2, "Cause 2");
     Status status3(msg, cause2);
     EXPECT_FALSE(status3.is_ok());
     EXPECT_EQ(status3.error()->message(), "Std string message");
     EXPECT_NE(status3.error()->cause(), nullptr);
 
-    // Test Status(Error::SharedDataPtr &&)
+    // test Status(Error::SharedDataPtr &&)
     auto error = Error::create(domain, TestDomain::kTestError3, "Rvalue error");
     Status status4(std::move(error));
     EXPECT_FALSE(status4.is_ok());
@@ -296,17 +296,17 @@ TEST(StatusTest, MissingAssignmentOperators)
     auto domain = testDomain();
     Status status;
 
-    // Test operator=(const char *)
+    // test operator=(const char *)
     status = "C string assignment";
     EXPECT_FALSE(status.is_ok());
     EXPECT_EQ(status.error()->message(), "C string assignment");
 
-    // Test operator=(const StringView)
+    // test operator=(const StringView)
     status = StringView("StringView assignment");
     EXPECT_FALSE(status.is_ok());
     EXPECT_EQ(status.error()->message(), "StringView assignment");
 
-    // Test operator=(const std::string &)
+    // test operator=(const std::string &)
     std::string msg = "Std string assignment";
     status = msg;
     EXPECT_FALSE(status.is_ok());
@@ -324,15 +324,15 @@ TEST(StatusTest, ErrorCodeAndMessageMethods)
 {
     auto domain = testDomain();
     auto cause = Error::create(domain, TestDomain::kTestError2, "Cause");
-    Status status(domain, TestDomain::kTestError1, "Test message", cause);
+    Status status(domain, TestDomain::kTestError1, "test message", cause);
 
-    // Test error_code()
+    // test error_code()
     EXPECT_EQ(status.error_code(), TestDomain::kTestError1);
 
-    // Test error_message()
-    EXPECT_EQ(status.error_message(), std::string("Test message")) << status.error_message();
+    // test error_message()
+    EXPECT_EQ(status.error_message(), std::string("test message")) << status.error_message();
 
-    // Test with successful status
+    // test with successful status
     status = Status::ok;
     EXPECT_EQ(status.error_code(), Error::kInvalidId);
     EXPECT_TRUE(status.error_message().empty());
@@ -342,18 +342,18 @@ TEST(StatusTest, BoundaryCases)
 {
     auto domain = testDomain();
 
-    // Test with empty message
+    // test with empty message
     Status emptyMsgStatus(domain, TestDomain::kTestError1, "");
     EXPECT_FALSE(emptyMsgStatus.is_ok());
     EXPECT_TRUE(emptyMsgStatus.error_message().empty());
 
-    // Test with very long message
+    // test with very long message
     std::string longMsg(1000, 'x');
     Status longMsgStatus(domain, TestDomain::kTestError1, longMsg);
     EXPECT_FALSE(longMsgStatus.is_ok());
     EXPECT_EQ(longMsgStatus.error_message(), longMsg);
 
-    // Test with different domains
+    // test with different domains
     auto domain2 = anotherDomain();
     Status status1(domain, TestDomain::kTestError1, "Error in test domain");
     Status status2(domain2, AnotherDomain::kAnotherError, "Error in another domain");
@@ -362,11 +362,11 @@ TEST(StatusTest, BoundaryCases)
 
 TEST(StatusTest, OkStatusConstant)
 {
-    // Test comparison with Status::ok
+    // test comparison with Status::ok
     Status status;
     EXPECT_EQ(status, Status::ok);
 
-    // Test the Status::ok constant
+    // test the Status::ok constant
     status = Status::ok;
     EXPECT_TRUE(status.is_ok());
     EXPECT_EQ(status.error(), nullptr);

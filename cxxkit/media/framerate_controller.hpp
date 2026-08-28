@@ -33,7 +33,7 @@
 namespace cxxkit {
 
 // Determines which frames should be dropped based on input framerate and
-// requested (target) framerate. API follows OpenCTK: ShouldDropFrame() takes
+// requested (target) framerate. API follows OpenCTK: should_drop_frame() takes
 // the incoming frame timestamp in nanoseconds and reports whether it must be
 // dropped to keep the configured frame rate.
 class CXXKIT_MEDIA_API FramerateController {
@@ -42,18 +42,18 @@ public:
     explicit FramerateController(double max_framerate);
 
     // Sets max framerate (default is maxdouble = no throttling).
-    void SetFrameRate(double max_framerate);
-    double GetFrameRate() const;
+    void set_frame_rate(double max_framerate);
+    double get_frame_rate() const;
 
     // Returns true if the frame with the given timestamp (ns) should be dropped,
     // false otherwise. Timestamps are expected to be monotonically increasing.
-    bool ShouldDropFrame(int64_t in_timestamp_nsecs);
+    bool should_drop_frame(int64_t in_timestamp_nsecs);
 
     // Resets to the default state: max framerate and no pending frame.
-    void Reset();
+    void reset();
 
-    // Registers the frame as kept even if ShouldDropFrame would have dropped it.
-    void KeepFrame(int64_t in_timestamp_nsecs);
+    // Registers the frame as kept even if should_drop_frame would have dropped it.
+    void keep_frame(int64_t in_timestamp_nsecs);
 
 private:
     double mMaxFramerate;

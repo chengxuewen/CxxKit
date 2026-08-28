@@ -41,38 +41,38 @@ class Frequency final : public RelativeUnit<Frequency>
 {
 public:
     template <typename T>
-    static CXXKIT_CXX14_CONSTEXPR Frequency MilliHertz(T value)
+    static CXXKIT_CXX14_CONSTEXPR Frequency milli_hertz(T value)
     {
         static_assert(std::is_arithmetic<T>::value, "");
-        return FromValue(value);
+        return from_value(value);
     }
     template <typename T>
-    static CXXKIT_CXX14_CONSTEXPR Frequency Hertz(T value)
+    static CXXKIT_CXX14_CONSTEXPR Frequency hertz(T value)
     {
         static_assert(std::is_arithmetic<T>::value, "");
-        return FromFraction(1000, value);
+        return from_fraction(1000, value);
     }
     template <typename T>
-    static CXXKIT_CXX14_CONSTEXPR Frequency KiloHertz(T value)
+    static CXXKIT_CXX14_CONSTEXPR Frequency kilo_hertz(T value)
     {
         static_assert(std::is_arithmetic<T>::value, "");
-        return FromFraction(1000000, value);
+        return from_fraction(1000000, value);
     }
 
     constexpr Frequency() = default;
 
     template <typename Sink>
-    friend void AbslStringify(Sink &sink, Frequency value);
+    friend void absl_stringify(Sink &sink, Frequency value);
 
     template <typename T = int64_t>
     constexpr T hertz() const
     {
-        return ToFraction<1000, T>();
+        return to_fraction<1000, T>();
     }
     template <typename T = int64_t>
     constexpr T millihertz() const
     {
-        return ToValue<T>();
+        return to_value<T>();
     }
 
 private:
@@ -86,18 +86,18 @@ inline CXXKIT_CXX14_CONSTEXPR Frequency operator/(int64_t nominator, const TimeD
 {
     constexpr int64_t kKiloPerMicro = 1000 * 1000000;
     CXXKIT_DCHECK_LE(nominator, std::numeric_limits<int64_t>::max() / kKiloPerMicro);
-    CXXKIT_CHECK(interval.IsFinite());
-    CXXKIT_CHECK(!interval.IsZero());
-    return Frequency::MilliHertz(nominator * kKiloPerMicro / interval.us());
+    CXXKIT_CHECK(interval.is_finite());
+    CXXKIT_CHECK(!interval.is_zero());
+    return Frequency::milli_hertz(nominator * kKiloPerMicro / interval.us());
 }
 
 inline CXXKIT_CXX14_CONSTEXPR TimeDelta operator/(int64_t nominator, const Frequency &frequency)
 {
     constexpr int64_t kMegaPerMilli = 1000000 * 1000;
     CXXKIT_DCHECK_LE(nominator, std::numeric_limits<int64_t>::max() / kMegaPerMilli);
-    CXXKIT_CHECK(frequency.IsFinite());
-    CXXKIT_CHECK(!frequency.IsZero());
-    return TimeDelta::Micros(nominator * kMegaPerMilli / frequency.millihertz());
+    CXXKIT_CHECK(frequency.is_finite());
+    CXXKIT_CHECK(!frequency.is_zero());
+    return TimeDelta::micros(nominator * kMegaPerMilli / frequency.millihertz());
 }
 
 inline constexpr double operator*(Frequency frequency, TimeDelta time_delta)
@@ -112,9 +112,9 @@ inline constexpr double operator*(TimeDelta time_delta, Frequency frequency)
 CXXKIT_UNITS_API std::string to_string(Frequency value);
 
 template <typename Sink>
-void AbslStringify(Sink &sink, Frequency value)
+void absl_stringify(Sink &sink, Frequency value)
 {
-    sink.Append(to_string(value));
+    sink.append(to_string(value));
 }
 CXXKIT_END_NAMESPACE
 

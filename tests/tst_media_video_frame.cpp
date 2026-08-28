@@ -30,7 +30,7 @@
 namespace {
 
 TEST(VideoFrame, Builder) {
-    auto buf = cxxkit::I420Buffer::Create(16, 16);
+    auto buf = cxxkit::I420Buffer::create(16, 16);
     auto frame = cxxkit::VideoFrame::Builder()
                      .set_video_frame_buffer(buf)
                      .set_timestamp_us(1000)
@@ -44,7 +44,7 @@ TEST(VideoFrame, Builder) {
 }
 
 TEST(VideoFrame, BuilderAllMetadata) {
-    auto buf = cxxkit::I420Buffer::Create(16, 16);
+    auto buf = cxxkit::I420Buffer::create(16, 16);
     cxxkit::ColorSpace cs(cxxkit::ColorSpace::PrimaryID::kBT709,
                           cxxkit::ColorSpace::TransferID::kBT709,
                           cxxkit::ColorSpace::MatrixID::kBT709,
@@ -81,20 +81,20 @@ TEST(VideoFrame, UpdateRectUnion) {
 TEST(VideoFrame, UpdateRectIntersect) {
     cxxkit::VideoFrame::UpdateRect a{0, 0, 10, 10};
     cxxkit::VideoFrame::UpdateRect b{5, 5, 10, 10};
-    auto i = a.Intersect(b);
+    auto i = a.intersect(b);
     EXPECT_EQ(i.x, 5);
     EXPECT_EQ(i.y, 5);
     EXPECT_EQ(i.width, 5);
     EXPECT_EQ(i.height, 5);
     // 不相交 → 空矩形
     cxxkit::VideoFrame::UpdateRect c{20, 20, 4, 4};
-    EXPECT_TRUE(a.Intersect(c).IsEmpty());
+    EXPECT_TRUE(a.intersect(c).is_empty());
 }
 
 TEST(VideoFrame, UpdateRectScaleWithFrame) {
     // 640x360 帧，中间 320x180 裁剪，缩放到 320x180：原更新区 (0,0,640,360)
     cxxkit::VideoFrame::UpdateRect r{0, 0, 640, 360};
-    auto s = r.ScaleWithFrame(640, 360, 160, 90, 320, 180, 320, 180);
+    auto s = r.scale_with_frame(640, 360, 160, 90, 320, 180, 320, 180);
     EXPECT_EQ(s.x, 0);
     EXPECT_EQ(s.y, 0);
     EXPECT_EQ(s.width, 320);

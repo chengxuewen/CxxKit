@@ -215,7 +215,7 @@ TEST(StringFormatTest, MaxSizeShouldWork)
     EXPECT_EQ(str, cxxkit::utils::string_format("%s", str));
 }
 
-// Test that formating a string using `StringView` works as expected
+// test that formating a string using `StringView` works as expected
 // whe using `%.*s`.
 TEST(StringFormatTest, FormatStringView)
 {

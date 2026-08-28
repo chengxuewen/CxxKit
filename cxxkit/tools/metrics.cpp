@@ -54,7 +54,7 @@ public:
     RtcHistogram(const RtcHistogram &) = delete;
     RtcHistogram &operator=(const RtcHistogram &) = delete;
 
-    void Add(int sample)
+    void add(int sample)
     {
         sample = std::min(sample, mMax);
         sample = std::max(sample, mMin - 1); // Underflow bucket.
@@ -68,7 +68,7 @@ public:
     }
 
     // Returns a copy (or nullptr if there are no samples) and clears samples.
-    std::unique_ptr<SampleInfo> GetAndReset()
+    std::unique_ptr<SampleInfo> get_and_reset()
     {
         Mutex::Lock lock(mMutex);
         if (info_.samples.empty())
@@ -86,20 +86,20 @@ public:
     const std::string &name() const { return info_.name; }
 
     // Functions only for testing.
-    void Reset()
+    void reset()
     {
         Mutex::Lock lock(mMutex);
         info_.samples.clear();
     }
 
-    int NumEvents(int sample) const
+    int num_events(int sample) const
     {
         Mutex::Lock lock(mMutex);
         const auto it = info_.samples.find(sample);
         return (it == info_.samples.end()) ? 0 : it->second;
     }
 
-    int NumSamples() const
+    int num_samples() const
     {
         int num_samples = 0;
         Mutex::Lock lock(mMutex);
@@ -110,13 +110,13 @@ public:
         return num_samples;
     }
 
-    int MinSample() const
+    int min_sample() const
     {
         Mutex::Lock lock(mMutex);
         return (info_.samples.empty()) ? -1 : info_.samples.begin()->first;
     }
 
-    std::map<int, int> Samples() const
+    std::map<int, int> samples() const
     {
         Mutex::Lock lock(mMutex);
         return info_.samples;
@@ -138,7 +138,7 @@ public:
     RtcHistogramMap(const RtcHistogramMap &) = delete;
     RtcHistogramMap &operator=(const RtcHistogramMap &) = delete;
 
-    Histogram *GetCountsHistogram(StringView name, int min, int max, int bucket_count)
+    Histogram *get_counts_histogram(StringView name, int min, int max, int bucket_count)
     {
         Mutex::Lock lock(mMutex);
         const auto &it = map_.find(name.data());
@@ -152,7 +152,7 @@ public:
         return reinterpret_cast<Histogram *>(hist);
     }
 
-    Histogram *GetEnumerationHistogram(StringView name, int boundary)
+    Histogram *get_enumeration_histogram(StringView name, int boundary)
     {
         Mutex::Lock lock(mMutex);
         const auto &it = map_.find(name.data());
@@ -166,12 +166,12 @@ public:
         return reinterpret_cast<Histogram *>(hist);
     }
 
-    void GetAndReset(std::map<std::string, std::unique_ptr<SampleInfo>, StringViewCmp> *histograms)
+    void get_and_reset(std::map<std::string, std::unique_ptr<SampleInfo>, StringViewCmp> *histograms)
     {
         Mutex::Lock lock(mMutex);
         for (const auto &kv : map_)
         {
-            std::unique_ptr<SampleInfo> info = kv.second->GetAndReset();
+            std::unique_ptr<SampleInfo> info = kv.second->get_and_reset();
             if (info)
             {
                 histograms->insert(std::make_pair(kv.first, std::move(info)));
@@ -180,41 +180,41 @@ public:
     }
 
     // Functions only for testing.
-    void Reset()
+    void reset()
     {
         Mutex::Lock lock(mMutex);
         for (const auto &kv : map_)
         {
-            kv.second->Reset();
+            kv.second->reset();
         }
     }
 
-    int NumEvents(StringView name, int sample) const
+    int num_events(StringView name, int sample) const
     {
         Mutex::Lock lock(mMutex);
         const auto &it = map_.find(name.data());
-        return (it == map_.end()) ? 0 : it->second->NumEvents(sample);
+        return (it == map_.end()) ? 0 : it->second->num_events(sample);
     }
 
-    int NumSamples(StringView name) const
+    int num_samples(StringView name) const
     {
         Mutex::Lock lock(mMutex);
         const auto &it = map_.find(name.data());
-        return (it == map_.end()) ? 0 : it->second->NumSamples();
+        return (it == map_.end()) ? 0 : it->second->num_samples();
     }
 
-    int MinSample(StringView name) const
+    int min_sample(StringView name) const
     {
         Mutex::Lock lock(mMutex);
         const auto &it = map_.find(name.data());
-        return (it == map_.end()) ? -1 : it->second->MinSample();
+        return (it == map_.end()) ? -1 : it->second->min_sample();
     }
 
-    std::map<int, int> Samples(StringView name) const
+    std::map<int, int> samples(StringView name) const
     {
         Mutex::Lock lock(mMutex);
         const auto &it = map_.find(name.data());
-        return (it == map_.end()) ? std::map<int, int>() : it->second->Samples();
+        return (it == map_.end()) ? std::map<int, int>() : it->second->samples();
     }
 
 private:
@@ -222,13 +222,13 @@ private:
     std::map<std::string, std::unique_ptr<RtcHistogram>, StringViewCmp> map_ CXXKIT_ATTRIBUTE_GUARDED_BY(mMutex);
 };
 
-// RtcHistogramMap is allocated upon call to Enable().
+// RtcHistogramMap is allocated upon call to enable().
 // The histogram getter functions, which return pointer values to the histograms
 // in the map, are cached in WebRTC. Therefore, this memory is not freed by the
 // application (the memory will be reclaimed by the OS).
 static std::atomic<RtcHistogramMap *> g_rtc_histogram_map(nullptr);
 
-void CreateMap()
+void create_map()
 {
     RtcHistogramMap *map = g_rtc_histogram_map.load(std::memory_order_acquire);
     if (map == nullptr)
@@ -241,14 +241,14 @@ void CreateMap()
     }
 }
 
-// Set the first time we start using histograms. Used to make sure Enable() is
+// set the first time we start using histograms. Used to make sure enable() is
 // not called thereafter.
 #if CXXKIT_DCHECK_IS_ON
 static std::atomic<int> g_rtc_histogram_called(0);
 #endif
 
 // Gets the map (or nullptr).
-RtcHistogramMap *GetMap()
+RtcHistogramMap *get_map()
 {
 #if CXXKIT_DCHECK_IS_ON
     g_rtc_histogram_called.store(1, std::memory_order_release);
@@ -265,54 +265,54 @@ RtcHistogramMap *GetMap()
 // Creates (or finds) histogram.
 // The returned histogram pointer is cached (and used for adding samples in
 // subsequent calls).
-Histogram *HistogramFactoryGetCounts(StringView name, int min, int max, int bucket_count)
+Histogram *histogram_factory_get_counts(StringView name, int min, int max, int bucket_count)
 {
     // TODO(asapersson): Alternative implementation will be needed if this
     // histogram type should be truly exponential.
-    return HistogramFactoryGetCountsLinear(name, min, max, bucket_count);
+    return histogram_factory_get_counts_linear(name, min, max, bucket_count);
 }
 
 // Histogram with linearly spaced buckets.
 // Creates (or finds) histogram.
 // The returned histogram pointer is cached (and used for adding samples in
 // subsequent calls).
-Histogram *HistogramFactoryGetCountsLinear(StringView name, int min, int max, int bucket_count)
+Histogram *histogram_factory_get_counts_linear(StringView name, int min, int max, int bucket_count)
 {
-    RtcHistogramMap *map = GetMap();
+    RtcHistogramMap *map = get_map();
     if (!map)
     {
         return nullptr;
     }
 
-    return map->GetCountsHistogram(name, min, max, bucket_count);
+    return map->get_counts_histogram(name, min, max, bucket_count);
 }
 
 // Histogram with linearly spaced buckets.
 // Creates (or finds) histogram.
 // The returned histogram pointer is cached (and used for adding samples in
 // subsequent calls).
-Histogram *HistogramFactoryGetEnumeration(StringView name, int boundary)
+Histogram *histogram_factory_get_enumeration(StringView name, int boundary)
 {
-    RtcHistogramMap *map = GetMap();
+    RtcHistogramMap *map = get_map();
     if (!map)
     {
         return nullptr;
     }
 
-    return map->GetEnumerationHistogram(name, boundary);
+    return map->get_enumeration_histogram(name, boundary);
 }
 
 // Our default implementation reuses the non-sparse histogram.
-Histogram *SparseHistogramFactoryGetEnumeration(StringView name, int boundary)
+Histogram *sparse_histogram_factory_get_enumeration(StringView name, int boundary)
 {
-    return HistogramFactoryGetEnumeration(name, boundary);
+    return histogram_factory_get_enumeration(name, boundary);
 }
 
 // Fast path. Adds `sample` to cached `histogram_pointer`.
-void HistogramAdd(Histogram *histogram_pointer, int sample)
+void histogram_add(Histogram *histogram_pointer, int sample)
 {
     RtcHistogram *ptr = reinterpret_cast<RtcHistogram *>(histogram_pointer);
-    ptr->Add(sample);
+    ptr->add(sample);
 }
 
 #endif // CXXKIT_EXCLUDE_METRICS_DEFAULT
@@ -330,56 +330,56 @@ SampleInfo::~SampleInfo()
 }
 
 // Implementation of global functions in metrics.h.
-void Enable()
+void enable()
 {
     CXXKIT_DCHECK(g_rtc_histogram_map.load() == nullptr);
 #if CXXKIT_DCHECK_IS_ON
     CXXKIT_DCHECK_EQ(0, g_rtc_histogram_called.load(std::memory_order_acquire));
 #endif
-    CreateMap();
+    create_map();
 }
 
-void GetAndReset(std::map<std::string, std::unique_ptr<SampleInfo>, StringViewCmp> *histograms)
+void get_and_reset(std::map<std::string, std::unique_ptr<SampleInfo>, StringViewCmp> *histograms)
 {
     histograms->clear();
-    RtcHistogramMap *map = GetMap();
+    RtcHistogramMap *map = get_map();
     if (map)
     {
-        map->GetAndReset(histograms);
+        map->get_and_reset(histograms);
     }
 }
 
-void Reset()
+void reset()
 {
-    RtcHistogramMap *map = GetMap();
+    RtcHistogramMap *map = get_map();
     if (map)
     {
-        map->Reset();
+        map->reset();
     }
 }
 
-int NumEvents(StringView name, int sample)
+int num_events(StringView name, int sample)
 {
-    RtcHistogramMap *map = GetMap();
-    return map ? map->NumEvents(name, sample) : 0;
+    RtcHistogramMap *map = get_map();
+    return map ? map->num_events(name, sample) : 0;
 }
 
-int NumSamples(StringView name)
+int num_samples(StringView name)
 {
-    RtcHistogramMap *map = GetMap();
-    return map ? map->NumSamples(name) : 0;
+    RtcHistogramMap *map = get_map();
+    return map ? map->num_samples(name) : 0;
 }
 
-int MinSample(StringView name)
+int min_sample(StringView name)
 {
-    RtcHistogramMap *map = GetMap();
-    return map ? map->MinSample(name) : -1;
+    RtcHistogramMap *map = get_map();
+    return map ? map->min_sample(name) : -1;
 }
 
-std::map<int, int> Samples(StringView name)
+std::map<int, int> samples(StringView name)
 {
-    RtcHistogramMap *map = GetMap();
-    return map ? map->Samples(name) : std::map<int, int>();
+    RtcHistogramMap *map = get_map();
+    return map ? map->samples(name) : std::map<int, int>();
 }
 } // namespace metrics
 

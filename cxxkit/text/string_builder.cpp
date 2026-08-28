@@ -47,7 +47,7 @@ SimpleStringBuilder::SimpleStringBuilder(ArrayView<char> buffer)
     : mBuffer(buffer)
 {
     mBuffer[0] = '\0';
-    CXXKIT_DCHECK(IsConsistent());
+    CXXKIT_DCHECK(is_consistent());
 }
 
 SimpleStringBuilder &SimpleStringBuilder::operator<<(char ch)
@@ -58,11 +58,11 @@ SimpleStringBuilder &SimpleStringBuilder::operator<<(char ch)
 SimpleStringBuilder &SimpleStringBuilder::operator<<(StringView str)
 {
     CXXKIT_DCHECK_LT(mSize + str.length(), mBuffer.size()) << "Buffer size was insufficient";
-    const size_t chars_added = SafeMin(str.length(), mBuffer.size() - mSize - 1);
+    const size_t chars_added = safe_min(str.length(), mBuffer.size() - mSize - 1);
     memcpy(&mBuffer[mSize], str.data(), chars_added);
     mSize += chars_added;
     mBuffer[mSize] = '\0';
-    CXXKIT_DCHECK(IsConsistent());
+    CXXKIT_DCHECK(is_consistent());
     return *this;
 }
 
@@ -78,57 +78,57 @@ SimpleStringBuilder &SimpleStringBuilder::operator<<(StringView str)
 
 SimpleStringBuilder &SimpleStringBuilder::operator<<(int i)
 {
-    return AppendFormat("%d", i);
+    return append_format("%d", i);
 }
 
 SimpleStringBuilder &SimpleStringBuilder::operator<<(unsigned i)
 {
-    return AppendFormat("%u", i);
+    return append_format("%u", i);
 }
 
 SimpleStringBuilder &SimpleStringBuilder::operator<<(long i)
 { // NOLINT
-    return AppendFormat("%ld", i);
+    return append_format("%ld", i);
 }
 
 SimpleStringBuilder &SimpleStringBuilder::operator<<(long long i)
 { // NOLINT
-    return AppendFormat("%lld", i);
+    return append_format("%lld", i);
 }
 
 SimpleStringBuilder &SimpleStringBuilder::operator<<(unsigned long i)
 { // NOLINT
-    return AppendFormat("%lu", i);
+    return append_format("%lu", i);
 }
 
 SimpleStringBuilder &SimpleStringBuilder::operator<<(unsigned long long i)
 { // NOLINT
-    return AppendFormat("%llu", i);
+    return append_format("%llu", i);
 }
 
 SimpleStringBuilder &SimpleStringBuilder::operator<<(float f)
 {
-    return AppendFormat("%g", f);
+    return append_format("%g", f);
 }
 
 SimpleStringBuilder &SimpleStringBuilder::operator<<(double f)
 {
-    return AppendFormat("%g", f);
+    return append_format("%g", f);
 }
 
 SimpleStringBuilder &SimpleStringBuilder::operator<<(long double f)
 {
-    return AppendFormat("%Lg", f);
+    return append_format("%Lg", f);
 }
 
-SimpleStringBuilder &SimpleStringBuilder::AppendFormat(const char *fmt, ...)
+SimpleStringBuilder &SimpleStringBuilder::append_format(const char *fmt, ...)
 {
     va_list args;
     va_start(args, fmt);
     const int len = std::vsnprintf(&mBuffer[mSize], mBuffer.size() - mSize, fmt, args);
     if (len >= 0)
     {
-        const size_t chars_added = SafeMin(len, mBuffer.size() - 1 - mSize);
+        const size_t chars_added = safe_min(len, mBuffer.size() - 1 - mSize);
         mSize += chars_added;
         CXXKIT_DCHECK_EQ(len, chars_added) << "Buffer size was insufficient";
     }
@@ -140,11 +140,11 @@ SimpleStringBuilder &SimpleStringBuilder::AppendFormat(const char *fmt, ...)
         mBuffer[mSize] = '\0';
     }
     va_end(args);
-    CXXKIT_DCHECK(IsConsistent());
+    CXXKIT_DCHECK(is_consistent());
     return *this;
 }
 
-StringBuilder &StringBuilder::AppendFormat(const char *fmt, ...)
+StringBuilder &StringBuilder::append_format(const char *fmt, ...)
 {
     va_list args, copy;
     va_start(args, fmt);

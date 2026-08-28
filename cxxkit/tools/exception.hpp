@@ -110,17 +110,17 @@ CXXKIT_END_NAMESPACE
 #    define CXXKIT_TRY                              try
 #    define CXXKIT_CATCH(A)                         catch (A)
 #    define CXXKIT_RETHROW                          throw
-#    define CXXKIT_THROW_DELEGATE(Exception, what)  throw Exception(cxxkit::detail::get_c_str_helper(what))
-#    define CXXKIT_THROW_NO_MSG_DELEGATE(Exception) throw Exception()
+#    define CXXKIT_THROW_DELEGATE(exception, what)  throw exception(cxxkit::detail::get_c_str_helper(what))
+#    define CXXKIT_THROW_NO_MSG_DELEGATE(exception) throw exception()
 #else
 #    define CXXKIT_TRY                              if (true)
 #    define CXXKIT_CATCH(A)                         else
 #    define CXXKIT_RETHROW                          cxxkit::detail::noop()
-#    define CXXKIT_THROW_DELEGATE(Exception, what)  CXXKIT_FATAL("%s", detail::get_c_str_helper(what))
-#    define CXXKIT_THROW_NO_MSG_DELEGATE(Exception) CXXKIT_FATAL("%s", #Exception)
+#    define CXXKIT_THROW_DELEGATE(exception, what)  CXXKIT_FATAL("%s", detail::get_c_str_helper(what))
+#    define CXXKIT_THROW_NO_MSG_DELEGATE(exception) CXXKIT_FATAL("%s", #exception)
 #endif
-#define CXXKIT_THROW(Exception, ...)   CXXKIT_THROW_DELEGATE(Exception, cxxkit::detail::ExceptionWhat(__VA_ARGS__))
-#define CXXKIT_THROW_NO_MSG(Exception) CXXKIT_THROW_NO_MSG_DELEGATE(Exception)
+#define CXXKIT_THROW(exception, ...)   CXXKIT_THROW_DELEGATE(exception, cxxkit::detail::ExceptionWhat(__VA_ARGS__))
+#define CXXKIT_THROW_NO_MSG(exception) CXXKIT_THROW_NO_MSG_DELEGATE(exception)
 
 #define CXXKIT_THROW_STD_LOGIC_ERROR(...)      CXXKIT_THROW(std::logic_error, __VA_ARGS__)
 #define CXXKIT_THROW_STD_INVALID_ARGUMENT(...) CXXKIT_THROW(std::invalid_argument, __VA_ARGS__)

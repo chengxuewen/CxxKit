@@ -122,7 +122,7 @@ TEST(FlatHashSet, MoveConstruct) {
     EXPECT_TRUE(set2.contains(1));
 }
 
-TEST(FlatHashSet, Clear) {
+TEST(FlatHashSet, clear) {
     cxxkit::flat_hash_set<int> set;
     set.insert(1);
     set.insert(2);

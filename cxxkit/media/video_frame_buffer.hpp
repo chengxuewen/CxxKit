@@ -51,7 +51,7 @@ class NV12BufferInterface;
 // The tag in type() indicates how the data is represented, and each type is
 // implemented as a subclass. To access the pixel data, call the appropriate
 // GetXXX() function, where XXX represents the type. There is also a function
-// ToI420() that returns a frame buffer in I420 format, converting from the
+// to_i420() that returns a frame buffer in I420 format, converting from the
 // underlying representation if necessary. I420 is the most widely accepted
 // format and serves as a fallback for video sinks that can only handle I420.
 // Frame metadata such as rotation and timestamp are stored in
@@ -71,13 +71,13 @@ public:
     // provide a fallback to I420 for compatibility.
     // Conversion may fail, for example if reading the pixel data from a texture
     // fails. If the conversion fails, nullptr is returned.
-    virtual SharedRefPtr<I420BufferInterface> ToI420() = 0;
+    virtual SharedRefPtr<I420BufferInterface> to_i420() = 0;
 
-    // GetI420() should return the I420 buffer when the conversion is trivial,
+    // get_i420() should return the I420 buffer when the conversion is trivial,
     // i.e. no change for binary data is needed. Otherwise it should return
     // nullptr. It is overridden by subclasses that can return an I420 buffer
     // without any conversion, in particular, I420BufferInterface.
-    virtual const I420BufferInterface* GetI420() const;
+    virtual const I420BufferInterface* get_i420() const;
 
     // A format specific scale function. First, the image is cropped to
     // `crop_width` and `crop_height` and then scaled to `scaled_width` and
@@ -85,7 +85,7 @@ public:
     // ponytail: the default I420-conversion implementation needs the concrete
     // I420Buffer (added with the I420Buffer sublib); base default returns
     // nullptr. Concrete buffers override this (e.g. I420Buffer in Task 4).
-    virtual SharedRefPtr<VideoFrameBuffer> CropAndScale(int offset_x,
+    virtual SharedRefPtr<VideoFrameBuffer> crop_and_scale(int offset_x,
                                                         int offset_y,
                                                         int crop_width,
                                                         int crop_height,
@@ -93,14 +93,14 @@ public:
                                                         int scaled_height);
 
     // Alias for common use case.
-    SharedRefPtr<VideoFrameBuffer> Scale(int scaled_width, int scaled_height)
+    SharedRefPtr<VideoFrameBuffer> scale(int scaled_width, int scaled_height)
     {
-        return CropAndScale(0, 0, width(), height(), scaled_width, scaled_height);
+        return crop_and_scale(0, 0, width(), height(), scaled_width, scaled_height);
     }
 
     // These functions should only be called if type() is of the correct type.
     // Calling with a different type will result in a crash.
-    const NV12BufferInterface* GetNV12() const;
+    const NV12BufferInterface* get_nv12() const;
 
     // For logging: returns a textual representation of the storage.
     virtual std::string storage_representation() const;
@@ -112,14 +112,14 @@ protected:
 // This interface represents planar formats.
 class PlanarYuvBuffer : public VideoFrameBuffer {
 public:
-    virtual int ChromaWidth() const = 0;
-    virtual int ChromaHeight() const = 0;
+    virtual int chroma_width() const = 0;
+    virtual int chroma_height() const = 0;
 
     // Returns the number of steps (in terms of Data*() return type) between
     // successive rows for a given plane.
-    virtual int StrideY() const = 0;
-    virtual int StrideU() const = 0;
-    virtual int StrideV() const = 0;
+    virtual int stride_y() const = 0;
+    virtual int stride_u() const = 0;
+    virtual int stride_v() const = 0;
 
 protected:
     ~PlanarYuvBuffer() override {}
@@ -131,9 +131,9 @@ class PlanarYuv8Buffer : public PlanarYuvBuffer {
 public:
     // Returns pointer to the pixel data for a given plane. The memory is owned by
     // the VideoFrameBuffer object and must not be freed by the caller.
-    virtual const uint8_t* GetDataY() const = 0;
-    virtual const uint8_t* GetDataU() const = 0;
-    virtual const uint8_t* GetDataV() const = 0;
+    virtual const uint8_t* get_data_y() const = 0;
+    virtual const uint8_t* get_data_u() const = 0;
+    virtual const uint8_t* get_data_v() const = 0;
 
 protected:
     ~PlanarYuv8Buffer() override {}
@@ -143,12 +143,12 @@ class CXXKIT_MEDIA_API I420BufferInterface : public PlanarYuv8Buffer {
 public:
     VideoType type() const override { return VideoType::kI420; }
 
-    int ChromaWidth() const final { return (width() + 1) / 2; }
-    int ChromaHeight() const final { return (height() + 1) / 2; }
+    int chroma_width() const final { return (width() + 1) / 2; }
+    int chroma_height() const final { return (height() + 1) / 2; }
 
     // Trivial conversion: the buffer is already I420.
-    SharedRefPtr<I420BufferInterface> ToI420() final { return SharedRefPtr<I420BufferInterface>(this); }
-    const I420BufferInterface* GetI420() const final { return this; }
+    SharedRefPtr<I420BufferInterface> to_i420() final { return SharedRefPtr<I420BufferInterface>(this); }
+    const I420BufferInterface* get_i420() const final { return this; }
 
 protected:
     ~I420BufferInterface() override {}
@@ -158,13 +158,13 @@ protected:
 // interleaved UV.
 class BiplanarYuvBuffer : public VideoFrameBuffer {
 public:
-    virtual int ChromaWidth() const = 0;
-    virtual int ChromaHeight() const = 0;
+    virtual int chroma_width() const = 0;
+    virtual int chroma_height() const = 0;
 
     // Returns the number of steps (in terms of Data*() return type) between
     // successive rows for a given plane.
-    virtual int StrideY() const = 0;
-    virtual int StrideUV() const = 0;
+    virtual int stride_y() const = 0;
+    virtual int stride_uv() const = 0;
 
 protected:
     ~BiplanarYuvBuffer() override {}
@@ -172,8 +172,8 @@ protected:
 
 class BiplanarYuv8Buffer : public BiplanarYuvBuffer {
 public:
-    virtual const uint8_t* GetDataY() const = 0;
-    virtual const uint8_t* GetDataUV() const = 0;
+    virtual const uint8_t* get_data_y() const = 0;
+    virtual const uint8_t* get_data_uv() const = 0;
 
 protected:
     ~BiplanarYuv8Buffer() override {}
@@ -183,8 +183,8 @@ class CXXKIT_MEDIA_API NV12BufferInterface : public BiplanarYuv8Buffer {
 public:
     VideoType type() const override { return VideoType::kNV12; }
 
-    int ChromaWidth() const final { return (width() + 1) / 2; }
-    int ChromaHeight() const final { return (height() + 1) / 2; }
+    int chroma_width() const final { return (width() + 1) / 2; }
+    int chroma_height() const final { return (height() + 1) / 2; }
 
 protected:
     ~NV12BufferInterface() override {}
@@ -194,14 +194,14 @@ protected:
 // Inline default implementations (kept header-only).
 // ---------------------------------------------------------------------------
 
-inline const I420BufferInterface* VideoFrameBuffer::GetI420() const
+inline const I420BufferInterface* VideoFrameBuffer::get_i420() const
 {
     // Overridden by subclasses that can return an I420 buffer without any
     // conversion, in particular, I420BufferInterface.
     return nullptr;
 }
 
-inline SharedRefPtr<VideoFrameBuffer> VideoFrameBuffer::CropAndScale(int /*offset_x*/,
+inline SharedRefPtr<VideoFrameBuffer> VideoFrameBuffer::crop_and_scale(int /*offset_x*/,
                                                                      int /*offset_y*/,
                                                                      int /*crop_width*/,
                                                                      int /*crop_height*/,
@@ -214,7 +214,7 @@ inline SharedRefPtr<VideoFrameBuffer> VideoFrameBuffer::CropAndScale(int /*offse
     return SharedRefPtr<VideoFrameBuffer>();
 }
 
-inline const NV12BufferInterface* VideoFrameBuffer::GetNV12() const
+inline const NV12BufferInterface* VideoFrameBuffer::get_nv12() const
 {
     // Only callable when type() is kNV12; calling with a different type results
     // in a crash (CHECK).
@@ -260,12 +260,12 @@ public:
 
     int width() const override { return mWidth; }
     int height() const override { return mHeight; }
-    const uint8_t* GetDataY() const override { return mYPlane; }
-    const uint8_t* GetDataU() const override { return mUPlane; }
-    const uint8_t* GetDataV() const override { return mVPlane; }
-    int StrideY() const override { return mYStride; }
-    int StrideU() const override { return mUStride; }
-    int StrideV() const override { return mVStride; }
+    const uint8_t* get_data_y() const override { return mYPlane; }
+    const uint8_t* get_data_u() const override { return mUPlane; }
+    const uint8_t* get_data_v() const override { return mVPlane; }
+    int stride_y() const override { return mYStride; }
+    int stride_u() const override { return mUStride; }
+    int stride_v() const override { return mVStride; }
 
 private:
     friend class RefCountedObject<WrappedI420Buffer>;
@@ -287,7 +287,7 @@ private:
 // Creates an I420BufferInterface wrapping externally-owned memory. The
 // `no_longer_used` callback is invoked (exactly once) when the last reference
 // to the wrapped buffer is released.
-inline SharedRefPtr<I420BufferInterface> WrapI420Buffer(int width,
+inline SharedRefPtr<I420BufferInterface> wrap_i420_buffer(int width,
                                                         int height,
                                                         const uint8_t* y_plane,
                                                         int y_stride,

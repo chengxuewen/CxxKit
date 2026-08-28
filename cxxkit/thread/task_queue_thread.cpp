@@ -228,7 +228,7 @@ TaskQueueThread::NextTask TaskQueueThread::pop_next_task()
             return result;
         }
 
-        result.sleepTime = TimeDelta::Millis(DivideRoundUp(delayedTaskTimestamp - tickUSecs, 1'000));
+        result.sleepTime = TimeDelta::millis(divide_round_up(delayedTaskTimestamp - tickUSecs, 1'000));
     }
 
     if (!d->mPendingTasks.empty())
@@ -240,14 +240,14 @@ TaskQueueThread::NextTask TaskQueueThread::pop_next_task()
 
     if (!result.runTask && result.sleepTime.us() > 1000)
     {
-        // Nothing due soon, and the empty-queue default sleepTime is PlusInfinity: waiting on it
+        // Nothing due soon, and the empty-queue default sleepTime is plus_infinity: waiting on it
         // would sleep a full second (the wait cap) even after a post/post_delayed_task notify that
         // arrived while this thread was already waiting with an earlier deadline (predicate wait
         // does not shorten a deadline). A 1ms short-poll bounds that window far inside any real
         // delay deadline (fixes intermittent TaskQueueThreadTest.PostDelayedTask 1s timeouts:
         // the 3ms task was being run 1s late). Delayed tasks with a precise sleepTime < 1ms keep
         // their exact wait.
-        result.sleepTime = TimeDelta::Millis(1);
+        result.sleepTime = TimeDelta::millis(1);
     }
 
     return result;

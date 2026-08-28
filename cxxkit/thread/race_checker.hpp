@@ -35,27 +35,27 @@
 
 CXXKIT_BEGIN_NAMESPACE
 
-class CXXKIT_THREAD_API CXXKIT_ATTRIBUTE_LOCKABLE RaceChecker final
+class CXXKIT_THREAD_API CXXKIT_ATTRIBUTE_LOCKABLE race_checker final
 {
 public:
     class CXXKIT_ATTRIBUTE_SCOPED_LOCKABLE Scope
     {
     public:
-        explicit Scope(const RaceChecker *race_checker) CXXKIT_ATTRIBUTE_EXCLUSIVE_LOCK_FUNCTION(race_checker);
+        explicit Scope(const race_checker *race_checker) CXXKIT_ATTRIBUTE_EXCLUSIVE_LOCK_FUNCTION(race_checker);
         ~Scope() CXXKIT_ATTRIBUTE_UNLOCK_FUNCTION();
 
         bool is_detected() const;
 
 #if CXXKIT_DCHECK_IS_ON
     private:
-        const RaceChecker *const mRaceChecker;
+        const race_checker *const mRaceChecker;
         const bool mRacecheckOk;
 #endif
     };
 
     //    friend class internal::RaceCheckerScope;
-    RaceChecker() = default;
-    ~RaceChecker() = default;
+    race_checker() = default;
+    ~race_checker() = default;
 
 private:
     bool acquire() const CXXKIT_ATTRIBUTE_EXCLUSIVE_LOCK_FUNCTION();
@@ -69,11 +69,11 @@ private:
 CXXKIT_END_NAMESPACE
 
 #define CXXKIT_CHECK_RUNS_SERIALIZED_IMPL(x, suffix)                                                                   \
-    cxxkit::RaceChecker::Scope race_checker##suffix(x);                                                                 \
+    cxxkit::race_checker::Scope race_checker##suffix(x);                                                                 \
     CXXKIT_CHECK(!race_checker##suffix.is_detected())
 
 #define CXXKIT_CHECK_RUNS_SERIALIZED_NEXT(x, suffix) CXXKIT_CHECK_RUNS_SERIALIZED_IMPL(x, suffix)
 
-#define CXXKIT_DCHECK_RUNS_SERIALIZED(x) cxxkit::RaceChecker::Scope race_checker(x)
+#define CXXKIT_DCHECK_RUNS_SERIALIZED(x) cxxkit::race_checker::Scope race_checker(x)
 
 #define CXXKIT_CHECK_RUNS_SERIALIZED(x) CXXKIT_CHECK_RUNS_SERIALIZED_NEXT(x, __LINE__)

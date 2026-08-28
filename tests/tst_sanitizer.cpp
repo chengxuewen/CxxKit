@@ -38,7 +38,7 @@ CXXKIT_BEGIN_NAMESPACE
 namespace
 {
 
-// Test traits::is_trivially_copyable_v (at compile time).
+// test traits::is_trivially_copyable_v (at compile time).
 // Trivially copyable.
 
 struct TrTrTr
@@ -167,14 +167,14 @@ void MsanExpectUninitializedRead(F &&f)
 
 } // namespace
 
-TEST(SanitizerTest, MsanUninitialized)
+TEST(SanitizerTest, msan_uninitialized)
 {
-    Bar bar = MsanUninitialized<Bar>({});
-    // Check that a read after initialization is OK.
+    Bar bar = msan_uninitialized<Bar>({});
+    // check that a read after initialization is OK.
     bar.ID = 1;
     EXPECT_EQ(1u, bar.ID);
     CXXKIT_INFO() << "read after init passed";
-    // Check that other fields are uninitialized and equal to zero.
+    // check that other fields are uninitialized and equal to zero.
     MsanExpectUninitializedRead([&] { EXPECT_EQ(0u, bar.foo.field1); });
     MsanExpectUninitializedRead([&] { EXPECT_EQ(0u, bar.foo.field2); });
     CXXKIT_INFO() << "read with no init passed";

@@ -128,7 +128,7 @@ TEST(Logging, OutputCapturedByHandler)
     ASSERT_EQ(captured.size(), 2u);
     EXPECT_EQ(captured[1], "value=42");
 
-    // Clear handler.
+    // clear handler.
     logger.install_message_handler(nullptr);
 }
 

@@ -189,9 +189,9 @@ inline std::wstring to_utf16(const char *utf8, size_t len)
     {
         return std::wstring();
     }
-    int len16 = ::MultiByteToWideChar(CP_UTF8, 0, utf8, static_cast<int>(len), nullptr, 0);
+    int len16 = ::multi_byte_to_wide_char(CP_UTF8, 0, utf8, static_cast<int>(len), nullptr, 0);
     std::wstring ws(len16, 0);
-    ::MultiByteToWideChar(CP_UTF8, 0, utf8, static_cast<int>(len), &*ws.begin(), len16);
+    ::multi_byte_to_wide_char(CP_UTF8, 0, utf8, static_cast<int>(len), &*ws.begin(), len16);
     return ws;
 }
 
@@ -206,9 +206,9 @@ inline std::string to_utf8(const wchar_t *wide, size_t len)
     {
         return std::string();
     }
-    int len8 = ::WideCharToMultiByte(CP_UTF8, 0, wide, static_cast<int>(len), nullptr, 0, nullptr, nullptr);
+    int len8 = ::wide_char_to_multi_byte(CP_UTF8, 0, wide, static_cast<int>(len), nullptr, 0, nullptr, nullptr);
     std::string ns(len8, 0);
-    ::WideCharToMultiByte(CP_UTF8, 0, wide, static_cast<int>(len), &*ns.begin(), len8, nullptr, nullptr);
+    ::wide_char_to_multi_byte(CP_UTF8, 0, wide, static_cast<int>(len), &*ns.begin(), len8, nullptr, nullptr);
     return ns;
 }
 

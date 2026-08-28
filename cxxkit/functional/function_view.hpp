@@ -62,8 +62,8 @@ CXXKIT_BEGIN_NAMESPACE
 template <typename T>
 class FunctionView; // Undefined.
 
-template <typename RetT, typename... ArgT>
-class FunctionView<RetT(ArgT...)> final
+template <typename ret_t, typename... ArgT>
+class FunctionView<ret_t(ArgT...)> final
 {
 public:
     /**
@@ -83,7 +83,7 @@ public:
             !std::is_same<FunctionView, typename std::remove_cv<typename std::remove_reference<F>::type>::type>::
                 value>::type * = nullptr>
     FunctionView(F &&f)
-        : mCall(CallVoidPtr<typename std::remove_reference<F>::type>)
+        : mCall(call_void_ptr<typename std::remove_reference<F>::type>)
     {
         mVoidUnion.voidPtr = &f;
     }
@@ -98,7 +98,7 @@ public:
               typename std::enable_if<std::is_function<typename std::remove_pointer<
                   typename std::remove_reference<F>::type>::type>::value>::type * = nullptr>
     FunctionView(F &&f)
-        : mCall(f ? CallFunPtr<typename std::remove_pointer<F>::type> : nullptr)
+        : mCall(f ? call_fun_ptr<typename std::remove_pointer<F>::type> : nullptr)
     {
         mVoidUnion.funPtr = reinterpret_cast<void (*)()>(f);
     }
@@ -123,7 +123,7 @@ public:
     {
     }
 
-    RetT operator()(ArgT... args) const
+    ret_t operator()(ArgT... args) const
     {
         CXXKIT_DCHECK(mCall);
         return mCall(mVoidUnion, std::forward<ArgT>(args)...);
@@ -142,12 +142,12 @@ private:
     };
 
     template <typename F>
-    static RetT CallVoidPtr(VoidUnion vu, ArgT... args)
+    static ret_t call_void_ptr(VoidUnion vu, ArgT... args)
     {
         return (*static_cast<F *>(vu.voidPtr))(std::forward<ArgT>(args)...);
     }
     template <typename F>
-    static RetT CallFunPtr(VoidUnion vu, ArgT... args)
+    static ret_t call_fun_ptr(VoidUnion vu, ArgT... args)
     {
         return (reinterpret_cast<typename std::add_pointer<F>::type>(vu.funPtr))(std::forward<ArgT>(args)...);
     }
@@ -164,7 +164,7 @@ private:
      * and how to call it.
      * A FunctionView object is empty (null) iff mCall is null.
      */
-    RetT (*mCall)(VoidUnion, ArgT...);
+    ret_t (*mCall)(VoidUnion, ArgT...);
 };
 
 /**

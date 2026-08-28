@@ -34,36 +34,36 @@ using namespace cxxkit;
 
 TEST(Metrics, HistogramCounts)
 {
-    metrics::Enable();
-    metrics::Histogram *hist = metrics::HistogramFactoryGetCounts("tst_counts", 0, 100, 10);
+    metrics::enable();
+    metrics::Histogram *hist = metrics::histogram_factory_get_counts("tst_counts", 0, 100, 10);
     ASSERT_TRUE(hist != nullptr);
-    metrics::HistogramAdd(hist, 5);
-    metrics::HistogramAdd(hist, 95);
+    metrics::histogram_add(hist, 5);
+    metrics::histogram_add(hist, 95);
 
     std::map<std::string, std::unique_ptr<metrics::SampleInfo>, cxxkit::StringViewCmp> histograms;
-    metrics::GetAndReset(&histograms);
+    metrics::get_and_reset(&histograms);
     EXPECT_FALSE(histograms.empty());
 }
 
 TEST(Metrics, HistogramCountsLinear)
 {
-    metrics::Histogram *hist = metrics::HistogramFactoryGetCountsLinear("tst_linear", 0, 100, 10);
+    metrics::Histogram *hist = metrics::histogram_factory_get_counts_linear("tst_linear", 0, 100, 10);
     ASSERT_TRUE(hist != nullptr);
-    metrics::HistogramAdd(hist, 10);
-    metrics::Reset();
+    metrics::histogram_add(hist, 10);
+    metrics::reset();
 }
 
 TEST(Metrics, Enumeration)
 {
-    metrics::Histogram *hist = metrics::HistogramFactoryGetEnumeration("tst_enum", 5);
+    metrics::Histogram *hist = metrics::histogram_factory_get_enumeration("tst_enum", 5);
     ASSERT_TRUE(hist != nullptr);
-    metrics::HistogramAdd(hist, 3);
+    metrics::histogram_add(hist, 3);
 
-    metrics::Histogram *sparse = metrics::SparseHistogramFactoryGetEnumeration("tst_sparse", 8);
+    metrics::Histogram *sparse = metrics::sparse_histogram_factory_get_enumeration("tst_sparse", 8);
     ASSERT_TRUE(sparse != nullptr);
-    metrics::HistogramAdd(sparse, 1);
+    metrics::histogram_add(sparse, 1);
 
     std::map<std::string, std::unique_ptr<metrics::SampleInfo>, cxxkit::StringViewCmp> histograms;
-    metrics::GetAndReset(&histograms);
+    metrics::get_and_reset(&histograms);
     EXPECT_FALSE(histograms.empty());
 }

@@ -64,7 +64,7 @@ public:
     }
 
     /**
-     * @brief Copy constructor. Creates a Result by copying another Result.
+     * @brief copy constructor. Creates a Result by copying another Result.
      *
      * @param other The Result to copy from.
      */
@@ -81,7 +81,7 @@ public:
     }
 
     /**
-     * @brief Copy constructor from a Result of a convertible type.
+     * @brief copy constructor from a Result of a convertible type.
      *
      * @tparam U The type of the other Result's value, which must be convertible to T.
      * @param other The Result to copy from.
@@ -172,7 +172,7 @@ public:
     }
 
     /**
-     * @brief Copy assignment operator.
+     * @brief copy assignment operator.
      *
      * @param other The Result to copy from.
      * @return Reference to this Result.
@@ -195,7 +195,7 @@ public:
     }
 
     /**
-     * @brief Copy assignment from a Result of a convertible type.
+     * @brief copy assignment from a Result of a convertible type.
      *
      * @tparam U The type of the other Result's value, which must be convertible to T.
      * @param other The Result to copy from.

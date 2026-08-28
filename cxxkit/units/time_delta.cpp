@@ -34,11 +34,11 @@ namespace utils
 std::string to_string(TimeDelta value)
 {
     std::stringstream ss;
-    if (value.IsPlusInfinity())
+    if (value.is_plus_infinity())
     {
         ss << "+inf ms";
     }
-    else if (value.IsMinusInfinity())
+    else if (value.is_minus_infinity())
     {
         ss << "-inf ms";
     }

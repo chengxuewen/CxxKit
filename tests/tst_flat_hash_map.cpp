@@ -131,7 +131,7 @@ TEST(FlatHashMap, CopyConstruct) {
     EXPECT_EQ(map.size(), 2u);
 }
 
-TEST(FlatHashMap, Clear) {
+TEST(FlatHashMap, clear) {
     cxxkit::flat_hash_map<int, int> map;
     map[1] = 10;
     map[2] = 20;

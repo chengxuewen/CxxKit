@@ -26,7 +26,7 @@
 
 CXXKIT_BEGIN_NAMESPACE
 
-RaceChecker::Scope::Scope(const RaceChecker *race_checker)
+race_checker::Scope::Scope(const race_checker *race_checker)
 #if CXXKIT_DCHECK_IS_ON
     : mRaceChecker(race_checker)
     , mRacecheckOk(race_checker->acquire())
@@ -34,14 +34,14 @@ RaceChecker::Scope::Scope(const RaceChecker *race_checker)
 {
 }
 
-RaceChecker::Scope::~Scope()
+race_checker::Scope::~Scope()
 {
 #if CXXKIT_DCHECK_IS_ON
     mRaceChecker->release();
 #endif
 }
 
-bool RaceChecker::Scope::is_detected() const
+bool race_checker::Scope::is_detected() const
 {
 #if CXXKIT_DCHECK_IS_ON
     return !mRacecheckOk;
@@ -50,10 +50,10 @@ bool RaceChecker::Scope::is_detected() const
 #endif
 }
 
-bool RaceChecker::acquire() const
+bool race_checker::acquire() const
 {
     const auto current_thread_id = PlatformThread::current_thread_id();
-    // Set new accessing thread if this is a new use.
+    // set new accessing thread if this is a new use.
     const int currentAccessCount = mAccessCount;
     mAccessCount = mAccessCount + 1;
     if (currentAccessCount == 0)
@@ -67,7 +67,7 @@ bool RaceChecker::acquire() const
     return accessingThreadId == current_thread_id;
 }
 
-void RaceChecker::release() const
+void race_checker::release() const
 {
     mAccessCount = mAccessCount - 1;
 }

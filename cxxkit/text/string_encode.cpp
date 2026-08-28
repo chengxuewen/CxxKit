@@ -77,7 +77,7 @@ void hex_encode_with_delimiter(char *buffer, StringView source, char delimiter)
 {
     CXXKIT_DCHECK(buffer);
 
-    // Init and check bounds.
+    // init and check bounds.
     const unsigned char *bsource = reinterpret_cast<const unsigned char *>(source.data());
     size_t srcpos = 0, bufpos = 0;
 
@@ -118,7 +118,7 @@ size_t hex_decode_with_delimiter(ArrayView<char> cbuffer, StringView source, cha
         return 0;
     }
 
-    // Init and bounds check.
+    // init and bounds check.
     unsigned char *bbuffer = reinterpret_cast<unsigned char *>(cbuffer.data());
     size_t srcpos = 0, bufpos = 0;
     size_t srclen = source.length();
@@ -208,7 +208,7 @@ bool tokenize_first(StringView source, const char delimiter, std::string *token,
     return true;
 }
 
-bool FromString(StringView s, bool *b)
+bool from_string(StringView s, bool *b)
 {
     if (s == "false")
     {

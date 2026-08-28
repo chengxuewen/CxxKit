@@ -36,7 +36,7 @@ class DefaultTaskQueueFactory : public TaskQueueFactory
 public:
     DefaultTaskQueueFactory() = default;
     ~DefaultTaskQueueFactory() override { }
-    std::unique_ptr<TaskQueueBase, TaskQueueBase::Deleter> CreateTaskQueue(StringView name,
+    std::unique_ptr<TaskQueueBase, TaskQueueBase::Deleter> create_task_queue(StringView name,
                                                                            Priority priority) const override
     {
         auto taskQueue = TaskQueueThread::make_unique();
@@ -46,7 +46,7 @@ public:
 };
 } // namespace detail
 
-std::unique_ptr<TaskQueueFactory> TaskQueueFactory::CreateDefault()
+std::unique_ptr<TaskQueueFactory> TaskQueueFactory::create_default()
 {
     return utils::make_unique<detail::DefaultTaskQueueFactory>();
 }

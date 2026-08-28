@@ -35,12 +35,12 @@
 namespace {
 
 TEST(FrameGenerator, SlideShow) {
-    auto gen = cxxkit::FrameGenerator::CreateSlideShow(
+    auto gen = cxxkit::FrameGenerator::create_slide_show(
         std::vector<std::string>{}, cxxkit::FrameGenerator::OutputType::kI420, 640, 480, 1);
     ASSERT_TRUE(gen);
     EXPECT_EQ(gen->width(), 640);
     EXPECT_EQ(gen->height(), 480);
-    auto frame = gen->GetNextFrame();
+    auto frame = gen->get_next_frame();
     ASSERT_TRUE(frame);
     EXPECT_EQ(frame->width(), 640);
     EXPECT_EQ(frame->height(), 480);
@@ -49,7 +49,7 @@ TEST(FrameGenerator, SlideShow) {
 
 TEST(FrameGeneratorCapturer, GenerateOneFrameInvokesCallback) {
     int captured = 0;
-    auto cap = cxxkit::CreateFrameGeneratorCapturer(
+    auto cap = cxxkit::create_frame_generator_capturer(
         30.0, 32, 32, [&captured](const cxxkit::VideoFrame& frame) {
             ++captured;
             EXPECT_TRUE(frame.video_frame_buffer());
@@ -58,18 +58,18 @@ TEST(FrameGeneratorCapturer, GenerateOneFrameInvokesCallback) {
             EXPECT_EQ(frame.timestamp_us(), 1000);  // 1,000,000 ns → 1000 us
         });
     ASSERT_TRUE(cap);
-    cap->GenerateOneFrame(1000000);
+    cap->generate_one_frame(1000000);
     EXPECT_EQ(captured, 1);
 }
 
 TEST(FrameGeneratorCapturer, FramerateThrottleDropsFrames) {
     int captured = 0;
-    auto cap = cxxkit::CreateFrameGeneratorCapturer(
+    auto cap = cxxkit::create_frame_generator_capturer(
         30.0, 32, 32, [&captured](const cxxkit::VideoFrame&) { ++captured; });
     ASSERT_TRUE(cap);
-    cap->GenerateOneFrame(0);         // 首帧保留
-    cap->GenerateOneFrame(0);         // 同一时间戳未到间隔 → 丢
-    cap->GenerateOneFrame(40000000);  // +40ms > 33.3ms 帧间隔 → 保留
+    cap->generate_one_frame(0);         // 首帧保留
+    cap->generate_one_frame(0);         // 同一时间戳未到间隔 → 丢
+    cap->generate_one_frame(40000000);  // +40ms > 33.3ms 帧间隔 → 保留
     EXPECT_EQ(captured, 2);
 }
 

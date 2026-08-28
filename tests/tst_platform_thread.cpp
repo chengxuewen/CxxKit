@@ -93,11 +93,11 @@ protected:
         cond.notify_one();
     }
 };
-class TerminateThread : public SimpleThread
+class terminate_thread : public SimpleThread
 {
 public:
     using SimpleThread::SimpleThread;
-    TerminateThread() = default;
+    terminate_thread() = default;
 
 protected:
     void run()
@@ -109,7 +109,7 @@ protected:
             cond.wait_for(lock, std::chrono::milliseconds(kFiveMinutes));
         }
         this->set_termination_enabled(true);
-        CXXKIT_FATAL("TerminateThread: test case hung");
+        CXXKIT_FATAL("terminate_thread: test case hung");
     }
 };
 class SleepThread : public SimpleThread
@@ -203,7 +203,7 @@ protected:
         // Adopt thread, create QThread object.
         threadWrapper->mPlatformThread = PlatformThread::current_thread();
 
-        // Release main thread.
+        // release main thread.
         {
             std::unique_lock<std::mutex> lock(threadWrapper->mMutex);
             threadWrapper->mStartCondition.notify_one();
@@ -404,7 +404,7 @@ TEST(PlatformThreadTest, Terminate)
 #if defined(CXXKIT_OS_WINRT) || defined(CXXKIT_OS_ANDROID)
     CXXKIT_WARNING("PlatformThread termination is not supported on WinRT or Android.");
 #endif
-    TerminateThread thread;
+    terminate_thread thread;
     {
         std::unique_lock<std::mutex> lock(thread.mutex);
         thread.start();
@@ -524,7 +524,7 @@ TEST(PlatformThreadTest, Waiting)
     EXPECT_TRUE(elapsed - WaitingThread::WaitTime >= -1) << "elapsed:" << std::to_string(elapsed);
 }
 
-TEST(PlatformThreadTest, Create)
+TEST(PlatformThreadTest, create)
 {
     {
         const auto &function = []() {};

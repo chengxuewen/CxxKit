@@ -47,17 +47,17 @@ FramerateController::FramerateController(double max_framerate)
 {
 }
 
-void FramerateController::SetFrameRate(double max_framerate)
+void FramerateController::set_frame_rate(double max_framerate)
 {
     mMaxFramerate = max_framerate;
 }
 
-double FramerateController::GetFrameRate() const
+double FramerateController::get_frame_rate() const
 {
     return mMaxFramerate;
 }
 
-bool FramerateController::ShouldDropFrame(int64_t in_timestamp_nsecs)
+bool FramerateController::should_drop_frame(int64_t in_timestamp_nsecs)
 {
     if (mMaxFramerate < kMinFramerate)
     {
@@ -92,21 +92,21 @@ bool FramerateController::ShouldDropFrame(int64_t in_timestamp_nsecs)
     }
 
     // First timestamp received or timestamp is way outside expected range, so
-    // reset. Set first timestamp target to just half the interval to prefer
+    // reset. set first timestamp target to just half the interval to prefer
     // keeping frames in case of jitter.
     mNextFrameTimestampNs = in_timestamp_nsecs + frame_interval_ns / 2;
     return false;
 }
 
-void FramerateController::Reset()
+void FramerateController::reset()
 {
     mMaxFramerate = std::numeric_limits<double>::max();
     mNextFrameTimestampNs = utils::nullopt;
 }
 
-void FramerateController::KeepFrame(int64_t in_timestamp_nsecs)
+void FramerateController::keep_frame(int64_t in_timestamp_nsecs)
 {
-    if (ShouldDropFrame(in_timestamp_nsecs))
+    if (should_drop_frame(in_timestamp_nsecs))
     {
         if (mMaxFramerate < kMinFramerate)
         {

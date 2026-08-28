@@ -36,8 +36,8 @@
 // Minimum and maximum
 // ===================
 //
-//   cxxkit::SafeMin(x, y)
-//   cxxkit::SafeMax(x, y)
+//   cxxkit::safe_min(x, y)
+//   cxxkit::safe_max(x, y)
 //
 // (These are both constexpr.)
 //
@@ -52,15 +52,15 @@
 //     because the floating-point type will have greater range, but may not
 //     have sufficient precision to represent the integer value exactly.)
 //
-// Clamp (a.k.a. constrain to a given interval)
+// clamp (a.k.a. constrain to a given interval)
 // ============================================
 //
-//   cxxkit::SafeClamp(x, a, b)
+//   cxxkit::safe_clamp(x, a, b)
 //
 // Accepts three arguments of any mix of integral types or any mix of
 // floating-point types, and returns the value in the closed interval [a, b]
 // that is closest to x (that is, if x < a it returns a; if x > b it returns b;
-// and if a <= x <= b it returns x). As for SafeMin() and SafeMax(), there is
+// and if a <= x <= b it returns x). As for safe_min() and safe_max(), there is
 // no truncation or wrap-around. The result type
 //
 //   1. is statically guaranteed to be able to represent the result;
@@ -72,8 +72,8 @@
 //
 // There is always at least one type that meets criteria 1 and 2. If more than
 // one type meets these criteria equally well, the result type is one of the
-// types that is smallest. Note that unlike SafeMin() and SafeMax(),
-// SafeClamp() will sometimes pick a return type that isn't the type of any of
+// types that is smallest. Note that unlike safe_min() and safe_max(),
+// safe_clamp() will sometimes pick a return type that isn't the type of any of
 // its arguments.
 //
 //   * In this context, a type A is smaller than a type B if it has a smaller
@@ -81,7 +81,7 @@
 //     example, int8_t < int16_t == uint16_t < int32_t, and all integral types
 //     are smaller than all floating-point types.)
 //
-//   * As for SafeMin and SafeMax, mixing integer and floating-point arguments
+//   * As for safe_min and safe_max, mixing integer and floating-point arguments
 //     is not allowed, because floating-point types have greater range than
 //     integer types, but do not have sufficient precision to represent the
 //     values of most integer types exactly.
@@ -92,7 +92,7 @@
 // All three functions allow callers to explicitly specify the return type as a
 // template parameter, overriding the default return type. E.g.
 //
-//   cxxkit::SafeMin<int>(x, y)  // returns an int
+//   cxxkit::safe_min<int>(x, y)  // returns an int
 //
 // If the requested type is statically guaranteed to be able to represent the
 // result, then everything's fine, and the return type is as requested. But if
@@ -156,20 +156,20 @@ struct MType<T1, T2, true, true>
     // the lowest maximum value. In case that too is a tie, the types have the
     // same range, and we arbitrarily pick T1.
     using min_t = typename std::conditional<
-        SafeLt(Limits<T1>::lowest, Limits<T2>::lowest),
+        safe_lt(Limits<T1>::lowest, Limits<T2>::lowest),
         T1,
         typename std::conditional<
-            SafeGt(Limits<T1>::lowest, Limits<T2>::lowest),
+            safe_gt(Limits<T1>::lowest, Limits<T2>::lowest),
             T2,
-            typename std::conditional<SafeLe(Limits<T1>::max, Limits<T2>::max), T1, T2>::type>::type>::type;
+            typename std::conditional<safe_le(Limits<T1>::max, Limits<T2>::max), T1, T2>::type>::type>::type;
     static_assert(std::is_same<min_t, T1>::value || std::is_same<min_t, T2>::value, "");
 
     // The type with the highest maximum value. In case of a tie, the types have
     // the same range (because in C++, integer types with the same maximum also
     // have the same minimum).
-    static_assert(SafeNe(Limits<T1>::max, Limits<T2>::max) || SafeEq(Limits<T1>::lowest, Limits<T2>::lowest),
+    static_assert(safe_ne(Limits<T1>::max, Limits<T2>::max) || safe_eq(Limits<T1>::lowest, Limits<T2>::lowest),
                   "integer types with the same max should have the same min");
-    using max_t = typename std::conditional<SafeGe(Limits<T1>::max, Limits<T2>::max), T1, T2>::type;
+    using max_t = typename std::conditional<safe_ge(Limits<T1>::max, Limits<T2>::max), T1, T2>::type;
     static_assert(std::is_same<max_t, T1>::value || std::is_same<max_t, T2>::value, "");
 };
 
@@ -183,7 +183,7 @@ template <typename A, typename B>
 struct TypeOr
 {
     using type = typename std::conditional<std::is_same<A, DefaultType>::value, B, A>::type;
-    static_assert(SafeLe(Limits<type>::lowest, Limits<B>::lowest) && SafeGe(Limits<type>::max, Limits<B>::max),
+    static_assert(safe_le(Limits<type>::lowest, Limits<B>::lowest) && safe_ge(Limits<type>::max, Limits<B>::max),
                   "The specified type isn't large enough");
     static_assert(IsIntLike<type>::value == IsIntLike<B>::value &&
                       std::is_floating_point<type>::value == std::is_floating_point<type>::value,
@@ -204,15 +204,15 @@ template <typename R = safe_minmax_impl::DefaultType,
  * @tparam T1, T2 Input types (integral or floating-point).
  * @param a, b Values to compare.
  * @return Smaller of @p a and @p b in type @c R2.
- * @see SafeMax, SafeClamp
+ * @see safe_max, safe_clamp
  */
-constexpr R2 SafeMin(T1 a, T2 b)
+constexpr R2 safe_min(T1 a, T2 b)
 {
     static_assert(IsIntLike<T1>::value || std::is_floating_point<T1>::value,
                   "The first argument must be integral or floating-point");
     static_assert(IsIntLike<T2>::value || std::is_floating_point<T2>::value,
                   "The second argument must be integral or floating-point");
-    return SafeLt(a, b) ? static_cast<R2>(a) : static_cast<R2>(b);
+    return safe_lt(a, b) ? static_cast<R2>(a) : static_cast<R2>(b);
 }
 
 template <typename R = safe_minmax_impl::DefaultType,
@@ -227,22 +227,22 @@ template <typename R = safe_minmax_impl::DefaultType,
  * @tparam T1, T2 Input types.
  * @param a, b Values to compare.
  * @return Larger of @p a and @p b in type @c R2.
- * @see SafeMin, SafeClamp
+ * @see safe_min, safe_clamp
  */
-constexpr R2 SafeMax(T1 a, T2 b)
+constexpr R2 safe_max(T1 a, T2 b)
 {
     static_assert(IsIntLike<T1>::value || std::is_floating_point<T1>::value,
                   "The first argument must be integral or floating-point");
     static_assert(IsIntLike<T2>::value || std::is_floating_point<T2>::value,
                   "The second argument must be integral or floating-point");
-    return SafeGt(a, b) ? static_cast<R2>(a) : static_cast<R2>(b);
+    return safe_gt(a, b) ? static_cast<R2>(a) : static_cast<R2>(b);
 }
 
 namespace safe_minmax_impl
 {
 
 // Given three types T, L, and H, let ::type be a suitable return value for
-// SafeClamp(T, L, H). See the docs at the top of this file for details.
+// safe_clamp(T, L, H). See the docs at the top of this file for details.
 template <typename T,
           typename L,
           typename H,
@@ -268,8 +268,8 @@ struct ClampType<T, L, H, true, true, true>
 private:
     // Range of the return value. The return type must be able to represent this
     // full range.
-    static constexpr auto r_min = SafeMax(Limits<L>::lowest, SafeMin(Limits<H>::lowest, Limits<T>::lowest));
-    static constexpr auto r_max = SafeMin(Limits<H>::max, SafeMax(Limits<L>::max, Limits<T>::max));
+    static constexpr auto r_min = safe_max(Limits<L>::lowest, safe_min(Limits<H>::lowest, Limits<T>::lowest));
+    static constexpr auto r_max = safe_min(Limits<H>::max, safe_max(Limits<L>::max, Limits<T>::max));
 
     // Is the given type an acceptable return type? (That is, can it represent
     // all possible return values, and is it no larger than the largest of the
@@ -280,7 +280,7 @@ private:
     private:
         static constexpr bool not_too_large = sizeof(A) <= sizeof(L) || sizeof(A) <= sizeof(H) ||
                                               sizeof(A) <= sizeof(T);
-        static constexpr bool range_contained = SafeLe(Limits<A>::lowest, r_min) && SafeLe(r_max, Limits<A>::max);
+        static constexpr bool range_contained = safe_le(Limits<A>::lowest, r_min) && safe_le(r_max, Limits<A>::max);
 
     public:
         static constexpr bool value = not_too_large && range_contained;
@@ -333,7 +333,7 @@ template <typename R = safe_minmax_impl::DefaultType,
  * @return @p x clamped to [@p min, @p max].
  * @note Requires all three args to be either all integral or all floating-point.
  */
-R2 SafeClamp(T x, L min, H max)
+R2 safe_clamp(T x, L min, H max)
 {
     static_assert(IsIntLike<H>::value || std::is_floating_point<H>::value,
                   "The first argument must be integral or floating-point");
@@ -342,7 +342,7 @@ R2 SafeClamp(T x, L min, H max)
     static_assert(IsIntLike<L>::value || std::is_floating_point<L>::value,
                   "The third argument must be integral or floating-point");
     CXXKIT_DCHECK_LE(min, max);
-    return SafeLe(x, min) ? static_cast<R2>(min) : SafeGe(x, max) ? static_cast<R2>(max) : static_cast<R2>(x);
+    return safe_le(x, min) ? static_cast<R2>(min) : safe_ge(x, max) ? static_cast<R2>(max) : static_cast<R2>(x);
 }
 
 CXXKIT_END_NAMESPACE

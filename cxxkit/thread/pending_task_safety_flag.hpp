@@ -37,11 +37,11 @@ CXXKIT_BEGIN_NAMESPACE
  * @brief Ref-counted alive flag to prevent use-after-free in async callbacks.
  *
  * Port from libwebrtc api/task_queue/pending_task_safety_flag.h.
- * Use SafeTask() to wrap a callable that checks flag->alive() before execution.
+ * Use safe_task() to wrap a callable that checks flag->alive() before execution.
  *
  * Usage:
- *   auto flag = PendingTaskSafetyFlag::Create();
- *   task_queue->Post(SafeTask(flag, [this]() { DoWork(); }));
+ *   auto flag = PendingTaskSafetyFlag::create();
+ *   task_queue->post(safe_task(flag, [this]() { DoWork(); }));
  */
 class PendingTaskSafetyFlag : public std::enable_shared_from_this<PendingTaskSafetyFlag>
 {
@@ -50,7 +50,7 @@ public:
      * @brief Creates a new PendingTaskSafetyFlag in the alive state.
      * @return shared_ptr to the flag.
      */
-    static std::shared_ptr<PendingTaskSafetyFlag> Create()
+    static std::shared_ptr<PendingTaskSafetyFlag> create()
     {
         return std::shared_ptr<PendingTaskSafetyFlag>(new PendingTaskSafetyFlag());
     }
@@ -63,7 +63,7 @@ public:
     /**
      * @brief Marks the flag as not alive. Subsequent alive() calls return false.
      */
-    void SetNotAlive() { mAlive.store(false, std::memory_order_release); }
+    void set_not_alive() { mAlive.store(false, std::memory_order_release); }
 
 private:
     PendingTaskSafetyFlag() : mAlive(true) {}
@@ -80,7 +80,7 @@ private:
  * @return A std::function<void()> that checks alive() before invoking callable.
  */
 template <class Callable>
-std::function<void()> SafeTask(std::shared_ptr<PendingTaskSafetyFlag> flag, Callable &&callable)
+std::function<void()> safe_task(std::shared_ptr<PendingTaskSafetyFlag> flag, Callable &&callable)
 {
     return [flag, callable]() {
         if (flag->alive())

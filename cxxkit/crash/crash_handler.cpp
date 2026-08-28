@@ -101,11 +101,11 @@ bool CrashHandler::install()
     CXXKIT_CHECK(!mDPtr->mDumpPath.empty()) << "CrashHandler::install() requires set_dump_path() first.";
 
 #if defined(CXXKIT_OS_MACOS)
-    mDPtr->mHandler.reset(new google_breakpad::ExceptionHandler(
+    mDPtr->mHandler.reset(new google_breakpad::exception_handler(
         mDPtr->mDumpPath, nullptr, &CrashHandlerPrivate::on_minidump, this, true, NULL));
 #elif defined(CXXKIT_OS_LINUX)
-    mDPtr->mHandler.reset(new google_breakpad::ExceptionHandler(
-        google_breakpad::MinidumpDescriptor(mDPtr->mDumpPath),
+    mDPtr->mHandler.reset(new google_breakpad::exception_handler(
+        google_breakpad::minidump_descriptor(mDPtr->mDumpPath),
         nullptr, &CrashHandlerPrivate::on_minidump, this, true, -1));
 #else
 #    error "cxxkit::crash supports macOS and Linux only (Windows needs a crash-deps-x64-windows export first)."
@@ -117,7 +117,7 @@ bool CrashHandler::install()
 void CrashHandler::uninstall()
 {
     if (mDPtr->mHandler) {
-        mDPtr->mHandler.reset(); // ExceptionHandler dtor uninstalls the signal handlers
+        mDPtr->mHandler.reset(); // exception_handler dtor uninstalls the signal handlers
     }
     g_installedGuard.store(false);
 }
@@ -160,7 +160,7 @@ bool CrashHandler::write_minidump()
     if (!mDPtr->mHandler) {
         return false; // not installed — manual dump without a handler is unsupported in v1
     }
-    return mDPtr->mHandler->WriteMinidump();
+    return mDPtr->mHandler->write_minidump();
 }
 
 std::vector<std::string> CrashHandler::dump_file_list() const
@@ -201,7 +201,7 @@ bool cxxkit::CrashHandlerPrivate::on_minidump(const char *dumpPath, const char *
     const char *path = dumpPath;
     void *ucontext = nullptr;
 #else
-bool cxxkit::CrashHandlerPrivate::on_minidump(const google_breakpad::MinidumpDescriptor &descriptor, void *context,
+bool cxxkit::CrashHandlerPrivate::on_minidump(const google_breakpad::minidump_descriptor &descriptor, void *context,
                                              bool succeeded)
 {
     CrashHandler *self = static_cast<CrashHandler *>(context);

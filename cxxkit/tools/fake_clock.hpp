@@ -46,14 +46,14 @@ public:
     ~FakeClock() override = default;
 
     // ClockInterface implementation.
-    int64_t TimeNanos() const override;
+    int64_t time_nanos() const override;
 
     // Methods that can be used by the test to control the time.
 
     // Should only be used to set a time in the future.
-    void SetTime(Timestamp new_time);
+    void set_time(Timestamp new_time);
 
-    void AdvanceTime(TimeDelta delta);
+    void advance_time(TimeDelta delta);
 
 private:
     mutable Mutex mLock;
@@ -63,9 +63,9 @@ private:
 class CXXKIT_TOOLS_API ThreadProcessingFakeClock : public ClockInterface
 {
 public:
-    int64_t TimeNanos() const override { return mClock.TimeNanos(); }
-    void SetTime(Timestamp time);
-    void AdvanceTime(TimeDelta delta);
+    int64_t time_nanos() const override { return mClock.time_nanos(); }
+    void set_time(Timestamp time);
+    void advance_time(TimeDelta delta);
 
 private:
     FakeClock mClock;

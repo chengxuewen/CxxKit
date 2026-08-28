@@ -147,7 +147,7 @@ static uint64_t _parse_long_long(const char *nptr, const char **endptr, uint_t b
         goto noconv;
     }
 
-    /* Check for a sign.  */
+    /* check for a sign.  */
     if (*s == '-')
     {
         *negative = true;
@@ -202,7 +202,7 @@ static uint64_t _parse_long_long(const char *nptr, const char **endptr, uint_t b
         {
             break;
         }
-        /* Check for overflow.  */
+        /* check for overflow.  */
         if (ui64 > cutoff || (ui64 == cutoff && c > cutlim))
         {
             overflow = true;
@@ -214,7 +214,7 @@ static uint64_t _parse_long_long(const char *nptr, const char **endptr, uint_t b
         }
     }
 
-    /* Check if anything actually happened.  */
+    /* check if anything actually happened.  */
     if (s == save)
     {
         goto noconv;

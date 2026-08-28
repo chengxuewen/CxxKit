@@ -87,7 +87,7 @@ public:
     {
         if (mPtr)
         {
-            mPtr->Release();
+            mPtr->release();
         }
     }
 
@@ -100,7 +100,7 @@ public:
     // null pointer, all without touching the reference count of the underlying
     // pointed-to object. The object is still reference counted, and the caller of
     // release() is now the proud owner of one reference, so it is responsible for
-    // calling Release() once on the object when no longer using it.
+    // calling release() once on the object when no longer using it.
     T *release()
     {
         T *retVal = mPtr;
@@ -117,7 +117,7 @@ public:
         }
         if (mPtr)
         {
-            mPtr->Release();
+            mPtr->release();
         }
         mPtr = p;
         return *this;

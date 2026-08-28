@@ -183,7 +183,7 @@ void TaskQueueBase::send_task(const Task::SharedPtr &task, const SourceLocation 
     Semaphore semaphore;
     auto cleanup = utils::make_scope_guard([&semaphore] { semaphore.release(); });
     this->post_task([task, cleanup = std::move(cleanup)] { task->run(); });
-    if (!semaphore.try_acquire(1, TimeDelta::Seconds(10).ms()))
+    if (!semaphore.try_acquire(1, TimeDelta::seconds(10).ms()))
     {
         CXXKIT_WARNING("TaskQueueBase::send_task: timeout waiting 10s for task to complete");
         semaphore.acquire();

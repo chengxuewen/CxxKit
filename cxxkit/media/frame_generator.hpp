@@ -48,7 +48,7 @@ public:
     virtual ~FrameGenerator() = default;
 
     // Returns the next generated frame. Never null.
-    virtual SharedRefPtr<VideoFrameBuffer> GetNextFrame() = 0;
+    virtual SharedRefPtr<VideoFrameBuffer> get_next_frame() = 0;
 
     virtual int width() const = 0;
     virtual int height() const = 0;
@@ -58,7 +58,7 @@ public:
     // that fills frames with randomly sized/colored moving squares.
     // `frame_repeat_count` determines how many times each slide is shown
     // before a new one is generated (1 = new slide per frame).
-    static std::unique_ptr<FrameGenerator> CreateSlideShow(std::vector<std::string> filenames,
+    static std::unique_ptr<FrameGenerator> create_slide_show(std::vector<std::string> filenames,
                                                            OutputType type,
                                                            int width,
                                                            int height,

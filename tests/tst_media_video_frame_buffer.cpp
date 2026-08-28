@@ -42,9 +42,9 @@ public:
     }
 
     void add_ref() const override { ref_count_.inc_ref(); }
-    cxxkit::RefCountReleaseStatus Release() const override
+    cxxkit::RefCountReleaseStatus release() const override
     {
-        if (ref_count_.DecRef() == cxxkit::RefCountReleaseStatus::kDroppedLastRef) {
+        if (ref_count_.dec_ref() == cxxkit::RefCountReleaseStatus::kDroppedLastRef) {
             delete this;
             return cxxkit::RefCountReleaseStatus::kDroppedLastRef;
         }
@@ -53,12 +53,12 @@ public:
 
     int width() const override { return w_; }
     int height() const override { return h_; }
-    const uint8_t* GetDataY() const override { return data_.data(); }
-    const uint8_t* GetDataU() const override { return data_.data() + w_ * h_; }
-    const uint8_t* GetDataV() const override { return data_.data() + w_ * h_ * 5 / 4; }
-    int StrideY() const override { return sy_; }
-    int StrideU() const override { return su_; }
-    int StrideV() const override { return sv_; }
+    const uint8_t* get_data_y() const override { return data_.data(); }
+    const uint8_t* get_data_u() const override { return data_.data() + w_ * h_; }
+    const uint8_t* get_data_v() const override { return data_.data() + w_ * h_ * 5 / 4; }
+    int stride_y() const override { return sy_; }
+    int stride_u() const override { return su_; }
+    int stride_v() const override { return sv_; }
     cxxkit::VideoType type() const override { return cxxkit::VideoType::kI420; }
 
 private:
@@ -74,15 +74,15 @@ TEST(VideoFrameBuffer, InterfaceType) {
     EXPECT_EQ(buf->width(), 2);
     EXPECT_EQ(buf->height(), 2);
     EXPECT_EQ(buf->type(), cxxkit::VideoType::kI420);
-    EXPECT_EQ(buf->StrideY(), 2);
-    EXPECT_EQ(buf->ChromaWidth(), 1);
-    EXPECT_EQ(buf->ChromaHeight(), 1);
+    EXPECT_EQ(buf->stride_y(), 2);
+    EXPECT_EQ(buf->chroma_width(), 1);
+    EXPECT_EQ(buf->chroma_height(), 1);
 }
 
-TEST(VideoFrameBuffer, WrapI420Buffer) {
+TEST(VideoFrameBuffer, wrap_i420_buffer) {
     std::vector<uint8_t> mem(6);
     bool released = false;
-    auto wrapped = cxxkit::WrapI420Buffer(
+    auto wrapped = cxxkit::wrap_i420_buffer(
         2, 2, mem.data(), 2, mem.data() + 4, 1, mem.data() + 5, 1,
         [&released]() { released = true; });
     EXPECT_TRUE(wrapped);
@@ -94,7 +94,7 @@ TEST(VideoFrameBuffer, WrapI420Buffer) {
 
 TEST(VideoFrameBuffer, ToI420ReturnsSelf) {
     cxxkit::SharedRefPtr<NativeI420Buffer> buf(new NativeI420Buffer(2, 2));
-    auto converted = buf->ToI420();
+    auto converted = buf->to_i420();
     ASSERT_TRUE(converted);
     EXPECT_EQ(converted.get(), buf.get());
 }

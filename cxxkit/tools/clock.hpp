@@ -48,41 +48,41 @@ public:
     virtual ~Clock() { }
 
     // Return a timestamp relative to an unspecified epoch.
-    virtual Timestamp CurrentTime() = 0;
-    int64_t TimeInMilliseconds() { return CurrentTime().ms(); }
-    int64_t TimeInMicroseconds() { return CurrentTime().us(); }
+    virtual Timestamp current_time() = 0;
+    int64_t time_in_milliseconds() { return current_time().ms(); }
+    int64_t time_in_microseconds() { return current_time().us(); }
 
     // Retrieve an NTP absolute timestamp (with an epoch of Jan 1, 1900).
-    NtpTime CurrentNtpTime() { return ConvertTimestampToNtpTime(CurrentTime()); }
-    int64_t CurrentNtpInMilliseconds() { return CurrentNtpTime().ToMs(); }
+    NtpTime current_ntp_time() { return convert_timestamp_to_ntp_time(current_time()); }
+    int64_t current_ntp_in_milliseconds() { return current_ntp_time().to_ms(); }
 
     // Converts between a relative timestamp returned by this clock, to NTP time.
-    virtual NtpTime ConvertTimestampToNtpTime(Timestamp timestamp) = 0;
-    int64_t ConvertTimestampToNtpTimeInMilliseconds(int64_t timestamp_ms)
+    virtual NtpTime convert_timestamp_to_ntp_time(Timestamp timestamp) = 0;
+    int64_t convert_timestamp_to_ntp_time_in_milliseconds(int64_t timestamp_ms)
     {
-        return ConvertTimestampToNtpTime(Timestamp::Millis(timestamp_ms)).ToMs();
+        return convert_timestamp_to_ntp_time(Timestamp::millis(timestamp_ms)).to_ms();
     }
 
     // Converts NtpTime to a Timestamp with UTC epoch.
-    // A `Minus Infinity` Timestamp is returned if the NtpTime is invalid.
-    static Timestamp NtpToUtc(NtpTime ntp_time)
+    // A `Minus infinity` Timestamp is returned if the NtpTime is invalid.
+    static Timestamp ntp_to_utc(NtpTime ntp_time)
     {
-        if (!ntp_time.Valid())
+        if (!ntp_time.valid())
         {
-            return Timestamp::MinusInfinity();
+            return Timestamp::minus_infinity();
         }
-        // Seconds since UTC epoch.
+        // seconds since UTC epoch.
         int64_t time = ntp_time.seconds() - kNtpJan1970;
         // Microseconds since UTC epoch (not including NTP fraction)
         time = time * 1000000;
         // Fractions part of the NTP time, in microseconds.
-        int64_t time_fraction = DivideRoundToNearest(int64_t{ntp_time.fractions()} * 1000000,
+        int64_t time_fraction = divide_round_to_nearest(int64_t{ntp_time.fractions()} * 1000000,
                                                      NtpTime::kFractionsPerSecond);
-        return Timestamp::Micros(time + time_fraction);
+        return Timestamp::micros(time + time_fraction);
     }
 
     // Returns an instance of the real-time system clock implementation.
-    static Clock *GetRealTimeClock();
+    static Clock *get_real_time_clock();
 };
 
 class CXXKIT_TOOLS_API SimulatedClock : public Clock
@@ -94,15 +94,15 @@ public:
     ~SimulatedClock() override;
 
     // Return a timestamp with an epoch of Jan 1, 1970.
-    Timestamp CurrentTime() override;
+    Timestamp current_time() override;
 
-    NtpTime ConvertTimestampToNtpTime(Timestamp timestamp) override;
+    NtpTime convert_timestamp_to_ntp_time(Timestamp timestamp) override;
 
     // Advance the simulated clock with a given number of milliseconds or
     // microseconds.
-    void AdvanceTimeMilliseconds(int64_t milliseconds);
-    void AdvanceTimeMicroseconds(int64_t microseconds);
-    void AdvanceTime(TimeDelta delta);
+    void advance_time_milliseconds(int64_t milliseconds);
+    void advance_time_microseconds(int64_t microseconds);
+    void advance_time(TimeDelta delta);
 
 private:
     // The time is read and incremented with relaxed order. Each thread will see

@@ -39,25 +39,25 @@ class DataSize final : public RelativeUnit<DataSize>
 {
 public:
     template <typename T>
-    static CXXKIT_CXX14_CONSTEXPR DataSize Bytes(T value)
+    static CXXKIT_CXX14_CONSTEXPR DataSize bytes(T value)
     {
         static_assert(std::is_arithmetic<T>::value, "");
-        return FromValue(value);
+        return from_value(value);
     }
-    static constexpr DataSize Infinity() { return PlusInfinity(); }
+    static constexpr DataSize infinity() { return plus_infinity(); }
 
     constexpr DataSize() = default;
 
     template <typename Sink>
-    friend void AbslStringify(Sink &sink, DataSize value);
+    friend void absl_stringify(Sink &sink, DataSize value);
 
     template <typename T = int64_t>
     constexpr T bytes() const
     {
-        return ToValue<T>();
+        return to_value<T>();
     }
 
-    constexpr int64_t bytes_or(int64_t fallback_value) const { return ToValueOr(fallback_value); }
+    constexpr int64_t bytes_or(int64_t fallback_value) const { return to_value_or(fallback_value); }
 
 private:
     friend class UnitBase<DataSize>;
@@ -73,7 +73,7 @@ CXXKIT_UNITS_API std::string to_string(DataSize value);
 // template <typename Sink>
 // void stringify(Sink &sink, DataSize value)
 // {
-//     sink.Append(to_string(value));
+//     sink.append(to_string(value));
 // }
 } // namespace utils
 

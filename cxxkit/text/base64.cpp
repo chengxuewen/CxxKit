@@ -38,7 +38,7 @@ const char Base64::Base64Table[] =
     // 0123456789012345678901234567890123456789012345678901234567890123
     "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789+/";
 
-// Decode Table gives the index of any valid base64 character in the
+// decode Table gives the index of any valid base64 character in the
 // Base64 table
 // 65 == A, 97 == a, 48 == 0, 43 == +, 47 == /
 
@@ -72,13 +72,13 @@ const unsigned char Base64::DecodeTable[] = {
     il, il, il, il, il, il                  // 250 - 255
 };
 
-bool Base64::IsBase64Char(char ch)
+bool Base64::is_base64_char(char ch)
 {
     return (('A' <= ch) && (ch <= 'Z')) || (('a' <= ch) && (ch <= 'z')) || (('0' <= ch) && (ch <= '9')) ||
            (ch == '+') || (ch == '/');
 }
 
-bool Base64::GetNextBase64Char(char ch, char *next_ch)
+bool Base64::get_next_base64_char(char ch, char *next_ch)
 {
     if (next_ch == nullptr)
     {
@@ -94,11 +94,11 @@ bool Base64::GetNextBase64Char(char ch, char *next_ch)
     return true;
 }
 
-bool Base64::IsBase64Encoded(StringView str)
+bool Base64::is_base64_encoded(StringView str)
 {
     for (size_t i = 0; i < str.size(); ++i)
     {
-        if (!IsBase64Char(str.at(i)))
+        if (!is_base64_char(str.at(i)))
         {
             return false;
         }
@@ -106,7 +106,7 @@ bool Base64::IsBase64Encoded(StringView str)
     return true;
 }
 
-void Base64::EncodeFromArray(const void *data, size_t len, std::string *result)
+void Base64::encode_from_array(const void *data, size_t len, std::string *result)
 {
     CXXKIT_DCHECK(result);
     result->clear();
@@ -155,7 +155,7 @@ void Base64::EncodeFromArray(const void *data, size_t len, std::string *result)
     }
 }
 
-size_t Base64::GetNextQuantum(DecodeFlags parse_flags,
+size_t Base64::get_next_quantum(DecodeFlags parse_flags,
                               bool illegal_pads,
                               const char *data,
                               size_t len,
@@ -243,31 +243,31 @@ size_t Base64::GetNextQuantum(DecodeFlags parse_flags,
     return byte_len;
 }
 
-bool Base64::DecodeFromArray(const char *data, size_t len, DecodeFlags flags, std::string *result, size_t *data_used)
+bool Base64::decode_from_array(const char *data, size_t len, DecodeFlags flags, std::string *result, size_t *data_used)
 {
-    return DecodeFromArrayTemplate<std::string>(data, len, flags, result, data_used);
+    return decode_from_array_template<std::string>(data, len, flags, result, data_used);
 }
 
-bool Base64::DecodeFromArray(const char *data,
+bool Base64::decode_from_array(const char *data,
                              size_t len,
                              DecodeFlags flags,
                              std::vector<char> *result,
                              size_t *data_used)
 {
-    return DecodeFromArrayTemplate<std::vector<char>>(data, len, flags, result, data_used);
+    return decode_from_array_template<std::vector<char>>(data, len, flags, result, data_used);
 }
 
-bool Base64::DecodeFromArray(const char *data,
+bool Base64::decode_from_array(const char *data,
                              size_t len,
                              DecodeFlags flags,
                              std::vector<uint8_t> *result,
                              size_t *data_used)
 {
-    return DecodeFromArrayTemplate<std::vector<uint8_t>>(data, len, flags, result, data_used);
+    return decode_from_array_template<std::vector<uint8_t>>(data, len, flags, result, data_used);
 }
 
 template <typename T>
-bool Base64::DecodeFromArrayTemplate(const char *data, size_t len, DecodeFlags flags, T *result, size_t *data_used)
+bool Base64::decode_from_array_template(const char *data, size_t len, DecodeFlags flags, T *result, size_t *data_used)
 {
     CXXKIT_DCHECK(result);
     CXXKIT_DCHECK_LE(flags, (DO_PARSE_MASK | DO_PAD_MASK | DO_TERM_MASK));
@@ -287,7 +287,7 @@ bool Base64::DecodeFromArrayTemplate(const char *data, size_t len, DecodeFlags f
     unsigned char c, qbuf[4];
     while (dpos < len)
     {
-        size_t qlen = GetNextQuantum(parse_flags, (DO_PAD_NO == pad_flags), data, len, &dpos, qbuf, &padded);
+        size_t qlen = get_next_quantum(parse_flags, (DO_PAD_NO == pad_flags), data, len, &dpos, qbuf, &padded);
         c = (qbuf[0] << 2) | ((qbuf[1] >> 4) & 0x3);
         if (qlen >= 2)
         {

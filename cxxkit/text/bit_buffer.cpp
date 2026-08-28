@@ -39,7 +39,7 @@ void set_last_read_is_verified(bool &verified, bool value)
 }
 
 // Returns the highest byte of `val` in a uint8_t.
-uint8_t HighestByte(uint64_t val)
+uint8_t highest_byte(uint64_t val)
 {
     return static_cast<uint8_t>(val >> 56);
 }
@@ -47,12 +47,12 @@ uint8_t HighestByte(uint64_t val)
 // Returns the result of writing partial data from `source`, of
 // `source_bit_count` size in the highest bits, to `target` at
 // `target_bit_offset` from the highest bit.
-uint8_t WritePartialByte(uint8_t source, size_t source_bit_count, uint8_t target, size_t target_bit_offset)
+uint8_t write_partial_byte(uint8_t source, size_t source_bit_count, uint8_t target, size_t target_bit_offset)
 {
     CXXKIT_DCHECK(target_bit_offset < 8);
     CXXKIT_DCHECK(source_bit_count < 9);
     CXXKIT_DCHECK(source_bit_count <= (8 - target_bit_offset));
-    // Generate a mask for just the bits we're going to overwrite, so:
+    // generate a mask for just the bits we're going to overwrite, so:
     uint8_t mask =
         // The number of bits we want, in the most significant bits...
         static_cast<uint8_t>(0xFF << (8 - source_bit_count))
@@ -79,17 +79,17 @@ BitBufferReader::BitBufferReader(StringView bytes)
 
 BitBufferReader::~BitBufferReader()
 {
-    CXXKIT_DCHECK(mLastReadIsVerified) << "Latest calls to Read or ConsumeBit "
+    CXXKIT_DCHECK(mLastReadIsVerified) << "Latest calls to read or ConsumeBit "
                                              "were not checked with Ok function.";
 }
 
-int BitBufferReader::RemainingBitCount() const
+int BitBufferReader::remaining_bit_count() const
 {
     detail::set_last_read_is_verified(mLastReadIsVerified, true);
     return mRemainingBits;
 }
 
-uint64_t BitBufferReader::ReadBits(int bits)
+uint64_t BitBufferReader::read_bits(int bits)
 {
     CXXKIT_DCHECK_GE(bits, 0);
     CXXKIT_DCHECK_LE(bits, 64);
@@ -97,7 +97,7 @@ uint64_t BitBufferReader::ReadBits(int bits)
 
     if (mRemainingBits < bits)
     {
-        Invalidate();
+        invalidate();
         return 0;
     }
 
@@ -114,14 +114,14 @@ uint64_t BitBufferReader::ReadBits(int bits)
     uint64_t result = 0;
     if (remaining_bits_in_first_byte > 0)
     {
-        // Read all bits that were left in the current byte and consume that byte.
+        // read all bits that were left in the current byte and consume that byte.
         bits -= remaining_bits_in_first_byte;
         uint8_t mask = (1 << remaining_bits_in_first_byte) - 1;
         result = static_cast<uint64_t>(*mBytes & mask) << bits;
         ++mBytes;
     }
 
-    // Read as many full bytes as we can.
+    // read as many full bytes as we can.
     while (bits >= 8)
     {
         bits -= 8;
@@ -137,12 +137,12 @@ uint64_t BitBufferReader::ReadBits(int bits)
     return result;
 }
 
-int BitBufferReader::ReadBit()
+int BitBufferReader::read_bit()
 {
     detail::set_last_read_is_verified(mLastReadIsVerified, false);
     if (mRemainingBits <= 0)
     {
-        Invalidate();
+        invalidate();
         return 0;
     }
     --mRemainingBits;
@@ -150,20 +150,20 @@ int BitBufferReader::ReadBit()
     int bit_position = mRemainingBits % 8;
     if (bit_position == 0)
     {
-        // Read the last bit from current byte and move to the next byte.
+        // read the last bit from current byte and move to the next byte.
         return (*mBytes++) & 0x01;
     }
 
     return (*mBytes >> bit_position) & 0x01;
 }
 
-void BitBufferReader::ConsumeBits(int bits)
+void BitBufferReader::consume_bits(int bits)
 {
     CXXKIT_DCHECK_GE(bits, 0);
     detail::set_last_read_is_verified(mLastReadIsVerified, false);
     if (mRemainingBits < bits)
     {
-        Invalidate();
+        invalidate();
         return;
     }
 
@@ -173,7 +173,7 @@ void BitBufferReader::ConsumeBits(int bits)
     mBytes += (remaining_bytes - new_remaining_bytes);
 }
 
-uint32_t BitBufferReader::ReadNonSymmetric(uint32_t num_values)
+uint32_t BitBufferReader::read_non_symmetric(uint32_t num_values)
 {
     CXXKIT_DCHECK_GT(num_values, 0);
     CXXKIT_DCHECK_LE(num_values, uint32_t{1} << 31);
@@ -181,36 +181,36 @@ uint32_t BitBufferReader::ReadNonSymmetric(uint32_t num_values)
     int width = utils::bit_width(num_values);
     uint32_t num_min_bits_values = (uint32_t{1} << width) - num_values;
 
-    uint64_t val = ReadBits(width - 1);
+    uint64_t val = read_bits(width - 1);
     if (val < num_min_bits_values)
     {
         return val;
     }
-    return (val << 1) + ReadBit() - num_min_bits_values;
+    return (val << 1) + read_bit() - num_min_bits_values;
 }
 
-uint32_t BitBufferReader::ReadExponentialGolomb()
+uint32_t BitBufferReader::read_exponential_golomb()
 {
     // Count the number of leading 0.
     int zero_bit_count = 0;
-    while (ReadBit() == 0)
+    while (read_bit() == 0)
     {
         if (++zero_bit_count >= 32)
         {
             // Golob value won't fit into 32 bits of the return value. Fail the parse.
-            Invalidate();
+            invalidate();
             return 0;
         }
     }
 
     // The bit count of the value is the number of zeros + 1.
     // However the first '1' was already read above.
-    return (uint32_t{1} << zero_bit_count) + utils::dchecked_cast<uint32_t>(ReadBits(zero_bit_count)) - 1;
+    return (uint32_t{1} << zero_bit_count) + utils::dchecked_cast<uint32_t>(read_bits(zero_bit_count)) - 1;
 }
 
-int BitBufferReader::ReadSignedExponentialGolomb()
+int BitBufferReader::read_signed_exponential_golomb()
 {
-    uint32_t unsigned_val = ReadExponentialGolomb();
+    uint32_t unsigned_val = read_exponential_golomb();
     if ((unsigned_val & 1) == 0)
     {
         return -static_cast<int>(unsigned_val / 2);
@@ -221,7 +221,7 @@ int BitBufferReader::ReadSignedExponentialGolomb()
     }
 }
 
-uint64_t BitBufferReader::ReadLeb128()
+uint64_t BitBufferReader::read_leb128()
 {
     uint64_t decoded = 0;
     size_t i = 0;
@@ -230,7 +230,7 @@ uint64_t BitBufferReader::ReadLeb128()
     // consider it invalid if it can't fit in an uint64_t.
     do
     {
-        byte = Read<uint8_t>();
+        byte = read<uint8_t>();
         decoded += (static_cast<uint64_t>(byte & 0x7f) << static_cast<uint64_t>(7 * i));
         ++i;
     } while (i < 10 && (byte & 0x80));
@@ -239,19 +239,19 @@ uint64_t BitBufferReader::ReadLeb128()
     // not be larger than 1 as it would overflow an uint64_t.
     if (i == 10 && byte > 1)
     {
-        Invalidate();
+        invalidate();
     }
 
     return Ok() ? decoded : 0;
 }
 
-std::string BitBufferReader::ReadString(int num_bytes)
+std::string BitBufferReader::read_string(int num_bytes)
 {
     std::string res;
     res.reserve(num_bytes);
     for (int i = 0; i < num_bytes; ++i)
     {
-        res += Read<uint8_t>();
+        res += read<uint8_t>();
     }
 
     return Ok() ? res : std::string();
@@ -266,19 +266,19 @@ BitBufferWriter::BitBufferWriter(uint8_t *bytes, size_t byte_count)
     CXXKIT_DCHECK(static_cast<uint64_t>(mByteCount) <= std::numeric_limits<uint32_t>::max());
 }
 
-uint64_t BitBufferWriter::RemainingBitCount() const
+uint64_t BitBufferWriter::remaining_bit_count() const
 {
     return (static_cast<uint64_t>(mByteCount) - mByteOffset) * 8 - mBitOffset;
 }
 
-bool BitBufferWriter::ConsumeBytes(size_t byte_count)
+bool BitBufferWriter::consume_bytes(size_t byte_count)
 {
-    return ConsumeBits(byte_count * 8);
+    return consume_bits(byte_count * 8);
 }
 
-bool BitBufferWriter::ConsumeBits(size_t bit_count)
+bool BitBufferWriter::consume_bits(size_t bit_count)
 {
-    if (bit_count > RemainingBitCount())
+    if (bit_count > remaining_bit_count())
     {
         return false;
     }
@@ -288,7 +288,7 @@ bool BitBufferWriter::ConsumeBits(size_t bit_count)
     return true;
 }
 
-void BitBufferWriter::GetCurrentOffset(size_t *out_byte_offset, size_t *out_bit_offset)
+void BitBufferWriter::get_current_offset(size_t *out_byte_offset, size_t *out_bit_offset)
 {
     CXXKIT_CHECK(out_byte_offset != nullptr);
     CXXKIT_CHECK(out_bit_offset != nullptr);
@@ -296,7 +296,7 @@ void BitBufferWriter::GetCurrentOffset(size_t *out_byte_offset, size_t *out_bit_
     *out_bit_offset = mBitOffset;
 }
 
-bool BitBufferWriter::Seek(size_t byte_offset, size_t bit_offset)
+bool BitBufferWriter::seek(size_t byte_offset, size_t bit_offset)
 {
     if (byte_offset > mByteCount || bit_offset > 7 || (byte_offset == mByteCount && bit_offset > 0))
     {
@@ -307,24 +307,24 @@ bool BitBufferWriter::Seek(size_t byte_offset, size_t bit_offset)
     return true;
 }
 
-bool BitBufferWriter::WriteUInt8(uint8_t val)
+bool BitBufferWriter::write_u_int8(uint8_t val)
 {
-    return WriteBits(val, sizeof(uint8_t) * 8);
+    return write_bits(val, sizeof(uint8_t) * 8);
 }
 
-bool BitBufferWriter::WriteUInt16(uint16_t val)
+bool BitBufferWriter::write_u_int16(uint16_t val)
 {
-    return WriteBits(val, sizeof(uint16_t) * 8);
+    return write_bits(val, sizeof(uint16_t) * 8);
 }
 
-bool BitBufferWriter::WriteUInt32(uint32_t val)
+bool BitBufferWriter::write_u_int32(uint32_t val)
 {
-    return WriteBits(val, sizeof(uint32_t) * 8);
+    return write_bits(val, sizeof(uint32_t) * 8);
 }
 
-bool BitBufferWriter::WriteBits(uint64_t val, size_t bit_count)
+bool BitBufferWriter::write_bits(uint64_t val, size_t bit_count)
 {
-    if (bit_count > RemainingBitCount())
+    if (bit_count > remaining_bit_count())
     {
         return false;
     }
@@ -340,11 +340,11 @@ bool BitBufferWriter::WriteBits(uint64_t val, size_t bit_count)
     // save the bits at the end of the byte.
     size_t remaining_bits_in_current_byte = 8 - mBitOffset;
     size_t bits_in_first_byte = std::min(bit_count, remaining_bits_in_current_byte);
-    *bytes = detail::WritePartialByte(detail::HighestByte(val), bits_in_first_byte, *bytes, mBitOffset);
+    *bytes = detail::write_partial_byte(detail::highest_byte(val), bits_in_first_byte, *bytes, mBitOffset);
     if (bit_count <= remaining_bits_in_current_byte)
     {
         // Nothing left to write, so quit early.
-        return ConsumeBits(total_bits);
+        return consume_bits(total_bits);
     }
 
     // Subtract what we've written from the bit count, shift it off the value, and
@@ -354,7 +354,7 @@ bool BitBufferWriter::WriteBits(uint64_t val, size_t bit_count)
     bit_count -= bits_in_first_byte;
     while (bit_count >= 8)
     {
-        *bytes++ = detail::HighestByte(val);
+        *bytes++ = detail::highest_byte(val);
         val <<= 8;
         bit_count -= 8;
     }
@@ -363,31 +363,31 @@ bool BitBufferWriter::WriteBits(uint64_t val, size_t bit_count)
     // val.
     if (bit_count > 0)
     {
-        *bytes = detail::WritePartialByte(detail::HighestByte(val), bit_count, *bytes, 0);
+        *bytes = detail::write_partial_byte(detail::highest_byte(val), bit_count, *bytes, 0);
     }
 
     // All done! Consume the bits we've written.
-    return ConsumeBits(total_bits);
+    return consume_bits(total_bits);
 }
 
-bool BitBufferWriter::WriteNonSymmetric(uint32_t val, uint32_t num_values)
+bool BitBufferWriter::write_non_symmetric(uint32_t val, uint32_t num_values)
 {
     CXXKIT_DCHECK_LT(val, num_values);
     CXXKIT_DCHECK_LE(num_values, uint32_t{1} << 31);
     if (num_values == 1)
     {
         // When there is only one possible value, it requires zero bits to store it.
-        // But WriteBits doesn't support writing zero bits.
+        // But write_bits doesn't support writing zero bits.
         return true;
     }
     size_t count_bits = utils::bit_width(num_values);
     uint32_t num_min_bits_values = (uint32_t{1} << count_bits) - num_values;
 
-    return val < num_min_bits_values ? WriteBits(val, count_bits - 1)
-                                     : WriteBits(val + num_min_bits_values, count_bits);
+    return val < num_min_bits_values ? write_bits(val, count_bits - 1)
+                                     : write_bits(val + num_min_bits_values, count_bits);
 }
 
-size_t BitBufferWriter::SizeNonSymmetricBits(uint32_t val, uint32_t num_values)
+size_t BitBufferWriter::size_non_symmetric_bits(uint32_t val, uint32_t num_values)
 {
     CXXKIT_DCHECK_LT(val, num_values);
     CXXKIT_DCHECK_LE(num_values, uint32_t{1} << 31);
@@ -397,7 +397,7 @@ size_t BitBufferWriter::SizeNonSymmetricBits(uint32_t val, uint32_t num_values)
     return val < num_min_bits_values ? (count_bits - 1) : count_bits;
 }
 
-bool BitBufferWriter::WriteExponentialGolomb(uint32_t val)
+bool BitBufferWriter::write_exponential_golomb(uint32_t val)
 {
     // We don't support reading UINT32_MAX, because it doesn't fit in a uint32_t
     // when encoded, so don't support writing it either.
@@ -410,30 +410,30 @@ bool BitBufferWriter::WriteExponentialGolomb(uint32_t val)
     // We need to write bit_width(val+1) 0s and then val+1. Since val (as a
     // uint64_t) has leading zeros, we can just write the total golomb encoded
     // size worth of bits, knowing the value will appear last.
-    return WriteBits(val_to_encode, utils::bit_width(val_to_encode) * 2 - 1);
+    return write_bits(val_to_encode, utils::bit_width(val_to_encode) * 2 - 1);
 }
 
-bool BitBufferWriter::WriteSignedExponentialGolomb(int32_t val)
+bool BitBufferWriter::write_signed_exponential_golomb(int32_t val)
 {
     if (val == 0)
     {
-        return WriteExponentialGolomb(0);
+        return write_exponential_golomb(0);
     }
     else if (val > 0)
     {
         uint32_t signed_val = val;
-        return WriteExponentialGolomb((signed_val * 2) - 1);
+        return write_exponential_golomb((signed_val * 2) - 1);
     }
     else
     {
         if (val == std::numeric_limits<int32_t>::min())
             return false; // Not supported, would cause overflow.
         uint32_t signed_val = -val;
-        return WriteExponentialGolomb(signed_val * 2);
+        return write_exponential_golomb(signed_val * 2);
     }
 }
 
-bool BitBufferWriter::WriteLeb128(uint64_t val)
+bool BitBufferWriter::write_leb128(uint64_t val)
 {
     bool success = true;
     do
@@ -444,17 +444,17 @@ bool BitBufferWriter::WriteLeb128(uint64_t val)
         {
             byte |= 0x80;
         }
-        success &= WriteUInt8(byte);
+        success &= write_u_int8(byte);
     } while (val > 0);
     return success;
 }
 
-bool BitBufferWriter::WriteString(StringView data)
+bool BitBufferWriter::write_string(StringView data)
 {
     bool success = true;
     for (char c : data)
     {
-        success &= WriteUInt8(c);
+        success &= write_u_int8(c);
     }
     return success;
 }

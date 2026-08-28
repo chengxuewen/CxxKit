@@ -31,33 +31,33 @@
 
 TEST(PendingTaskSafetyFlag, AliveAfterCreate)
 {
-    auto flag = cxxkit::PendingTaskSafetyFlag::Create();
+    auto flag = cxxkit::PendingTaskSafetyFlag::create();
     EXPECT_TRUE(flag->alive());
 }
 
 TEST(PendingTaskSafetyFlag, NotAliveAfterSetNotAlive)
 {
-    auto flag = cxxkit::PendingTaskSafetyFlag::Create();
+    auto flag = cxxkit::PendingTaskSafetyFlag::create();
     EXPECT_TRUE(flag->alive());
-    flag->SetNotAlive();
+    flag->set_not_alive();
     EXPECT_FALSE(flag->alive());
 }
 
 TEST(PendingTaskSafetyFlag, SafeTaskExecutesWhenAlive)
 {
-    auto flag = cxxkit::PendingTaskSafetyFlag::Create();
+    auto flag = cxxkit::PendingTaskSafetyFlag::create();
     int value = 0;
-    auto task = cxxkit::SafeTask(flag, [&]() { value = 42; });
+    auto task = cxxkit::safe_task(flag, [&]() { value = 42; });
     task();
     EXPECT_EQ(value, 42);
 }
 
 TEST(PendingTaskSafetyFlag, SafeTaskSkipsWhenNotAlive)
 {
-    auto flag = cxxkit::PendingTaskSafetyFlag::Create();
+    auto flag = cxxkit::PendingTaskSafetyFlag::create();
     int value = 0;
-    auto task = cxxkit::SafeTask(flag, [&]() { value = 42; });
-    flag->SetNotAlive();
+    auto task = cxxkit::safe_task(flag, [&]() { value = 42; });
+    flag->set_not_alive();
     task();
     EXPECT_EQ(value, 0);
 }
@@ -67,9 +67,9 @@ TEST(PendingTaskSafetyFlag, SafeTaskSkipsWhenFlagDestroyed)
     int value = 0;
     std::function<void()> task;
     {
-        auto flag = cxxkit::PendingTaskSafetyFlag::Create();
-        task = cxxkit::SafeTask(flag, [&]() { value = 42; });
-        flag->SetNotAlive();
+        auto flag = cxxkit::PendingTaskSafetyFlag::create();
+        task = cxxkit::safe_task(flag, [&]() { value = 42; });
+        flag->set_not_alive();
     }
     // flag shared_ptr destroyed, but task holds a copy
     task();
@@ -78,9 +78,9 @@ TEST(PendingTaskSafetyFlag, SafeTaskSkipsWhenFlagDestroyed)
 
 TEST(PendingTaskSafetyFlag, AsyncScenario)
 {
-    auto flag = cxxkit::PendingTaskSafetyFlag::Create();
+    auto flag = cxxkit::PendingTaskSafetyFlag::create();
     int value = 0;
-    auto task = cxxkit::SafeTask(flag, [&]() { value = 42; });
+    auto task = cxxkit::safe_task(flag, [&]() { value = 42; });
 
     std::thread t(task);
     t.join();
@@ -89,10 +89,10 @@ TEST(PendingTaskSafetyFlag, AsyncScenario)
 
 TEST(PendingTaskSafetyFlag, AsyncSkipsAfterSetNotAlive)
 {
-    auto flag = cxxkit::PendingTaskSafetyFlag::Create();
+    auto flag = cxxkit::PendingTaskSafetyFlag::create();
     std::atomic<int> value{0};
-    flag->SetNotAlive();
-    auto task = cxxkit::SafeTask(flag, [&]() { value.store(42); });
+    flag->set_not_alive();
+    auto task = cxxkit::safe_task(flag, [&]() { value.store(42); });
 
     std::thread t(task);
     t.join();

@@ -97,7 +97,7 @@ std::string to_string(T p)
 
 template <typename T,
           typename std::enable_if<std::is_arithmetic<T>::value && !std::is_same<T, bool>::value, int>::type = 0>
-static bool FromString(StringView s, T *t)
+static bool from_string(StringView s, T *t)
 {
     CXXKIT_DCHECK(t);
     Optional<T> result = string_to_number<T>(s);
@@ -110,13 +110,13 @@ static bool FromString(StringView s, T *t)
     return result.has_value();
 }
 
-CXXKIT_TEXT_API bool FromString(StringView s, bool *b);
+CXXKIT_TEXT_API bool from_string(StringView s, bool *b);
 
 template <typename T>
-static inline T FromString(StringView str)
+static inline T from_string(StringView str)
 {
     T val;
-    FromString(str, &val);
+    from_string(str, &val);
     return val;
 }
 } // namespace utils

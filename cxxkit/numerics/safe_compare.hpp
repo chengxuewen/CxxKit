@@ -161,26 +161,26 @@ CXXKIT_SAFECMP_MAKE_OP(GeOp, >=)
  * @param name the generated comparison function name.
  * @return Result of the comparison.
  */
-#define CXXKIT_SAFECMP_MAKE_FUN(name)                                                                                  \
+#define CXXKIT_SAFECMP_MAKE_FUN(fn, OpName)                                                                            \
     template <typename T1, typename T2>                                                                                \
-    constexpr typename std::enable_if<IsIntLike<T1>::value && IsIntLike<T2>::value, bool>::type Safe##name(T1 a, T2 b) \
+    constexpr typename std::enable_if<IsIntLike<T1>::value && IsIntLike<T2>::value, bool>::type safe_##fn(T1 a, T2 b)  \
     {                                                                                                                  \
         /* Unary plus here turns enums into real integral types. */                                                    \
-        return safe_cmp_impl::cmp<safe_cmp_impl::name##Op>(+a, +b);                                                    \
+        return safe_cmp_impl::cmp<safe_cmp_impl::OpName>(+a, +b);                                                      \
     }                                                                                                                  \
     template <typename T1, typename T2>                                                                                \
     constexpr                                                                                                          \
-        typename std::enable_if<!IsIntLike<T1>::value || !IsIntLike<T2>::value, bool>::type Safe##name(const T1 &a,    \
+        typename std::enable_if<!IsIntLike<T1>::value || !IsIntLike<T2>::value, bool>::type safe_##fn(const T1 &a,     \
                                                                                                        const T2 &b)    \
     {                                                                                                                  \
-        return safe_cmp_impl::name##Op::Op(a, b);                                                                      \
+        return safe_cmp_impl::OpName::Op(a, b);                                                                        \
     }
-CXXKIT_SAFECMP_MAKE_FUN(Eq)
-CXXKIT_SAFECMP_MAKE_FUN(Ne)
-CXXKIT_SAFECMP_MAKE_FUN(Lt)
-CXXKIT_SAFECMP_MAKE_FUN(Le)
-CXXKIT_SAFECMP_MAKE_FUN(Gt)
-CXXKIT_SAFECMP_MAKE_FUN(Ge)
+CXXKIT_SAFECMP_MAKE_FUN(eq, EqOp)
+CXXKIT_SAFECMP_MAKE_FUN(ne, NeOp)
+CXXKIT_SAFECMP_MAKE_FUN(lt, LtOp)
+CXXKIT_SAFECMP_MAKE_FUN(le, LeOp)
+CXXKIT_SAFECMP_MAKE_FUN(gt, GtOp)
+CXXKIT_SAFECMP_MAKE_FUN(ge, GeOp)
 #undef CXXKIT_SAFECMP_MAKE_FUN
 CXXKIT_END_NAMESPACE
 

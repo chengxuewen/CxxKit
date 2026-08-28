@@ -30,7 +30,7 @@
 
 /**
  * If you for some reson need to know if DCHECKs are on, test the value of CXXKIT_DCHECK_IS_ON.
- * (Test its value, not if it's defined; it'll always be defined, to either a true or a false value.)
+ * (test its value, not if it's defined; it'll always be defined, to either a true or a false value.)
  */
 #if !defined(NDEBUG) || defined(DCHECK_ALWAYS_ON)
 #    define CXXKIT_DCHECK_IS_ON 1
@@ -40,28 +40,28 @@
 
 // #define CXXKIT_CHECK(condition)                                                                                          \
 //     if (!(condition))                                                                                                  \
-//     cxxkit::Logger::FatalLogCall("Check "" #condition "" failed!") & CXXKIT_FATAL()
+//     cxxkit::Logger::FatalLogCall("check "" #condition "" failed!") & CXXKIT_FATAL()
 
 #define CXXKIT_CHECK(condition)                                                                                        \
     if (!(condition))                                                                                                  \
-    CXXKIT_FATAL() << "Check "                                                                                         \
+    CXXKIT_FATAL() << "check "                                                                                         \
                       " #condition "                                                                                   \
                       " failed!"
 
 #define CXXKIT_CHECK_OP(name, op, val1, val2)                                                                          \
-    if (!cxxkit::Safe##name((val1), (val2)))                                                                           \
-    CXXKIT_FATAL(cxxkit::StringView("Check "                                                                           \
+    if (!cxxkit::safe_##name((val1), (val2)))                                                                           \
+    CXXKIT_FATAL(cxxkit::StringView("check "                                                                           \
                                     " #val1 "                                                                          \
                                     " #op "                                                                            \
                                     " #val2 "                                                                          \
                                     " failed!"))
 
-#define CXXKIT_CHECK_EQ(val1, val2) CXXKIT_CHECK_OP(Eq, ==, val1, val2)
-#define CXXKIT_CHECK_NE(val1, val2) CXXKIT_CHECK_OP(Ne, !=, val1, val2)
-#define CXXKIT_CHECK_LE(val1, val2) CXXKIT_CHECK_OP(Le, <=, val1, val2)
-#define CXXKIT_CHECK_LT(val1, val2) CXXKIT_CHECK_OP(Lt, <, val1, val2)
-#define CXXKIT_CHECK_GE(val1, val2) CXXKIT_CHECK_OP(Ge, >=, val1, val2)
-#define CXXKIT_CHECK_GT(val1, val2) CXXKIT_CHECK_OP(Gt, >, val1, val2)
+#define CXXKIT_CHECK_EQ(val1, val2) CXXKIT_CHECK_OP(eq, ==, val1, val2)
+#define CXXKIT_CHECK_NE(val1, val2) CXXKIT_CHECK_OP(ne, !=, val1, val2)
+#define CXXKIT_CHECK_LE(val1, val2) CXXKIT_CHECK_OP(le, <=, val1, val2)
+#define CXXKIT_CHECK_LT(val1, val2) CXXKIT_CHECK_OP(lt, <, val1, val2)
+#define CXXKIT_CHECK_GE(val1, val2) CXXKIT_CHECK_OP(ge, >=, val1, val2)
+#define CXXKIT_CHECK_GT(val1, val2) CXXKIT_CHECK_OP(gt, >, val1, val2)
 
 /**
  * The CXXKIT_DCHECK macro is equivalent to RTC_CHECK except that it only generates code in debug builds.

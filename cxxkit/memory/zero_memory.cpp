@@ -34,11 +34,11 @@
 
 CXXKIT_BEGIN_NAMESPACE
 // Code and comment taken from "OPENSSL_cleanse" of BoringSSL.
-void ExplicitZeroMemory(void *ptr, size_t len)
+void explicit_zero_memory(void *ptr, size_t len)
 {
     CXXKIT_DCHECK(ptr || !len);
 #if defined(CXXKIT_OS_WIN)
-    SecureZeroMemory(ptr, len);
+    secure_zero_memory(ptr, len);
 #else
     memset(ptr, 0, len);
 #    if !defined(__pnacl__)
