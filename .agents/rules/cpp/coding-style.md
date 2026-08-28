@@ -28,11 +28,14 @@ paths:
 
 ## Naming Conventions
 
-- Types/Classes: `PascalCase`
-- Functions/Methods: `snake_case` or `camelCase` (follow project convention)
-- Constants: `kPascalCase` or `UPPER_SNAKE_CASE`
-- Namespaces: `lowercase`
-- Member variables: `snake_case_` (trailing underscore) or `m_` prefix
+- Types/Classes: `PascalCase` (std-mirroring containers like `flat_hash_map` and trait structs like `is_pointer` keep snake — spec §1)
+- Functions/Methods: `snake_case` (post_task, to_string)
+- Member variables: `mPascalCase` (mSize — encapsulated classes); POD/aggregate struct fields stay pure `snake_case`
+- Static members / constants / enum values: `kPascalCase` (kInvalidHandle, kVideoRotation_0)
+- Local/parameter variables: `snake_case` (pending_task)
+- Namespaces: `lowercase` (new free functions go flat in `cxxkit::`)
+- Macros: `UPPER_SNAKE_CASE`
+- Function prefixes: bare noun = getter (size); is_/has_/should_/can_ = predicates; set_ = setter; to_ = owning conversion; as_ = non-owning view; make_ = factory; _out suffix = output param (whitelist only)
 
 ## Formatting
 

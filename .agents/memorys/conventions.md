@@ -98,3 +98,5 @@ add_library(cxxkit_xxx ${_cxxkit_headers} xxx.cpp)   # header-only 用 add_libra
 - **C15（2026-08-24）**：BuildAll/BuildInstall 等 convenience target 必须包 `if(PROJECT_SOURCE_DIR STREQUAL CMAKE_SOURCE_DIR)`（octk 惯例，PROJECT_IS_TOP_LEVEL 需 3.21+ 不用）——被父项目 add_subdirectory 时跳过防同名冲突
 
 - **C16（2026-08-25）**：外部库移植纪律——从 abseil/webrtc 移植代码时：① 库代码保持 C++11（降级 auto 返回/if constexpr/泛型 lambda/_t/_v）；② 统一 `cxxkit::` 命名空间 + `#pragma once`；③ 简化实现（禁 SIMD/自定义 allocator/异常安全等重依赖）；④ 适配现有 API（如 StatusOr 用 `isOk()` 而非 abseil `ok()`）；⑤ 每个移植功能配套 gtest 测试 + 许可横幅 + doxygen 注释。检查：新头 `grep -c "pragma once"` 应为 1
+
+- **C16⑥（2026-08-28）**：移植代码中的所有公开标识符（函数名/成员变量/枚举值）必须在同 PR 内迁移到本项目命名规范（spec §1 矩阵 + §2 前缀规则），不留豁免层。上游 C API 限定调用（如 libyuv::I420Copy）保持原名。

@@ -159,3 +159,12 @@ cxxkit 是 OpenCTK（an open cpp toolkit）的成功重构版本 —— 精简�
 - [x] **type_traits C++17 class 形式导入补全**：C++17 分支原只导入 `_v` 变量模板，`cxxkit::traits::is_void<T>`/`is_same<T,U>`（class 形式）编译失败——补 `using std::is_void; using std::is_same;`（其余 trait 均已双形式导入，这两个是漏网）。A/B stash 验证：修复前 static_assert 失败，修复后通过
 - [x] **vendored gtest include 优先级**：TestHelpers 用 BEFORE PRIVATE 前置 vendored gtest 头目录（-I 优先于 -isystem，防 pixi gtest 1.17 头 + vendored 1.12 库 MakeAndRegisterTestInfo ABI 不匹配）
 - 验证：全量构建 0 error + 63/63 ctest 全绿（95.65s）
+
+### 2026-08-28 代码风格全库统一（D26，α/γ/β 三批次）
+
+- [x] **批次 α**（`6dbcdc4`）：横幅 82 文件（cxxkit 23 + tests 37 + examples 3 + 5 年份修正；string_builder 双横幅保 WebRTC BSD；4 OpenCTK 改名）+ D8 引号 include 清零 + 5 尾随空格 + ref_counted_object 混用点修复 + LogLevelNum→kLogLevelNum。3 成员团队复查 8/8 PASS 补漏后收口
+- [x] **批次 γ**（`54c9161`）：74 trailing-underscore 成员符号 → mPascalCase（29 文件 736 处），POD 聚合字段制度性保留纯 snake；迭代扫漏 3 轮到 0
+- [x] **批次 β**（`c020811`+`f0e34d9`+`e8436fa`）：661 函数符号 → snake_case（camel 291 + Pascal 多词 346 + 残余 4；约 5900 调用点，210+ 文件）。22 类型别名甄别剔除；UpdateRect::Union 关键字例外；libyuv/gtest/gmock 上游符号豁免；SafeGt 族宏双参数化重构
+- [x] **批次 δ**：coding-style.md 命名段整段替换 + AGENTS.md UNIQUE STYLES 更新（含守卫断言修正）+ C16⑥ 移植改名条款 + check.sh 双 gate（snake/mPascal，spec §4δ 修正版正则）+ D26 决策记录
+- 验证：每批次构建 0 error + ctest 63/63 + clang-format 0 违规；双 gate 实跑 0/0
+- 教训（D26 详录）：类型别名四重普查先行；宏 ## 拼接名扫描盲区；上游 C API/gtest 符号永久豁免；误伤整批回退优于就地补

@@ -18,6 +18,19 @@ if grep -rn "octk\|OCTK_" cxxkit/ tests/ --include="*.hpp" --include="*.cpp" | g
 fi
 echo "namespace OK"
 
+echo "=== 命名一致性检查（snake 函数 + mPascal 成员）==="
+SNAKE_GATE=$(grep -rnP '\b(?!m[A-Z])[a-z]+[A-Z][a-zA-Z0-9]*\s*\(' cxxkit --include="*.hpp" --include="*.cpp" 2>/dev/null | grep -vP ':\d+:\s*(//|\*|/\*)' | grep -vP '\b(std::|libyuv::|[A-Z]\w+::)(if|for|while|switch|return|sizeof|catch)\b' | wc -l)
+if [ "$SNAKE_GATE" != "0" ]; then
+    echo "发现非 snake 函数残留（camel/Pascal 函数名）:"; grep -rnP '\b(?!m[A-Z])[a-z]+[A-Z][a-zA-Z0-9]*\s*\(' cxxkit --include="*.hpp" --include="*.cpp" 2>/dev/null | grep -vP ':\d+:\s*(//|\*|/\*)' | head -5
+    exit 1
+fi
+MEMBER_GATE=$(grep -rnE '^\s+.*\b[a-z][a-z0-9_]*_\s*(;|=|\{)' cxxkit --include="*.hpp" --include="*.cpp" 2>/dev/null | grep -v preprocessor.hpp | wc -l)
+if [ "$MEMBER_GATE" != "0" ]; then
+    echo "发现 trailing-underscore 成员残留:"; grep -rnE '^\s+.*\b[a-z][a-z0-9_]*_\s*(;|=|\{)' cxxkit --include="*.hpp" --include="*.cpp" 2>/dev/null | grep -v preprocessor.hpp | head -5
+    exit 1
+fi
+echo "naming OK"
+
 echo "=== 3/8 C++11 严格性检查（PIT-22：禁 C++14 语法混入库代码）==="
 if grep -rnE "std::[a-z_]+_t<|if constexpr|\[\][^)]*\(auto|0b[01]'[, ]" cxxkit/ --include="*.hpp" --include="*.cpp"; then
     echo "发现 C++14 语法残留（变量模板/_t 别名/泛型 lambda/数字分隔符）——库代码必须 C++11！"; exit 1

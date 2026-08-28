@@ -119,3 +119,9 @@ sanitizer（ASAN/LSAN/UBSan）与 coverage 用**独立 build 目录**（build-as
 - **理由**: 用户要求 GUI 可配 + 有效性校验 + 子项目外部传入；OpenCTK 机制完整（QExt 无 INPUT_ 通道且无校验，QExt 阶梯仅向上 ON 不便 if() 双向使用）。**变量名保留 `CXXKIT_FEATURE_CXX_STANDARD` 不重命名**（CXXKIT_CMAKE_CXX_STANDARD 式重命名会静默打断 ConfigureHelpers core_config defines 生成——消费方零改动是硬约束）。测试 target 跟随主标准（原硬编码 11）。
 - **已知语义**: INPUT_ 经 -D 传入后残留在 CMakeCache，重配置持续 FORCE 生效（GUI 编辑被覆盖）——OpenCTK 同款；清除需 rm build/CMakeCache.txt。
 - **验证**: default=11 / -DINPUT_=14 / 非法 13→FATAL 三态 + 63/63 tests。
+
+## D26: 代码风格全库统一（2026-08-28，批次 α/γ/β 三连提交）
+- **决策**: 用户裁定路线 C 变体——全库统一无豁免层：函数/局部 `snake_case`（生态调研：2020+ 新库一致选 snake；SerenityOS 是 Pascal类+snake方法大规模先例）；封装类成员 `mPascalCase`（89% 存量多数）；POD 聚合字段纯 snake；枚举值/常量/static `kPascalCase`。语义前缀闭环：getter 无前缀 / is_has_should_can_ / set_ / to_ 拥有转换 / as_ 视图 / make_ 工厂 / _out 白名单出参。getter 属性式（size 非 get_size）。
+- **执行**: α 机械修复（横幅 82 文件 + D8 + ref_counted_object 混用点）；γ 成员 74 符号 mPascal 化（迭代扫漏到 0）；β 函数 661 符号 snake 化（camel 291 + Pascal 多词 346 + 残余 4 + 宏双参数化 SafeGt 族 + CHECK_OP；22 类型别名甄别剔除；UpdateRect::Union 关键字例外保留；libyuv 上游 C API 豁免）。
+- **方法论教训**: ① 全量符号替换必须先做类型别名普查（using/typedef/class/struct/#define 四扫），否则 Value/SharedPtr 型灾难；② 宏拼接名（Safe##Gt）扫描期不可见——调用点替换前必须 grep 宏体 ## 拼接；③ 上游 C API（libyuv::I420Copy）与 gtest/gmock 符号（testing::Test/IsEmpty/Invoke）设永久豁免；④ 文件级补丁不如全库扫描——color_space.cpp 构造列表漏改教训；⑤ 大批量替换遇误伤时 git checkout 整批回退重做受控子批，优于就地打补丁。
+- **验证**: 每批构建 0 error + ctest 63/63 + clang-format 0 违规；snake gate 与成员 gate 已入 check.sh（spec §4δ 修正版正则）。
