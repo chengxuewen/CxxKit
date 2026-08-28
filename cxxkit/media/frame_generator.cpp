@@ -41,11 +41,11 @@ class SlideShowVideoFrameGenerator : public FrameGenerator
 {
 public:
     SlideShowVideoFrameGenerator(int width, int height, int frame_repeat_count)
-        : width_(width)
-        , height_(height)
-        , frame_display_count_(frame_repeat_count)
-        , current_display_count_(0)
-        , random_generator_(1234)
+        : mWidth(width)
+        , mHeight(height)
+        , mFrameDisplayCount(frame_repeat_count)
+        , mCurrentDisplayCount(0)
+        , mRandomGenerator(1234)
     {
         CXXKIT_DCHECK_GT(width, 0);
         CXXKIT_DCHECK_GT(height, 0);
@@ -54,66 +54,66 @@ public:
 
     SharedRefPtr<VideoFrameBuffer> GetNextFrame() override
     {
-        if (current_display_count_ == 0)
+        if (mCurrentDisplayCount == 0)
         {
             generateNewFrame();
         }
-        if (++current_display_count_ >= frame_display_count_)
+        if (++mCurrentDisplayCount >= mFrameDisplayCount)
         {
-            current_display_count_ = 0;
+            mCurrentDisplayCount = 0;
         }
-        return buffer_;
+        return mBuffer;
     }
 
-    int width() const override { return width_; }
-    int height() const override { return height_; }
+    int width() const override { return mWidth; }
+    int height() const override { return mHeight; }
 
 private:
     void generateNewFrame()
     {
         // The squares should have a varying order of magnitude in order to
         // simulate variation in the slides' complexity.
-        const int kSquareNum = 1 << (4 + (random_generator_.Rand(0, 3) * 2));
+        const int kSquareNum = 1 << (4 + (mRandomGenerator.Rand(0, 3) * 2));
 
-        buffer_ = I420Buffer::Create(width_, height_);
-        memset(buffer_->MutableDataY(), 127, static_cast<size_t>(height_) * buffer_->StrideY());
-        memset(buffer_->MutableDataU(), 127, static_cast<size_t>(buffer_->ChromaHeight()) * buffer_->StrideU());
-        memset(buffer_->MutableDataV(), 127, static_cast<size_t>(buffer_->ChromaHeight()) * buffer_->StrideV());
+        mBuffer = I420Buffer::Create(mWidth, mHeight);
+        memset(mBuffer->MutableDataY(), 127, static_cast<size_t>(mHeight) * mBuffer->StrideY());
+        memset(mBuffer->MutableDataU(), 127, static_cast<size_t>(mBuffer->ChromaHeight()) * mBuffer->StrideU());
+        memset(mBuffer->MutableDataV(), 127, static_cast<size_t>(mBuffer->ChromaHeight()) * mBuffer->StrideV());
 
         for (int i = 0; i < kSquareNum; ++i)
         {
-            const int length = random_generator_.Rand(1, width_ > 4 ? width_ / 4 : 1);
+            const int length = mRandomGenerator.Rand(1, mWidth > 4 ? mWidth / 4 : 1);
             // Limit the length of later squares so that they don't overwrite
             // the previous ones too much.
             const int capped_length = (length * (kSquareNum - i)) / kSquareNum;
 
-            const int x = random_generator_.Rand(0, width_ - capped_length);
-            const int y = random_generator_.Rand(0, height_ - capped_length);
-            const uint8_t yuv_y = static_cast<uint8_t>(random_generator_.Rand(0, 255));
-            const uint8_t yuv_u = static_cast<uint8_t>(random_generator_.Rand(0, 255));
-            const uint8_t yuv_v = static_cast<uint8_t>(random_generator_.Rand(0, 255));
+            const int x = mRandomGenerator.Rand(0, mWidth - capped_length);
+            const int y = mRandomGenerator.Rand(0, mHeight - capped_length);
+            const uint8_t yuv_y = static_cast<uint8_t>(mRandomGenerator.Rand(0, 255));
+            const uint8_t yuv_u = static_cast<uint8_t>(mRandomGenerator.Rand(0, 255));
+            const uint8_t yuv_v = static_cast<uint8_t>(mRandomGenerator.Rand(0, 255));
 
             for (int yy = y; yy < y + capped_length; ++yy)
             {
-                uint8_t* pos_y = buffer_->MutableDataY() + x + yy * buffer_->StrideY();
+                uint8_t* pos_y = mBuffer->MutableDataY() + x + yy * mBuffer->StrideY();
                 memset(pos_y, yuv_y, static_cast<size_t>(capped_length));
             }
             for (int yy = y; yy < y + capped_length; yy += 2)
             {
-                uint8_t* pos_u = buffer_->MutableDataU() + x / 2 + yy / 2 * buffer_->StrideU();
+                uint8_t* pos_u = mBuffer->MutableDataU() + x / 2 + yy / 2 * mBuffer->StrideU();
                 memset(pos_u, yuv_u, static_cast<size_t>(capped_length) / 2);
-                uint8_t* pos_v = buffer_->MutableDataV() + x / 2 + yy / 2 * buffer_->StrideV();
+                uint8_t* pos_v = mBuffer->MutableDataV() + x / 2 + yy / 2 * mBuffer->StrideV();
                 memset(pos_v, yuv_v, static_cast<size_t>(capped_length) / 2);
             }
         }
     }
 
-    const int width_;
-    const int height_;
-    const int frame_display_count_;
-    int current_display_count_;
-    Random random_generator_;
-    SharedRefPtr<I420Buffer> buffer_;
+    const int mWidth;
+    const int mHeight;
+    const int mFrameDisplayCount;
+    int mCurrentDisplayCount;
+    Random mRandomGenerator;
+    SharedRefPtr<I420Buffer> mBuffer;
 };
 
 }  // namespace

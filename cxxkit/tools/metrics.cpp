@@ -44,8 +44,8 @@ class RtcHistogram
 {
 public:
     RtcHistogram(StringView name, int min, int max, int bucket_count)
-        : min_(min)
-        , max_(max)
+        : mMin(min)
+        , mMax(max)
         , info_(name, min, max, bucket_count)
     {
         CXXKIT_DCHECK_GT(bucket_count, 0);
@@ -56,10 +56,10 @@ public:
 
     void Add(int sample)
     {
-        sample = std::min(sample, max_);
-        sample = std::max(sample, min_ - 1); // Underflow bucket.
+        sample = std::min(sample, mMax);
+        sample = std::max(sample, mMin - 1); // Underflow bucket.
 
-        Mutex::Lock lock(mutex_);
+        Mutex::Lock lock(mMutex);
         if (info_.samples.size() == kMaxSampleMapSize && info_.samples.find(sample) == info_.samples.end())
         {
             return;
@@ -70,7 +70,7 @@ public:
     // Returns a copy (or nullptr if there are no samples) and clears samples.
     std::unique_ptr<SampleInfo> GetAndReset()
     {
-        Mutex::Lock lock(mutex_);
+        Mutex::Lock lock(mMutex);
         if (info_.samples.empty())
         {
             return nullptr;
@@ -88,13 +88,13 @@ public:
     // Functions only for testing.
     void Reset()
     {
-        Mutex::Lock lock(mutex_);
+        Mutex::Lock lock(mMutex);
         info_.samples.clear();
     }
 
     int NumEvents(int sample) const
     {
-        Mutex::Lock lock(mutex_);
+        Mutex::Lock lock(mMutex);
         const auto it = info_.samples.find(sample);
         return (it == info_.samples.end()) ? 0 : it->second;
     }
@@ -102,7 +102,7 @@ public:
     int NumSamples() const
     {
         int num_samples = 0;
-        Mutex::Lock lock(mutex_);
+        Mutex::Lock lock(mMutex);
         for (const auto &sample : info_.samples)
         {
             num_samples += sample.second;
@@ -112,21 +112,21 @@ public:
 
     int MinSample() const
     {
-        Mutex::Lock lock(mutex_);
+        Mutex::Lock lock(mMutex);
         return (info_.samples.empty()) ? -1 : info_.samples.begin()->first;
     }
 
     std::map<int, int> Samples() const
     {
-        Mutex::Lock lock(mutex_);
+        Mutex::Lock lock(mMutex);
         return info_.samples;
     }
 
 private:
-    const int min_;
-    const int max_;
-    mutable Mutex mutex_;
-    SampleInfo info_ CXXKIT_ATTRIBUTE_GUARDED_BY(mutex_);
+    const int mMin;
+    const int mMax;
+    mutable Mutex mMutex;
+    SampleInfo info_ CXXKIT_ATTRIBUTE_GUARDED_BY(mMutex);
 };
 
 class RtcHistogramMap
@@ -140,7 +140,7 @@ public:
 
     Histogram *GetCountsHistogram(StringView name, int min, int max, int bucket_count)
     {
-        Mutex::Lock lock(mutex_);
+        Mutex::Lock lock(mMutex);
         const auto &it = map_.find(name.data());
         if (it != map_.end())
         {
@@ -154,7 +154,7 @@ public:
 
     Histogram *GetEnumerationHistogram(StringView name, int boundary)
     {
-        Mutex::Lock lock(mutex_);
+        Mutex::Lock lock(mMutex);
         const auto &it = map_.find(name.data());
         if (it != map_.end())
         {
@@ -168,7 +168,7 @@ public:
 
     void GetAndReset(std::map<std::string, std::unique_ptr<SampleInfo>, StringViewCmp> *histograms)
     {
-        Mutex::Lock lock(mutex_);
+        Mutex::Lock lock(mMutex);
         for (const auto &kv : map_)
         {
             std::unique_ptr<SampleInfo> info = kv.second->GetAndReset();
@@ -182,7 +182,7 @@ public:
     // Functions only for testing.
     void Reset()
     {
-        Mutex::Lock lock(mutex_);
+        Mutex::Lock lock(mMutex);
         for (const auto &kv : map_)
         {
             kv.second->Reset();
@@ -191,35 +191,35 @@ public:
 
     int NumEvents(StringView name, int sample) const
     {
-        Mutex::Lock lock(mutex_);
+        Mutex::Lock lock(mMutex);
         const auto &it = map_.find(name.data());
         return (it == map_.end()) ? 0 : it->second->NumEvents(sample);
     }
 
     int NumSamples(StringView name) const
     {
-        Mutex::Lock lock(mutex_);
+        Mutex::Lock lock(mMutex);
         const auto &it = map_.find(name.data());
         return (it == map_.end()) ? 0 : it->second->NumSamples();
     }
 
     int MinSample(StringView name) const
     {
-        Mutex::Lock lock(mutex_);
+        Mutex::Lock lock(mMutex);
         const auto &it = map_.find(name.data());
         return (it == map_.end()) ? -1 : it->second->MinSample();
     }
 
     std::map<int, int> Samples(StringView name) const
     {
-        Mutex::Lock lock(mutex_);
+        Mutex::Lock lock(mMutex);
         const auto &it = map_.find(name.data());
         return (it == map_.end()) ? std::map<int, int>() : it->second->Samples();
     }
 
 private:
-    mutable Mutex mutex_;
-    std::map<std::string, std::unique_ptr<RtcHistogram>, StringViewCmp> map_ CXXKIT_ATTRIBUTE_GUARDED_BY(mutex_);
+    mutable Mutex mMutex;
+    std::map<std::string, std::unique_ptr<RtcHistogram>, StringViewCmp> map_ CXXKIT_ATTRIBUTE_GUARDED_BY(mMutex);
 };
 
 // RtcHistogramMap is allocated upon call to Enable().

@@ -28,26 +28,26 @@ CXXKIT_BEGIN_NAMESPACE
 
 int64_t FakeClock::TimeNanos() const
 {
-    Mutex::UniqueLock locker(lock_);
-    return time_ns_;
+    Mutex::UniqueLock locker(mLock);
+    return mTimeNs;
 }
 
 void FakeClock::SetTime(Timestamp new_time)
 {
-    Mutex::UniqueLock locker(lock_);
-    CXXKIT_DCHECK(new_time.us() * 1000 >= time_ns_);
-    time_ns_ = new_time.us() * 1000;
+    Mutex::UniqueLock locker(mLock);
+    CXXKIT_DCHECK(new_time.us() * 1000 >= mTimeNs);
+    mTimeNs = new_time.us() * 1000;
 }
 
 void FakeClock::AdvanceTime(TimeDelta delta)
 {
-    Mutex::UniqueLock locker(lock_);
-    time_ns_ += delta.ns();
+    Mutex::UniqueLock locker(mLock);
+    mTimeNs += delta.ns();
 }
 
 void ThreadProcessingFakeClock::SetTime(Timestamp time)
 {
-    clock_.SetTime(time);
+    mClock.SetTime(time);
     // If message queues are waiting in a socket select() with a timeout provided
     // by the OS, they should wake up and dispatch all messages that are ready.
     // TaskThreadManager::ProcessAllMessageQueuesForTesting(); //TODO
@@ -55,27 +55,27 @@ void ThreadProcessingFakeClock::SetTime(Timestamp time)
 
 void ThreadProcessingFakeClock::AdvanceTime(TimeDelta delta)
 {
-    clock_.AdvanceTime(delta);
+    mClock.AdvanceTime(delta);
     // TaskThreadManager::ProcessAllMessageQueuesForTesting(); //TODO
 }
 
 ScopedBaseFakeClock::ScopedBaseFakeClock()
 {
-    prev_clock_ = SetClockForTesting(this);
+    mPrevClock = SetClockForTesting(this);
 }
 
 ScopedBaseFakeClock::~ScopedBaseFakeClock()
 {
-    SetClockForTesting(prev_clock_);
+    SetClockForTesting(mPrevClock);
 }
 
 ScopedFakeClock::ScopedFakeClock()
 {
-    prev_clock_ = SetClockForTesting(this);
+    mPrevClock = SetClockForTesting(this);
 }
 
 ScopedFakeClock::~ScopedFakeClock()
 {
-    SetClockForTesting(prev_clock_);
+    SetClockForTesting(mPrevClock);
 }
 CXXKIT_END_NAMESPACE

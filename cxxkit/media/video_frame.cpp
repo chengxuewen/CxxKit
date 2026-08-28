@@ -194,25 +194,25 @@ VideoFrame::UpdateRect VideoFrame::UpdateRect::ScaleWithFrame(int frame_width,
 
 VideoFrame VideoFrame::Builder::build()
 {
-    CXXKIT_CHECK(video_frame_buffer_ != nullptr);
-    return VideoFrame(id_,
-                      video_frame_buffer_,
-                      timestamp_us_,
-                      timestamp_rtp_,
-                      rotation_,
-                      color_space_,
-                      update_rect_);
+    CXXKIT_CHECK(mVideoFrameBuffer != nullptr);
+    return VideoFrame(mId,
+                      mVideoFrameBuffer,
+                      mTimestampUs,
+                      mTimestampRtp,
+                      mRotation,
+                      mColorSpace,
+                      mUpdateRect);
 }
 
 VideoFrame::Builder& VideoFrame::Builder::set_video_frame_buffer(const SharedRefPtr<VideoFrameBuffer>& buffer)
 {
-    video_frame_buffer_ = buffer;
+    mVideoFrameBuffer = buffer;
     return *this;
 }
 
 VideoFrame::Builder& VideoFrame::Builder::set_color_space(const ColorSpace* color_space)
 {
-    color_space_ = color_space ? utils::make_optional(*color_space) : utils::nullopt;
+    mColorSpace = color_space ? utils::make_optional(*color_space) : utils::nullopt;
     return *this;
 }
 
@@ -223,31 +223,31 @@ VideoFrame::VideoFrame(uint16_t id,
                        VideoRotation rotation,
                        const Optional<ColorSpace>& color_space,
                        const Optional<UpdateRect>& update_rect)
-    : id_(id)
-    , video_frame_buffer_(video_frame_buffer)
-    , timestamp_rtp_(timestamp_rtp)
-    , timestamp_us_(timestamp_us)
-    , rotation_(rotation)
-    , color_space_(color_space)
-    , update_rect_(update_rect)
+    : mId(id)
+    , mVideoFrameBuffer(video_frame_buffer)
+    , mTimestampRtp(timestamp_rtp)
+    , mTimestampUs(timestamp_us)
+    , mRotation(rotation)
+    , mColorSpace(color_space)
+    , mUpdateRect(update_rect)
 {
-    if (update_rect_)
+    if (mUpdateRect)
     {
-        CXXKIT_DCHECK_GE(update_rect_->x, 0);
-        CXXKIT_DCHECK_GE(update_rect_->y, 0);
-        CXXKIT_DCHECK_LE(update_rect_->x + update_rect_->width, width());
-        CXXKIT_DCHECK_LE(update_rect_->y + update_rect_->height, height());
+        CXXKIT_DCHECK_GE(mUpdateRect->x, 0);
+        CXXKIT_DCHECK_GE(mUpdateRect->y, 0);
+        CXXKIT_DCHECK_LE(mUpdateRect->x + mUpdateRect->width, width());
+        CXXKIT_DCHECK_LE(mUpdateRect->y + mUpdateRect->height, height());
     }
 }
 
 int VideoFrame::width() const
 {
-    return video_frame_buffer_ ? video_frame_buffer_->width() : 0;
+    return mVideoFrameBuffer ? mVideoFrameBuffer->width() : 0;
 }
 
 int VideoFrame::height() const
 {
-    return video_frame_buffer_ ? video_frame_buffer_->height() : 0;
+    return mVideoFrameBuffer ? mVideoFrameBuffer->height() : 0;
 }
 
 uint32_t VideoFrame::size() const
@@ -258,7 +258,7 @@ uint32_t VideoFrame::size() const
 void VideoFrame::set_video_frame_buffer(const SharedRefPtr<VideoFrameBuffer>& buffer)
 {
     CXXKIT_CHECK(buffer != nullptr);
-    video_frame_buffer_ = buffer;
+    mVideoFrameBuffer = buffer;
 }
 
 void VideoFrame::set_update_rect(const VideoFrame::UpdateRect& update_rect)
@@ -267,7 +267,7 @@ void VideoFrame::set_update_rect(const VideoFrame::UpdateRect& update_rect)
     CXXKIT_DCHECK_GE(update_rect.y, 0);
     CXXKIT_DCHECK_LE(update_rect.x + update_rect.width, width());
     CXXKIT_DCHECK_LE(update_rect.y + update_rect.height, height());
-    update_rect_ = update_rect;
+    mUpdateRect = update_rect;
 }
 
 }  // namespace cxxkit

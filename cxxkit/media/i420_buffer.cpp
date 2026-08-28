@@ -53,12 +53,12 @@ I420Buffer::I420Buffer(int width, int height)
 }
 
 I420Buffer::I420Buffer(int width, int height, int stride_y, int stride_u, int stride_v)
-    : width_(width)
-    , height_(height)
-    , stride_y_(stride_y)
-    , stride_u_(stride_u)
-    , stride_v_(stride_v)
-    , data_(static_cast<uint8_t*>(
+    : mWidth(width)
+    , mHeight(height)
+    , mStrideY(stride_y)
+    , mStrideU(stride_u)
+    , mStrideV(stride_v)
+    , mData(static_cast<uint8_t*>(
           utils::alignedMalloc(I420DataSize(height, stride_y, stride_u, stride_v), kBufferAlignment)))
 {
     CXXKIT_DCHECK_GT(width, 0);
@@ -163,47 +163,47 @@ SharedRefPtr<I420Buffer> I420Buffer::Rotate(const I420BufferInterface& src, Vide
 
 void I420Buffer::InitializeData()
 {
-    memset(data_.get(), 0, I420DataSize(height_, stride_y_, stride_u_, stride_v_));
+    memset(mData.get(), 0, I420DataSize(mHeight, mStrideY, mStrideU, mStrideV));
 }
 
 int I420Buffer::width() const
 {
-    return width_;
+    return mWidth;
 }
 
 int I420Buffer::height() const
 {
-    return height_;
+    return mHeight;
 }
 
 const uint8_t* I420Buffer::GetDataY() const
 {
-    return data_.get();
+    return mData.get();
 }
 
 const uint8_t* I420Buffer::GetDataU() const
 {
-    return data_.get() + stride_y_ * height_;
+    return mData.get() + mStrideY * mHeight;
 }
 
 const uint8_t* I420Buffer::GetDataV() const
 {
-    return data_.get() + stride_y_ * height_ + stride_u_ * ((height_ + 1) / 2);
+    return mData.get() + mStrideY * mHeight + mStrideU * ((mHeight + 1) / 2);
 }
 
 int I420Buffer::StrideY() const
 {
-    return stride_y_;
+    return mStrideY;
 }
 
 int I420Buffer::StrideU() const
 {
-    return stride_u_;
+    return mStrideU;
 }
 
 int I420Buffer::StrideV() const
 {
-    return stride_v_;
+    return mStrideV;
 }
 
 uint8_t* I420Buffer::MutableDataY()
@@ -231,8 +231,8 @@ void I420Buffer::SetBlack()
                                   StrideV(),
                                   0,
                                   0,
-                                  width_,
-                                  height_,
+                                  mWidth,
+                                  mHeight,
                                   0,
                                   128,
                                   128) == 0);
@@ -274,8 +274,8 @@ void I420Buffer::CropAndScaleFrom(const I420BufferInterface& src,
                                 StrideU(),
                                 MutableDataV(),
                                 StrideV(),
-                                width_,
-                                height_,
+                                mWidth,
+                                mHeight,
                                 libyuv::kFilterBox);
 
     CXXKIT_DCHECK_EQ(res, 0);

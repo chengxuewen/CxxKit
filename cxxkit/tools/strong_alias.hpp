@@ -60,7 +60,7 @@ public:
     using UnderlyingType = TheUnderlyingType;
 
     /**
-     * @brief Default constructor. Leaves @p value_ default-initialized.
+     * @brief Default constructor. Leaves @p mValue default-initialized.
      */
     constexpr StrongAlias() = default;
 
@@ -69,7 +69,7 @@ public:
      * @param v The underlying value to wrap.
      */
     constexpr explicit StrongAlias(const UnderlyingType &v)
-        : value_(v)
+        : mValue(v)
     {
     }
 
@@ -78,51 +78,51 @@ public:
      * @param v The underlying value to move-construct into.
      */
     constexpr explicit StrongAlias(UnderlyingType &&v) noexcept
-        : value_(std::move(v))
+        : mValue(std::move(v))
     {
     }
 
     /** @brief Dereference to mutable underlying pointer. */
-    CXXKIT_CXX14_CONSTEXPR UnderlyingType *operator->() { return &value_; }
+    CXXKIT_CXX14_CONSTEXPR UnderlyingType *operator->() { return &mValue; }
     /** @brief Dereference to const underlying pointer. */
-    constexpr const UnderlyingType *operator->() const { return &value_; }
+    constexpr const UnderlyingType *operator->() const { return &mValue; }
 
     /** @brief Dereference to mutable underlying reference. */
-    CXXKIT_CXX14_CONSTEXPR UnderlyingType &operator*() & { return value_; }
+    CXXKIT_CXX14_CONSTEXPR UnderlyingType &operator*() & { return mValue; }
     /** @brief Dereference to const underlying reference (lvalue). */
-    constexpr const UnderlyingType &operator*() const & { return value_; }
+    constexpr const UnderlyingType &operator*() const & { return mValue; }
     /** @brief Dereference to rvalue underlying (move). */
-    CXXKIT_CXX14_CONSTEXPR UnderlyingType &&operator*() && { return std::move(value_); }
+    CXXKIT_CXX14_CONSTEXPR UnderlyingType &&operator*() && { return std::move(mValue); }
     /** @brief Dereference to const rvalue underlying (move). */
-    constexpr const UnderlyingType &&operator*() const && { return std::move(value_); }
+    constexpr const UnderlyingType &&operator*() const && { return std::move(mValue); }
 
     /** @brief Access mutable underlying value. */
-    CXXKIT_CXX14_CONSTEXPR UnderlyingType &value() & { return value_; }
+    CXXKIT_CXX14_CONSTEXPR UnderlyingType &value() & { return mValue; }
     /** @brief Access const underlying value (lvalue). */
-    constexpr const UnderlyingType &value() const & { return value_; }
+    constexpr const UnderlyingType &value() const & { return mValue; }
     /** @brief Move-construct underlying value from this. */
-    CXXKIT_CXX14_CONSTEXPR UnderlyingType &&value() && { return std::move(value_); }
+    CXXKIT_CXX14_CONSTEXPR UnderlyingType &&value() && { return std::move(mValue); }
     /** @brief Move-construct const underlying from this. */
-    constexpr const UnderlyingType &&value() const && { return std::move(value_); }
+    constexpr const UnderlyingType &&value() const && { return std::move(mValue); }
 
     /** @brief Explicit conversion to const underlying reference. */
-    constexpr explicit operator const UnderlyingType &() const & { return value_; }
+    constexpr explicit operator const UnderlyingType &() const & { return mValue; }
 
     /** @brief Equality comparison between two StrongAlias of the same tag/underlying. */
-    constexpr bool operator==(const StrongAlias &other) const { return value_ == other.value_; }
+    constexpr bool operator==(const StrongAlias &other) const { return mValue == other.mValue; }
     /** @brief Inequality comparison. */
-    constexpr bool operator!=(const StrongAlias &other) const { return value_ != other.value_; }
+    constexpr bool operator!=(const StrongAlias &other) const { return mValue != other.mValue; }
     /** @brief Less-than ordering. */
-    constexpr bool operator<(const StrongAlias &other) const { return value_ < other.value_; }
+    constexpr bool operator<(const StrongAlias &other) const { return mValue < other.mValue; }
     /** @brief Less-than-or-equal ordering. */
-    constexpr bool operator<=(const StrongAlias &other) const { return value_ <= other.value_; }
+    constexpr bool operator<=(const StrongAlias &other) const { return mValue <= other.mValue; }
     /** @brief Greater-than ordering. */
-    constexpr bool operator>(const StrongAlias &other) const { return value_ > other.value_; }
+    constexpr bool operator>(const StrongAlias &other) const { return mValue > other.mValue; }
     /** @brief Greater-than-or-equal ordering. */
-    constexpr bool operator>=(const StrongAlias &other) const { return value_ >= other.value_; }
+    constexpr bool operator>=(const StrongAlias &other) const { return mValue >= other.mValue; }
 
 protected:
-    UnderlyingType value_; ///< The wrapped underlying value.
+    UnderlyingType mValue; ///< The wrapped underlying value.
 };
 
 /** @} */ // end of cxxkit_tools_strong_alias

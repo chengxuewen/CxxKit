@@ -56,8 +56,8 @@ public:
     void KeepFrame(int64_t in_timestamp_nsecs);
 
 private:
-    double max_framerate_;
-    Optional<int64_t> next_frame_timestamp_ns_;
+    double mMaxFramerate;
+    Optional<int64_t> mNextFrameTimestampNs;
 };
 
 }  // namespace cxxkit

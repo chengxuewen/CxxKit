@@ -55,7 +55,7 @@ public:
     bool Ok() const { return RemainingBitCount() >= 0; }
 
     // Sets `BitStream` into the failure state.
-    void Invalidate() { remaining_bits_ = -1; }
+    void Invalidate() { mRemainingBits = -1; }
 
     // Moves current read position forward. `bits` must be non-negative.
     void ConsumeBits(int bits);
@@ -121,11 +121,11 @@ public:
 
 private:
     // Next byte with at least one unread bit.
-    const uint8_t *bytes_;
+    const uint8_t *mBytes;
     // Number of bits remained to read.
-    int remaining_bits_;
+    int mRemainingBits;
     // Unused in release mode.
-    mutable bool last_read_is_verified_ = true;
+    mutable bool mLastReadIsVerified = true;
 };
 
 
@@ -195,13 +195,13 @@ public:
 
 private:
     // The buffer, as a writable array.
-    uint8_t *const writable_bytes_;
-    // The total size of `bytes_`.
-    const size_t byte_count_;
-    // The current offset, in bytes, from the start of `bytes_`.
-    size_t byte_offset_;
+    uint8_t *const mWritableBytes;
+    // The total size of `mBytes`.
+    const size_t mByteCount;
+    // The current offset, in bytes, from the start of `mBytes`.
+    size_t mByteOffset;
     // The current offset, in bits, into the current byte.
-    size_t bit_offset_;
+    size_t mBitOffset;
 };
 
 CXXKIT_END_NAMESPACE

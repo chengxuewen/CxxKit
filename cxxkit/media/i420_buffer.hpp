@@ -110,12 +110,12 @@ protected:
     friend class RefCountedObject<I420Buffer>;
 
 private:
-    const int width_;
-    const int height_;
-    const int stride_y_;
-    const int stride_u_;
-    const int stride_v_;
-    const std::unique_ptr<uint8_t, AlignedFreeDeleter> data_;
+    const int mWidth;
+    const int mHeight;
+    const int mStrideY;
+    const int mStrideU;
+    const int mStrideV;
+    const std::unique_ptr<uint8_t, AlignedFreeDeleter> mData;
 };
 
 }  // namespace cxxkit

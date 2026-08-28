@@ -30,52 +30,52 @@
 namespace cxxkit {
 
 FrameGeneratorCapturer::FrameGeneratorCapturer(std::unique_ptr<FrameGenerator> generator, double framerate)
-    : generator_(std::move(generator))
-    , framerate_controller_(framerate)
+    : mGenerator(std::move(generator))
+    , mFramerateController(framerate)
 {
-    CXXKIT_DCHECK(generator_);
+    CXXKIT_DCHECK(mGenerator);
 }
 
 void FrameGeneratorCapturer::SetFrameCallback(FrameCallback callback)
 {
-    callback_ = std::move(callback);
+    mCallback = std::move(callback);
 }
 
 void FrameGeneratorCapturer::SetFrameRate(double fps)
 {
-    framerate_controller_.SetFrameRate(fps);
+    mFramerateController.SetFrameRate(fps);
 }
 
 double FrameGeneratorCapturer::GetFrameRate() const
 {
-    return framerate_controller_.GetFrameRate();
+    return mFramerateController.GetFrameRate();
 }
 
 void FrameGeneratorCapturer::GenerateOneFrame(int64_t timestamp_ns)
 {
-    if (!generator_ || framerate_controller_.ShouldDropFrame(timestamp_ns))
+    if (!mGenerator || mFramerateController.ShouldDropFrame(timestamp_ns))
     {
         return;
     }
 
     VideoFrame frame = VideoFrame::Builder()
-                           .set_video_frame_buffer(generator_->GetNextFrame())
+                           .set_video_frame_buffer(mGenerator->GetNextFrame())
                            .set_timestamp_us(timestamp_ns / 1000)
                            .build();
-    if (callback_)
+    if (mCallback)
     {
-        callback_(frame);
+        mCallback(frame);
     }
 }
 
 int FrameGeneratorCapturer::width() const
 {
-    return generator_ ? generator_->width() : 0;
+    return mGenerator ? mGenerator->width() : 0;
 }
 
 int FrameGeneratorCapturer::height() const
 {
-    return generator_ ? generator_->height() : 0;
+    return mGenerator ? mGenerator->height() : 0;
 }
 
 std::unique_ptr<FrameGeneratorCapturer> CreateFrameGeneratorCapturer(double framerate,

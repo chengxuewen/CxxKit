@@ -93,31 +93,31 @@ ColorSpace::ColorSpace(PrimaryID primaries,
                        ChromaSiting chroma_siting_horz,
                        ChromaSiting chroma_siting_vert,
                        const HdrMetadata *hdr_metadata)
-    : primaries_(primaries)
-    , transfer_(transfer)
-    , matrix_(matrix)
-    , range_(range)
-    , chroma_siting_horizontal_(chroma_siting_horz)
-    , chroma_siting_vertical_(chroma_siting_vert)
-    , hdr_metadata_(hdr_metadata ? utils::make_optional(*hdr_metadata) : utils::nullopt)
+    : mPrimaries(primaries)
+    , mTransfer(transfer)
+    , mMatrix(matrix)
+    , mRange(range)
+    , mChromaSitingHorizontal(chroma_siting_horz)
+    , mChromaSitingVertical(chroma_siting_vert)
+    , mHdrMetadata(hdr_metadata ? utils::make_optional(*hdr_metadata) : utils::nullopt)
 {
 }
 
 ColorSpace::~ColorSpace() { }
 
-ColorSpace::PrimaryID ColorSpace::primaries() const { return primaries_; }
+ColorSpace::PrimaryID ColorSpace::primaries() const { return mPrimaries; }
 
-ColorSpace::TransferID ColorSpace::transfer() const { return transfer_; }
+ColorSpace::TransferID ColorSpace::transfer() const { return mTransfer; }
 
-ColorSpace::MatrixID ColorSpace::matrix() const { return matrix_; }
+ColorSpace::MatrixID ColorSpace::matrix() const { return mMatrix; }
 
-ColorSpace::RangeID ColorSpace::range() const { return range_; }
+ColorSpace::RangeID ColorSpace::range() const { return mRange; }
 
-ColorSpace::ChromaSiting ColorSpace::chroma_siting_horizontal() const { return chroma_siting_horizontal_; }
+ColorSpace::ChromaSiting ColorSpace::chroma_siting_horizontal() const { return mChromaSitingHorizontal; }
 
-ColorSpace::ChromaSiting ColorSpace::chroma_siting_vertical() const { return chroma_siting_vertical_; }
+ColorSpace::ChromaSiting ColorSpace::chroma_siting_vertical() const { return mChromaSitingVertical; }
 
-const HdrMetadata *ColorSpace::hdr_metadata() const { return hdr_metadata_ ? &*hdr_metadata_ : nullptr; }
+const HdrMetadata *ColorSpace::hdr_metadata() const { return mHdrMetadata ? &*mHdrMetadata : nullptr; }
 
 #define PRINT_ENUM_CASE(TYPE, NAME)                                                                                    \
     case TYPE::NAME: ss << #NAME; break;
@@ -128,7 +128,7 @@ std::string ColorSpace::AsString() const
     //    rtc::SimpleStringBuilder ss(buf);
     std::stringstream ss;
     ss << "{primaries:";
-    switch (primaries_)
+    switch (mPrimaries)
     {
         PRINT_ENUM_CASE(PrimaryID, kBT709)
         PRINT_ENUM_CASE(PrimaryID, kUnspecified)
@@ -144,7 +144,7 @@ std::string ColorSpace::AsString() const
         PRINT_ENUM_CASE(PrimaryID, kJEDECP22)
     }
     ss << ", transfer:";
-    switch (transfer_)
+    switch (mTransfer)
     {
         PRINT_ENUM_CASE(TransferID, kBT709)
         PRINT_ENUM_CASE(TransferID, kUnspecified)
@@ -165,7 +165,7 @@ std::string ColorSpace::AsString() const
         PRINT_ENUM_CASE(TransferID, kARIB_STD_B67)
     }
     ss << ", matrix:";
-    switch (matrix_)
+    switch (mMatrix)
     {
         PRINT_ENUM_CASE(MatrixID, kRGB)
         PRINT_ENUM_CASE(MatrixID, kBT709)
@@ -184,7 +184,7 @@ std::string ColorSpace::AsString() const
     }
 
     ss << ", range:";
-    switch (range_)
+    switch (mRange)
     {
         PRINT_ENUM_CASE(RangeID, kInvalid)
         PRINT_ENUM_CASE(RangeID, kLimited)
@@ -213,7 +213,7 @@ bool ColorSpace::set_primaries_from_uint8(uint8_t enum_value)
                                          PrimaryID::kJEDECP22};
     constexpr uint64_t enum_bitmask = CreateEnumBitmask(kPrimaryIds);
 
-    return SetFromUint8(enum_value, enum_bitmask, &primaries_);
+    return SetFromUint8(enum_value, enum_bitmask, &mPrimaries);
 }
 
 bool ColorSpace::set_transfer_from_uint8(uint8_t enum_value)
@@ -237,7 +237,7 @@ bool ColorSpace::set_transfer_from_uint8(uint8_t enum_value)
                                            TransferID::kARIB_STD_B67};
     constexpr uint64_t enum_bitmask = CreateEnumBitmask(kTransferIds);
 
-    return SetFromUint8(enum_value, enum_bitmask, &transfer_);
+    return SetFromUint8(enum_value, enum_bitmask, &mTransfer);
 }
 
 bool ColorSpace::set_matrix_from_uint8(uint8_t enum_value)
@@ -258,7 +258,7 @@ bool ColorSpace::set_matrix_from_uint8(uint8_t enum_value)
                                        MatrixID::kBT2100_ICTCP};
     constexpr uint64_t enum_bitmask = CreateEnumBitmask(kMatrixIds);
 
-    return SetFromUint8(enum_value, enum_bitmask, &matrix_);
+    return SetFromUint8(enum_value, enum_bitmask, &mMatrix);
 }
 
 bool ColorSpace::set_range_from_uint8(uint8_t enum_value)
@@ -266,21 +266,21 @@ bool ColorSpace::set_range_from_uint8(uint8_t enum_value)
     constexpr RangeID kRangeIds[] = {RangeID::kInvalid, RangeID::kLimited, RangeID::kFull, RangeID::kDerived};
     constexpr uint64_t enum_bitmask = CreateEnumBitmask(kRangeIds);
 
-    return SetFromUint8(enum_value, enum_bitmask, &range_);
+    return SetFromUint8(enum_value, enum_bitmask, &mRange);
 }
 
 bool ColorSpace::set_chroma_siting_horizontal_from_uint8(uint8_t enum_value)
 {
-    return SetChromaSitingFromUint8(enum_value, &chroma_siting_horizontal_);
+    return SetChromaSitingFromUint8(enum_value, &mChromaSitingHorizontal);
 }
 
 bool ColorSpace::set_chroma_siting_vertical_from_uint8(uint8_t enum_value)
 {
-    return SetChromaSitingFromUint8(enum_value, &chroma_siting_vertical_);
+    return SetChromaSitingFromUint8(enum_value, &mChromaSitingVertical);
 }
 
 void ColorSpace::set_hdr_metadata(const HdrMetadata *hdr_metadata)
 {
-    hdr_metadata_ = hdr_metadata ? utils::make_optional(*hdr_metadata) : utils::nullopt;
+    mHdrMetadata = hdr_metadata ? utils::make_optional(*hdr_metadata) : utils::nullopt;
 }
 }  // namespace cxxkit

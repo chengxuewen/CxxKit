@@ -38,24 +38,24 @@ public:
     static constexpr uint64_t kFractionsPerSecond = 0x100000000;
 
     NtpTime()
-        : value_(0)
+        : mValue(0)
     {
     }
     explicit NtpTime(uint64_t value)
-        : value_(value)
+        : mValue(value)
     {
     }
     NtpTime(uint32_t seconds, uint32_t fractions)
-        : value_(seconds * kFractionsPerSecond + fractions)
+        : mValue(seconds * kFractionsPerSecond + fractions)
     {
     }
 
     NtpTime(const NtpTime &) = default;
     NtpTime &operator=(const NtpTime &) = default;
-    explicit operator uint64_t() const { return value_; }
+    explicit operator uint64_t() const { return mValue; }
 
-    void Set(uint32_t seconds, uint32_t fractions) { value_ = seconds * kFractionsPerSecond + fractions; }
-    void Reset() { value_ = 0; }
+    void Set(uint32_t seconds, uint32_t fractions) { mValue = seconds * kFractionsPerSecond + fractions; }
+    void Reset() { mValue = 0; }
 
     int64_t ToMs() const
     {
@@ -64,13 +64,13 @@ public:
         return 1000 * static_cast<int64_t>(seconds()) + static_cast<int64_t>(frac_ms + 0.5);
     }
     // NTP standard (RFC1305, section 3.1) explicitly state value 0 is invalid.
-    bool Valid() const { return value_ != 0; }
+    bool Valid() const { return mValue != 0; }
 
-    uint32_t seconds() const { return utils::dchecked_cast<uint32_t>(value_ / kFractionsPerSecond); }
-    uint32_t fractions() const { return utils::dchecked_cast<uint32_t>(value_ % kFractionsPerSecond); }
+    uint32_t seconds() const { return utils::dchecked_cast<uint32_t>(mValue / kFractionsPerSecond); }
+    uint32_t fractions() const { return utils::dchecked_cast<uint32_t>(mValue % kFractionsPerSecond); }
 
 private:
-    uint64_t value_;
+    uint64_t mValue;
 };
 
 inline bool operator==(const NtpTime &n1, const NtpTime &n2)

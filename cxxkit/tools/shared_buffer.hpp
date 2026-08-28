@@ -68,11 +68,11 @@ public:
     SharedBuffer(const T *data, size_t size, size_t capacity)
         : SharedBuffer(size, capacity)
     {
-        if (buffer_)
+        if (mBuffer)
         {
-            std::memcpy(buffer_->data(), data, size);
-            offset_ = 0;
-            size_ = size;
+            std::memcpy(mBuffer->data(), data, size);
+            mOffset = 0;
+            mSize = size;
         }
     }
 
@@ -119,12 +119,12 @@ public:
     T *MutableData()
     {
         CXXKIT_DCHECK(IsConsistent());
-        if (!buffer_)
+        if (!mBuffer)
         {
             return nullptr;
         }
         UnshareAndEnsureCapacity(capacity());
-        return buffer_->data<T>() + offset_;
+        return mBuffer->data<T>() + mOffset;
     }
 
     // Get const pointer to the data. This will not create a copy of the
@@ -133,29 +133,29 @@ public:
     const T *cdata() const
     {
         CXXKIT_DCHECK(IsConsistent());
-        if (!buffer_)
+        if (!mBuffer)
         {
             return nullptr;
         }
-        return buffer_->data<T>() + offset_;
+        return mBuffer->data<T>() + mOffset;
     }
 
-    bool empty() const { return size_ == 0; }
+    bool empty() const { return mSize == 0; }
 
     size_t size() const
     {
         CXXKIT_DCHECK(IsConsistent());
-        return size_;
+        return mSize;
     }
 
     size_t capacity() const
     {
         CXXKIT_DCHECK(IsConsistent());
-        return buffer_ ? buffer_->capacity() - offset_ : 0;
+        return mBuffer ? mBuffer->capacity() - mOffset : 0;
     }
 
     const uint8_t *begin() const { return data(); }
-    const uint8_t *end() const { return data() + size_; }
+    const uint8_t *end() const { return data() + mSize; }
 
     SharedBuffer &operator=(const SharedBuffer &buf)
     {
@@ -163,9 +163,9 @@ public:
         CXXKIT_DCHECK(buf.IsConsistent());
         if (&buf != this)
         {
-            buffer_ = buf.buffer_;
-            offset_ = buf.offset_;
-            size_ = buf.size_;
+            mBuffer = buf.mBuffer;
+            mOffset = buf.mOffset;
+            mSize = buf.mSize;
         }
         return *this;
     }
@@ -174,11 +174,11 @@ public:
     {
         CXXKIT_DCHECK(IsConsistent());
         CXXKIT_DCHECK(buf.IsConsistent());
-        buffer_ = std::move(buf.buffer_);
-        offset_ = buf.offset_;
-        size_ = buf.size_;
-        buf.offset_ = 0;
-        buf.size_ = 0;
+        mBuffer = std::move(buf.mBuffer);
+        mOffset = buf.mOffset;
+        mSize = buf.mSize;
+        buf.mOffset = 0;
+        buf.mSize = 0;
         return *this;
     }
 
@@ -198,20 +198,20 @@ public:
     void SetData(const T *data, size_t size)
     {
         CXXKIT_DCHECK(IsConsistent());
-        if (!buffer_)
+        if (!mBuffer)
         {
-            buffer_ = size > 0 ? new RefCountedBuffer(data, size) : nullptr;
+            mBuffer = size > 0 ? new RefCountedBuffer(data, size) : nullptr;
         }
-        else if (!buffer_->HasOneRef())
+        else if (!mBuffer->HasOneRef())
         {
-            buffer_ = new RefCountedBuffer(data, size, capacity());
+            mBuffer = new RefCountedBuffer(data, size, capacity());
         }
         else
         {
-            buffer_->SetData(data, size);
+            mBuffer->SetData(data, size);
         }
-        offset_ = 0;
-        size_ = size;
+        mOffset = 0;
+        mSize = size;
 
         CXXKIT_DCHECK(IsConsistent());
     }
@@ -228,9 +228,9 @@ public:
         CXXKIT_DCHECK(buf.IsConsistent());
         if (&buf != this)
         {
-            buffer_ = buf.buffer_;
-            offset_ = buf.offset_;
-            size_ = buf.size_;
+            mBuffer = buf.mBuffer;
+            mOffset = buf.mOffset;
+            mSize = buf.mSize;
         }
     }
 
@@ -239,20 +239,20 @@ public:
     void AppendData(const T *data, size_t size)
     {
         CXXKIT_DCHECK(IsConsistent());
-        if (!buffer_)
+        if (!mBuffer)
         {
-            buffer_ = new RefCountedBuffer(data, size);
-            offset_ = 0;
-            size_ = size;
+            mBuffer = new RefCountedBuffer(data, size);
+            mOffset = 0;
+            mSize = size;
             CXXKIT_DCHECK(IsConsistent());
             return;
         }
 
-        UnshareAndEnsureCapacity(std::max(capacity(), size_ + size));
+        UnshareAndEnsureCapacity(std::max(capacity(), mSize + size));
 
-        buffer_->SetSize(offset_ + size_); // Remove data to the right of the slice.
-        buffer_->AppendData(data, size);
-        size_ += size;
+        mBuffer->SetSize(mOffset + mSize); // Remove data to the right of the slice.
+        mBuffer->AppendData(data, size);
+        mSize += size;
 
         CXXKIT_DCHECK(IsConsistent());
     }
@@ -290,18 +290,18 @@ public:
     // Swaps two buffers.
     friend void swap(SharedBuffer &a, SharedBuffer &b)
     {
-        a.buffer_.swap(b.buffer_);
-        std::swap(a.offset_, b.offset_);
-        std::swap(a.size_, b.size_);
+        a.mBuffer.swap(b.mBuffer);
+        std::swap(a.mOffset, b.mOffset);
+        std::swap(a.mSize, b.mSize);
     }
 
     SharedBuffer Slice(size_t offset, size_t length) const
     {
         SharedBuffer slice(*this);
-        CXXKIT_DCHECK_LE(offset, size_);
-        CXXKIT_DCHECK_LE(length + offset, size_);
-        slice.offset_ += offset;
-        slice.size_ = length;
+        CXXKIT_DCHECK_LE(offset, mSize);
+        CXXKIT_DCHECK_LE(length + offset, mSize);
+        slice.mOffset += offset;
+        slice.mSize = length;
         return slice;
     }
 
@@ -314,23 +314,23 @@ private:
     // Pre- and postcondition of all methods.
     bool IsConsistent() const
     {
-        if (buffer_)
+        if (mBuffer)
         {
-            return buffer_->capacity() > 0 && offset_ <= buffer_->size() && offset_ + size_ <= buffer_->size();
+            return mBuffer->capacity() > 0 && mOffset <= mBuffer->size() && mOffset + mSize <= mBuffer->size();
         }
         else
         {
-            return size_ == 0 && offset_ == 0;
+            return mSize == 0 && mOffset == 0;
         }
     }
 
-    // buffer_ is either null, or points to an rtc::Buffer with capacity > 0.
-    SharedRefPtr<RefCountedBuffer> buffer_;
+    // mBuffer is either null, or points to an rtc::Buffer with capacity > 0.
+    SharedRefPtr<RefCountedBuffer> mBuffer;
     // This buffer may represent a slice of a original data.
-    size_t offset_; // Offset of a current slice in the original data in buffer_.
-    // Should be 0 if the buffer_ is empty.
-    size_t size_; // Size of a current slice in the original data in buffer_.
-    // Should be 0 if the buffer_ is empty.
+    size_t mOffset; // Offset of a current slice in the original data in mBuffer.
+    // Should be 0 if the mBuffer is empty.
+    size_t mSize; // Size of a current slice in the original data in mBuffer.
+    // Should be 0 if the mBuffer is empty.
 };
 CXXKIT_END_NAMESPACE
 

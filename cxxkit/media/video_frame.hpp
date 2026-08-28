@@ -99,25 +99,25 @@ public:
 
         Builder& set_timestamp_rtp(uint32_t rtp_timestamp)
         {
-            timestamp_rtp_ = rtp_timestamp;
+            mTimestampRtp = rtp_timestamp;
             return *this;
         }
 
         Builder& set_timestamp_us(int64_t timestamp_us)
         {
-            timestamp_us_ = timestamp_us;
+            mTimestampUs = timestamp_us;
             return *this;
         }
 
         Builder& set_rotation(VideoRotation rotation)
         {
-            rotation_ = rotation;
+            mRotation = rotation;
             return *this;
         }
 
         Builder& set_color_space(const Optional<ColorSpace>& color_space)
         {
-            color_space_ = color_space;
+            mColorSpace = color_space;
             return *this;
         }
 
@@ -125,24 +125,24 @@ public:
 
         Builder& set_id(uint16_t id)
         {
-            id_ = id;
+            mId = id;
             return *this;
         }
 
         Builder& set_update_rect(const Optional<UpdateRect>& update_rect)
         {
-            update_rect_ = update_rect;
+            mUpdateRect = update_rect;
             return *this;
         }
 
     private:
-        uint16_t id_ = kNotSetId;
-        SharedRefPtr<VideoFrameBuffer> video_frame_buffer_;
-        int64_t timestamp_us_ = 0;
-        uint32_t timestamp_rtp_ = 0;
-        VideoRotation rotation_ = VideoRotation::kVideoRotation_0;
-        Optional<ColorSpace> color_space_;
-        Optional<UpdateRect> update_rect_;
+        uint16_t mId = kNotSetId;
+        SharedRefPtr<VideoFrameBuffer> mVideoFrameBuffer;
+        int64_t mTimestampUs = 0;
+        uint32_t mTimestampRtp = 0;
+        VideoRotation mRotation = VideoRotation::kVideoRotation_0;
+        Optional<ColorSpace> mColorSpace;
+        Optional<UpdateRect> mUpdateRect;
     };
 
     VideoFrame(uint16_t id,
@@ -154,54 +154,54 @@ public:
                const Optional<UpdateRect>& update_rect);
 
     // System monotonic clock, same timebase as rtc::TimeMicros().
-    int64_t timestamp_us() const { return timestamp_us_; }
-    void set_timestamp_us(int64_t timestamp_us) { timestamp_us_ = timestamp_us; }
+    int64_t timestamp_us() const { return mTimestampUs; }
+    void set_timestamp_us(int64_t timestamp_us) { mTimestampUs = timestamp_us; }
 
     // Set frame timestamp (90kHz).
-    void set_timestamp_rtp(uint32_t rtp_timestamp) { timestamp_rtp_ = rtp_timestamp; }
+    void set_timestamp_rtp(uint32_t rtp_timestamp) { mTimestampRtp = rtp_timestamp; }
     // Get frame timestamp (90kHz).
-    uint32_t timestamp_rtp() const { return timestamp_rtp_; }
+    uint32_t timestamp_rtp() const { return mTimestampRtp; }
 
     // Get frame ID. Returns `kNotSetId` if ID is not set.
-    uint16_t id() const { return id_; }
-    void set_id(uint16_t id) { id_ = id; }
+    uint16_t id() const { return mId; }
+    void set_id(uint16_t id) { mId = id; }
 
-    VideoRotation rotation() const { return rotation_; }
-    void set_rotation(VideoRotation rotation) { rotation_ = rotation; }
+    VideoRotation rotation() const { return mRotation; }
+    void set_rotation(VideoRotation rotation) { mRotation = rotation; }
 
     // Get color space when available.
-    const Optional<ColorSpace>& color_space() const { return color_space_; }
-    void set_color_space(const Optional<ColorSpace>& color_space) { color_space_ = color_space; }
+    const Optional<ColorSpace>& color_space() const { return mColorSpace; }
+    void set_color_space(const Optional<ColorSpace>& color_space) { mColorSpace = color_space; }
 
     // Return the underlying buffer. Never nullptr for a properly initialized VideoFrame.
-    SharedRefPtr<VideoFrameBuffer> video_frame_buffer() const { return video_frame_buffer_; }
+    SharedRefPtr<VideoFrameBuffer> video_frame_buffer() const { return mVideoFrameBuffer; }
     void set_video_frame_buffer(const SharedRefPtr<VideoFrameBuffer>& buffer);
 
     int width() const;
     int height() const;
     uint32_t size() const;  // Get frame size in pixels.
 
-    bool has_update_rect() const { return update_rect_.has_value(); }
+    bool has_update_rect() const { return mUpdateRect.has_value(); }
 
     // Returns updateRect set by the builder or set_update_rect() or whole frame rect if no update rect is available.
-    UpdateRect update_rect() const { return update_rect_.value_or(UpdateRect{0, 0, width(), height()}); }
+    UpdateRect update_rect() const { return mUpdateRect.value_or(UpdateRect{0, 0, width(), height()}); }
     // Rectangle must be within the frame dimensions.
     void set_update_rect(const VideoFrame::UpdateRect& update_rect);
-    void clear_update_rect() { update_rect_ = utils::nullopt; }
+    void clear_update_rect() { mUpdateRect = utils::nullopt; }
 
 private:
-    uint16_t id_;
+    uint16_t mId;
     // An opaque reference counted handle that stores the pixel data.
-    SharedRefPtr<VideoFrameBuffer> video_frame_buffer_;
-    uint32_t timestamp_rtp_;
-    int64_t timestamp_us_;
-    VideoRotation rotation_;
-    Optional<ColorSpace> color_space_;
+    SharedRefPtr<VideoFrameBuffer> mVideoFrameBuffer;
+    uint32_t mTimestampRtp;
+    int64_t mTimestampUs;
+    VideoRotation mRotation;
+    Optional<ColorSpace> mColorSpace;
     // Updated since the last frame area. If present it means that the bounding
     // box of all the changes is within the rectangular area and is close to it.
     // If absent, it means that there's no information about the change at all and
     // updateRect() will return a rectangle corresponding to the entire frame.
-    Optional<UpdateRect> update_rect_;
+    Optional<UpdateRect> mUpdateRect;
 };
 
 }  // namespace cxxkit

@@ -31,7 +31,7 @@ CXXKIT_BEGIN_NAMESPACE
 
 namespace detail
 {
-void setLastReadIsVerified(bool &verified, bool value)
+void set_last_read_is_verified(bool &verified, bool value)
 {
 #ifdef CXXKIT_DCHECK_IS_ON
     verified = value;
@@ -66,49 +66,49 @@ uint8_t WritePartialByte(uint8_t source, size_t source_bit_count, uint8_t target
 } // namespace detail
 
 BitBufferReader::BitBufferReader(ArrayView<const uint8_t> bytes)
-    : bytes_(bytes.data())
-    , remaining_bits_(utils::checked_cast<int>(bytes.size() * 8))
+    : mBytes(bytes.data())
+    , mRemainingBits(utils::checked_cast<int>(bytes.size() * 8))
 {
 }
 
 BitBufferReader::BitBufferReader(StringView bytes)
-    : bytes_(reinterpret_cast<const uint8_t *>(bytes.data()))
-    , remaining_bits_(utils::checked_cast<int>(bytes.size() * 8))
+    : mBytes(reinterpret_cast<const uint8_t *>(bytes.data()))
+    , mRemainingBits(utils::checked_cast<int>(bytes.size() * 8))
 {
 }
 
 BitBufferReader::~BitBufferReader()
 {
-    CXXKIT_DCHECK(last_read_is_verified_) << "Latest calls to Read or ConsumeBit "
+    CXXKIT_DCHECK(mLastReadIsVerified) << "Latest calls to Read or ConsumeBit "
                                              "were not checked with Ok function.";
 }
 
 int BitBufferReader::RemainingBitCount() const
 {
-    detail::setLastReadIsVerified(last_read_is_verified_, true);
-    return remaining_bits_;
+    detail::set_last_read_is_verified(mLastReadIsVerified, true);
+    return mRemainingBits;
 }
 
 uint64_t BitBufferReader::ReadBits(int bits)
 {
     CXXKIT_DCHECK_GE(bits, 0);
     CXXKIT_DCHECK_LE(bits, 64);
-    detail::setLastReadIsVerified(last_read_is_verified_, false);
+    detail::set_last_read_is_verified(mLastReadIsVerified, false);
 
-    if (remaining_bits_ < bits)
+    if (mRemainingBits < bits)
     {
         Invalidate();
         return 0;
     }
 
-    int remaining_bits_in_first_byte = remaining_bits_ % 8;
-    remaining_bits_ -= bits;
+    int remaining_bits_in_first_byte = mRemainingBits % 8;
+    mRemainingBits -= bits;
     if (bits < remaining_bits_in_first_byte)
     {
         // Reading fewer bits than what's left in the current byte, just
         // return the portion of this byte that is needed.
         int offset = (remaining_bits_in_first_byte - bits);
-        return ((*bytes_) >> offset) & ((1 << bits) - 1);
+        return ((*mBytes) >> offset) & ((1 << bits) - 1);
     }
 
     uint64_t result = 0;
@@ -117,60 +117,60 @@ uint64_t BitBufferReader::ReadBits(int bits)
         // Read all bits that were left in the current byte and consume that byte.
         bits -= remaining_bits_in_first_byte;
         uint8_t mask = (1 << remaining_bits_in_first_byte) - 1;
-        result = static_cast<uint64_t>(*bytes_ & mask) << bits;
-        ++bytes_;
+        result = static_cast<uint64_t>(*mBytes & mask) << bits;
+        ++mBytes;
     }
 
     // Read as many full bytes as we can.
     while (bits >= 8)
     {
         bits -= 8;
-        result |= uint64_t{*bytes_} << bits;
-        ++bytes_;
+        result |= uint64_t{*mBytes} << bits;
+        ++mBytes;
     }
     // Whatever is left to read is smaller than a byte, so grab just the needed
     // bits and shift them into the lowest bits.
     if (bits > 0)
     {
-        result |= (*bytes_ >> (8 - bits));
+        result |= (*mBytes >> (8 - bits));
     }
     return result;
 }
 
 int BitBufferReader::ReadBit()
 {
-    detail::setLastReadIsVerified(last_read_is_verified_, false);
-    if (remaining_bits_ <= 0)
+    detail::set_last_read_is_verified(mLastReadIsVerified, false);
+    if (mRemainingBits <= 0)
     {
         Invalidate();
         return 0;
     }
-    --remaining_bits_;
+    --mRemainingBits;
 
-    int bit_position = remaining_bits_ % 8;
+    int bit_position = mRemainingBits % 8;
     if (bit_position == 0)
     {
         // Read the last bit from current byte and move to the next byte.
-        return (*bytes_++) & 0x01;
+        return (*mBytes++) & 0x01;
     }
 
-    return (*bytes_ >> bit_position) & 0x01;
+    return (*mBytes >> bit_position) & 0x01;
 }
 
 void BitBufferReader::ConsumeBits(int bits)
 {
     CXXKIT_DCHECK_GE(bits, 0);
-    detail::setLastReadIsVerified(last_read_is_verified_, false);
-    if (remaining_bits_ < bits)
+    detail::set_last_read_is_verified(mLastReadIsVerified, false);
+    if (mRemainingBits < bits)
     {
         Invalidate();
         return;
     }
 
-    int remaining_bytes = (remaining_bits_ + 7) / 8;
-    remaining_bits_ -= bits;
-    int new_remaining_bytes = (remaining_bits_ + 7) / 8;
-    bytes_ += (remaining_bytes - new_remaining_bytes);
+    int remaining_bytes = (mRemainingBits + 7) / 8;
+    mRemainingBits -= bits;
+    int new_remaining_bytes = (mRemainingBits + 7) / 8;
+    mBytes += (remaining_bytes - new_remaining_bytes);
 }
 
 uint32_t BitBufferReader::ReadNonSymmetric(uint32_t num_values)
@@ -258,17 +258,17 @@ std::string BitBufferReader::ReadString(int num_bytes)
 }
 
 BitBufferWriter::BitBufferWriter(uint8_t *bytes, size_t byte_count)
-    : writable_bytes_(bytes)
-    , byte_count_(byte_count)
-    , byte_offset_()
-    , bit_offset_()
+    : mWritableBytes(bytes)
+    , mByteCount(byte_count)
+    , mByteOffset()
+    , mBitOffset()
 {
-    CXXKIT_DCHECK(static_cast<uint64_t>(byte_count_) <= std::numeric_limits<uint32_t>::max());
+    CXXKIT_DCHECK(static_cast<uint64_t>(mByteCount) <= std::numeric_limits<uint32_t>::max());
 }
 
 uint64_t BitBufferWriter::RemainingBitCount() const
 {
-    return (static_cast<uint64_t>(byte_count_) - byte_offset_) * 8 - bit_offset_;
+    return (static_cast<uint64_t>(mByteCount) - mByteOffset) * 8 - mBitOffset;
 }
 
 bool BitBufferWriter::ConsumeBytes(size_t byte_count)
@@ -283,8 +283,8 @@ bool BitBufferWriter::ConsumeBits(size_t bit_count)
         return false;
     }
 
-    byte_offset_ += (bit_offset_ + bit_count) / 8;
-    bit_offset_ = (bit_offset_ + bit_count) % 8;
+    mByteOffset += (mBitOffset + bit_count) / 8;
+    mBitOffset = (mBitOffset + bit_count) % 8;
     return true;
 }
 
@@ -292,18 +292,18 @@ void BitBufferWriter::GetCurrentOffset(size_t *out_byte_offset, size_t *out_bit_
 {
     CXXKIT_CHECK(out_byte_offset != nullptr);
     CXXKIT_CHECK(out_bit_offset != nullptr);
-    *out_byte_offset = byte_offset_;
-    *out_bit_offset = bit_offset_;
+    *out_byte_offset = mByteOffset;
+    *out_bit_offset = mBitOffset;
 }
 
 bool BitBufferWriter::Seek(size_t byte_offset, size_t bit_offset)
 {
-    if (byte_offset > byte_count_ || bit_offset > 7 || (byte_offset == byte_count_ && bit_offset > 0))
+    if (byte_offset > mByteCount || bit_offset > 7 || (byte_offset == mByteCount && bit_offset > 0))
     {
         return false;
     }
-    byte_offset_ = byte_offset;
-    bit_offset_ = bit_offset;
+    mByteOffset = byte_offset;
+    mBitOffset = bit_offset;
     return true;
 }
 
@@ -333,14 +333,14 @@ bool BitBufferWriter::WriteBits(uint64_t val, size_t bit_count)
     // For simplicity, push the bits we want to read from val to the highest bits.
     val <<= (sizeof(uint64_t) * 8 - bit_count);
 
-    uint8_t *bytes = writable_bytes_ + byte_offset_;
+    uint8_t *bytes = mWritableBytes + mByteOffset;
 
     // The first byte is relatively special; the bit offset to write to may put us
     // in the middle of the byte, and the total bit count to write may require we
     // save the bits at the end of the byte.
-    size_t remaining_bits_in_current_byte = 8 - bit_offset_;
+    size_t remaining_bits_in_current_byte = 8 - mBitOffset;
     size_t bits_in_first_byte = std::min(bit_count, remaining_bits_in_current_byte);
-    *bytes = detail::WritePartialByte(detail::HighestByte(val), bits_in_first_byte, *bytes, bit_offset_);
+    *bytes = detail::WritePartialByte(detail::HighestByte(val), bits_in_first_byte, *bytes, mBitOffset);
     if (bit_count <= remaining_bits_in_current_byte)
     {
         // Nothing left to write, so quit early.

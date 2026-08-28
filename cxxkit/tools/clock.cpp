@@ -71,7 +71,7 @@ Clock *Clock::GetRealTimeClock()
 }
 
 SimulatedClock::SimulatedClock(int64_t initial_time_us)
-    : time_us_(initial_time_us)
+    : mTimeUs(initial_time_us)
 {
 }
 
@@ -86,7 +86,7 @@ SimulatedClock::~SimulatedClock()
 
 Timestamp SimulatedClock::CurrentTime()
 {
-    return Timestamp::Micros(time_us_.load(std::memory_order_relaxed));
+    return Timestamp::Micros(mTimeUs.load(std::memory_order_relaxed));
 }
 
 NtpTime SimulatedClock::ConvertTimestampToNtpTime(Timestamp timestamp)
@@ -114,6 +114,6 @@ void SimulatedClock::AdvanceTimeMicroseconds(int64_t microseconds)
 // CallStatsTest.LastProcessedRtt.
 void SimulatedClock::AdvanceTime(TimeDelta delta)
 {
-    time_us_.fetch_add(delta.us(), std::memory_order_relaxed);
+    mTimeUs.fetch_add(delta.us(), std::memory_order_relaxed);
 }
 CXXKIT_END_NAMESPACE

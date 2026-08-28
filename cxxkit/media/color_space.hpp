@@ -156,9 +156,9 @@ public:
     ~ColorSpace();
     friend bool operator==(const ColorSpace &lhs, const ColorSpace &rhs)
     {
-        return lhs.primaries_ == rhs.primaries_ && lhs.transfer_ == rhs.transfer_ && lhs.matrix_ == rhs.matrix_ &&
-               lhs.range_ == rhs.range_ && lhs.chroma_siting_horizontal_ == rhs.chroma_siting_horizontal_ &&
-               lhs.chroma_siting_vertical_ == rhs.chroma_siting_vertical_ && lhs.hdr_metadata_ == rhs.hdr_metadata_;
+        return lhs.mPrimaries == rhs.mPrimaries && lhs.mTransfer == rhs.mTransfer && lhs.mMatrix == rhs.mMatrix &&
+               lhs.mRange == rhs.mRange && lhs.mChromaSitingHorizontal == rhs.mChromaSitingHorizontal &&
+               lhs.mChromaSitingVertical == rhs.mChromaSitingVertical && lhs.mHdrMetadata == rhs.mHdrMetadata;
     }
     friend bool operator!=(const ColorSpace &lhs, const ColorSpace &rhs) { return !(lhs == rhs); }
 
@@ -180,13 +180,13 @@ public:
     void set_hdr_metadata(const HdrMetadata *hdr_metadata);
 
 private:
-    PrimaryID primaries_ = PrimaryID::kUnspecified;
-    TransferID transfer_ = TransferID::kUnspecified;
-    MatrixID matrix_ = MatrixID::kUnspecified;
-    RangeID range_ = RangeID::kInvalid;
-    ChromaSiting chroma_siting_horizontal_ = ChromaSiting::kUnspecified;
-    ChromaSiting chroma_siting_vertical_ = ChromaSiting::kUnspecified;
-    Optional<HdrMetadata> hdr_metadata_;
+    PrimaryID mPrimaries = PrimaryID::kUnspecified;
+    TransferID mTransfer = TransferID::kUnspecified;
+    MatrixID mMatrix = MatrixID::kUnspecified;
+    RangeID mRange = RangeID::kInvalid;
+    ChromaSiting mChromaSitingHorizontal = ChromaSiting::kUnspecified;
+    ChromaSiting mChromaSitingVertical = ChromaSiting::kUnspecified;
+    Optional<HdrMetadata> mHdrMetadata;
 };
 
 }  // namespace cxxkit

@@ -38,7 +38,7 @@ public:
     // TODO(tommi): Change this so that the seed can be initialized internally,
     // e.g. by offering two ways of constructing or offer a static method that
     // returns a seed that's suitable for initialization.
-    // The problem now is that callers are calling clock_->TimeInMicroseconds()
+    // The problem now is that callers are calling mClock->TimeInMicroseconds()
     // which calls TickTime::Now().Ticks(), which can return a very low value on
     // Mac and can result in a seed of 0 after conversion to microseconds.
     // Besides the quality of the random seed being poor, this also requires
@@ -84,14 +84,14 @@ private:
     // https://en.wikipedia.org/wiki/Xorshift
     uint64_t NextOutput()
     {
-        state_ ^= state_ >> 12;
-        state_ ^= state_ << 25;
-        state_ ^= state_ >> 27;
-        CXXKIT_DCHECK(state_ != 0x0ULL);
-        return state_ * 2685821657736338717ull;
+        mState ^= mState >> 12;
+        mState ^= mState << 25;
+        mState ^= mState >> 27;
+        CXXKIT_DCHECK(mState != 0x0ULL);
+        return mState * 2685821657736338717ull;
     }
 
-    uint64_t state_;
+    uint64_t mState;
 };
 
 // Return pseudo-random number in the interval [0.0, 1.0).

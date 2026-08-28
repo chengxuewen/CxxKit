@@ -56,19 +56,19 @@ public:
     void AdvanceTime(TimeDelta delta);
 
 private:
-    mutable Mutex lock_;
-    int64_t time_ns_ CXXKIT_ATTRIBUTE_GUARDED_BY(lock_) = 0;
+    mutable Mutex mLock;
+    int64_t mTimeNs CXXKIT_ATTRIBUTE_GUARDED_BY(mLock) = 0;
 };
 
 class CXXKIT_TOOLS_API ThreadProcessingFakeClock : public ClockInterface
 {
 public:
-    int64_t TimeNanos() const override { return clock_.TimeNanos(); }
+    int64_t TimeNanos() const override { return mClock.TimeNanos(); }
     void SetTime(Timestamp time);
     void AdvanceTime(TimeDelta delta);
 
 private:
-    FakeClock clock_;
+    FakeClock mClock;
 };
 
 // Helper class that sets itself as the global clock in its constructor and
@@ -80,7 +80,7 @@ public:
     ~ScopedBaseFakeClock() override;
 
 private:
-    ClockInterface *prev_clock_;
+    ClockInterface *mPrevClock;
 };
 
 // TODO(srte): Rename this to reflect that it also does thread processing.
@@ -91,7 +91,7 @@ public:
     ~ScopedFakeClock() override;
 
 private:
-    ClockInterface *prev_clock_;
+    ClockInterface *mPrevClock;
 };
 CXXKIT_END_NAMESPACE
 

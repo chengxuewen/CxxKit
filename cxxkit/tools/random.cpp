@@ -40,7 +40,7 @@ CXXKIT_BEGIN_NAMESPACE
 Random::Random(uint64_t seed)
 {
     CXXKIT_DCHECK(seed != 0x0ull);
-    state_ = seed;
+    mState = seed;
 }
 
 uint32_t Random::Rand(uint32_t t)
@@ -148,7 +148,7 @@ class TestRandomGenerator : public RandomGenerator
 {
 public:
     TestRandomGenerator()
-        : seed_(7)
+        : mSeed(7)
     {
     }
     ~TestRandomGenerator() override { }
@@ -163,8 +163,8 @@ public:
     }
 
 private:
-    int GetRandom() { return ((seed_ = seed_ * 214013L + 2531011L) >> 16) & 0x7fff; }
-    int seed_;
+    int GetRandom() { return ((mSeed = mSeed * 214013L + 2531011L) >> 16) & 0x7fff; }
+    int mSeed;
 };
 
 // TODO: Use Base64::Base64Table instead.

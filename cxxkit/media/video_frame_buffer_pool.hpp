@@ -63,20 +63,20 @@ public:
     // already allocated buffers is bigger than the new value.
     bool Resize(size_t max_number_of_buffers);
 
-    // Clears buffers_ and detaches the thread checker so that it can be reused
+    // Clears mBuffers and detaches the thread checker so that it can be reused
     // later from another thread.
     void Release();
 
 private:
     SharedRefPtr<VideoFrameBuffer> GetExistingBuffer(int width, int height, VideoType type);
 
-    RaceChecker race_checker_;
-    std::list<SharedRefPtr<VideoFrameBuffer>> buffers_;
+    RaceChecker mRaceChecker;
+    std::list<SharedRefPtr<VideoFrameBuffer>> mBuffers;
     // If true, newly allocated buffers are zero-initialized. Note that
     // recycled buffers are not zero'd before reuse.
-    const bool zero_initialize_;
+    const bool mZeroInitialize;
     // Max number of buffers this pool can have pending.
-    size_t max_number_of_buffers_;
+    size_t mMaxNumberOfBuffers;
 };
 
 }  // namespace cxxkit

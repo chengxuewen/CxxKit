@@ -110,7 +110,7 @@ private:
     // one another, the synchronization done as part of the message passing should
     // ensure that any causual chain of events on multiple threads also
     // corresponds to monotonically increasing time.
-    std::atomic<int64_t> time_us_;
+    std::atomic<int64_t> mTimeUs;
 };
 CXXKIT_END_NAMESPACE
 

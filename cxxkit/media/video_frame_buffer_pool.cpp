@@ -62,8 +62,8 @@ VideoFrameBufferPool::VideoFrameBufferPool(bool zero_initialize)
 }
 
 VideoFrameBufferPool::VideoFrameBufferPool(bool zero_initialize, size_t max_number_of_buffers)
-    : zero_initialize_(zero_initialize)
-    , max_number_of_buffers_(max_number_of_buffers)
+    : mZeroInitialize(zero_initialize)
+    , mMaxNumberOfBuffers(max_number_of_buffers)
 {
 }
 
@@ -71,14 +71,14 @@ VideoFrameBufferPool::~VideoFrameBufferPool() = default;
 
 void VideoFrameBufferPool::Release()
 {
-    buffers_.clear();
+    mBuffers.clear();
 }
 
 bool VideoFrameBufferPool::Resize(size_t max_number_of_buffers)
 {
-    CXXKIT_DCHECK_RUNS_SERIALIZED(&race_checker_);
+    CXXKIT_DCHECK_RUNS_SERIALIZED(&mRaceChecker);
     size_t used_buffers_count = 0;
-    for (const SharedRefPtr<VideoFrameBuffer>& buffer : buffers_)
+    for (const SharedRefPtr<VideoFrameBuffer>& buffer : mBuffers)
     {
         // If the buffer is in use, the ref count will be >= 2, one from the
         // list we are looping over and one from the application. If the ref
@@ -93,15 +93,15 @@ bool VideoFrameBufferPool::Resize(size_t max_number_of_buffers)
     {
         return false;
     }
-    max_number_of_buffers_ = max_number_of_buffers;
+    mMaxNumberOfBuffers = max_number_of_buffers;
 
-    size_t buffers_to_purge = buffers_.size() - max_number_of_buffers_;
-    auto iter = buffers_.begin();
-    while (iter != buffers_.end() && buffers_to_purge > 0)
+    size_t buffers_to_purge = mBuffers.size() - mMaxNumberOfBuffers;
+    auto iter = mBuffers.begin();
+    while (iter != mBuffers.end() && buffers_to_purge > 0)
     {
         if (HasOneRef(*iter))
         {
-            iter = buffers_.erase(iter);
+            iter = mBuffers.erase(iter);
             buffers_to_purge--;
         }
         else
@@ -114,7 +114,7 @@ bool VideoFrameBufferPool::Resize(size_t max_number_of_buffers)
 
 SharedRefPtr<I420Buffer> VideoFrameBufferPool::CreateI420Buffer(int width, int height)
 {
-    CXXKIT_DCHECK_RUNS_SERIALIZED(&race_checker_);
+    CXXKIT_DCHECK_RUNS_SERIALIZED(&mRaceChecker);
 
     SharedRefPtr<VideoFrameBuffer> existing_buffer = GetExistingBuffer(width, height, VideoType::kI420);
     if (existing_buffer)
@@ -129,31 +129,31 @@ SharedRefPtr<I420Buffer> VideoFrameBufferPool::CreateI420Buffer(int width, int h
         return SharedRefPtr<I420Buffer>(raw_buffer);
     }
 
-    if (buffers_.size() >= max_number_of_buffers_)
+    if (mBuffers.size() >= mMaxNumberOfBuffers)
     {
         return SharedRefPtr<I420Buffer>();
     }
 
     // Allocate a new buffer.
     SharedRefPtr<I420Buffer> buffer = I420Buffer::Create(width, height);
-    if (zero_initialize_)
+    if (mZeroInitialize)
     {
         buffer->InitializeData();
     }
 
-    buffers_.push_back(buffer);
+    mBuffers.push_back(buffer);
     return buffer;
 }
 
 SharedRefPtr<VideoFrameBuffer> VideoFrameBufferPool::GetExistingBuffer(int width, int height, VideoType type)
 {
     // Release buffers with wrong resolution or different type.
-    for (auto it = buffers_.begin(); it != buffers_.end();)
+    for (auto it = mBuffers.begin(); it != mBuffers.end();)
     {
         const SharedRefPtr<VideoFrameBuffer>& buffer = *it;
         if (buffer->width() != width || buffer->height() != height || buffer->type() != type)
         {
-            it = buffers_.erase(it);
+            it = mBuffers.erase(it);
         }
         else
         {
@@ -162,7 +162,7 @@ SharedRefPtr<VideoFrameBuffer> VideoFrameBufferPool::GetExistingBuffer(int width
     }
 
     // Look for a free buffer.
-    for (const SharedRefPtr<VideoFrameBuffer>& buffer : buffers_)
+    for (const SharedRefPtr<VideoFrameBuffer>& buffer : mBuffers)
     {
         // If the buffer is in use, the ref count will be >= 2, one from the
         // list we are looping over and one from the application. If the ref

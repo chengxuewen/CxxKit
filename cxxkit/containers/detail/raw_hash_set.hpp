@@ -78,19 +78,19 @@ static constexpr size_t kWidth = 1;
 class ProbeSeq {
 public:
     ProbeSeq(size_t hash, size_t mask)
-        : pos_(H1(hash) & mask), mask_(mask), stride_(0) {}
+        : mPos(H1(hash) & mask), mMask(mask), mStride(0) {}
 
-    size_t pos() const { return pos_; }
+    size_t pos() const { return mPos; }
 
     void next() {
-        stride_ += kWidth;
-        pos_ = (pos_ + stride_) & mask_;
+        mStride += kWidth;
+        mPos = (mPos + mStride) & mMask;
     }
 
 private:
-    size_t pos_;
-    size_t mask_;
-    size_t stride_;
+    size_t mPos;
+    size_t mMask;
+    size_t mStride;
 };
 
 // ---------------------------------------------------------------------------
@@ -161,31 +161,31 @@ public:
         using pointer           = value_type*;
         using reference         = value_type&;
 
-        iterator() : set_(nullptr), ctrl_(nullptr) {}
+        iterator() : mSet(nullptr), mCtrl(nullptr) {}
 
-        reference operator*()  const { return set_->slot_at_mut(ctrl_); }
-        pointer   operator->() const { return &set_->slot_at_mut(ctrl_); }
+        reference operator*()  const { return mSet->slot_at_mut(mCtrl); }
+        pointer   operator->() const { return &mSet->slot_at_mut(mCtrl); }
 
         iterator& operator++() {
-            ++ctrl_;
+            ++mCtrl;
             skip_empty_or_deleted();
             return *this;
         }
         iterator operator++(int) { auto tmp = *this; ++*this; return tmp; }
 
-        bool operator==(const iterator& o) const { return ctrl_ == o.ctrl_; }
-        bool operator!=(const iterator& o) const { return ctrl_ != o.ctrl_; }
+        bool operator==(const iterator& o) const { return mCtrl == o.mCtrl; }
+        bool operator!=(const iterator& o) const { return mCtrl != o.mCtrl; }
 
     private:
         iterator(raw_hash_set* set, Ctrl* ctrl)
-            : set_(set), ctrl_(ctrl) { skip_empty_or_deleted(); }
+            : mSet(set), mCtrl(ctrl) { skip_empty_or_deleted(); }
 
         void skip_empty_or_deleted() {
-            while (IsEmptyOrDeleted(*ctrl_)) ++ctrl_;
+            while (IsEmptyOrDeleted(*mCtrl)) ++mCtrl;
         }
 
-        raw_hash_set* set_;
-        Ctrl* ctrl_;
+        raw_hash_set* mSet;
+        Ctrl* mCtrl;
     };
 
     class const_iterator {
@@ -197,37 +197,37 @@ public:
         using pointer           = const value_type*;
         using reference         = const value_type&;
 
-        const_iterator() : set_(nullptr), ctrl_(nullptr) {}
+        const_iterator() : mSet(nullptr), mCtrl(nullptr) {}
         // implicit conversion from iterator
-        const_iterator(iterator it) : set_(it.set_), ctrl_(it.ctrl_) {}
+        const_iterator(iterator it) : mSet(it.mSet), mCtrl(it.mCtrl) {}
 
-        reference operator*()  const { return set_->slot_at(ctrl_); }
-        pointer   operator->() const { return &set_->slot_at(ctrl_); }
+        reference operator*()  const { return mSet->slot_at(mCtrl); }
+        pointer   operator->() const { return &mSet->slot_at(mCtrl); }
 
         const_iterator& operator++() {
-            ++ctrl_;
+            ++mCtrl;
             skip_empty_or_deleted();
             return *this;
         }
         const_iterator operator++(int) { auto tmp = *this; ++*this; return tmp; }
 
-        bool operator==(const const_iterator& o) const { return ctrl_ == o.ctrl_; }
-        bool operator!=(const const_iterator& o) const { return ctrl_ != o.ctrl_; }
+        bool operator==(const const_iterator& o) const { return mCtrl == o.mCtrl; }
+        bool operator!=(const const_iterator& o) const { return mCtrl != o.mCtrl; }
 
     private:
         const_iterator(const raw_hash_set* set, Ctrl* ctrl)
-            : set_(set), ctrl_(ctrl) { skip_empty_or_deleted(); }
+            : mSet(set), mCtrl(ctrl) { skip_empty_or_deleted(); }
 
         void skip_empty_or_deleted() {
-            while (IsEmptyOrDeleted(*ctrl_)) ++ctrl_;
+            while (IsEmptyOrDeleted(*mCtrl)) ++mCtrl;
         }
 
-        const raw_hash_set* set_;
-        Ctrl* ctrl_;
+        const raw_hash_set* mSet;
+        Ctrl* mCtrl;
     };
 
     // --- constructors / destructor --------------------------------------
-    raw_hash_set() : ctrl_(nullptr), slots_(nullptr), capacity_(0), size_(0) {}
+    raw_hash_set() : mCtrl(nullptr), mSlots(nullptr), mCapacity(0), mSize(0) {}
 
     explicit raw_hash_set(size_t bucket_count_hint) : raw_hash_set() {
         if (bucket_count_hint > 0) {
@@ -241,8 +241,8 @@ public:
 
     // copy
     raw_hash_set(const raw_hash_set& o) : raw_hash_set() {
-        if (o.capacity_ > 0) {
-            resize(o.capacity_);
+        if (o.mCapacity > 0) {
+            resize(o.mCapacity);
             for (auto it = o.begin(); it != o.end(); ++it) {
                 unchecked_insert(*it);
             }
@@ -252,8 +252,8 @@ public:
     raw_hash_set& operator=(const raw_hash_set& o) {
         if (this == &o) return *this;
         clear();
-        if (o.capacity_ > 0) {
-            if (capacity_ < o.capacity_) resize(o.capacity_);
+        if (o.mCapacity > 0) {
+            if (mCapacity < o.mCapacity) resize(o.mCapacity);
             for (auto it = o.begin(); it != o.end(); ++it) {
                 unchecked_insert(*it);
             }
@@ -263,31 +263,31 @@ public:
 
     // move
     raw_hash_set(raw_hash_set&& o) noexcept
-        : ctrl_(o.ctrl_), slots_(o.slots_),
-          capacity_(o.capacity_), size_(o.size_) {
-        o.ctrl_ = nullptr; o.slots_ = nullptr;
-        o.capacity_ = 0; o.size_ = 0;
+        : mCtrl(o.mCtrl), mSlots(o.mSlots),
+          mCapacity(o.mCapacity), mSize(o.mSize) {
+        o.mCtrl = nullptr; o.mSlots = nullptr;
+        o.mCapacity = 0; o.mSize = 0;
     }
 
     raw_hash_set& operator=(raw_hash_set&& o) noexcept {
         if (this == &o) return *this;
         destroy_all();
-        ctrl_ = o.ctrl_; slots_ = o.slots_;
-        capacity_ = o.capacity_; size_ = o.size_;
-        o.ctrl_ = nullptr; o.slots_ = nullptr;
-        o.capacity_ = 0; o.size_ = 0;
+        mCtrl = o.mCtrl; mSlots = o.mSlots;
+        mCapacity = o.mCapacity; mSize = o.mSize;
+        o.mCtrl = nullptr; o.mSlots = nullptr;
+        o.mCapacity = 0; o.mSize = 0;
         return *this;
     }
 
     // --- capacity / size ------------------------------------------------
-    bool      empty()     const { return size_ == 0; }
-    size_type size()      const { return size_; }
-    size_type capacity()  const { return capacity_; }
+    bool      empty()     const { return mSize == 0; }
+    size_type size()      const { return mSize; }
+    size_type capacity()  const { return mCapacity; }
 
     // --- iterators ------------------------------------------------------
-    iterator       begin()        { return iterator(this, ctrl_); }
-    const_iterator begin()  const { return const_iterator(this, ctrl_); }
-    const_iterator cbegin() const { return const_iterator(this, ctrl_); }
+    iterator       begin()        { return iterator(this, mCtrl); }
+    const_iterator begin()  const { return const_iterator(this, mCtrl); }
+    const_iterator cbegin() const { return const_iterator(this, mCtrl); }
 
     iterator       end()          { return iterator(this, sentinel()); }
     const_iterator end()    const { return const_iterator(this, sentinel()); }
@@ -296,11 +296,11 @@ public:
     // --- lookup ---------------------------------------------------------
     template <class K>
     iterator find(const K& key) {
-        if (capacity_ == 0) return end();
+        if (mCapacity == 0) return end();
         size_t h = Hash{}(key);
-        ProbeSeq seq(h, capacity_ - 1);
+        ProbeSeq seq(h, mCapacity - 1);
         while (true) {
-            Ctrl* g = ctrl_ + seq.pos();
+            Ctrl* g = mCtrl + seq.pos();
             // check group (scalar: 1 byte at a time)
             if (IsFull(*g) && H2(h) == *g && Eq{}(key, Policy::key(slot_at(g)))) {
                 return iterator(this, g);
@@ -312,11 +312,11 @@ public:
 
     template <class K>
     const_iterator find(const K& key) const {
-        if (capacity_ == 0) return end();
+        if (mCapacity == 0) return end();
         size_t h = Hash{}(key);
-        ProbeSeq seq(h, capacity_ - 1);
+        ProbeSeq seq(h, mCapacity - 1);
         while (true) {
-            const Ctrl* g = ctrl_ + seq.pos();
+            const Ctrl* g = mCtrl + seq.pos();
             if (IsFull(*g) && H2(h) == *g && Eq{}(key, Policy::key(slot_at(g)))) {
                 return const_iterator(this, const_cast<Ctrl*>(g));
             }
@@ -349,30 +349,30 @@ public:
     size_type erase(const K& key) {
         auto it = find(key);
         if (it == end()) return 0;
-        erase_at(it.ctrl_);
+        erase_at(it.mCtrl);
         return 1;
     }
 
-    void erase(iterator it) { erase_at(it.ctrl_); }
+    void erase(iterator it) { erase_at(it.mCtrl); }
 
     // --- clear ----------------------------------------------------------
     void clear() {
-        if (capacity_ == 0) return;
-        for (size_t i = 0; i < capacity_; ++i) {
-            if (IsFull(ctrl_[i])) {
-                destroy_slot(reinterpret_cast<value_type*>(slots_) + i);
-                ctrl_[i] = kEmpty;
+        if (mCapacity == 0) return;
+        for (size_t i = 0; i < mCapacity; ++i) {
+            if (IsFull(mCtrl[i])) {
+                destroy_slot(reinterpret_cast<value_type*>(mSlots) + i);
+                mCtrl[i] = kEmpty;
             }
         }
         // clear clones + sentinel
         initialize_ctrl();
-        size_ = 0;
+        mSize = 0;
     }
 
     // --- reserve --------------------------------------------------------
     void reserve(size_type n) {
-        if (n > GrowthThreshold(capacity_)) {
-            size_t cap = capacity_ == 0 ? kMinCapacity : capacity_;
+        if (n > GrowthThreshold(mCapacity)) {
+            size_t cap = mCapacity == 0 ? kMinCapacity : mCapacity;
             while (GrowthThreshold(cap) < n) cap *= 2;
             resize(cap);
         }
@@ -381,37 +381,37 @@ public:
     // --- swap -----------------------------------------------------------
     void swap(raw_hash_set& o) noexcept {
         using std::swap;
-        swap(ctrl_, o.ctrl_);
-        swap(slots_, o.slots_);
-        swap(capacity_, o.capacity_);
-        swap(size_, o.size_);
+        swap(mCtrl, o.mCtrl);
+        swap(mSlots, o.mSlots);
+        swap(mCapacity, o.mCapacity);
+        swap(mSize, o.mSize);
     }
 
 private:
     // --- memory layout --------------------------------------------------
     // ctrl[capacity] + sentinel(1) + clones[kWidth-1] + slots[capacity]
-    Ctrl*   ctrl_;
-    void*   slots_;      // raw pointer to slot storage
-    size_t  capacity_;
-    size_t  size_;
+    Ctrl*   mCtrl;
+    void*   mSlots;      // raw pointer to slot storage
+    size_t  mCapacity;
+    size_t  mSize;
 
-    Ctrl* sentinel() const { return ctrl_ + capacity_; }
+    Ctrl* sentinel() const { return mCtrl + mCapacity; }
 
     void initialize_ctrl() {
-        if (capacity_ == 0) return;
-        std::memset(ctrl_, kEmpty, capacity_ * sizeof(Ctrl));
-        ctrl_[capacity_] = kSentinel;
+        if (mCapacity == 0) return;
+        std::memset(mCtrl, kEmpty, mCapacity * sizeof(Ctrl));
+        mCtrl[mCapacity] = kSentinel;
         // clones (for SIMD boundary; scalar mode: just copy first kWidth-1)
         for (size_t i = 0; i < kWidth - 1; ++i) {
-            ctrl_[capacity_ + 1 + i] = ctrl_[i];
+            mCtrl[mCapacity + 1 + i] = mCtrl[i];
         }
     }
 
     void resize(size_t new_cap) {
         assert(IsValidCapacity(new_cap));
-        Ctrl*  old_ctrl = ctrl_;
-        void*  old_slots = slots_;
-        size_t old_cap = capacity_;
+        Ctrl*  old_ctrl = mCtrl;
+        void*  old_slots = mSlots;
+        size_t old_cap = mCapacity;
 
         // allocate new backing array (ctrl + slots as one block)
         size_t ctrl_bytes = (new_cap + 1 + (kWidth - 1)) * sizeof(Ctrl);
@@ -419,10 +419,10 @@ private:
         size_t total = ctrl_aligned + new_cap * sizeof(value_type);
         void* block = ::operator new(total);
 
-        ctrl_ = static_cast<Ctrl*>(block);
-        slots_ = static_cast<char*>(block) + ctrl_aligned;
-        capacity_ = new_cap;
-        size_ = 0;
+        mCtrl = static_cast<Ctrl*>(block);
+        mSlots = static_cast<char*>(block) + ctrl_aligned;
+        mCapacity = new_cap;
+        mSize = 0;
         initialize_ctrl();
 
         // re-insert old elements
@@ -439,16 +439,16 @@ private:
 
     // --- slot access ----------------------------------------------------
     value_type& slot_at(Ctrl* c) {
-        size_t idx = static_cast<size_t>(c - ctrl_);
-        return reinterpret_cast<value_type*>(slots_)[idx];
+        size_t idx = static_cast<size_t>(c - mCtrl);
+        return reinterpret_cast<value_type*>(mSlots)[idx];
     }
     const value_type& slot_at(const Ctrl* c) const {
-        size_t idx = static_cast<size_t>(c - ctrl_);
-        return reinterpret_cast<const value_type*>(slots_)[idx];
+        size_t idx = static_cast<size_t>(c - mCtrl);
+        return reinterpret_cast<const value_type*>(mSlots)[idx];
     }
     value_type& slot_at_mut(Ctrl* c) {
-        size_t idx = static_cast<size_t>(c - ctrl_);
-        return reinterpret_cast<value_type*>(slots_)[idx];
+        size_t idx = static_cast<size_t>(c - mCtrl);
+        return reinterpret_cast<value_type*>(mSlots)[idx];
     }
 
     void construct_slot(value_type* p, value_type&& v) {
@@ -462,40 +462,40 @@ private:
     // --- core operations ------------------------------------------------
     template <class V>
     std::pair<iterator, bool> emplace_impl(V&& v) {
-        if (capacity_ == 0) reserve(kMinCapacity);
+        if (mCapacity == 0) reserve(kMinCapacity);
         auto res = find_or_prepare_insert(Policy::key(v));
         if (res.second) {
-            construct_slot(reinterpret_cast<value_type*>(slots_) + res.first, std::forward<V>(v));
-            ++size_;
+            construct_slot(reinterpret_cast<value_type*>(mSlots) + res.first, std::forward<V>(v));
+            ++mSize;
         }
-        return {iterator(this, ctrl_ + res.first), res.second};
+        return {iterator(this, mCtrl + res.first), res.second};
     }
 
     // Returns {index, true} if key is new (slot prepared), {index, false} if key exists.
     std::pair<size_t, bool> find_or_prepare_insert(const key_type& key) {
         size_t h = Hash{}(key);
-        ProbeSeq seq(h, capacity_ - 1);
+        ProbeSeq seq(h, mCapacity - 1);
 
-        size_t first_deleted = capacity_;  // sentinel: no deleted slot found yet
+        size_t first_deleted = mCapacity;  // sentinel: no deleted slot found yet
         while (true) {
             size_t pos = seq.pos();
-            Ctrl c = ctrl_[pos];
+            Ctrl c = mCtrl[pos];
             if (IsFull(c)) {
-                if (c == H2(h) && Eq{}(key, Policy::key(reinterpret_cast<value_type*>(slots_)[pos]))) {
+                if (c == H2(h) && Eq{}(key, Policy::key(reinterpret_cast<value_type*>(mSlots)[pos]))) {
                     return {pos, false};  // key already present
                 }
             } else {  // empty or deleted
                 if (IsEmpty(c)) {
                     // use first deleted slot if any, otherwise this empty slot
-                    size_t target = first_deleted != capacity_ ? first_deleted : pos;
-                    if (size_ + 1 > GrowthThreshold(capacity_)) {
-                        resize(NextCapacity(capacity_));
+                    size_t target = first_deleted != mCapacity ? first_deleted : pos;
+                    if (mSize + 1 > GrowthThreshold(mCapacity)) {
+                        resize(NextCapacity(mCapacity));
                         return find_or_prepare_insert(key);  // re-probe after resize
                     }
-                    ctrl_[target] = H2(h);
+                    mCtrl[target] = H2(h);
                     return {target, true};
                 }
-                if (first_deleted == capacity_) first_deleted = pos;
+                if (first_deleted == mCapacity) first_deleted = pos;
             }
             seq.next();
         }
@@ -504,40 +504,40 @@ private:
     void unchecked_insert(const value_type& v) {
         auto res = find_or_prepare_insert(Policy::key(v));
         assert(res.second);
-        construct_slot(reinterpret_cast<value_type*>(slots_) + res.first, v);
-        ++size_;
+        construct_slot(reinterpret_cast<value_type*>(mSlots) + res.first, v);
+        ++mSize;
     }
 
     void unchecked_insert(value_type&& v) {
         auto res = find_or_prepare_insert(Policy::key(v));
         assert(res.second);
-        construct_slot(reinterpret_cast<value_type*>(slots_) + res.first, std::move(v));
-        ++size_;
+        construct_slot(reinterpret_cast<value_type*>(mSlots) + res.first, std::move(v));
+        ++mSize;
     }
 
     void erase_at(Ctrl* c) {
-        size_t idx = static_cast<size_t>(c - ctrl_);
-        destroy_slot(reinterpret_cast<value_type*>(slots_) + idx);
+        size_t idx = static_cast<size_t>(c - mCtrl);
+        destroy_slot(reinterpret_cast<value_type*>(mSlots) + idx);
         // try to convert to empty (if group has no full slots after this, it was never full)
-        size_t next = (idx + 1) & (capacity_ - 1);
-        if (IsEmpty(ctrl_[next])) {
-            ctrl_[idx] = kEmpty;
+        size_t next = (idx + 1) & (mCapacity - 1);
+        if (IsEmpty(mCtrl[next])) {
+            mCtrl[idx] = kEmpty;
         } else {
-            ctrl_[idx] = kDeleted;
+            mCtrl[idx] = kDeleted;
         }
-        --size_;
+        --mSize;
     }
 
     void destroy_all() {
-        if (capacity_ == 0) return;
-        for (size_t i = 0; i < capacity_; ++i) {
-            if (IsFull(ctrl_[i])) {
-                destroy_slot(reinterpret_cast<value_type*>(slots_) + i);
+        if (mCapacity == 0) return;
+        for (size_t i = 0; i < mCapacity; ++i) {
+            if (IsFull(mCtrl[i])) {
+                destroy_slot(reinterpret_cast<value_type*>(mSlots) + i);
             }
         }
-        ::operator delete(ctrl_);
-        ctrl_ = nullptr; slots_ = nullptr;
-        capacity_ = 0; size_ = 0;
+        ::operator delete(mCtrl);
+        mCtrl = nullptr; mSlots = nullptr;
+        mCapacity = 0; mSize = 0;
     }
 };
 

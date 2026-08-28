@@ -66,9 +66,9 @@ public:
     int height() const;
 
 private:
-    std::unique_ptr<FrameGenerator> generator_;
-    FramerateController framerate_controller_;
-    FrameCallback callback_;
+    std::unique_ptr<FrameGenerator> mGenerator;
+    FramerateController mFramerateController;
+    FrameCallback mCallback;
 };
 
 // Factory: creates a FrameGeneratorCapturer backed by a synthetic slideshow

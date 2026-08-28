@@ -90,7 +90,7 @@ class RefCounter
 {
 public:
     explicit RefCounter(int ref_count)
-        : ref_count_(ref_count)
+        : mRefCount(ref_count)
     {
     }
     RefCounter() = delete;
@@ -100,7 +100,7 @@ public:
         // Relaxed memory order: The current thread is allowed to act on the
         // resource protected by the reference counter both before and after the
         // atomic op, so this function doesn't prevent memory access reordering.
-        ref_count_.fetch_add(1, std::memory_order_relaxed);
+        mRefCount.fetch_add(1, std::memory_order_relaxed);
     }
 
     // Returns kDroppedLastRef if this call dropped the last reference; the caller
@@ -119,7 +119,7 @@ public:
         // In addition std::memory_order_release is used for synchronization with
         // the HasOneRef function to make sure all actions on the protected resource
         // are finished before the resource is assumed to have exclusive access.
-        int ref_count_after_subtract = ref_count_.fetch_sub(1, std::memory_order_acq_rel) - 1;
+        int ref_count_after_subtract = mRefCount.fetch_sub(1, std::memory_order_acq_rel) - 1;
         return ref_count_after_subtract == 0 ? RefCountReleaseStatus::kDroppedLastRef
                                              : RefCountReleaseStatus::kOtherRefsRemained;
     }
@@ -136,11 +136,11 @@ public:
         // access, all changes to the resource before it was released by other
         // threads must be visible by current thread. That is provided by release
         // (in DecRef) and acquire (in this function) ordering.
-        return ref_count_.load(std::memory_order_acquire) == 1;
+        return mRefCount.load(std::memory_order_acquire) == 1;
     }
 
 private:
-    std::atomic<int> ref_count_;
+    std::atomic<int> mRefCount;
 };
 } // namespace detail
 
@@ -152,10 +152,10 @@ public:
     RefCountedBase(const RefCountedBase &) = delete;
     RefCountedBase &operator=(const RefCountedBase &) = delete;
 
-    void addRef() const { ref_count_.incRef(); }
+    void addRef() const { mRefCount.incRef(); }
     RefCountReleaseStatus Release() const
     {
-        const auto status = ref_count_.DecRef();
+        const auto status = mRefCount.DecRef();
         if (status == RefCountReleaseStatus::kDroppedLastRef)
         {
             delete this;
@@ -166,12 +166,12 @@ public:
 protected:
     // Provided for internal webrtc subclasses for corner cases where it's
     // necessary to know whether or not a reference is exclusively held.
-    bool HasOneRef() const { return ref_count_.HasOneRef(); }
+    bool HasOneRef() const { return mRefCount.HasOneRef(); }
 
     virtual ~RefCountedBase() = default;
 
 private:
-    mutable detail::RefCounter ref_count_{0};
+    mutable detail::RefCounter mRefCount{0};
 };
 
 // Template based version of `RefCountedBase` for simple implementations that do
@@ -196,7 +196,7 @@ public:
     RefCountedNonVirtual(const RefCountedNonVirtual &) = delete;
     RefCountedNonVirtual &operator=(const RefCountedNonVirtual &) = delete;
 
-    void addRef() const { ref_count_.incRef(); }
+    void addRef() const { mRefCount.incRef(); }
     RefCountReleaseStatus Release() const
     {
         // If you run into this assert, T has virtual methods. There are two
@@ -207,7 +207,7 @@ public:
         //    case you can consider using `RefCountedBase` instead or alternatively
         //    use `rtc::RefCountedObject`.
         static_assert(!std::is_polymorphic<T>::value, "T has virtual methods. RefCountedBase is a better fit.");
-        const auto status = ref_count_.DecRef();
+        const auto status = mRefCount.DecRef();
         if (status == RefCountReleaseStatus::kDroppedLastRef)
         {
             delete static_cast<const T *>(this);
@@ -218,12 +218,12 @@ public:
 protected:
     // Provided for internal webrtc subclasses for corner cases where it's
     // necessary to know whether or not a reference is exclusively held.
-    bool HasOneRef() const { return ref_count_.HasOneRef(); }
+    bool HasOneRef() const { return mRefCount.HasOneRef(); }
 
     ~RefCountedNonVirtual() = default;
 
 private:
-    mutable detail::RefCounter ref_count_{0};
+    mutable detail::RefCounter mRefCount{0};
 };
 
 CXXKIT_END_NAMESPACE

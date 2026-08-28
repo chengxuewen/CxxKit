@@ -246,40 +246,40 @@ public:
                       const uint8_t* v_plane,
                       int v_stride,
                       std::function<void()> no_longer_used)
-        : width_(width)
-        , height_(height)
-        , y_plane_(y_plane)
-        , u_plane_(u_plane)
-        , v_plane_(v_plane)
-        , y_stride_(y_stride)
-        , u_stride_(u_stride)
-        , v_stride_(v_stride)
-        , no_longer_used_(no_longer_used)
+        : mWidth(width)
+        , mHeight(height)
+        , mYPlane(y_plane)
+        , mUPlane(u_plane)
+        , mVPlane(v_plane)
+        , mYStride(y_stride)
+        , mUStride(u_stride)
+        , mVStride(v_stride)
+        , mNoLongerUsed(no_longer_used)
     {
     }
 
-    int width() const override { return width_; }
-    int height() const override { return height_; }
-    const uint8_t* GetDataY() const override { return y_plane_; }
-    const uint8_t* GetDataU() const override { return u_plane_; }
-    const uint8_t* GetDataV() const override { return v_plane_; }
-    int StrideY() const override { return y_stride_; }
-    int StrideU() const override { return u_stride_; }
-    int StrideV() const override { return v_stride_; }
+    int width() const override { return mWidth; }
+    int height() const override { return mHeight; }
+    const uint8_t* GetDataY() const override { return mYPlane; }
+    const uint8_t* GetDataU() const override { return mUPlane; }
+    const uint8_t* GetDataV() const override { return mVPlane; }
+    int StrideY() const override { return mYStride; }
+    int StrideU() const override { return mUStride; }
+    int StrideV() const override { return mVStride; }
 
 private:
     friend class RefCountedObject<WrappedI420Buffer>;
-    ~WrappedI420Buffer() override { no_longer_used_(); }
+    ~WrappedI420Buffer() override { mNoLongerUsed(); }
 
-    const int width_;
-    const int height_;
-    const uint8_t* const y_plane_;
-    const uint8_t* const u_plane_;
-    const uint8_t* const v_plane_;
-    const int y_stride_;
-    const int u_stride_;
-    const int v_stride_;
-    std::function<void()> no_longer_used_;
+    const int mWidth;
+    const int mHeight;
+    const uint8_t* const mYPlane;
+    const uint8_t* const mUPlane;
+    const uint8_t* const mVPlane;
+    const int mYStride;
+    const int mUStride;
+    const int mVStride;
+    std::function<void()> mNoLongerUsed;
 };
 
 }  // namespace detail
