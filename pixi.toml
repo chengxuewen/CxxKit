@@ -11,3 +11,6 @@ version = "0.1.0"
 
 [dependencies]
 nodejs = ">=22.22.0,<23.0"
+# clang-format 供 check.sh 第 1 步格式门禁（BreakBeforeBraces: Allman 全库执行）。
+# 独立轻量包（~35MB 装后），不拖 LLVM 工具链；C++11 项目用 17 LTS 即可。
+clang-format = ">=17,<24"

@@ -107,5 +107,4 @@ stash
 # --------
 !.vscode/settings.json
 !.omo/omo.jsonc.pixi/
-pixi.lock
 .codegraph/
