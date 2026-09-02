@@ -1,0 +1,4 @@
+# clang-format Allman unification (D27) — pure-formatting commits, blame past these:
+#   git config blame.ignoreRevsFile .git-blame-ignore-revs
+4ad0eff style(format): Allman unification F1-F6 + bare namespace macro migration (N0)
+cdbcc92 style(format): InlineOnly verdict + macros.hpp format guard
