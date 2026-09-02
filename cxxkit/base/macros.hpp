@@ -37,6 +37,7 @@
  * @see CXXKIT_VERSION_MAJOR, CXXKIT_VERSION_MINOR, CXXKIT_VERSION_PATCH
  */
 // CXXKIT_VERSION is (major << 16) + (minor << 8) + patch.
+// clang-format off
 #define CXXKIT_VERSION CXXKIT_VERSION_CHECK(CXXKIT_VERSION_MAJOR, CXXKIT_VERSION_MINOR, CXXKIT_VERSION_PATCH)
 // can be used like #if (CXXKIT_VERSION >= CXXKIT_VERSION_CHECK(0, 3, 1))
 #define CXXKIT_VERSION_CHECK(major, minor, patch) ((major << 16) | (minor << 8) | (patch))
@@ -1238,4 +1239,4 @@ CXXKIT_EXPORT_TEMPLATE_TEST(DEFAULT, __declspec(dllimport));
 #else
 #    define CXXKIT_ATTRIBUTE_MUST_USE_RESULT
 #endif
-
+// clang-format on
