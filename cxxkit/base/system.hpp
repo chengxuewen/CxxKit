@@ -294,4 +294,3 @@
 #        define CXXKIT_LINUXBASE
 #    endif
 #endif
-

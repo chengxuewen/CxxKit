@@ -32,11 +32,16 @@
 #include <string>
 #include <vector>
 
-namespace {
+namespace
+{
 
-TEST(FrameGenerator, SlideShow) {
-    auto gen = cxxkit::FrameGenerator::create_slide_show(
-        std::vector<std::string>{}, cxxkit::FrameGenerator::OutputType::kI420, 640, 480, 1);
+TEST(FrameGenerator, SlideShow)
+{
+    auto gen = cxxkit::FrameGenerator::create_slide_show(std::vector<std::string>{},
+                                                         cxxkit::FrameGenerator::OutputType::kI420,
+                                                         640,
+                                                         480,
+                                                         1);
     ASSERT_TRUE(gen);
     EXPECT_EQ(gen->width(), 640);
     EXPECT_EQ(gen->height(), 480);
@@ -47,30 +52,38 @@ TEST(FrameGenerator, SlideShow) {
     EXPECT_EQ(frame->type(), cxxkit::VideoType::kI420);
 }
 
-TEST(FrameGeneratorCapturer, GenerateOneFrameInvokesCallback) {
+TEST(FrameGeneratorCapturer, GenerateOneFrameInvokesCallback)
+{
     int captured = 0;
-    auto cap = cxxkit::create_frame_generator_capturer(
-        30.0, 32, 32, [&captured](const cxxkit::VideoFrame& frame) {
-            ++captured;
-            EXPECT_TRUE(frame.video_frame_buffer());
-            EXPECT_EQ(frame.width(), 32);
-            EXPECT_EQ(frame.height(), 32);
-            EXPECT_EQ(frame.timestamp_us(), 1000);  // 1,000,000 ns → 1000 us
-        });
+    auto cap = cxxkit::create_frame_generator_capturer(30.0,
+                                                       32,
+                                                       32,
+                                                       [&captured](const cxxkit::VideoFrame &frame)
+                                                       {
+                                                           ++captured;
+                                                           EXPECT_TRUE(frame.video_frame_buffer());
+                                                           EXPECT_EQ(frame.width(), 32);
+                                                           EXPECT_EQ(frame.height(), 32);
+                                                           EXPECT_EQ(frame.timestamp_us(),
+                                                                     1000); // 1,000,000 ns → 1000 us
+                                                       });
     ASSERT_TRUE(cap);
     cap->generate_one_frame(1000000);
     EXPECT_EQ(captured, 1);
 }
 
-TEST(FrameGeneratorCapturer, FramerateThrottleDropsFrames) {
+TEST(FrameGeneratorCapturer, FramerateThrottleDropsFrames)
+{
     int captured = 0;
-    auto cap = cxxkit::create_frame_generator_capturer(
-        30.0, 32, 32, [&captured](const cxxkit::VideoFrame&) { ++captured; });
+    auto cap = cxxkit::create_frame_generator_capturer(30.0,
+                                                       32,
+                                                       32,
+                                                       [&captured](const cxxkit::VideoFrame &) { ++captured; });
     ASSERT_TRUE(cap);
-    cap->generate_one_frame(0);         // 首帧保留
-    cap->generate_one_frame(0);         // 同一时间戳未到间隔 → 丢
-    cap->generate_one_frame(40000000);  // +40ms > 33.3ms 帧间隔 → 保留
+    cap->generate_one_frame(0);        // 首帧保留
+    cap->generate_one_frame(0);        // 同一时间戳未到间隔 → 丢
+    cap->generate_one_frame(40000000); // +40ms > 33.3ms 帧间隔 → 保留
     EXPECT_EQ(captured, 2);
 }
 
-}  // namespace
+} // namespace

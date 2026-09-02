@@ -36,7 +36,8 @@ TEST(Barrier, BasicSync)
     cxxkit::Barrier barrier(n);
     std::atomic<int> counter{0};
 
-    auto worker = [&]() {
+    auto worker = [&]()
+    {
         counter.fetch_add(1, std::memory_order_relaxed);
         barrier.arrive_and_wait();
         // All threads have arrived before any proceeds.
@@ -60,7 +61,8 @@ TEST(Barrier, MultiplePhases)
     cxxkit::Barrier barrier(n);
     std::atomic<int> phase_count{0};
 
-    auto worker = [&]() {
+    auto worker = [&]()
+    {
         for (int p = 0; p < 3; ++p)
         {
             barrier.arrive_and_wait();
@@ -87,7 +89,8 @@ TEST(Barrier, ArriveAndDrop)
     cxxkit::Barrier barrier(n);
     std::atomic<int> counter{0};
 
-    auto worker = [&](bool drop) {
+    auto worker = [&](bool drop)
+    {
         counter.fetch_add(1, std::memory_order_relaxed);
         if (drop)
         {

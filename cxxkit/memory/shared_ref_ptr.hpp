@@ -231,4 +231,3 @@ struct IsSupportedType<SharedRefPtr<T>> : std::true_type
 } // namespace detail
 
 CXXKIT_END_NAMESPACE
-

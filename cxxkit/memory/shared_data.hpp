@@ -399,4 +399,3 @@ inline bool operator==(const ExplicitlySharedDataPointer<T> &p1, std::nullptr_t 
 }
 
 CXXKIT_END_NAMESPACE
-

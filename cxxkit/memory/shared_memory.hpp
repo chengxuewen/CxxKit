@@ -86,4 +86,3 @@ public:
     virtual std::unique_ptr<SharedMemory> create_shared_memory(size_t size) = 0;
 };
 CXXKIT_END_NAMESPACE
-

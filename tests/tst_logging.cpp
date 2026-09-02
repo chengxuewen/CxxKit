@@ -40,7 +40,8 @@ struct CaptureHandler
 {
     static Logger::MessageHandler make(std::vector<std::string> *out)
     {
-        return [out](const char *name, const Logger::Context &ctx, const char *message) {
+        return [out](const char *name, const Logger::Context &ctx, const char *message)
+        {
             (void)name;
             (void)ctx;
             out->push_back(std::string(message));
@@ -69,7 +70,8 @@ TEST(Logging, LoggerRegistryLookup)
     bool found = false;
     for (Logger::Pointer p : all)
     {
-        if (p == logger) found = true;
+        if (p == logger)
+            found = true;
     }
     EXPECT_TRUE(found);
 }
@@ -109,17 +111,18 @@ TEST(Logging, OutputCapturedByHandler)
     std::vector<std::string> captured;
     logger.install_message_handler(CaptureHandler::make(&captured), /*uniqueOwnership=*/true);
 
-    logger.output(Logger::Context{LogLevel::Info, __FILE__, extract_file_name(__FILE__), "func", 1},
-                  "hello world");
+    logger.output(Logger::Context{LogLevel::Info, __FILE__, extract_file_name(__FILE__), "func", 1}, "hello world");
     EXPECT_EQ(captured.size(), 1u);
     EXPECT_EQ(captured[0], "hello world");
 
     // vlogging path (va_list).
     {
-        auto printv = [&](const char *fmt, ...) {
+        auto printv = [&](const char *fmt, ...)
+        {
             va_list args;
             va_start(args, fmt);
-            logger.vlogging(Logger::Context{LogLevel::Debug, __FILE__, extract_file_name(__FILE__), "func", 2}, fmt,
+            logger.vlogging(Logger::Context{LogLevel::Debug, __FILE__, extract_file_name(__FILE__), "func", 2},
+                            fmt,
                             args);
             va_end(args);
         };

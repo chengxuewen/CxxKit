@@ -24,10 +24,10 @@
 
 #include <cxxkit/media/hdr_metadata.hpp>
 
-namespace cxxkit {
+CXXKIT_BEGIN_NAMESPACE
 
 HdrMasteringMetadata::Chromaticity::Chromaticity() = default;
 HdrMasteringMetadata::HdrMasteringMetadata() = default;
 HdrMetadata::HdrMetadata() = default;
 
-}  // namespace cxxkit
+CXXKIT_END_NAMESPACE

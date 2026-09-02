@@ -33,7 +33,6 @@
 CXXKIT_BEGIN_NAMESPACE
 
 
-
 TEST(Assert, TrueConditionsAreNoops)
 {
     int x = 1;

@@ -51,7 +51,10 @@ public:
     constexpr SourceLocation(SourceLocation &&other) noexcept = default;
     SourceLocation &operator=(const SourceLocation &other) noexcept = default;
 
-    std::string file_line() const noexcept { return std::string(this->file_name()) + ":" + std::to_string(mLineNumber); }
+    std::string file_line() const noexcept
+    {
+        return std::string(this->file_name()) + ":" + std::to_string(mLineNumber);
+    }
     std::string to_string() const { return std::string(mFunctionName) + "@" + this->file_line(); }
     constexpr const char *function_name() const noexcept { return mFunctionName; }
     const char *file_name() const noexcept { return CXXKIT_PATH_NAME(mFilePath); }
@@ -69,4 +72,3 @@ CXXKIT_END_NAMESPACE
 #define CXXKIT_SOURCE_LOCATION_WITH_FUNCTION(function_name)                                                            \
     cxxkit::SourceLocation(function_name, CXXKIT_STRFILE, CXXKIT_LINE)
 #define CXXKIT_SOURCE_LOCATION CXXKIT_SOURCE_LOCATION_WITH_FUNCTION(CXXKIT_STRFUNC)
-

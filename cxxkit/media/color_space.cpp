@@ -29,14 +29,15 @@
 #include <sstream>
 #include <string>
 
-namespace cxxkit {
+CXXKIT_BEGIN_NAMESPACE
 
 namespace
 {
 // Try to convert `enum_value` into the enum class T. `enum_bitmask` is created
 // by the funciton below. Returns true if conversion was successful, false
 // otherwise.
-template <typename T> bool set_from_uint8(uint8_t enum_value, uint64_t enum_bitmask, T *out)
+template <typename T>
+bool set_from_uint8(uint8_t enum_value, uint64_t enum_bitmask, T *out)
 {
     if ((enum_value < 64) && ((enum_bitmask >> enum_value) & 1))
     {
@@ -50,9 +51,13 @@ template <typename T> bool set_from_uint8(uint8_t enum_value, uint64_t enum_bitm
 // purpose not declared as constexpr so that it causes a build problem if enum
 // values of 64 or above are used. The bitmask and the code generating it would
 // have to be extended if the standard is updated to include enum values >= 64.
-int enum_must_be_less_than64() { return -1; }
+int enum_must_be_less_than64()
+{
+    return -1;
+}
 
-template <typename T, size_t N> constexpr int make_mask(const int index, const int length, T (&values)[N])
+template <typename T, size_t N>
+constexpr int make_mask(const int index, const int length, T (&values)[N])
 {
     return length > 1 ? (make_mask(index, 1, values) + make_mask(index + 1, length - 1, values))
                       : (static_cast<uint8_t>(values[index]) < 64 ? (uint64_t{1} << static_cast<uint8_t>(values[index]))
@@ -63,7 +68,11 @@ template <typename T, size_t N> constexpr int make_mask(const int index, const i
 // `values` should be an array listing all possible enum values. The bit is set
 // to one if the corresponding enum exists. Only works for enums with values
 // less than 64.
-template <typename T, size_t N> constexpr uint64_t create_enum_bitmask(T (&values)[N]) { return make_mask(0, N, values); }
+template <typename T, size_t N>
+constexpr uint64_t create_enum_bitmask(T (&values)[N])
+{
+    return make_mask(0, N, values);
+}
 
 bool set_chroma_siting_from_uint8(uint8_t enum_value, ColorSpace::ChromaSiting *chroma_siting)
 {
@@ -103,21 +112,44 @@ ColorSpace::ColorSpace(PrimaryID primaries,
 {
 }
 
-ColorSpace::~ColorSpace() { }
+ColorSpace::~ColorSpace()
+{
+}
 
-ColorSpace::PrimaryID ColorSpace::primaries() const { return mPrimaries; }
+ColorSpace::PrimaryID ColorSpace::primaries() const
+{
+    return mPrimaries;
+}
 
-ColorSpace::TransferID ColorSpace::transfer() const { return mTransfer; }
+ColorSpace::TransferID ColorSpace::transfer() const
+{
+    return mTransfer;
+}
 
-ColorSpace::MatrixID ColorSpace::matrix() const { return mMatrix; }
+ColorSpace::MatrixID ColorSpace::matrix() const
+{
+    return mMatrix;
+}
 
-ColorSpace::RangeID ColorSpace::range() const { return mRange; }
+ColorSpace::RangeID ColorSpace::range() const
+{
+    return mRange;
+}
 
-ColorSpace::ChromaSiting ColorSpace::chroma_siting_horizontal() const { return mChromaSitingHorizontal; }
+ColorSpace::ChromaSiting ColorSpace::chroma_siting_horizontal() const
+{
+    return mChromaSitingHorizontal;
+}
 
-ColorSpace::ChromaSiting ColorSpace::chroma_siting_vertical() const { return mChromaSitingVertical; }
+ColorSpace::ChromaSiting ColorSpace::chroma_siting_vertical() const
+{
+    return mChromaSitingVertical;
+}
 
-const HdrMetadata *ColorSpace::hdr_metadata() const { return mHdrMetadata ? &*mHdrMetadata : nullptr; }
+const HdrMetadata *ColorSpace::hdr_metadata() const
+{
+    return mHdrMetadata ? &*mHdrMetadata : nullptr;
+}
 
 #define PRINT_ENUM_CASE(TYPE, NAME)                                                                                    \
     case TYPE::NAME: ss << #NAME; break;
@@ -283,4 +315,4 @@ void ColorSpace::set_hdr_metadata(const HdrMetadata *hdr_metadata)
 {
     mHdrMetadata = hdr_metadata ? utils::make_optional(*hdr_metadata) : utils::nullopt;
 }
-}  // namespace cxxkit
+CXXKIT_END_NAMESPACE

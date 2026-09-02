@@ -49,7 +49,7 @@
                       " failed!"
 
 #define CXXKIT_CHECK_OP(name, op, val1, val2)                                                                          \
-    if (!cxxkit::safe_##name((val1), (val2)))                                                                           \
+    if (!cxxkit::safe_##name((val1), (val2)))                                                                          \
     CXXKIT_FATAL(cxxkit::StringView("check "                                                                           \
                                     " #val1 "                                                                          \
                                     " #op "                                                                            \

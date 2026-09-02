@@ -136,7 +136,6 @@ private:
 class CXXKIT_TEXT_API BitBufferWriter
 {
 public:
-
     // Constructs a bit buffer for the writable buffer of `bytes`.
     BitBufferWriter(uint8_t *bytes, size_t byte_count);
 

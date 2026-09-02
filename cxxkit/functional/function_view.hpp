@@ -173,4 +173,3 @@ private:
  */
 
 CXXKIT_END_NAMESPACE
-

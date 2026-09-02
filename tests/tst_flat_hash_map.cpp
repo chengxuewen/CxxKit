@@ -29,9 +29,11 @@
 #include <string>
 #include <utility>
 
-namespace {
+namespace
+{
 
-TEST(FlatHashMap, InsertAndFind) {
+TEST(FlatHashMap, InsertAndFind)
+{
     cxxkit::flat_hash_map<std::string, int> map;
     map["hello"] = 1;
     map["world"] = 2;
@@ -40,7 +42,8 @@ TEST(FlatHashMap, InsertAndFind) {
     EXPECT_EQ(map["world"], 2);
 }
 
-TEST(FlatHashMap, InsertDuplicate) {
+TEST(FlatHashMap, InsertDuplicate)
+{
     cxxkit::flat_hash_map<int, int> map;
     auto res1 = map.insert({1, 10});
     EXPECT_TRUE(res1.second);
@@ -49,7 +52,8 @@ TEST(FlatHashMap, InsertDuplicate) {
     EXPECT_EQ(res2.first->second, 10);
 }
 
-TEST(FlatHashMap, Erase) {
+TEST(FlatHashMap, Erase)
+{
     cxxkit::flat_hash_map<int, int> map;
     map[1] = 10;
     map[2] = 20;
@@ -58,52 +62,61 @@ TEST(FlatHashMap, Erase) {
     EXPECT_EQ(map.find(1), map.end());
 }
 
-TEST(FlatHashMap, Contains) {
+TEST(FlatHashMap, Contains)
+{
     cxxkit::flat_hash_map<int, int> map;
     map[1] = 10;
     EXPECT_TRUE(map.contains(1));
     EXPECT_FALSE(map.contains(2));
 }
 
-TEST(FlatHashMap, At) {
+TEST(FlatHashMap, At)
+{
     cxxkit::flat_hash_map<int, int> map;
     map[1] = 10;
     EXPECT_EQ(map.at(1), 10);
     EXPECT_THROW(map.at(2), std::out_of_range);
 }
 
-TEST(FlatHashMap, AtConst) {
+TEST(FlatHashMap, AtConst)
+{
     cxxkit::flat_hash_map<int, int> map;
     map[1] = 10;
-    const auto& cmap = map;
+    const auto &cmap = map;
     EXPECT_EQ(cmap.at(1), 10);
     EXPECT_THROW(cmap.at(2), std::out_of_range);
 }
 
-TEST(FlatHashMap, Rehash) {
+TEST(FlatHashMap, Rehash)
+{
     cxxkit::flat_hash_map<int, int> map;
-    for (int i = 0; i < 1000; ++i) {
+    for (int i = 0; i < 1000; ++i)
+    {
         map[i] = i * 2;
     }
     EXPECT_EQ(map.size(), 1000u);
-    for (int i = 0; i < 1000; ++i) {
+    for (int i = 0; i < 1000; ++i)
+    {
         EXPECT_EQ(map[i], i * 2);
     }
 }
 
-TEST(FlatHashMap, Iterator) {
+TEST(FlatHashMap, Iterator)
+{
     cxxkit::flat_hash_map<int, int> map;
     map[1] = 10;
     map[2] = 20;
     map[3] = 30;
     int sum = 0;
-    for (const auto& kv : map) {
+    for (const auto &kv : map)
+    {
         sum += kv.second;
     }
     EXPECT_EQ(sum, 60);
 }
 
-TEST(FlatHashMap, Empty) {
+TEST(FlatHashMap, Empty)
+{
     cxxkit::flat_hash_map<int, int> map;
     EXPECT_TRUE(map.empty());
     EXPECT_EQ(map.size(), 0u);
@@ -111,7 +124,8 @@ TEST(FlatHashMap, Empty) {
     EXPECT_FALSE(map.empty());
 }
 
-TEST(FlatHashMap, MoveConstruct) {
+TEST(FlatHashMap, MoveConstruct)
+{
     cxxkit::flat_hash_map<int, int> map;
     map[1] = 10;
     map[2] = 20;
@@ -120,7 +134,8 @@ TEST(FlatHashMap, MoveConstruct) {
     EXPECT_EQ(map2[1], 10);
 }
 
-TEST(FlatHashMap, CopyConstruct) {
+TEST(FlatHashMap, CopyConstruct)
+{
     cxxkit::flat_hash_map<int, int> map;
     map[1] = 10;
     map[2] = 20;
@@ -131,7 +146,8 @@ TEST(FlatHashMap, CopyConstruct) {
     EXPECT_EQ(map.size(), 2u);
 }
 
-TEST(FlatHashMap, clear) {
+TEST(FlatHashMap, clear)
+{
     cxxkit::flat_hash_map<int, int> map;
     map[1] = 10;
     map[2] = 20;
@@ -140,13 +156,15 @@ TEST(FlatHashMap, clear) {
     EXPECT_EQ(map.size(), 0u);
 }
 
-TEST(FlatHashMap, Reserve) {
+TEST(FlatHashMap, Reserve)
+{
     cxxkit::flat_hash_map<int, int> map;
     map.reserve(100);
     EXPECT_GE(map.capacity(), 100u);
 }
 
-TEST(FlatHashMap, Emplace) {
+TEST(FlatHashMap, Emplace)
+{
     cxxkit::flat_hash_map<int, std::string> map;
     map.emplace(1, "hello");
     map.emplace(2, "world");
@@ -154,14 +172,16 @@ TEST(FlatHashMap, Emplace) {
     EXPECT_EQ(map[2], "world");
 }
 
-TEST(FlatHashMap, EraseNonexistent) {
+TEST(FlatHashMap, EraseNonexistent)
+{
     cxxkit::flat_hash_map<int, int> map;
     map[1] = 10;
     EXPECT_EQ(map.erase(99), 0u);
     EXPECT_EQ(map.size(), 1u);
 }
 
-TEST(FlatHashMap, InsertPair) {
+TEST(FlatHashMap, InsertPair)
+{
     cxxkit::flat_hash_map<int, int> map;
     map.insert(std::make_pair(1, 10));
     map.insert(std::make_pair(2, 20));
@@ -169,4 +189,4 @@ TEST(FlatHashMap, InsertPair) {
     EXPECT_EQ(map[1], 10);
 }
 
-}  // namespace
+} // namespace

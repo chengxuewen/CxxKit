@@ -114,17 +114,20 @@ public:
     static LocalTime local_time_from_steady_time_m_secs(int64_t msecs = -1)
     {
         msecs = msecs > 0 ? msecs : steady_time_m_secs();
-        return local_time_from_system_time_m_secs(system_time_from_steady_n_secs(msecs * kNSecsPerMSec) / kNSecsPerMSec);
+        return local_time_from_system_time_m_secs(system_time_from_steady_n_secs(msecs * kNSecsPerMSec) /
+                                                  kNSecsPerMSec);
     }
     static CXXKIT_FORCE_INLINE std::string local_time_string_from_steady_time_secs(int64_t secs = -1)
     {
         secs = secs > 0 ? secs : steady_time_secs();
-        return local_time_string_from_system_time_secs(system_time_from_steady_n_secs(secs * kNSecsPerSec) / kNSecsPerSec);
+        return local_time_string_from_system_time_secs(system_time_from_steady_n_secs(secs * kNSecsPerSec) /
+                                                       kNSecsPerSec);
     }
     static CXXKIT_FORCE_INLINE std::string local_time_string_from_steady_time_m_secs(int64_t msecs = -1)
     {
         msecs = msecs > 0 ? msecs : steady_time_m_secs();
-        return local_time_string_from_system_time_m_secs(system_time_from_steady_n_secs(msecs * kNSecsPerMSec) / kNSecsPerMSec);
+        return local_time_string_from_system_time_m_secs(system_time_from_steady_n_secs(msecs * kNSecsPerMSec) /
+                                                         kNSecsPerMSec);
     }
     static CXXKIT_FORCE_INLINE std::string local_time_string() { return local_time_string_from_steady_time_m_secs(); }
 
@@ -173,4 +176,3 @@ public:
     static int64_t tm_to_seconds(const tm &tm);
 };
 CXXKIT_END_NAMESPACE
-

@@ -119,8 +119,8 @@ TEST(RepeatingTaskTest, CancelDelayedTaskBeforeItRuns)
     EXPECT_CALL(mock, Delete).WillOnce(Invoke([&done] { done.release(); }));
     auto taskQueueThread = TaskQueueThread::make_shared();
     auto handle = RepeatingTaskHandle::delayed_start(taskQueueThread.get(),
-                                                    TimeDelta::millis(100),
-                                                    MoveOnlyClosure(&mock));
+                                                     TimeDelta::millis(100),
+                                                     MoveOnlyClosure(&mock));
     {
         auto handleMove = utils::make_move_wrapper(std::move(handle));
         taskQueueThread->post_task([handleMove]() mutable { handleMove.move().stop(); });
@@ -419,11 +419,11 @@ TEST(SafetyFlagTest, PendingTaskNotAliveInitialized)
         });
     blocker.acquire(); // wait flag->set_alive();
     tq->post_task(TaskQueueThread::create_safe_task(flag,
-                                                 [&task_2_ran, &blocker]()
-                                                 {
-                                                     task_2_ran = true;
-                                                     blocker.release(); // notify EXPECT_TRUE(task_2_ran);
-                                                 }));
+                                                    [&task_2_ran, &blocker]()
+                                                    {
+                                                        task_2_ran = true;
+                                                        blocker.release(); // notify EXPECT_TRUE(task_2_ran);
+                                                    }));
     blocker.acquire(); // wait task_2_ran = true; task finish
     EXPECT_FALSE(task_1_ran);
     EXPECT_TRUE(task_2_ran);

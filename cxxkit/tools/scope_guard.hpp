@@ -135,4 +135,3 @@ template <typename FC, typename F>
 } // namespace utils
 
 CXXKIT_END_NAMESPACE
-

@@ -74,4 +74,3 @@ struct AlignedFreeDeleter
     inline void operator()(void *ptr) const { utils::aligned_free(ptr); }
 };
 CXXKIT_END_NAMESPACE
-

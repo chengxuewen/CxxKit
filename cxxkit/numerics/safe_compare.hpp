@@ -169,9 +169,9 @@ CXXKIT_SAFECMP_MAKE_OP(GeOp, >=)
         return safe_cmp_impl::cmp<safe_cmp_impl::OpName>(+a, +b);                                                      \
     }                                                                                                                  \
     template <typename T1, typename T2>                                                                                \
-    constexpr                                                                                                          \
-        typename std::enable_if<!IsIntLike<T1>::value || !IsIntLike<T2>::value, bool>::type safe_##fn(const T1 &a,     \
-                                                                                                       const T2 &b)    \
+    constexpr typename std::enable_if<!IsIntLike<T1>::value || !IsIntLike<T2>::value, bool>::type safe_##fn(           \
+        const T1 &a,                                                                                                   \
+        const T2 &b)                                                                                                   \
     {                                                                                                                  \
         return safe_cmp_impl::OpName::Op(a, b);                                                                        \
     }
@@ -183,4 +183,3 @@ CXXKIT_SAFECMP_MAKE_FUN(gt, GtOp)
 CXXKIT_SAFECMP_MAKE_FUN(ge, GeOp)
 #undef CXXKIT_SAFECMP_MAKE_FUN
 CXXKIT_END_NAMESPACE
-

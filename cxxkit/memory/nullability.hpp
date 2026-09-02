@@ -175,4 +175,3 @@ using Nullable = detail::NullableImpl<T>;
 template <typename T>
 using NullabilityUnknown = detail::NullabilityUnknownImpl<T>;
 CXXKIT_END_NAMESPACE
-

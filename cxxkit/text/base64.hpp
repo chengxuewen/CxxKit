@@ -79,20 +79,20 @@ public:
 
     static void encode_from_array(const void *data, size_t len, std::string *result);
     static bool decode_from_array(const char *data,
-                                size_t len,
-                                DecodeFlags flags,
-                                std::string *result,
-                                size_t *data_used);
+                                  size_t len,
+                                  DecodeFlags flags,
+                                  std::string *result,
+                                  size_t *data_used);
     static bool decode_from_array(const char *data,
-                                size_t len,
-                                DecodeFlags flags,
-                                std::vector<char> *result,
-                                size_t *data_used);
+                                  size_t len,
+                                  DecodeFlags flags,
+                                  std::vector<char> *result,
+                                  size_t *data_used);
     static bool decode_from_array(const char *data,
-                                size_t len,
-                                DecodeFlags flags,
-                                std::vector<uint8_t> *result,
-                                size_t *data_used);
+                                  size_t len,
+                                  DecodeFlags flags,
+                                  std::vector<uint8_t> *result,
+                                  size_t *data_used);
 
     // Convenience Methods
     static inline std::string encode(StringView data)
@@ -121,14 +121,17 @@ private:
     static const unsigned char DecodeTable[];
 
     static size_t get_next_quantum(DecodeFlags parse_flags,
-                                 bool illegal_pads,
-                                 const char *data,
-                                 size_t len,
-                                 size_t *dpos,
-                                 unsigned char qbuf[4],
-                                 bool *padded);
+                                   bool illegal_pads,
+                                   const char *data,
+                                   size_t len,
+                                   size_t *dpos,
+                                   unsigned char qbuf[4],
+                                   bool *padded);
     template <typename T>
-    static bool decode_from_array_template(const char *data, size_t len, DecodeFlags flags, T *result, size_t *data_used);
+    static bool decode_from_array_template(const char *data,
+                                           size_t len,
+                                           DecodeFlags flags,
+                                           T *result,
+                                           size_t *data_used);
 };
 CXXKIT_END_NAMESPACE
-

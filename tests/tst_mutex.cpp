@@ -51,7 +51,8 @@ TEST(Mutex, ConcurrentIncrement)
 {
     cxxkit::Mutex mu;
     int counter = 0;
-    auto worker = [&]() {
+    auto worker = [&]()
+    {
         for (int i = 0; i < 10000; ++i)
         {
             cxxkit::MutexLock lock(mu);
@@ -94,7 +95,8 @@ TEST(RWLock, ConcurrentReadWrite)
     int shared_value = 0;
     std::atomic<int> read_sum{0};
 
-    auto writer = [&]() {
+    auto writer = [&]()
+    {
         for (int i = 0; i < 100; ++i)
         {
             cxxkit::WriteLock wlock(rw);
@@ -102,7 +104,8 @@ TEST(RWLock, ConcurrentReadWrite)
         }
     };
 
-    auto reader = [&]() {
+    auto reader = [&]()
+    {
         for (int i = 0; i < 100; ++i)
         {
             cxxkit::ReadLock rlock(rw);

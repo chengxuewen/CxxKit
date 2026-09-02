@@ -58,4 +58,3 @@ constexpr std::size_t size(const T (&)[N]) noexcept
 } // namespace utils
 
 CXXKIT_END_NAMESPACE
-

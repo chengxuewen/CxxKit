@@ -323,7 +323,8 @@ TEST(PlatformThreadTest, SetPriority)
     EXPECT_EQ(thread.priority(), PlatformThread::Priority::kInherit);
     std::unique_lock<std::mutex> lock(thread.mutex);
     thread.start();
-    EXPECT_FALSE(thread.set_priority(PlatformThread::Priority::kInherit).is_ok()); //"Argument cannot be InheritPriority";
+    EXPECT_FALSE(
+        thread.set_priority(PlatformThread::Priority::kInherit).is_ok()); //"Argument cannot be InheritPriority";
     // change the priority of a running thread
     EXPECT_TRUE(thread.set_priority(PlatformThread::Priority::kIdle).is_ok());
     EXPECT_EQ(thread.priority(), PlatformThread::Priority::kIdle);
@@ -527,7 +528,7 @@ TEST(PlatformThreadTest, Waiting)
 TEST(PlatformThreadTest, create)
 {
     {
-        const auto &function = []() {};
+        const auto &function = []() { };
         auto thread = PlatformThread::create(function);
         EXPECT_TRUE(thread);
         EXPECT_FALSE(thread->is_running());
@@ -771,7 +772,7 @@ TEST(PlatformThreadTest, create)
             ThrowWhenCopying &operator=(const ThrowWhenCopying &) = default;
         };
 
-        const auto &function = [](const ThrowWhenCopying &) {};
+        const auto &function = [](const ThrowWhenCopying &) { };
         PlatformThread::UniquePtr thread;
         ThrowWhenCopying t;
         EXPECT_THROW(thread = PlatformThread::create(function, t), ThreadException);

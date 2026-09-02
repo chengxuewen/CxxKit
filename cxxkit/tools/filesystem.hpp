@@ -47,4 +47,3 @@ namespace filesystem = ghc::filesystem;
 #endif
 
 CXXKIT_END_NAMESPACE
-

@@ -38,7 +38,10 @@ namespace
 class FakeClock final : public ClockInterface
 {
 public:
-    explicit FakeClock(int64_t nanos) : mNanos(nanos) {}
+    explicit FakeClock(int64_t nanos)
+        : mNanos(nanos)
+    {
+    }
     int64_t time_nanos() const override { return mNanos; }
 
 private:
@@ -150,8 +153,8 @@ TEST(DateTime, LocalTimeString)
 TEST(DateTime, tm_to_seconds)
 {
     std::tm tm = {};
-    tm.tm_year = 70;  // 1970
-    tm.tm_mon = 0;    // January
+    tm.tm_year = 70; // 1970
+    tm.tm_mon = 0;   // January
     tm.tm_mday = 1;
     EXPECT_EQ(DateTime::tm_to_seconds(tm), 0);
 

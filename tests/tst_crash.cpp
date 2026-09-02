@@ -41,7 +41,8 @@
 #include <unistd.h>
 #include <vector>
 
-namespace {
+namespace
+{
 
 std::string makeTempDir()
 {
@@ -49,7 +50,8 @@ std::string makeTempDir()
     std::vector<char> buf(tmpl.begin(), tmpl.end());
     buf.push_back('\0');
     char *created = ::mkdtemp(&buf[0]);
-    if (!created) {
+    if (!created)
+    {
         return "";
     }
     return std::string(created);
@@ -65,18 +67,23 @@ bool fileExists(const std::string &path)
 int runFixture(const std::string &dumpDir, const std::string &fixturePath, bool stacktrace)
 {
     const pid_t pid = ::fork();
-    if (pid == 0) {
+    if (pid == 0)
+    {
 #if defined(TEST_ELFUTILS_LIB_DIR)
         ::setenv("LD_LIBRARY_PATH", TEST_ELFUTILS_LIB_DIR, 1); // backward dlopen("libdw.so.1")
 #endif
-        if (stacktrace) {
+        if (stacktrace)
+        {
             ::execl(fixturePath.c_str(), "crash_fixture", dumpDir.c_str(), "--stacktrace", nullptr);
-        } else {
+        }
+        else
+        {
             ::execl(fixturePath.c_str(), "crash_fixture", dumpDir.c_str(), nullptr);
         }
         _exit(127); // execl failed
     }
-    if (pid < 0) {
+    if (pid < 0)
+    {
         return -1;
     }
     int status = 0;
@@ -88,13 +95,17 @@ int runFixture(const std::string &dumpDir, const std::string &fixturePath, bool 
 std::string waitForDump(const std::string &dir, int timeoutSeconds)
 {
     const std::time_t deadline = std::time(nullptr) + timeoutSeconds;
-    while (std::time(nullptr) < deadline) {
+    while (std::time(nullptr) < deadline)
+    {
         DIR *d = ::opendir(dir.c_str());
-        if (d) {
+        if (d)
+        {
             struct dirent *e = nullptr;
-            while ((e = ::readdir(d)) != nullptr) {
+            while ((e = ::readdir(d)) != nullptr)
+            {
                 const size_t len = std::strlen(e->d_name);
-                if (len > 4 && std::strcmp(e->d_name + len - 4, ".dmp") == 0) {
+                if (len > 4 && std::strcmp(e->d_name + len - 4, ".dmp") == 0)
+                {
                     std::string found(e->d_name);
                     ::closedir(d);
                     return found;
@@ -160,7 +171,8 @@ TEST(CrashHandler, CrashProducesMinidump)
 
     const std::string dumpFile = waitForDump(dir, 10);
     EXPECT_FALSE(dumpFile.empty()) << "no .dmp appeared in " << dir;
-    if (!dumpFile.empty()) {
+    if (!dumpFile.empty())
+    {
         const std::string full = dir + "/" + dumpFile;
         EXPECT_TRUE(fileExists(full));
         struct stat st;
@@ -186,7 +198,8 @@ TEST(CrashHandler, StackTraceOptIn)
     ASSERT_EQ(::pipe(pipefd), 0);
     const pid_t pid = ::fork();
     ASSERT_GE(pid, 0);
-    if (pid == 0) {
+    if (pid == 0)
+    {
 #if defined(TEST_ELFUTILS_LIB_DIR)
         ::setenv("LD_LIBRARY_PATH", TEST_ELFUTILS_LIB_DIR, 1); // backward dlopen("libdw.so.1")
 #endif
@@ -200,7 +213,8 @@ TEST(CrashHandler, StackTraceOptIn)
     std::string captured;
     char buf[512];
     ssize_t n = 0;
-    while ((n = ::read(pipefd[0], buf, sizeof(buf))) > 0) {
+    while ((n = ::read(pipefd[0], buf, sizeof(buf))) > 0)
+    {
         captured.append(buf, static_cast<size_t>(n));
     }
     ::close(pipefd[0]);

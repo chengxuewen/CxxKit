@@ -469,7 +469,9 @@ void ThreadPoolPrivate::reset()
                                  utils::fmt::ptr(thread.get()));
             thread->wake_all();
             thread->exit_wait();
-            CXXKIT_LOGGING_TRACE(CXXKIT_THREAD_POOL_LOGGER(), "thread {} exit_wait done", utils::fmt::ptr(thread.get()));
+            CXXKIT_LOGGING_TRACE(CXXKIT_THREAD_POOL_LOGGER(),
+                                 "thread {} exit_wait done",
+                                 utils::fmt::ptr(thread.get()));
         }
     }
     mMutex.lock();

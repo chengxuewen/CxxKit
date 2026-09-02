@@ -38,7 +38,7 @@
 #define CXXKIT_DEFINE_ERROR_DOMAIN(Type, name, Description)                                                            \
     const cxxkit::Error::Domain &name()                                                                                \
     {                                                                                                                  \
-        static const Type domain(cxxkit::Error::Domain::Registry::register_domain(#Type, #name, Description));          \
+        static const Type domain(cxxkit::Error::Domain::Registry::register_domain(#Type, #name, Description));         \
         return domain;                                                                                                 \
     }
 

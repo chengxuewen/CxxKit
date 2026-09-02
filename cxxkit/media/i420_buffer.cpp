@@ -36,16 +36,17 @@
 // Aligning pointer to 64 bytes for improved performance, e.g. use SIMD.
 static const int kBufferAlignment = 64;
 
-namespace cxxkit {
+CXXKIT_BEGIN_NAMESPACE
 
-namespace {
+namespace
+{
 
 int I420DataSize(int height, int stride_y, int stride_u, int stride_v)
 {
     return stride_y * height + (stride_u + stride_v) * ((height + 1) / 2);
 }
 
-}  // namespace
+} // namespace
 
 I420Buffer::I420Buffer(int width, int height)
     : I420Buffer(width, height, width, (width + 1) / 2, (width + 1) / 2)
@@ -58,7 +59,7 @@ I420Buffer::I420Buffer(int width, int height, int stride_y, int stride_u, int st
     , mStrideY(stride_y)
     , mStrideU(stride_u)
     , mStrideV(stride_v)
-    , mData(static_cast<uint8_t*>(
+    , mData(static_cast<uint8_t *>(
           utils::aligned_malloc(I420DataSize(height, stride_y, stride_u, stride_v), kBufferAlignment)))
 {
     CXXKIT_DCHECK_GT(width, 0);
@@ -68,7 +69,9 @@ I420Buffer::I420Buffer(int width, int height, int stride_y, int stride_u, int st
     CXXKIT_DCHECK_GE(stride_v, (width + 1) / 2);
 }
 
-I420Buffer::~I420Buffer() {}
+I420Buffer::~I420Buffer()
+{
+}
 
 // static
 SharedRefPtr<I420Buffer> I420Buffer::create(int width, int height)
@@ -83,7 +86,7 @@ SharedRefPtr<I420Buffer> I420Buffer::create(int width, int height, int stride_y,
 }
 
 // static
-SharedRefPtr<I420Buffer> I420Buffer::copy(const I420BufferInterface& source)
+SharedRefPtr<I420Buffer> I420Buffer::copy(const I420BufferInterface &source)
 {
     return copy(source.width(),
                 source.height(),
@@ -98,11 +101,11 @@ SharedRefPtr<I420Buffer> I420Buffer::copy(const I420BufferInterface& source)
 // static
 SharedRefPtr<I420Buffer> I420Buffer::copy(int width,
                                           int height,
-                                          const uint8_t* data_y,
+                                          const uint8_t *data_y,
                                           int stride_y,
-                                          const uint8_t* data_u,
+                                          const uint8_t *data_u,
                                           int stride_u,
-                                          const uint8_t* data_v,
+                                          const uint8_t *data_v,
                                           int stride_v)
 {
     // Note: May use different strides than the input data.
@@ -126,7 +129,7 @@ SharedRefPtr<I420Buffer> I420Buffer::copy(int width,
 }
 
 // static
-SharedRefPtr<I420Buffer> I420Buffer::rotate(const I420BufferInterface& src, VideoRotation rotation)
+SharedRefPtr<I420Buffer> I420Buffer::rotate(const I420BufferInterface &src, VideoRotation rotation)
 {
     CXXKIT_CHECK(src.get_data_y());
     CXXKIT_CHECK(src.get_data_u());
@@ -176,17 +179,17 @@ int I420Buffer::height() const
     return mHeight;
 }
 
-const uint8_t* I420Buffer::get_data_y() const
+const uint8_t *I420Buffer::get_data_y() const
 {
     return mData.get();
 }
 
-const uint8_t* I420Buffer::get_data_u() const
+const uint8_t *I420Buffer::get_data_u() const
 {
     return mData.get() + mStrideY * mHeight;
 }
 
-const uint8_t* I420Buffer::get_data_v() const
+const uint8_t *I420Buffer::get_data_v() const
 {
     return mData.get() + mStrideY * mHeight + mStrideU * ((mHeight + 1) / 2);
 }
@@ -206,19 +209,19 @@ int I420Buffer::stride_v() const
     return mStrideV;
 }
 
-uint8_t* I420Buffer::mutable_data_y()
+uint8_t *I420Buffer::mutable_data_y()
 {
-    return const_cast<uint8_t*>(get_data_y());
+    return const_cast<uint8_t *>(get_data_y());
 }
 
-uint8_t* I420Buffer::mutable_data_u()
+uint8_t *I420Buffer::mutable_data_u()
 {
-    return const_cast<uint8_t*>(get_data_u());
+    return const_cast<uint8_t *>(get_data_u());
 }
 
-uint8_t* I420Buffer::mutable_data_v()
+uint8_t *I420Buffer::mutable_data_v()
 {
-    return const_cast<uint8_t*>(get_data_v());
+    return const_cast<uint8_t *>(get_data_v());
 }
 
 void I420Buffer::set_black()
@@ -238,11 +241,11 @@ void I420Buffer::set_black()
                                   128) == 0);
 }
 
-void I420Buffer::crop_and_scale_from(const I420BufferInterface& src,
-                                  int offset_x,
-                                  int offset_y,
-                                  int crop_width,
-                                  int crop_height)
+void I420Buffer::crop_and_scale_from(const I420BufferInterface &src,
+                                     int offset_x,
+                                     int offset_y,
+                                     int crop_width,
+                                     int crop_height)
 {
     CXXKIT_CHECK_LE(crop_width, src.width());
     CXXKIT_CHECK_LE(crop_height, src.height());
@@ -257,9 +260,9 @@ void I420Buffer::crop_and_scale_from(const I420BufferInterface& src,
     offset_x = uv_offset_x * 2;
     offset_y = uv_offset_y * 2;
 
-    const uint8_t* y_plane = src.get_data_y() + src.stride_y() * offset_y + offset_x;
-    const uint8_t* u_plane = src.get_data_u() + src.stride_u() * uv_offset_y + uv_offset_x;
-    const uint8_t* v_plane = src.get_data_v() + src.stride_v() * uv_offset_y + uv_offset_x;
+    const uint8_t *y_plane = src.get_data_y() + src.stride_y() * offset_y + offset_x;
+    const uint8_t *u_plane = src.get_data_u() + src.stride_u() * uv_offset_y + uv_offset_x;
+    const uint8_t *v_plane = src.get_data_v() + src.stride_v() * uv_offset_y + uv_offset_x;
     int res = libyuv::I420Scale(y_plane,
                                 src.stride_y(),
                                 u_plane,
@@ -281,30 +284,34 @@ void I420Buffer::crop_and_scale_from(const I420BufferInterface& src,
     CXXKIT_DCHECK_EQ(res, 0);
 }
 
-void I420Buffer::crop_and_scale_from(const I420BufferInterface& src)
+void I420Buffer::crop_and_scale_from(const I420BufferInterface &src)
 {
     const int width = this->width();
     const int height = this->height();
     const int crop_width = height > 0 ? std::min(src.width(), width * src.height() / height) : src.width();
     const int crop_height = width > 0 ? std::min(src.height(), height * src.width() / width) : src.height();
-    this->crop_and_scale_from(src, (src.width() - crop_width) / 2, (src.height() - crop_height) / 2, crop_width, crop_height);
+    this->crop_and_scale_from(src,
+                              (src.width() - crop_width) / 2,
+                              (src.height() - crop_height) / 2,
+                              crop_width,
+                              crop_height);
 }
 
-void I420Buffer::scale_from(const I420BufferInterface& src)
+void I420Buffer::scale_from(const I420BufferInterface &src)
 {
     crop_and_scale_from(src, 0, 0, src.width(), src.height());
 }
 
 SharedRefPtr<VideoFrameBuffer> I420Buffer::crop_and_scale(int offset_x,
-                                                        int offset_y,
-                                                        int crop_width,
-                                                        int crop_height,
-                                                        int scaled_width,
-                                                        int scaled_height)
+                                                          int offset_y,
+                                                          int crop_width,
+                                                          int crop_height,
+                                                          int scaled_width,
+                                                          int scaled_height)
 {
     SharedRefPtr<I420Buffer> result = I420Buffer::create(scaled_width, scaled_height);
     result->crop_and_scale_from(*this, offset_x, offset_y, crop_width, crop_height);
     return result;
 }
 
-}  // namespace cxxkit
+CXXKIT_END_NAMESPACE

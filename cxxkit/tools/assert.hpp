@@ -109,4 +109,3 @@ static inline void cxxkit_noop(void)
 #    define CXXKIT_CXX17_CONSTEXPR_ASSERT(Condition)            CXXKIT_ASSERT(Condition)
 #    define CXXKIT_CXX17_CONSTEXPR_ASSERT_X(Condition, Message) CXXKIT_ASSERT_X(Condition, CXXKIT_STRFILELINE, Message)
 #endif
-

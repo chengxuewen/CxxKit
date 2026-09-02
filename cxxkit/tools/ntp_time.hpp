@@ -160,4 +160,3 @@ inline int64_t Q32x32ToInt64Us(int64_t q32x32)
 } // namespace utils
 
 CXXKIT_END_NAMESPACE
-

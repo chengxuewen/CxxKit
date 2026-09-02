@@ -192,9 +192,10 @@ std::map<int, int> samples(StringView name);
                                       cxxkit::metrics::histogram_factory_get_counts(name, min, max, bucket_count))
 
 #    define CXXKIT_HISTOGRAM_COUNTS_LINEAR(name, sample, min, max, bucket_count)                                       \
-        CXXKIT_HISTOGRAM_COMMON_BLOCK(name,                                                                            \
-                                      sample,                                                                          \
-                                      cxxkit::metrics::histogram_factory_get_counts_linear(name, min, max, bucket_count))
+        CXXKIT_HISTOGRAM_COMMON_BLOCK(                                                                                 \
+            name,                                                                                                      \
+            sample,                                                                                                    \
+            cxxkit::metrics::histogram_factory_get_counts_linear(name, min, max, bucket_count))
 
 // Slow metrics: pointer to metric is acquired at each call and is not cached.
 #    define CXXKIT_HISTOGRAM_COUNTS_SPARSE_100(name, sample)  CXXKIT_HISTOGRAM_COUNTS_SPARSE(name, sample, 1, 100, 50)
@@ -206,9 +207,10 @@ std::map<int, int> samples(StringView name);
 #    define CXXKIT_HISTOGRAM_COUNTS_SPARSE_100000(name, sample)                                                        \
         CXXKIT_HISTOGRAM_COUNTS_SPARSE(name, sample, 1, 100000, 50)
 #    define CXXKIT_HISTOGRAM_COUNTS_SPARSE(name, sample, min, max, bucket_count)                                       \
-        CXXKIT_HISTOGRAM_COMMON_BLOCK_SLOW(name,                                                                       \
-                                           sample,                                                                     \
-                                           cxxkit::metrics::histogram_factory_get_counts(name, min, max, bucket_count))
+        CXXKIT_HISTOGRAM_COMMON_BLOCK_SLOW(                                                                            \
+            name,                                                                                                      \
+            sample,                                                                                                    \
+            cxxkit::metrics::histogram_factory_get_counts(name, min, max, bucket_count))
 
 // Histogram for percentage (evenly spaced buckets).
 #    define CXXKIT_HISTOGRAM_PERCENTAGE_SPARSE(name, sample) CXXKIT_HISTOGRAM_ENUMERATION_SPARSE(name, sample, 101)
@@ -253,7 +255,7 @@ std::map<int, int> samples(StringView name);
             }                                                                                                          \
             if (histogram_pointer)                                                                                     \
             {                                                                                                          \
-                cxxkit::metrics::histogram_add(histogram_pointer, sample);                                              \
+                cxxkit::metrics::histogram_add(histogram_pointer, sample);                                             \
             }                                                                                                          \
         } while (0)
 
@@ -265,7 +267,7 @@ std::map<int, int> samples(StringView name);
             cxxkit::metrics::Histogram *histogram_pointer = factory_get_invocation;                                    \
             if (histogram_pointer)                                                                                     \
             {                                                                                                          \
-                cxxkit::metrics::histogram_add(histogram_pointer, sample);                                              \
+                cxxkit::metrics::histogram_add(histogram_pointer, sample);                                             \
             }                                                                                                          \
         } while (0)
 

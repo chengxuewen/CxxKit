@@ -133,4 +133,3 @@ CXXKIT_END_NAMESPACE
 #define CXXKIT_THROW_STD_UNDERFLOW_ERROR(...)  CXXKIT_THROW(std::underflow_error, __VA_ARGS__)
 #define CXXKIT_THROW_STD_BAD_FUNCTION_CALL()   CXXKIT_THROW_NO_MSG(std::bad_function_call)
 #define CXXKIT_THROW_STD_BAD_ALLOC()           CXXKIT_THROW_NO_MSG(std::bad_alloc)
-

@@ -44,4 +44,3 @@ void explicit_zero_memory(ArrayView<T> a)
 }
 
 CXXKIT_END_NAMESPACE
-

@@ -37,4 +37,3 @@ template <typename T>
 using Invocable = UniqueFunction<T>;
 
 CXXKIT_END_NAMESPACE
-

@@ -34,7 +34,7 @@
 #include <cstddef>
 #include <cstdint>
 
-namespace cxxkit {
+CXXKIT_BEGIN_NAMESPACE
 
 // This is the max PSNR value our algorithms can return.
 const double kPerfectPSNR = 48.0;
@@ -46,7 +46,7 @@ const double kPerfectPSNR = 48.0;
 //                   returned.
 //   - buffer      : Pointer to destination buffer.
 // Return value: length of buffer if OK, < 0 otherwise.
-int extract_buffer(const I420BufferInterface& input_frame, size_t size, uint8_t* buffer);
+int extract_buffer(const I420BufferInterface &input_frame, size_t size, uint8_t *buffer);
 
 // Convert From I420.
 // Input:
@@ -57,25 +57,25 @@ int extract_buffer(const I420BufferInterface& input_frame, size_t size, uint8_t*
 //   - dst_height       : Height of the destination frame.
 //   - dst_frame        : Pointer to a destination frame.
 // Return value: 0 if OK, < 0 otherwise.
-int convert_from_i420(const VideoFrame& src_frame,
-                    VideoType dst_video_type,
-                    int dst_width,
-                    int dst_height,
-                    uint8_t* dst_frame);
+int convert_from_i420(const VideoFrame &src_frame,
+                      VideoType dst_video_type,
+                      int dst_width,
+                      int dst_height,
+                      uint8_t *dst_frame);
 
 // Scales an I420 frame to a new resolution. Uses libyuv::I420Scale with box
 // filtering.
-SharedRefPtr<I420BufferInterface> scale_video_frame_buffer(const I420BufferInterface& source,
-                                                        int dst_width,
-                                                        int dst_height);
+SharedRefPtr<I420BufferInterface> scale_video_frame_buffer(const I420BufferInterface &source,
+                                                           int dst_width,
+                                                           int dst_height);
 
 // Compute PSNR for an I420 frame (all planes). Returns the PSNR in decibel,
 // to a maximum of kPerfectPSNR. If the buffers differ in size, the test frame
 // is first scaled up to the reference resolution.
-double I420Psnr(const I420BufferInterface& ref_buffer, const I420BufferInterface& test_buffer);
+double I420Psnr(const I420BufferInterface &ref_buffer, const I420BufferInterface &test_buffer);
 
 // Compute SSIM for an I420 frame (all planes). If the buffers differ in size,
 // the test frame is first scaled up to the reference resolution.
-double I420Ssim(const I420BufferInterface& ref_buffer, const I420BufferInterface& test_buffer);
+double I420Ssim(const I420BufferInterface &ref_buffer, const I420BufferInterface &test_buffer);
 
-}  // namespace cxxkit
+CXXKIT_END_NAMESPACE

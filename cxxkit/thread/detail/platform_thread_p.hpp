@@ -103,8 +103,8 @@ public:
     static PlatformThread *get(PlatformThreadPrivate *d) { return d->p_func(); }
 
     void set_priority(Priority priority); // impl
-    bool start(Priority priority);       // impl
-    Status terminate();                  // impl
+    bool start(Priority priority);        // impl
+    Status terminate();                   // impl
 
     void on_finished() { mPPtr->on_finished(); }
     void on_started() { mPPtr->on_started(); }

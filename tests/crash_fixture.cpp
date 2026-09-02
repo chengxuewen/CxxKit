@@ -34,19 +34,22 @@
 
 int main(int argc, char **argv)
 {
-    if (argc < 2) {
+    if (argc < 2)
+    {
         std::fprintf(stderr, "usage: crash_fixture <dump_path> [--stacktrace]\n");
         return 2;
     }
     const bool stacktrace = argc > 2 && std::strcmp(argv[2], "--stacktrace") == 0;
 
     cxxkit::CrashHandler &handler = cxxkit::CrashHandler::instance();
-    if (!handler.set_dump_path(argv[1])) {
+    if (!handler.set_dump_path(argv[1]))
+    {
         std::fprintf(stderr, "set_dump_path failed\n");
         return 3;
     }
     handler.set_stack_trace_on_crash(stacktrace);
-    if (!handler.install()) {
+    if (!handler.install())
+    {
         std::fprintf(stderr, "install failed\n");
         return 4;
     }

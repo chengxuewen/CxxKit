@@ -28,8 +28,7 @@
 #include <cxxkit/media/media_global.hpp>
 #include <cstddef>
 
-namespace cxxkit
-{
+CXXKIT_BEGIN_NAMESPACE
 
 enum class CXXKIT_MEDIA_API VideoType : uint8_t
 {
@@ -102,10 +101,10 @@ inline size_t calc_buffer_size(VideoType type, int width, int height)
         case VideoType::kI210:
         case VideoType::kI410:
         {
-            return 0;  // 未支持格式
+            return 0; // 未支持格式
         }
     }
     return 0;
 }
 
-}  // namespace cxxkit
+CXXKIT_END_NAMESPACE

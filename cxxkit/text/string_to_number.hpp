@@ -192,7 +192,7 @@ typename std::enable_if<std::is_integral<T>::value && std::is_unsigned<T>::value
 
 template <typename T>
 typename std::enable_if<std::is_floating_point<T>::value, Optional<T>>::type string_to_number(StringView str,
-                                                                                            int /* base */ = 10)
+                                                                                              int /* base */ = 10)
 {
     static_assert(std::numeric_limits<T>::max() <= std::numeric_limits<long double>::max(),
                   "string_to_number only supports floating-point numbers as large "
@@ -202,4 +202,3 @@ typename std::enable_if<std::is_floating_point<T>::value, Optional<T>>::type str
 } // namespace utils
 
 CXXKIT_END_NAMESPACE
-

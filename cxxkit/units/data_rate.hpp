@@ -164,4 +164,3 @@ CXXKIT_UNITS_API std::string to_string(DataRate value);
 } // namespace utils
 
 CXXKIT_END_NAMESPACE
-

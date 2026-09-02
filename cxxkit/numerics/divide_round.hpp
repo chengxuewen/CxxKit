@@ -141,4 +141,3 @@ inline auto CXXKIT_CXX14_CONSTEXPR divide_round_to_nearest(Dividend dividend, Di
     return quotient;
 }
 CXXKIT_END_NAMESPACE
-

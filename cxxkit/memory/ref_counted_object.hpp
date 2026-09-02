@@ -210,4 +210,3 @@ Nonnull<SharedRefPtr<FinalRefCountedObject<T>>> make_ref_counted(Args &&...args)
 } // namespace utils
 
 CXXKIT_END_NAMESPACE
-

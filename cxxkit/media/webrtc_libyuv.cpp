@@ -31,29 +31,23 @@
 
 #include <libyuv.h>
 
-namespace cxxkit {
+CXXKIT_BEGIN_NAMESPACE
 
-namespace {
+namespace
+{
 
 // Maps a VideoType to the libyuv FourCC used by ConvertFromI420.
 int video_type_to_four_cc(VideoType video_type)
 {
     switch (video_type)
     {
-        case VideoType::kI420:
-            return libyuv::FOURCC_I420;
-        case VideoType::kRGB24:
-            return libyuv::FOURCC_24BG;
-        case VideoType::kARGB:
-            return libyuv::FOURCC_ARGB;
-        case VideoType::kRGB565:
-            return libyuv::FOURCC_RGBP;
-        case VideoType::kUYVY:
-            return libyuv::FOURCC_UYVY;
-        case VideoType::kNV12:
-            return libyuv::FOURCC_NV12;
-        default:
-            break;
+        case VideoType::kI420: return libyuv::FOURCC_I420;
+        case VideoType::kRGB24: return libyuv::FOURCC_24BG;
+        case VideoType::kARGB: return libyuv::FOURCC_ARGB;
+        case VideoType::kRGB565: return libyuv::FOURCC_RGBP;
+        case VideoType::kUYVY: return libyuv::FOURCC_UYVY;
+        case VideoType::kNV12: return libyuv::FOURCC_NV12;
+        default: break;
     }
     CXXKIT_CHECK_NOTREACHED() << "Unsupported destination format " << static_cast<int>(video_type);
     return libyuv::FOURCC_ANY;
@@ -66,24 +60,19 @@ int sample_size(VideoType video_type, int dst_width)
     {
         case VideoType::kI420:
         case VideoType::kNV12:
-        case VideoType::kUYVY:
-            return dst_width;
-        case VideoType::kRGB24:
-            return dst_width * 3;
-        case VideoType::kARGB:
-            return dst_width * 4;
-        case VideoType::kRGB565:
-            return dst_width * 2;
-        default:
-            break;
+        case VideoType::kUYVY: return dst_width;
+        case VideoType::kRGB24: return dst_width * 3;
+        case VideoType::kARGB: return dst_width * 4;
+        case VideoType::kRGB565: return dst_width * 2;
+        default: break;
     }
     CXXKIT_CHECK_NOTREACHED() << "Unsupported destination format " << static_cast<int>(video_type);
     return 0;
 }
 
-}  // namespace
+} // namespace
 
-int extract_buffer(const I420BufferInterface& input_frame, size_t size, uint8_t* buffer)
+int extract_buffer(const I420BufferInterface &input_frame, size_t size, uint8_t *buffer)
 {
     CXXKIT_DCHECK(buffer);
     if (!buffer)
@@ -119,11 +108,11 @@ int extract_buffer(const I420BufferInterface& input_frame, size_t size, uint8_t*
     return static_cast<int>(length);
 }
 
-int convert_from_i420(const VideoFrame& src_frame,
-                    VideoType dst_video_type,
-                    int dst_width,
-                    int dst_height,
-                    uint8_t* dst_frame)
+int convert_from_i420(const VideoFrame &src_frame,
+                      VideoType dst_video_type,
+                      int dst_width,
+                      int dst_height,
+                      uint8_t *dst_frame)
 {
     const SharedRefPtr<I420BufferInterface> i420_buffer = src_frame.video_frame_buffer()->to_i420();
     if (!i420_buffer)
@@ -143,23 +132,22 @@ int convert_from_i420(const VideoFrame& src_frame,
                                    video_type_to_four_cc(dst_video_type));
 }
 
-SharedRefPtr<I420BufferInterface> scale_video_frame_buffer(const I420BufferInterface& source,
-                                                        int dst_width,
-                                                        int dst_height)
+SharedRefPtr<I420BufferInterface> scale_video_frame_buffer(const I420BufferInterface &source,
+                                                           int dst_width,
+                                                           int dst_height)
 {
     const SharedRefPtr<I420Buffer> scaled_buffer = I420Buffer::create(dst_width, dst_height);
     scaled_buffer->scale_from(source);
     return scaled_buffer;
 }
 
-double I420Psnr(const I420BufferInterface& ref_buffer, const I420BufferInterface& test_buffer)
+double I420Psnr(const I420BufferInterface &ref_buffer, const I420BufferInterface &test_buffer)
 {
     CXXKIT_DCHECK_GE(ref_buffer.width(), test_buffer.width());
     CXXKIT_DCHECK_GE(ref_buffer.height(), test_buffer.height());
     if ((ref_buffer.width() != test_buffer.width()) || (ref_buffer.height() != test_buffer.height()))
     {
-        const SharedRefPtr<I420Buffer> scaled_buffer =
-            I420Buffer::create(ref_buffer.width(), ref_buffer.height());
+        const SharedRefPtr<I420Buffer> scaled_buffer = I420Buffer::create(ref_buffer.width(), ref_buffer.height());
         scaled_buffer->scale_from(test_buffer);
         return I420Psnr(ref_buffer, *scaled_buffer);
     }
@@ -184,14 +172,13 @@ double I420Psnr(const I420BufferInterface& ref_buffer, const I420BufferInterface
     return (psnr > kPerfectPSNR) ? kPerfectPSNR : psnr;
 }
 
-double I420Ssim(const I420BufferInterface& ref_buffer, const I420BufferInterface& test_buffer)
+double I420Ssim(const I420BufferInterface &ref_buffer, const I420BufferInterface &test_buffer)
 {
     CXXKIT_DCHECK_GE(ref_buffer.width(), test_buffer.width());
     CXXKIT_DCHECK_GE(ref_buffer.height(), test_buffer.height());
     if ((ref_buffer.width() != test_buffer.width()) || (ref_buffer.height() != test_buffer.height()))
     {
-        const SharedRefPtr<I420Buffer> scaled_buffer =
-            I420Buffer::create(ref_buffer.width(), ref_buffer.height());
+        const SharedRefPtr<I420Buffer> scaled_buffer = I420Buffer::create(ref_buffer.width(), ref_buffer.height());
         scaled_buffer->scale_from(test_buffer);
         return I420Ssim(ref_buffer, *scaled_buffer);
     }
@@ -212,4 +199,4 @@ double I420Ssim(const I420BufferInterface& ref_buffer, const I420BufferInterface
                             test_buffer.height());
 }
 
-}  // namespace cxxkit
+CXXKIT_END_NAMESPACE

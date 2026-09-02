@@ -150,7 +150,8 @@ static CXXKIT_FORCE_INLINE bool string_starts_with_ignore_case(StringView text, 
  */
 static CXXKIT_FORCE_INLINE bool string_ends_with_ignore_case(StringView text, StringView suffix) noexcept
 {
-    return (text.size() >= suffix.size()) && string_equals_ignore_case(text.substr(text.size() - suffix.size()), suffix);
+    return (text.size() >= suffix.size()) &&
+           string_equals_ignore_case(text.substr(text.size() - suffix.size()), suffix);
 }
 
 /**

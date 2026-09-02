@@ -30,13 +30,14 @@
 
 #include <cstdint>
 
-namespace cxxkit {
+CXXKIT_BEGIN_NAMESPACE
 
 // Determines which frames should be dropped based on input framerate and
 // requested (target) framerate. API follows OpenCTK: should_drop_frame() takes
 // the incoming frame timestamp in nanoseconds and reports whether it must be
 // dropped to keep the configured frame rate.
-class CXXKIT_MEDIA_API FramerateController {
+class CXXKIT_MEDIA_API FramerateController
+{
 public:
     FramerateController();
     explicit FramerateController(double max_framerate);
@@ -60,4 +61,4 @@ private:
     Optional<int64_t> mNextFrameTimestampNs;
 };
 
-}  // namespace cxxkit
+CXXKIT_END_NAMESPACE

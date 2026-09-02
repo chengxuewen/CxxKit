@@ -58,8 +58,8 @@ public:
     void post_task(const Task::SharedPtr &task, const SourceLocation &location = SourceLocation::current()) override;
     using TaskQueueBase::post_delayed_task;
     void post_delayed_task(const Task::SharedPtr &task,
-                         const TimeDelta &delay,
-                         const SourceLocation &location = SourceLocation::current()) override;
+                           const TimeDelta &delay,
+                           const SourceLocation &location = SourceLocation::current()) override;
 
 protected:
     NextTask pop_next_task();

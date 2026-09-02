@@ -49,31 +49,39 @@ class StatusOr
 {
 public:
     /// @brief Construct with a value.
-    StatusOr(const T &value) : mHasValue(true)
+    StatusOr(const T &value)
+        : mHasValue(true)
     {
         new (&mStorage) T(value);
     }
 
     /// @brief Construct with a value (move).
-    StatusOr(T &&value) : mHasValue(true)
+    StatusOr(T &&value)
+        : mHasValue(true)
     {
         new (&mStorage) T(std::move(value));
     }
 
     /// @brief Construct with an error Status (must not be ok).
-    StatusOr(const Status &status) : mHasValue(false), mStatus(status)
+    StatusOr(const Status &status)
+        : mHasValue(false)
+        , mStatus(status)
     {
         CXXKIT_CHECK(!mStatus.is_ok()) << "StatusOr constructed with ok Status";
     }
 
     /// @brief Construct with an error Status (move, must not be ok).
-    StatusOr(Status &&status) : mHasValue(false), mStatus(std::move(status))
+    StatusOr(Status &&status)
+        : mHasValue(false)
+        , mStatus(std::move(status))
     {
         CXXKIT_CHECK(!mStatus.is_ok()) << "StatusOr constructed with ok Status";
     }
 
     /// @brief copy constructor.
-    StatusOr(const StatusOr &other) : mHasValue(other.mHasValue), mStatus(other.mStatus)
+    StatusOr(const StatusOr &other)
+        : mHasValue(other.mHasValue)
+        , mStatus(other.mStatus)
     {
         if (mHasValue)
         {
@@ -82,7 +90,9 @@ public:
     }
 
     /// @brief Move constructor.
-    StatusOr(StatusOr &&other) : mHasValue(other.mHasValue), mStatus(std::move(other.mStatus))
+    StatusOr(StatusOr &&other)
+        : mHasValue(other.mHasValue)
+        , mStatus(std::move(other.mStatus))
     {
         if (mHasValue)
         {

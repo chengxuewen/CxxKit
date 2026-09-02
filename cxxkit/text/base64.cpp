@@ -156,12 +156,12 @@ void Base64::encode_from_array(const void *data, size_t len, std::string *result
 }
 
 size_t Base64::get_next_quantum(DecodeFlags parse_flags,
-                              bool illegal_pads,
-                              const char *data,
-                              size_t len,
-                              size_t *dpos,
-                              unsigned char qbuf[4],
-                              bool *padded)
+                                bool illegal_pads,
+                                const char *data,
+                                size_t len,
+                                size_t *dpos,
+                                unsigned char qbuf[4],
+                                bool *padded)
 {
     size_t byte_len = 0, pad_len = 0, pad_start = 0;
     for (; (byte_len < 4) && (*dpos < len); ++*dpos)
@@ -249,19 +249,19 @@ bool Base64::decode_from_array(const char *data, size_t len, DecodeFlags flags, 
 }
 
 bool Base64::decode_from_array(const char *data,
-                             size_t len,
-                             DecodeFlags flags,
-                             std::vector<char> *result,
-                             size_t *data_used)
+                               size_t len,
+                               DecodeFlags flags,
+                               std::vector<char> *result,
+                               size_t *data_used)
 {
     return decode_from_array_template<std::vector<char>>(data, len, flags, result, data_used);
 }
 
 bool Base64::decode_from_array(const char *data,
-                             size_t len,
-                             DecodeFlags flags,
-                             std::vector<uint8_t> *result,
-                             size_t *data_used)
+                               size_t len,
+                               DecodeFlags flags,
+                               std::vector<uint8_t> *result,
+                               size_t *data_used)
 {
     return decode_from_array_template<std::vector<uint8_t>>(data, len, flags, result, data_used);
 }

@@ -94,4 +94,3 @@ private:
     ClockInterface *mPrevClock;
 };
 CXXKIT_END_NAMESPACE
-

@@ -53,5 +53,5 @@
 // No-op variant when profiling is disabled
 #    define CXXKIT_PROFILE_SCOPE(name) ((void)0)
 // No-op variant when profiling is disabled
-#    define CXXKIT_PROFILE_FRAME() ((void)0)
+#    define CXXKIT_PROFILE_FRAME()     ((void)0)
 #endif

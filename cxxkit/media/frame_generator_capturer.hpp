@@ -36,7 +36,7 @@
 #include <functional>
 #include <memory>
 
-namespace cxxkit {
+CXXKIT_BEGIN_NAMESPACE
 
 // Self-contained capturer that emits VideoFrames from a FrameGenerator,
 // throttled by a FramerateController. Unlike the OpenCTK original it does not
@@ -45,7 +45,7 @@ namespace cxxkit {
 class CXXKIT_MEDIA_API FrameGeneratorCapturer
 {
 public:
-    using FrameCallback = std::function<void(const VideoFrame&)>;
+    using FrameCallback = std::function<void(const VideoFrame &)>;
 
     FrameGeneratorCapturer(std::unique_ptr<FrameGenerator> generator, double framerate);
     ~FrameGeneratorCapturer() = default;
@@ -79,4 +79,4 @@ CXXKIT_MEDIA_API std::unique_ptr<FrameGeneratorCapturer> create_frame_generator_
     int height,
     FrameGeneratorCapturer::FrameCallback callback);
 
-}  // namespace cxxkit
+CXXKIT_END_NAMESPACE

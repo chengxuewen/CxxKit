@@ -78,4 +78,3 @@ CXXKIT_UNITS_API std::string to_string(DataSize value);
 } // namespace utils
 
 CXXKIT_END_NAMESPACE
-

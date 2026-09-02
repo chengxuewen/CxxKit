@@ -34,7 +34,7 @@
 
 #include <list>
 
-namespace cxxkit {
+CXXKIT_BEGIN_NAMESPACE
 
 // Simple buffer pool to avoid unnecessary allocations of video frame buffers.
 // The pool manages the memory of the I420Buffer returned from
@@ -79,4 +79,4 @@ private:
     size_t mMaxNumberOfBuffers;
 };
 
-}  // namespace cxxkit
+CXXKIT_END_NAMESPACE

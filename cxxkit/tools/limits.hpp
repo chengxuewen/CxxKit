@@ -107,4 +107,3 @@ static constexpr T math_max(const T &left, const T &right, P pred) noexcept
 }
 }; // namespace utils
 CXXKIT_END_NAMESPACE
-

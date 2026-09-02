@@ -27,14 +27,13 @@
 
 #include <gtest/gtest.h>
 
-namespace {
+namespace
+{
 
-TEST(VideoFrame, Builder) {
+TEST(VideoFrame, Builder)
+{
     auto buf = cxxkit::I420Buffer::create(16, 16);
-    auto frame = cxxkit::VideoFrame::Builder()
-                     .set_video_frame_buffer(buf)
-                     .set_timestamp_us(1000)
-                     .build();
+    auto frame = cxxkit::VideoFrame::Builder().set_video_frame_buffer(buf).set_timestamp_us(1000).build();
     EXPECT_EQ(frame.video_frame_buffer(), buf);
     EXPECT_EQ(frame.timestamp_us(), 1000);
     EXPECT_EQ(frame.width(), 16);
@@ -43,7 +42,8 @@ TEST(VideoFrame, Builder) {
     EXPECT_EQ(frame.rotation(), cxxkit::VideoRotation::kVideoRotation_0);
 }
 
-TEST(VideoFrame, BuilderAllMetadata) {
+TEST(VideoFrame, BuilderAllMetadata)
+{
     auto buf = cxxkit::I420Buffer::create(16, 16);
     cxxkit::ColorSpace cs(cxxkit::ColorSpace::PrimaryID::kBT709,
                           cxxkit::ColorSpace::TransferID::kBT709,
@@ -65,7 +65,8 @@ TEST(VideoFrame, BuilderAllMetadata) {
     EXPECT_EQ(*frame.color_space(), cs);
 }
 
-TEST(VideoFrame, UpdateRectUnion) {
+TEST(VideoFrame, UpdateRectUnion)
+{
     cxxkit::VideoFrame::UpdateRect a{0, 0, 10, 10};
     cxxkit::VideoFrame::UpdateRect b{5, 5, 10, 10};
     auto u = a.Union(b);
@@ -78,7 +79,8 @@ TEST(VideoFrame, UpdateRectUnion) {
     EXPECT_EQ(a.x, 0);
 }
 
-TEST(VideoFrame, UpdateRectIntersect) {
+TEST(VideoFrame, UpdateRectIntersect)
+{
     cxxkit::VideoFrame::UpdateRect a{0, 0, 10, 10};
     cxxkit::VideoFrame::UpdateRect b{5, 5, 10, 10};
     auto i = a.intersect(b);
@@ -91,7 +93,8 @@ TEST(VideoFrame, UpdateRectIntersect) {
     EXPECT_TRUE(a.intersect(c).is_empty());
 }
 
-TEST(VideoFrame, UpdateRectScaleWithFrame) {
+TEST(VideoFrame, UpdateRectScaleWithFrame)
+{
     // 640x360 帧，中间 320x180 裁剪，缩放到 320x180：原更新区 (0,0,640,360)
     cxxkit::VideoFrame::UpdateRect r{0, 0, 640, 360};
     auto s = r.scale_with_frame(640, 360, 160, 90, 320, 180, 320, 180);
@@ -101,4 +104,4 @@ TEST(VideoFrame, UpdateRectScaleWithFrame) {
     EXPECT_EQ(s.height, 180);
 }
 
-}  // namespace
+} // namespace

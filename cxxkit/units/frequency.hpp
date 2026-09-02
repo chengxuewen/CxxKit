@@ -117,4 +117,3 @@ void absl_stringify(Sink &sink, Frequency value)
     sink.append(to_string(value));
 }
 CXXKIT_END_NAMESPACE
-

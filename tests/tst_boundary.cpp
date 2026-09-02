@@ -79,10 +79,8 @@ TEST(BoundaryNumeric, SaturatedCastOverflowBothDirections)
     EXPECT_EQ(-128, utils::saturated_cast<int8_t>(static_cast<int>(-1000)));
 
     // Exact boundaries saturate to the limit value, not a wrap.
-    EXPECT_EQ(std::numeric_limits<int32_t>::max(),
-              utils::saturated_cast<int32_t>(std::numeric_limits<int64_t>::max()));
-    EXPECT_EQ(std::numeric_limits<int32_t>::min(),
-              utils::saturated_cast<int32_t>(std::numeric_limits<int64_t>::min()));
+    EXPECT_EQ(std::numeric_limits<int32_t>::max(), utils::saturated_cast<int32_t>(std::numeric_limits<int64_t>::max()));
+    EXPECT_EQ(std::numeric_limits<int32_t>::min(), utils::saturated_cast<int32_t>(std::numeric_limits<int64_t>::min()));
 }
 
 TEST(BoundaryNumeric, is_value_in_range_for_numeric_type)
@@ -122,11 +120,11 @@ TEST(BoundaryNumeric, SafeMinMaxNoWrap)
 
 TEST(BoundaryNumeric, safe_clamp)
 {
-    EXPECT_EQ(0, safe_clamp(-100, 0, 10));  // below min clamps to min
-    EXPECT_EQ(5, safe_clamp(5, 0, 10));  // in range unchanged
+    EXPECT_EQ(0, safe_clamp(-100, 0, 10)); // below min clamps to min
+    EXPECT_EQ(5, safe_clamp(5, 0, 10));    // in range unchanged
     EXPECT_EQ(10, safe_clamp(100, 0, 10));
     // Mixed signedness clamp.
-    EXPECT_EQ(0, safe_clamp(-1, 0u, static_cast<uint8_t>(3)));  // clamps to 0u min
+    EXPECT_EQ(0, safe_clamp(-1, 0u, static_cast<uint8_t>(3))); // clamps to 0u min
 }
 
 // ---------------------------------------------------------------------------
@@ -310,7 +308,7 @@ TEST(BoundaryRefcount, SharedPointerUseCountLifecycle)
     // copy destroyed => back to 1.
     EXPECT_EQ(1L, sp.use_count());
 
-    EXPECT_TRUE(sp.unique());  // sole owner again after copy destroyed
+    EXPECT_TRUE(sp.unique()); // sole owner again after copy destroyed
     EXPECT_EQ(42, *sp);
 }
 

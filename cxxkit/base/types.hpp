@@ -256,4 +256,3 @@ struct None
 #endif
 
 CXXKIT_END_NAMESPACE
-

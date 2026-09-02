@@ -816,8 +816,7 @@ TEST(ThreadPoolTest, PriorityStart)
         threadPool.start(expected = new Runner(firstStarted),
                          true,
                          ThreadPool::Priority::kHighest); // priority kHighest, expected
-        threadPool.start(new Runner(firstStarted),
-                         true,
+        threadPool.start(new Runner(firstStarted), true,
                          ThreadPool::Priority::kHighest); // priority kHighest
                                                           //         CXXKIT_DEBUG("expected %p", expected);
 

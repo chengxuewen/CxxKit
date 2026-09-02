@@ -144,7 +144,7 @@ protected:
     {
         return is_plus_infinity()    ? std::numeric_limits<T>::infinity()
                : is_minus_infinity() ? -std::numeric_limits<T>::infinity()
-                                   : mValue;
+                                     : mValue;
     }
     template <typename T>
     constexpr T to_value_or(T fallbackValue) const
@@ -321,4 +321,3 @@ inline CXXKIT_CXX14_CONSTEXPR Unit_T operator-(RelativeUnit<Unit_T> other)
 }
 
 CXXKIT_END_NAMESPACE
-

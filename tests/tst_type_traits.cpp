@@ -37,7 +37,9 @@
 struct VariadicFunc
 {
     template <typename... Args>
-    void operator()(Args &&...) const {}
+    void operator()(Args &&...) const
+    {
+    }
 };
 
 CXXKIT_BEGIN_NAMESPACE
@@ -460,7 +462,7 @@ TEST(IsInvocableTest, PointerToNonCallable)
 
 TEST(IsInvocableTest, LvalueReferenceArguments)
 {
-    auto takes_lvalue_ref = [](int &) {};
+    auto takes_lvalue_ref = [](int &) { };
     int x = 0;
     static_assert(traits::is_invocable<decltype(takes_lvalue_ref), int &>::value,
                   "Should be true for lvalue reference argument");
@@ -472,7 +474,7 @@ TEST(IsInvocableTest, LvalueReferenceArguments)
 
 TEST(IsInvocableTest, ConstLvalueReferenceArguments)
 {
-    auto takes_const_ref = [](const int &) {};
+    auto takes_const_ref = [](const int &) { };
     static_assert(traits::is_invocable<decltype(takes_const_ref), const int &>::value,
                   "Should be true for const lvalue ref to const param");
     static_assert(traits::is_invocable<decltype(takes_const_ref), int &>::value,
@@ -483,7 +485,7 @@ TEST(IsInvocableTest, ConstLvalueReferenceArguments)
 
 TEST(IsInvocableTest, RvalueReferenceArguments)
 {
-    auto takes_rvalue_ref = [](int &&) {};
+    auto takes_rvalue_ref = [](int &&) { };
     static_assert(traits::is_invocable<decltype(takes_rvalue_ref), int>::value,
                   "Should be true for rvalue to rvalue ref param");
     static_assert(!traits::is_invocable<decltype(takes_rvalue_ref), int &>::value,
@@ -493,7 +495,7 @@ TEST(IsInvocableTest, RvalueReferenceArguments)
 TEST(IsInvocableTest, VariadicFunction)
 {
 #if CXXKIT_CC_CPP14_OR_GREATER
-    auto variadic_func = [](auto &&...) {};
+    auto variadic_func = [](auto &&...) { };
     static_assert(traits::is_invocable<decltype(variadic_func)>::value, "Should be true for variadic with zero args");
     static_assert(traits::is_invocable<decltype(variadic_func), int>::value,
                   "Should be true for variadic with one arg");
@@ -501,8 +503,7 @@ TEST(IsInvocableTest, VariadicFunction)
                   "Should be true for variadic with multiple args");
 #else
     static_assert(traits::is_invocable<VariadicFunc>::value, "Should be true for variadic with zero args");
-    static_assert(traits::is_invocable<VariadicFunc, int>::value,
-                  "Should be true for variadic with one arg");
+    static_assert(traits::is_invocable<VariadicFunc, int>::value, "Should be true for variadic with one arg");
     static_assert(traits::is_invocable<VariadicFunc, int, double, std::string>::value,
                   "Should be true for variadic with multiple args");
 #endif
@@ -511,7 +512,7 @@ TEST(IsInvocableTest, VariadicFunction)
 
 TEST(IsInvocableTest, MoveOnlyArguments)
 {
-    auto takes_unique_ptr = [](std::unique_ptr<int>) {};
+    auto takes_unique_ptr = [](std::unique_ptr<int>) { };
     static_assert(traits::is_invocable<decltype(takes_unique_ptr), std::unique_ptr<int>>::value,
                   "Should be true for move-only type argument");
     static_assert(!traits::is_invocable<decltype(takes_unique_ptr), std::unique_ptr<int> &>::value,

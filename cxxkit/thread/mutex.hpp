@@ -64,7 +64,11 @@ public:
 class MutexLock
 {
 public:
-    explicit MutexLock(Mutex &mutex) : mMutex(mutex) { mMutex.lock(); }
+    explicit MutexLock(Mutex &mutex)
+        : mMutex(mutex)
+    {
+        mMutex.lock();
+    }
     ~MutexLock() { mMutex.unlock(); }
 
     MutexLock(const MutexLock &) = delete;
@@ -96,7 +100,11 @@ private:
 class ReadLock
 {
 public:
-    explicit ReadLock(RWLock &rw) : mRw(rw) { mRw.read_lock(); }
+    explicit ReadLock(RWLock &rw)
+        : mRw(rw)
+    {
+        mRw.read_lock();
+    }
     ~ReadLock() { mRw.unlock(); }
 
     ReadLock(const ReadLock &) = delete;
@@ -110,7 +118,11 @@ private:
 class WriteLock
 {
 public:
-    explicit WriteLock(RWLock &rw) : mRw(rw) { mRw.write_lock(); }
+    explicit WriteLock(RWLock &rw)
+        : mRw(rw)
+    {
+        mRw.write_lock();
+    }
     ~WriteLock() { mRw.unlock(); }
 
     WriteLock(const WriteLock &) = delete;

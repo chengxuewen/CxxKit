@@ -82,4 +82,3 @@
 #    define CXXKIT_CORE_API
 #    define CXXKIT_CORE_HIDDEN
 #endif
-

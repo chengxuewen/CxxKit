@@ -28,9 +28,11 @@
 
 #include <string>
 
-namespace {
+namespace
+{
 
-TEST(FlatHashSet, InsertAndFind) {
+TEST(FlatHashSet, InsertAndFind)
+{
     cxxkit::flat_hash_set<int> set;
     set.insert(1);
     set.insert(2);
@@ -40,14 +42,16 @@ TEST(FlatHashSet, InsertAndFind) {
     EXPECT_FALSE(set.contains(4));
 }
 
-TEST(FlatHashSet, InsertDuplicate) {
+TEST(FlatHashSet, InsertDuplicate)
+{
     cxxkit::flat_hash_set<int> set;
     EXPECT_TRUE(set.insert(1).second);
     EXPECT_FALSE(set.insert(1).second);
     EXPECT_EQ(set.size(), 1u);
 }
 
-TEST(FlatHashSet, Erase) {
+TEST(FlatHashSet, Erase)
+{
     cxxkit::flat_hash_set<int> set;
     set.insert(1);
     set.insert(2);
@@ -56,37 +60,44 @@ TEST(FlatHashSet, Erase) {
     EXPECT_FALSE(set.contains(1));
 }
 
-TEST(FlatHashSet, Contains) {
+TEST(FlatHashSet, Contains)
+{
     cxxkit::flat_hash_set<int> set;
     set.insert(42);
     EXPECT_TRUE(set.contains(42));
     EXPECT_FALSE(set.contains(99));
 }
 
-TEST(FlatHashSet, Rehash) {
+TEST(FlatHashSet, Rehash)
+{
     cxxkit::flat_hash_set<int> set;
-    for (int i = 0; i < 1000; ++i) {
+    for (int i = 0; i < 1000; ++i)
+    {
         set.insert(i);
     }
     EXPECT_EQ(set.size(), 1000u);
-    for (int i = 0; i < 1000; ++i) {
+    for (int i = 0; i < 1000; ++i)
+    {
         EXPECT_TRUE(set.contains(i));
     }
 }
 
-TEST(FlatHashSet, Iterator) {
+TEST(FlatHashSet, Iterator)
+{
     cxxkit::flat_hash_set<int> set;
     set.insert(1);
     set.insert(2);
     set.insert(3);
     int sum = 0;
-    for (int v : set) {
+    for (int v : set)
+    {
         sum += v;
     }
     EXPECT_EQ(sum, 6);
 }
 
-TEST(FlatHashSet, Empty) {
+TEST(FlatHashSet, Empty)
+{
     cxxkit::flat_hash_set<int> set;
     EXPECT_TRUE(set.empty());
     EXPECT_EQ(set.size(), 0u);
@@ -94,7 +105,8 @@ TEST(FlatHashSet, Empty) {
     EXPECT_FALSE(set.empty());
 }
 
-TEST(FlatHashSet, String) {
+TEST(FlatHashSet, String)
+{
     cxxkit::flat_hash_set<std::string> set;
     set.insert("hello");
     set.insert("world");
@@ -103,7 +115,8 @@ TEST(FlatHashSet, String) {
     EXPECT_FALSE(set.contains("foo"));
 }
 
-TEST(FlatHashSet, CopyConstruct) {
+TEST(FlatHashSet, CopyConstruct)
+{
     cxxkit::flat_hash_set<int> set;
     set.insert(1);
     set.insert(2);
@@ -113,7 +126,8 @@ TEST(FlatHashSet, CopyConstruct) {
     EXPECT_EQ(set.size(), 2u);
 }
 
-TEST(FlatHashSet, MoveConstruct) {
+TEST(FlatHashSet, MoveConstruct)
+{
     cxxkit::flat_hash_set<int> set;
     set.insert(1);
     set.insert(2);
@@ -122,7 +136,8 @@ TEST(FlatHashSet, MoveConstruct) {
     EXPECT_TRUE(set2.contains(1));
 }
 
-TEST(FlatHashSet, clear) {
+TEST(FlatHashSet, clear)
+{
     cxxkit::flat_hash_set<int> set;
     set.insert(1);
     set.insert(2);
@@ -130,14 +145,16 @@ TEST(FlatHashSet, clear) {
     EXPECT_TRUE(set.empty());
 }
 
-TEST(FlatHashSet, EraseNonexistent) {
+TEST(FlatHashSet, EraseNonexistent)
+{
     cxxkit::flat_hash_set<int> set;
     set.insert(1);
     EXPECT_EQ(set.erase(99), 0u);
     EXPECT_EQ(set.size(), 1u);
 }
 
-TEST(FlatHashSet, Emplace) {
+TEST(FlatHashSet, Emplace)
+{
     cxxkit::flat_hash_set<std::string> set;
     set.emplace("hello");
     set.emplace("world");
@@ -145,17 +162,19 @@ TEST(FlatHashSet, Emplace) {
     EXPECT_TRUE(set.contains("hello"));
 }
 
-TEST(FlatHashSet, IteratorAfterErase) {
+TEST(FlatHashSet, IteratorAfterErase)
+{
     cxxkit::flat_hash_set<int> set;
     set.insert(1);
     set.insert(2);
     set.insert(3);
     set.erase(2);
     int sum = 0;
-    for (int v : set) {
+    for (int v : set)
+    {
         sum += v;
     }
-    EXPECT_EQ(sum, 4);  // 1 + 3
+    EXPECT_EQ(sum, 4); // 1 + 3
 }
 
-}  // namespace
+} // namespace

@@ -59,10 +59,12 @@ TEST(race_checker, CrossThreadScopeDetects)
     race_checker checker;
     race_checker::Scope mainScope(&checker);
     bool otherDetected = false;
-    std::thread t([&otherDetected, &checker]() {
-        race_checker::Scope other(&checker); // concurrent access from another thread while held
-        otherDetected = other.is_detected();
-    });
+    std::thread t(
+        [&otherDetected, &checker]()
+        {
+            race_checker::Scope other(&checker); // concurrent access from another thread while held
+            otherDetected = other.is_detected();
+        });
     t.join();
     (void)mainScope.is_detected();
     EXPECT_NO_THROW((void)otherDetected);

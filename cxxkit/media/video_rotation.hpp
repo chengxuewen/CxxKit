@@ -28,13 +28,14 @@
 #include <cxxkit/media/media_global.hpp>
 #include <cstdint>
 
-namespace cxxkit {
+CXXKIT_BEGIN_NAMESPACE
 
-enum class CXXKIT_MEDIA_API VideoRotation : int {
+enum class CXXKIT_MEDIA_API VideoRotation : int
+{
     kVideoRotation_0 = 0,
     kVideoRotation_90 = 90,
     kVideoRotation_180 = 180,
     kVideoRotation_270 = 270,
 };
 
-}  // namespace cxxkit
+CXXKIT_END_NAMESPACE

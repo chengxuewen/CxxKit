@@ -30,7 +30,7 @@
 
 #include <string>
 
-namespace cxxkit {
+CXXKIT_BEGIN_NAMESPACE
 
 // This class represents color information as specified in T-REC H.273,
 // available from https://www.itu.int/rec/T-REC-H.273.
@@ -189,5 +189,4 @@ private:
     Optional<HdrMetadata> mHdrMetadata;
 };
 
-}  // namespace cxxkit
-
+CXXKIT_END_NAMESPACE

@@ -26,7 +26,7 @@
 
 #include <cxxkit/media/media_global.hpp>
 
-namespace cxxkit {
+CXXKIT_BEGIN_NAMESPACE
 
 // SMPTE ST 2086 mastering metadata,
 // see https://ieeexplore.ieee.org/document/8353899.
@@ -36,15 +36,9 @@ struct CXXKIT_MEDIA_API HdrMasteringMetadata
     {
         Chromaticity();
 
-        bool operator==(const Chromaticity &rhs) const
-        {
-            return x == rhs.x && y == rhs.y;
-        }
+        bool operator==(const Chromaticity &rhs) const { return x == rhs.x && y == rhs.y; }
 
-        bool validate() const
-        {
-            return x >= 0.0 && x <= 1.0 && y >= 0.0 && y <= 1.0;
-        }
+        bool validate() const { return x >= 0.0 && x <= 1.0 && y >= 0.0 && y <= 1.0; }
 
         // xy chromaticity coordinates must be calculated as specified in ISO
         // 11664-3:2012 Section 7, and must be specified with four decimal places.
@@ -59,18 +53,15 @@ struct CXXKIT_MEDIA_API HdrMasteringMetadata
 
     bool operator==(const HdrMasteringMetadata &rhs) const
     {
-        return ((primary_r == rhs.primary_r) && (primary_g == rhs.primary_g) &&
-                (primary_b == rhs.primary_b) && (white_point == rhs.white_point) &&
-                (luminance_max == rhs.luminance_max) &&
+        return ((primary_r == rhs.primary_r) && (primary_g == rhs.primary_g) && (primary_b == rhs.primary_b) &&
+                (white_point == rhs.white_point) && (luminance_max == rhs.luminance_max) &&
                 (luminance_min == rhs.luminance_min));
     }
 
     bool validate() const
     {
-        return luminance_max >= 0.0 && luminance_max <= 20000.0 &&
-               luminance_min >= 0.0 && luminance_min <= 5.0 &&
-               primary_r.validate() && primary_g.validate() &&
-               primary_b.validate() && white_point.validate();
+        return luminance_max >= 0.0 && luminance_max <= 20000.0 && luminance_min >= 0.0 && luminance_min <= 5.0 &&
+               primary_r.validate() && primary_g.validate() && primary_b.validate() && white_point.validate();
     }
 
     // The nominal primaries of the mastering display.
@@ -101,18 +92,15 @@ struct CXXKIT_MEDIA_API HdrMetadata
 
     bool operator==(const HdrMetadata &rhs) const
     {
-        return (
-            (max_content_light_level == rhs.max_content_light_level) &&
-            (max_frame_average_light_level == rhs.max_frame_average_light_level) &&
-            (mastering_metadata == rhs.mastering_metadata));
+        return ((max_content_light_level == rhs.max_content_light_level) &&
+                (max_frame_average_light_level == rhs.max_frame_average_light_level) &&
+                (mastering_metadata == rhs.mastering_metadata));
     }
 
     bool validate() const
     {
-        return max_content_light_level >= 0 && max_content_light_level <= 20000 &&
-               max_frame_average_light_level >= 0 &&
-               max_frame_average_light_level <= 20000 &&
-               mastering_metadata.validate();
+        return max_content_light_level >= 0 && max_content_light_level <= 20000 && max_frame_average_light_level >= 0 &&
+               max_frame_average_light_level <= 20000 && mastering_metadata.validate();
     }
 
     HdrMasteringMetadata mastering_metadata;
@@ -123,5 +111,4 @@ struct CXXKIT_MEDIA_API HdrMetadata
     // the brightest frame in the stream, in nits. valid range [0, 20000].
     int max_frame_average_light_level = 0;
 };
-}  // namespace cxxkit
-
+CXXKIT_END_NAMESPACE

@@ -35,7 +35,8 @@
 #include <sys/stat.h>
 #include <unistd.h>
 
-namespace {
+namespace
+{
 
 std::atomic<bool> g_installedGuard(false);
 
@@ -65,7 +66,8 @@ void print_stack_trace_from_ucontext(void *ucontext)
 
 CXXKIT_BEGIN_NAMESPACE
 
-CrashHandler::CrashHandler() : mDPtr(new CrashHandlerPrivate)
+CrashHandler::CrashHandler()
+    : mDPtr(new CrashHandlerPrivate)
 {
 }
 
@@ -90,7 +92,8 @@ bool CrashHandler::is_handler_installed() const
 
 bool CrashHandler::install()
 {
-    if (g_installedGuard.exchange(true)) {
+    if (g_installedGuard.exchange(true))
+    {
         // Binary-level mutual exclusion contract: a second breakpad handler would double-write
         // minidumps (QExt::Breakpad coexistence is not supported — crash ON ⇒ QExt::Breakpad OFF).
         std::fputs("[cxxkit::crash] install() rejected: a crash handler is already installed "
@@ -101,12 +104,19 @@ bool CrashHandler::install()
     CXXKIT_CHECK(!mDPtr->mDumpPath.empty()) << "CrashHandler::install() requires set_dump_path() first.";
 
 #if defined(CXXKIT_OS_MACOS)
-    mDPtr->mHandler.reset(new google_breakpad::exception_handler(
-        mDPtr->mDumpPath, nullptr, &CrashHandlerPrivate::on_minidump, this, true, NULL));
+    mDPtr->mHandler.reset(new google_breakpad::exception_handler(mDPtr->mDumpPath,
+                                                                 nullptr,
+                                                                 &CrashHandlerPrivate::on_minidump,
+                                                                 this,
+                                                                 true,
+                                                                 NULL));
 #elif defined(CXXKIT_OS_LINUX)
-    mDPtr->mHandler.reset(new google_breakpad::exception_handler(
-        google_breakpad::minidump_descriptor(mDPtr->mDumpPath),
-        nullptr, &CrashHandlerPrivate::on_minidump, this, true, -1));
+    mDPtr->mHandler.reset(new google_breakpad::exception_handler(google_breakpad::minidump_descriptor(mDPtr->mDumpPath),
+                                                                 nullptr,
+                                                                 &CrashHandlerPrivate::on_minidump,
+                                                                 this,
+                                                                 true,
+                                                                 -1));
 #else
 #    error "cxxkit::crash supports macOS and Linux only (Windows needs a crash-deps-x64-windows export first)."
 #endif
@@ -116,7 +126,8 @@ bool CrashHandler::install()
 
 void CrashHandler::uninstall()
 {
-    if (mDPtr->mHandler) {
+    if (mDPtr->mHandler)
+    {
         mDPtr->mHandler.reset(); // exception_handler dtor uninstalls the signal handlers
     }
     g_installedGuard.store(false);
@@ -125,15 +136,20 @@ void CrashHandler::uninstall()
 bool CrashHandler::set_dump_path(const char *path)
 {
     CXXKIT_CHECK(!is_handler_installed()) << "CrashHandler::set_dump_path() must be called before install().";
-    if (!path || !path[0]) {
+    if (!path || !path[0])
+    {
         return false;
     }
     struct stat st;
-    if (::stat(path, &st) != 0) {
-        if (::mkdir(path, 0755) != 0) {
+    if (::stat(path, &st) != 0)
+    {
+        if (::mkdir(path, 0755) != 0)
+        {
             return false;
         }
-    } else if (!S_ISDIR(st.st_mode)) {
+    }
+    else if (!S_ISDIR(st.st_mode))
+    {
         return false;
     }
     mDPtr->mDumpPath = path;
@@ -142,7 +158,8 @@ bool CrashHandler::set_dump_path(const char *path)
 
 bool CrashHandler::set_stack_trace_on_crash(bool enable)
 {
-    CXXKIT_CHECK(!is_handler_installed()) << "CrashHandler::set_stack_trace_on_crash() must be called before install().";
+    CXXKIT_CHECK(!is_handler_installed())
+        << "CrashHandler::set_stack_trace_on_crash() must be called before install().";
     mDPtr->mStackTraceOnCrash = enable;
     return true;
 }
@@ -157,7 +174,8 @@ bool CrashHandler::set_callback(CrashCallback callback, void *context)
 
 bool CrashHandler::write_minidump()
 {
-    if (!mDPtr->mHandler) {
+    if (!mDPtr->mHandler)
+    {
         return false; // not installed — manual dump without a handler is unsupported in v1
     }
     return mDPtr->mHandler->write_minidump();
@@ -167,12 +185,15 @@ std::vector<std::string> CrashHandler::dump_file_list() const
 {
     std::vector<std::string> result;
     DIR *dir = ::opendir(mDPtr->mDumpPath.c_str());
-    if (!dir) {
+    if (!dir)
+    {
         return result;
     }
     struct dirent *entry = nullptr;
-    while ((entry = ::readdir(dir)) != nullptr) {
-        if (is_dump_file(entry->d_name)) {
+    while ((entry = ::readdir(dir)) != nullptr)
+    {
+        if (is_dump_file(entry->d_name))
+        {
             result.push_back(entry->d_name);
         }
     }
@@ -183,7 +204,8 @@ std::vector<std::string> CrashHandler::dump_file_list() const
 void CrashHandler::clear_dumps()
 {
     const std::vector<std::string> files = dump_file_list();
-    for (std::vector<std::string>::const_iterator it = files.begin(); it != files.end(); ++it) {
+    for (std::vector<std::string>::const_iterator it = files.begin(); it != files.end(); ++it)
+    {
         const std::string full = mDPtr->mDumpPath + "/" + *it;
         ::unlink(full.c_str());
     }
@@ -193,16 +215,19 @@ CXXKIT_END_NAMESPACE
 
 // ---- CrashHandlerPrivate (friend of CrashHandler — reaches the private pimpl) -------------------------------
 #if defined(CXXKIT_OS_MACOS)
-bool cxxkit::CrashHandlerPrivate::on_minidump(const char *dumpPath, const char *minidumpId, void *context,
-                                             bool succeeded)
+bool cxxkit::CrashHandlerPrivate::on_minidump(const char *dumpPath,
+                                              const char *minidumpId,
+                                              void *context,
+                                              bool succeeded)
 {
     (void)minidumpId;
     CrashHandler *self = static_cast<CrashHandler *>(context);
     const char *path = dumpPath;
     void *ucontext = nullptr;
 #else
-bool cxxkit::CrashHandlerPrivate::on_minidump(const google_breakpad::minidump_descriptor &descriptor, void *context,
-                                             bool succeeded)
+bool cxxkit::CrashHandlerPrivate::on_minidump(const google_breakpad::minidump_descriptor &descriptor,
+                                              void *context,
+                                              bool succeeded)
 {
     CrashHandler *self = static_cast<CrashHandler *>(context);
     const char *path = descriptor.path();
@@ -211,12 +236,15 @@ bool cxxkit::CrashHandlerPrivate::on_minidump(const google_breakpad::minidump_de
 #endif
     CXXKIT_ASSERT(self);
 
-    if (succeeded && self->is_handler_installed()) {
+    if (succeeded && self->is_handler_installed())
+    {
         CrashHandlerPrivate *d = self->d_func();
-        if (d->mStackTraceOnCrash) {
+        if (d->mStackTraceOnCrash)
+        {
             print_stack_trace_from_ucontext(ucontext);
         }
-        if (d->mCallback) {
+        if (d->mCallback)
+        {
             d->mCallback(path, d->mCallbackContext, succeeded);
         }
     }

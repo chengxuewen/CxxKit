@@ -138,7 +138,7 @@ void FnPtrFunction()
 TYPED_TEST(CleanupTest, FactoryProducesCorrectType)
 {
     {
-        auto callback = TypeParam::AsCallback([] {});
+        auto callback = TypeParam::AsCallback([] { });
         auto scopeGuard = utils::make_scope_guard(std::move(callback));
         static_assert(IsSame<scope_guard<decltype(callback)>, decltype(scopeGuard)>(), "");
     }
@@ -156,7 +156,7 @@ TYPED_TEST(CleanupTest, FactoryProducesCorrectType)
 TYPED_TEST(CleanupTest, CTADProducesCorrectType)
 {
     {
-        auto callback = TypeParam::AsCallback([] {});
+        auto callback = TypeParam::AsCallback([] { });
         scope_guard scopeGuard = std::move(callback);
         static_assert(IsSame<scope_guard<decltype(callback)>, decltype(scopeGuard)>(), "");
     }
@@ -173,19 +173,19 @@ TYPED_TEST(CleanupTest, CTADProducesCorrectType)
 TYPED_TEST(CleanupTest, FactoryAndCTADProduceSameType)
 {
     {
-        auto callback = IdentityFactory::AsCallback([] {});
+        auto callback = IdentityFactory::AsCallback([] { });
         auto factory_cleanup = utils::make_scope_guard(callback);
         scope_guard deduction_cleanup = callback;
         static_assert(IsSame<decltype(factory_cleanup), decltype(deduction_cleanup)>(), "");
     }
     {
-        auto factory_cleanup = utils::make_scope_guard(FunctorClassFactory::AsCallback([] {}));
-        scope_guard deduction_cleanup = FunctorClassFactory::AsCallback([] {});
+        auto factory_cleanup = utils::make_scope_guard(FunctorClassFactory::AsCallback([] { }));
+        scope_guard deduction_cleanup = FunctorClassFactory::AsCallback([] { });
         static_assert(IsSame<decltype(factory_cleanup), decltype(deduction_cleanup)>(), "");
     }
     {
-        auto factory_cleanup = utils::make_scope_guard(StdFunctionFactory::AsCallback([] {}));
-        scope_guard deduction_cleanup = StdFunctionFactory::AsCallback([] {});
+        auto factory_cleanup = utils::make_scope_guard(StdFunctionFactory::AsCallback([] { }));
+        scope_guard deduction_cleanup = StdFunctionFactory::AsCallback([] { });
         static_assert(IsSame<decltype(factory_cleanup), decltype(deduction_cleanup)>(), "");
     }
     {

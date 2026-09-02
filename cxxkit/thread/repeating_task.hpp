@@ -48,10 +48,10 @@ public:
                                      const SourceLocation &location = SourceLocation::current());
 
     static RepeatingTaskHandle delayed_start(TaskQueueBase *taskQueue,
-                                            TimeDelta firstDelay,
-                                            UniqueFunction<TimeDelta()> closure,
-                                            Clock *clock = Clock::get_real_time_clock(),
-                                            const SourceLocation &location = SourceLocation::current());
+                                             TimeDelta firstDelay,
+                                             UniqueFunction<TimeDelta()> closure,
+                                             Clock *clock = Clock::get_real_time_clock(),
+                                             const SourceLocation &location = SourceLocation::current());
 
     /**
      * Stops future invocations of the repeating task closure.

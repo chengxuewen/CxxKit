@@ -769,13 +769,13 @@
  * FOO(0, (baz))       // -> baz
  * @endcode
  */
-#define CXXKIT_PP_VA_OPT_COMMA(...)                                CXXKIT_PP_COMMA_IF(CXXKIT_PP_NOT(CXXKIT_PP_IS_EMPTY(__VA_ARGS__)))
-#define CXXKIT_PP_GET_N(N, ...)                                    CXXKIT_PP_CONCAT(CXXKIT_PP_GET_N_, N)(__VA_ARGS__)
-#define CXXKIT_PP_GET_N_0(_0, ...)                                 _0
-#define CXXKIT_PP_GET_N_1(_0, _1, ...)                             _1
-#define CXXKIT_PP_GET_N_2(_0, _1, _2, ...)                         _2
-#define CXXKIT_PP_GET_N_3(_0, _1, _2, _3, ...)                     _3
-#define CXXKIT_PP_GET_N_4(_0, _1, _2, _3, _4, ...)                 _4
+#define CXXKIT_PP_VA_OPT_COMMA(...)                CXXKIT_PP_COMMA_IF(CXXKIT_PP_NOT(CXXKIT_PP_IS_EMPTY(__VA_ARGS__)))
+#define CXXKIT_PP_GET_N(N, ...)                    CXXKIT_PP_CONCAT(CXXKIT_PP_GET_N_, N)(__VA_ARGS__)
+#define CXXKIT_PP_GET_N_0(_0, ...)                 _0
+#define CXXKIT_PP_GET_N_1(_0, _1, ...)             _1
+#define CXXKIT_PP_GET_N_2(_0, _1, _2, ...)         _2
+#define CXXKIT_PP_GET_N_3(_0, _1, _2, _3, ...)     _3
+#define CXXKIT_PP_GET_N_4(_0, _1, _2, _3, _4, ...) _4
 #define CXXKIT_PP_GET_N_5(_0, _1, _2, _3, _4, _5, ...)             _5
 #define CXXKIT_PP_GET_N_6(_0, _1, _2, _3, _4, _5, _6, ...)         _6
 #define CXXKIT_PP_GET_N_7(_0, _1, _2, _3, _4, _5, _6, _7, ...)     _7
@@ -915,11 +915,10 @@
 #define CXXKIT_PP_AUTO_DIM_12(CHECK) CXXKIT_PP_IF(CHECK(1), 1, 2)
 #define CXXKIT_PP_AUTO_DIM_34(CHECK) CXXKIT_PP_IF(CHECK(3), 3, 4)
 
-#define CXXKIT_PP_WHILE_CHECK(N)                        CXXKIT_PP_CONCAT(CXXKIT_PP_WHILE_CHECK_, CXXKIT_PP_WHILE_##N(0 CXXKIT_PP_EMPTY_V, , 1))
-#define CXXKIT_PP_WHILE_CHECK_1                         1
+#define CXXKIT_PP_WHILE_CHECK(N) CXXKIT_PP_CONCAT(CXXKIT_PP_WHILE_CHECK_, CXXKIT_PP_WHILE_##N(0 CXXKIT_PP_EMPTY_V, , 1))
+#define CXXKIT_PP_WHILE_CHECK_1  1
 #define CXXKIT_PP_WHILE_CHECK_PP_WHILE_1(PRED, OP, VAL) 0
 #define CXXKIT_PP_WHILE_CHECK_PP_WHILE_2(PRED, OP, VAL) 0
 #define CXXKIT_PP_WHILE_CHECK_PP_WHILE_3(PRED, OP, VAL) 0
 #define CXXKIT_PP_WHILE_CHECK_PP_WHILE_4(PRED, OP, VAL) 0
 // ...
-

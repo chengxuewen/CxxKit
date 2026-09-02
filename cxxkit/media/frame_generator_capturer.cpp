@@ -27,7 +27,7 @@
 
 #include <cxxkit/tools/checks.hpp>
 
-namespace cxxkit {
+CXXKIT_BEGIN_NAMESPACE
 
 FrameGeneratorCapturer::FrameGeneratorCapturer(std::unique_ptr<FrameGenerator> generator, double framerate)
     : mGenerator(std::move(generator))
@@ -79,20 +79,22 @@ int FrameGeneratorCapturer::height() const
 }
 
 std::unique_ptr<FrameGeneratorCapturer> create_frame_generator_capturer(double framerate,
-                                                                     int width,
-                                                                     int height,
-                                                                     FrameGeneratorCapturer::FrameCallback callback)
+                                                                        int width,
+                                                                        int height,
+                                                                        FrameGeneratorCapturer::FrameCallback callback)
 {
-    std::unique_ptr<FrameGenerator> generator = FrameGenerator::create_slide_show(
-        std::vector<std::string>(), FrameGenerator::OutputType::kI420, width, height, 1);
+    std::unique_ptr<FrameGenerator> generator = FrameGenerator::create_slide_show(std::vector<std::string>(),
+                                                                                  FrameGenerator::OutputType::kI420,
+                                                                                  width,
+                                                                                  height,
+                                                                                  1);
     if (!generator)
     {
         return std::unique_ptr<FrameGeneratorCapturer>();
     }
-    std::unique_ptr<FrameGeneratorCapturer> capturer(
-        new FrameGeneratorCapturer(std::move(generator), framerate));
+    std::unique_ptr<FrameGeneratorCapturer> capturer(new FrameGeneratorCapturer(std::move(generator), framerate));
     capturer->set_frame_callback(std::move(callback));
     return capturer;
 }
 
-}  // namespace cxxkit
+CXXKIT_END_NAMESPACE

@@ -27,15 +27,16 @@
 #include <cstdlib>
 #include <limits>
 
-namespace cxxkit {
+CXXKIT_BEGIN_NAMESPACE
 
-namespace {
+namespace
+{
 
 // Below this rate every frame is dropped (throttling is meaningless).
 const double kMinFramerate = 0.5;
 const int64_t kNSecsPerSec = 1000000000LL;
 
-}  // namespace
+} // namespace
 
 FramerateController::FramerateController()
     : FramerateController(std::numeric_limits<double>::max())
@@ -121,4 +122,4 @@ void FramerateController::keep_frame(int64_t in_timestamp_nsecs)
     }
 }
 
-}  // namespace cxxkit
+CXXKIT_END_NAMESPACE

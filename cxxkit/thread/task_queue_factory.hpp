@@ -47,7 +47,7 @@ public:
 
     virtual ~TaskQueueFactory() = default;
     virtual std::unique_ptr<TaskQueueBase, TaskQueueBase::Deleter> create_task_queue(StringView name,
-                                                                                   Priority priority) const = 0;
+                                                                                     Priority priority) const = 0;
 
     static std::unique_ptr<TaskQueueFactory> create_default();
 };

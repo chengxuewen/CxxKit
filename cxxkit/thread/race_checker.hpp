@@ -69,7 +69,7 @@ private:
 CXXKIT_END_NAMESPACE
 
 #define CXXKIT_CHECK_RUNS_SERIALIZED_IMPL(x, suffix)                                                                   \
-    cxxkit::race_checker::Scope race_checker##suffix(x);                                                                 \
+    cxxkit::race_checker::Scope race_checker##suffix(x);                                                               \
     CXXKIT_CHECK(!race_checker##suffix.is_detected())
 
 #define CXXKIT_CHECK_RUNS_SERIALIZED_NEXT(x, suffix) CXXKIT_CHECK_RUNS_SERIALIZED_IMPL(x, suffix)

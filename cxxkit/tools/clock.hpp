@@ -77,7 +77,7 @@ public:
         time = time * 1000000;
         // Fractions part of the NTP time, in microseconds.
         int64_t time_fraction = divide_round_to_nearest(int64_t{ntp_time.fractions()} * 1000000,
-                                                     NtpTime::kFractionsPerSecond);
+                                                        NtpTime::kFractionsPerSecond);
         return Timestamp::micros(time + time_fraction);
     }
 
@@ -113,4 +113,3 @@ private:
     std::atomic<int64_t> mTimeUs;
 };
 CXXKIT_END_NAMESPACE
-

@@ -34,27 +34,28 @@
 #include <cstdint>
 #include <memory>
 
-namespace cxxkit {
+CXXKIT_BEGIN_NAMESPACE
 
 // Plain I420 buffer in standard (64-byte aligned) memory.
-class CXXKIT_MEDIA_API I420Buffer : public I420BufferInterface {
+class CXXKIT_MEDIA_API I420Buffer : public I420BufferInterface
+{
 public:
     static SharedRefPtr<I420Buffer> create(int width, int height);
     static SharedRefPtr<I420Buffer> create(int width, int height, int stride_y, int stride_u, int stride_v);
 
     // create a new buffer and copy the pixel data.
-    static SharedRefPtr<I420Buffer> copy(const I420BufferInterface& buffer);
+    static SharedRefPtr<I420Buffer> copy(const I420BufferInterface &buffer);
     static SharedRefPtr<I420Buffer> copy(int width,
                                          int height,
-                                         const uint8_t* data_y,
+                                         const uint8_t *data_y,
                                          int stride_y,
-                                         const uint8_t* data_u,
+                                         const uint8_t *data_u,
                                          int stride_u,
-                                         const uint8_t* data_v,
+                                         const uint8_t *data_v,
                                          int stride_v);
 
     // Returns a rotated copy of `src`.
-    static SharedRefPtr<I420Buffer> rotate(const I420BufferInterface& src, VideoRotation rotation);
+    static SharedRefPtr<I420Buffer> rotate(const I420BufferInterface &src, VideoRotation rotation);
 
     // Sets the buffer to all black (Y=0, U=128, V=128).
     void set_black();
@@ -67,40 +68,40 @@ public:
 
     int width() const override;
     int height() const override;
-    const uint8_t* get_data_y() const override;
-    const uint8_t* get_data_u() const override;
-    const uint8_t* get_data_v() const override;
+    const uint8_t *get_data_y() const override;
+    const uint8_t *get_data_u() const override;
+    const uint8_t *get_data_v() const override;
     int stride_y() const override;
     int stride_u() const override;
     int stride_v() const override;
 
-    uint8_t* mutable_data_y();
-    uint8_t* mutable_data_u();
-    uint8_t* mutable_data_v();
+    uint8_t *mutable_data_y();
+    uint8_t *mutable_data_u();
+    uint8_t *mutable_data_v();
 
     // scale the cropped area of `src` to the size of `this` buffer, and
     // write the result into `this`.
-    void crop_and_scale_from(const I420BufferInterface& src,
-                          int offset_x,
-                          int offset_y,
-                          int crop_width,
-                          int crop_height);
+    void crop_and_scale_from(const I420BufferInterface &src,
+                             int offset_x,
+                             int offset_y,
+                             int crop_width,
+                             int crop_height);
 
     // The common case of a center crop, when needed to adjust the
     // aspect ratio without distorting the image.
-    void crop_and_scale_from(const I420BufferInterface& src);
+    void crop_and_scale_from(const I420BufferInterface &src);
 
     // scale all of `src` to the size of `this` buffer, with no cropping.
-    void scale_from(const I420BufferInterface& src);
+    void scale_from(const I420BufferInterface &src);
 
     // Concrete scale: base interface default has no I420 target, see
     // video_frame_buffer.hpp. Crops `this` to the given area and scales.
     SharedRefPtr<VideoFrameBuffer> crop_and_scale(int offset_x,
-                                                int offset_y,
-                                                int crop_width,
-                                                int crop_height,
-                                                int scaled_width,
-                                                int scaled_height) override;
+                                                  int offset_y,
+                                                  int crop_width,
+                                                  int crop_height,
+                                                  int scaled_width,
+                                                  int scaled_height) override;
 
 protected:
     I420Buffer(int width, int height);
@@ -118,4 +119,4 @@ private:
     const std::unique_ptr<uint8_t, AlignedFreeDeleter> mData;
 };
 
-}  // namespace cxxkit
+CXXKIT_END_NAMESPACE

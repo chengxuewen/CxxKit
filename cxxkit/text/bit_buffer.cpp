@@ -80,7 +80,7 @@ BitBufferReader::BitBufferReader(StringView bytes)
 BitBufferReader::~BitBufferReader()
 {
     CXXKIT_DCHECK(mLastReadIsVerified) << "Latest calls to read or ConsumeBit "
-                                             "were not checked with Ok function.";
+                                          "were not checked with Ok function.";
 }
 
 int BitBufferReader::remaining_bit_count() const

@@ -29,8 +29,8 @@
 /***********************************************************************************************************************
    cxxkit Compiler specific cmds for export and import code to DLL
 ***********************************************************************************************************************/
-#ifdef CXXKIT_BUILD_SHARED_TEXT      // compiled as a dynamic lib.
-#    ifdef CXXKIT_BUILDING_TEXT_LIB  // defined if we are building the lib
+#ifdef CXXKIT_BUILD_SHARED_TEXT     // compiled as a dynamic lib.
+#    ifdef CXXKIT_BUILDING_TEXT_LIB // defined if we are building the lib
 #        define CXXKIT_TEXT_API CXXKIT_DECLARE_EXPORT
 #    else
 #        define CXXKIT_TEXT_API CXXKIT_DECLARE_IMPORT

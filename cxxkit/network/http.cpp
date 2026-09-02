@@ -69,7 +69,7 @@ bool Cookie::is_including_subdomains() const
 #if CXXKIT_FEATURE_USE_BOOST_BACKEND
 
 #else
-    return d->mCookie.has_value() ? d->mCookie->is_including_subdomains() : false;
+    return d->mCookie.has_value() ? d->mCookie->IsIncludingSubdomains() : false;
 #endif
 }
 
@@ -79,7 +79,7 @@ bool Cookie::is_https_only() const
 #if CXXKIT_FEATURE_USE_BOOST_BACKEND
 
 #else
-    return d->mCookie.has_value() ? d->mCookie->is_https_only() : false;
+    return d->mCookie.has_value() ? d->mCookie->IsHttpsOnly() : false;
 #endif
 }
 
@@ -89,7 +89,7 @@ std::chrono::system_clock::time_point Cookie::get_expires() const
 #if CXXKIT_FEATURE_USE_BOOST_BACKEND
 
 #else
-    return d->mCookie.has_value() ? d->mCookie->get_expires() : std::chrono::system_clock::time_point();
+    return d->mCookie.has_value() ? d->mCookie->GetExpires() : std::chrono::system_clock::time_point();
 #endif
 }
 
@@ -99,7 +99,7 @@ std::string Cookie::get_expires_string() const
 #if CXXKIT_FEATURE_USE_BOOST_BACKEND
 
 #else
-    return d->mCookie.has_value() ? d->mCookie->get_expires_string() : "";
+    return d->mCookie.has_value() ? d->mCookie->GetExpiresString() : "";
 #endif
 }
 
@@ -109,7 +109,7 @@ std::string Cookie::get_domain() const
 #if CXXKIT_FEATURE_USE_BOOST_BACKEND
 
 #else
-    return d->mCookie.has_value() ? d->mCookie->get_domain() : "";
+    return d->mCookie.has_value() ? d->mCookie->GetDomain() : "";
 #endif
 }
 
@@ -119,7 +119,7 @@ std::string Cookie::get_value() const
 #if CXXKIT_FEATURE_USE_BOOST_BACKEND
 
 #else
-    return d->mCookie.has_value() ? d->mCookie->get_value() : "";
+    return d->mCookie.has_value() ? d->mCookie->GetValue() : "";
 #endif
 }
 
@@ -129,7 +129,7 @@ std::string Cookie::get_path() const
 #if CXXKIT_FEATURE_USE_BOOST_BACKEND
 
 #else
-    return d->mCookie.has_value() ? d->mCookie->get_path() : "";
+    return d->mCookie.has_value() ? d->mCookie->GetPath() : "";
 #endif
 }
 
@@ -139,7 +139,7 @@ std::string Cookie::get_name() const
 #if CXXKIT_FEATURE_USE_BOOST_BACKEND
 
 #else
-    return d->mCookie.has_value() ? d->mCookie->get_name() : "";
+    return d->mCookie.has_value() ? d->mCookie->GetName() : "";
 #endif
 }
 
@@ -181,13 +181,13 @@ Cookies Response::cookies() const
     Cookies cookies(aprCookies.encode);
     for (auto &item : aprCookies)
     {
-        cookies.add(utils::make_shared<Cookie>(Cookie::Initializer{item.get_name(),
-                                                                   item.get_value(),
-                                                                   item.get_domain(),
-                                                                   item.is_including_subdomains(),
-                                                                   item.get_path(),
-                                                                   item.is_https_only(),
-                                                                   item.get_expires()}));
+        cookies.add(utils::make_shared<Cookie>(Cookie::Initializer{item.GetName(),
+                                                                   item.GetValue(),
+                                                                   item.GetDomain(),
+                                                                   item.IsIncludingSubdomains(),
+                                                                   item.GetPath(),
+                                                                   item.IsHttpsOnly(),
+                                                                   item.GetExpires()}));
     }
     return cookies;
 #endif
@@ -287,7 +287,7 @@ const char *Authentication::auth_string() const noexcept
 #if CXXKIT_FEATURE_USE_BOOST_BACKEND
 
 #else
-    return d->mAuthentication.get_auth_string();
+    return d->mAuthentication.GetAuthString();
 #endif
 }
 
@@ -297,7 +297,7 @@ Authentication::Mode Authentication::auth_mode() const noexcept
 #if CXXKIT_FEATURE_USE_BOOST_BACKEND
 
 #else
-    return AuthenticationPrivate::from_cpr(d->mAuthentication.get_auth_mode());
+    return AuthenticationPrivate::from_cpr(d->mAuthentication.GetAuthMode());
 #endif
     return Mode::kBASIC;
 }
@@ -326,7 +326,7 @@ void Session::set_url(const Url &url)
 #if CXXKIT_FEATURE_USE_BOOST_BACKEND
 
 #else
-    d->mSession.set_url(url.data());
+    d->mSession.SetUrl(url.data());
 #endif
 }
 
@@ -339,9 +339,9 @@ void Session::set_parameters(const Parameters &parameters)
     cpr::Parameters cprParameters;
     for (const auto &item : parameters.data())
     {
-        cprParameters.add({item.key, item.value});
+        cprParameters.Add({item.key, item.value});
     }
-    d->mSession.set_parameters(std::move(cprParameters));
+    d->mSession.SetParameters(std::move(cprParameters));
 #endif
 }
 
@@ -351,7 +351,7 @@ void Session::set_header(const Header &header)
 #if CXXKIT_FEATURE_USE_BOOST_BACKEND
 
 #else
-    d->mSession.set_header(cpr::Header{header.begin(), header.end()});
+    d->mSession.SetHeader(cpr::Header{header.begin(), header.end()});
 #endif
 }
 
@@ -361,7 +361,7 @@ void Session::update_header(const Header &header)
 #if CXXKIT_FEATURE_USE_BOOST_BACKEND
 
 #else
-    d->mSession.update_header(cpr::Header{header.begin(), header.end()});
+    d->mSession.UpdateHeader(cpr::Header{header.begin(), header.end()});
 #endif
 }
 
@@ -371,7 +371,7 @@ void Session::set_timeout(const Timeout &timeout)
 #if CXXKIT_FEATURE_USE_BOOST_BACKEND
 
 #else
-    d->mSession.set_timeout({timeout.ms});
+    d->mSession.SetTimeout({timeout.ms});
 #endif
 }
 
@@ -381,7 +381,7 @@ void Session::set_connect_timeout(const ConnectTimeout &timeout)
 #if CXXKIT_FEATURE_USE_BOOST_BACKEND
 
 #else
-    d->mSession.set_connect_timeout(timeout.ms);
+    d->mSession.SetConnectTimeout(timeout.ms);
 #endif
 }
 
@@ -391,7 +391,7 @@ void Session::set_auth(const Authentication &auth)
 #if CXXKIT_FEATURE_USE_BOOST_BACKEND
 
 #else
-    d->mSession.set_auth(auth.d_func()->mAuthentication);
+    d->mSession.SetAuth(auth.d_func()->mAuthentication);
 #endif
 }
 
@@ -401,7 +401,7 @@ void Session::set_body(const Body &body)
 #if CXXKIT_FEATURE_USE_BOOST_BACKEND
 
 #else
-    d->mSession.set_body(body.string());
+    d->mSession.SetBody(body.string());
 #endif
 }
 
@@ -411,7 +411,7 @@ void Session::set_bearer(const Bearer &bearer)
 #if CXXKIT_FEATURE_USE_BOOST_BACKEND
 
 #else
-    d->mSession.set_bearer(bearer.string());
+    d->mSession.SetBearer(bearer.string());
 #endif
 }
 
@@ -424,9 +424,9 @@ void Session::set_payload(const Payload &payload)
     cpr::Payload cprPayload{};
     for (const auto &item : payload.data())
     {
-        cprPayload.add({item.key, item.value});
+        cprPayload.Add({item.key, item.value});
     }
-    d->mSession.set_payload(std::move(cprPayload));
+    d->mSession.SetPayload(std::move(cprPayload));
 #endif
 }
 
@@ -447,7 +447,7 @@ void Session::set_cookies(const Cookies &cookies)
                               item->is_https_only(),
                               item->get_expires()});
     }
-    d->mSession.set_cookies(std::move(cprCookies));
+    d->mSession.SetCookies(std::move(cprCookies));
 #endif
 }
 
@@ -458,7 +458,7 @@ Response::SharedPtr Session::get()
 #if CXXKIT_FEATURE_USE_BOOST_BACKEND
 
 #else
-    response->d_func()->mResponse = std::move(d->mSession.get());
+    response->d_func()->mResponse = std::move(d->mSession.Get());
 #endif
     return response;
 }
@@ -470,7 +470,7 @@ Response::SharedPtr Session::put()
 #if CXXKIT_FEATURE_USE_BOOST_BACKEND
 
 #else
-    response->d_func()->mResponse = std::move(d->mSession.put());
+    response->d_func()->mResponse = std::move(d->mSession.Put());
 #endif
     return response;
 }
@@ -482,7 +482,7 @@ Response::SharedPtr Session::post()
 #if CXXKIT_FEATURE_USE_BOOST_BACKEND
 
 #else
-    response->d_func()->mResponse = std::move(d->mSession.post());
+    response->d_func()->mResponse = std::move(d->mSession.Post());
 #endif
     return response;
 }
@@ -494,7 +494,7 @@ Response::SharedPtr Session::download(std::ofstream &file)
 #if CXXKIT_FEATURE_USE_BOOST_BACKEND
 
 #else
-    response->d_func()->mResponse = std::move(d->mSession.download(file));
+    response->d_func()->mResponse = std::move(d->mSession.Download(file));
 #endif
     return response;
 }
@@ -506,7 +506,7 @@ Response::SharedPtr Session::download(const WriteCallback &write)
 #if CXXKIT_FEATURE_USE_BOOST_BACKEND
 
 #else
-    response->d_func()->mResponse = std::move(d->mSession.download({write.callback, write.userdata}));
+    response->d_func()->mResponse = std::move(d->mSession.Download({write.callback, write.userdata}));
 #endif
     return response;
 }

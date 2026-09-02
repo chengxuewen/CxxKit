@@ -115,12 +115,12 @@ public:
     enum
     {
         isRelocatable = TypeInfoQuery<T1>::isRelocatable && TypeInfoQuery<T2>::isRelocatable &&
-                        TypeInfoQuery<T3>::isRelocatable && TypeInfoQuery<T4>::isRelocatable,
+            TypeInfoQuery<T3>::isRelocatable && TypeInfoQuery<T4>::isRelocatable,
         isSpecialized = true,
         isComplex = TypeInfoQuery<T1>::isComplex || TypeInfoQuery<T2>::isComplex || TypeInfoQuery<T3>::isComplex ||
-                    TypeInfoQuery<T4>::isComplex,
+            TypeInfoQuery<T4>::isComplex,
         isStatic = TypeInfoQuery<T1>::isStatic || TypeInfoQuery<T2>::isStatic || TypeInfoQuery<T3>::isStatic ||
-                   TypeInfoQuery<T4>::isStatic,
+            TypeInfoQuery<T4>::isStatic,
         isPointer = false,
         isIntegral = false
     };
@@ -155,15 +155,12 @@ struct TypeInfoFlags
             isComplex = (((FLAGS) & CXXKIT_PRIMITIVE_TYPE) == 0) && !std::is_trivial<TYPE>::value,                     \
             isStatic = (((FLAGS) & (CXXKIT_MOVABLE_TYPE | CXXKIT_PRIMITIVE_TYPE)) == 0),                               \
             isRelocatable = !isStatic || ((FLAGS) & CXXKIT_RELOCATABLE_TYPE) ||                                        \
-                            cxxkit::traits::is_relocatable<TYPE>::value,                                                    \
+                cxxkit::traits::is_relocatable<TYPE>::value,                                                           \
             isPointer = false,                                                                                         \
             isIntegral = std::is_integral<TYPE>::value,                                                                \
         };                                                                                                             \
         CXXKIT_WARNING_POP                                                                                             \
-        static inline const char *name()                                                                               \
-        {                                                                                                              \
-            return #TYPE;                                                                                              \
-        }                                                                                                              \
+        static inline const char *name() { return #TYPE; }                                                             \
     }
 
 #define CXXKIT_DECLARE_TYPEINFO(TYPE, FLAGS)                                                                           \

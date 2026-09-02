@@ -276,4 +276,3 @@ public:
     }
 };
 CXXKIT_END_NAMESPACE
-

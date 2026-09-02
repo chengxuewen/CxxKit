@@ -220,7 +220,8 @@ DWORD WINAPI adopted_thread_watcher_function(LPVOID)
 
         if (ret == WAIT_FAILED || ret >= WAIT_OBJECT_0 + uint_t(count))
         {
-            CXXKIT_WARNING("PlatformThread internal error while waiting for adopted threads: %d", int(get_last_error()));
+            CXXKIT_WARNING("PlatformThread internal error while waiting for adopted threads: %d",
+                           int(get_last_error()));
             continue;
         }
 
@@ -324,12 +325,12 @@ PlatformThreadData *PlatformThreadData::current(bool createIfNecessary)
 
         HANDLE realHandle = INVALID_HANDLE_VALUE;
         duplicate_handle(get_current_process(),
-                        get_current_thread(),
-                        get_current_process(),
-                        &realHandle,
-                        0,
-                        FALSE,
-                        DUPLICATE_SAME_ACCESS);
+                         get_current_thread(),
+                         get_current_process(),
+                         &realHandle,
+                         0,
+                         FALSE,
+                         DUPLICATE_SAME_ACCESS);
         detail::thread::watch_adopted(realHandle, threadData->thread.load());
     }
     return threadData;
@@ -422,11 +423,11 @@ bool PlatformThreadPrivate::start(Priority priority)
 #    else
     // MSVC -MD or -MDd or MinGW build
     mThreadHandle = create_thread(nullptr,
-                                 mStackSize,
-                                 reinterpret_cast<LPTHREAD_START_ROUTINE>(detail::thread::start),
-                                 this,
-                                 CREATE_SUSPENDED,
-                                 reinterpret_cast<LPDWORD>(&id));
+                                  mStackSize,
+                                  reinterpret_cast<LPTHREAD_START_ROUTINE>(detail::thread::start),
+                                  this,
+                                  CREATE_SUSPENDED,
+                                  reinterpret_cast<LPDWORD>(&id));
 #    endif // CXXKIT_OS_WINRT
     mData->thread_id.store(id);
 

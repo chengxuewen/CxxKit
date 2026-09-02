@@ -333,4 +333,3 @@ private:
     // Should be 0 if the mBuffer is empty.
 };
 CXXKIT_END_NAMESPACE
-

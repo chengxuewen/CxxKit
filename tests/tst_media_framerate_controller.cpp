@@ -29,24 +29,28 @@
 #include <cstdint>
 #include <limits>
 
-namespace {
+namespace
+{
 
-TEST(FramerateController, SetGet) {
+TEST(FramerateController, SetGet)
+{
     cxxkit::FramerateController fc;
     fc.set_frame_rate(30.0);
     EXPECT_DOUBLE_EQ(fc.get_frame_rate(), 30.0);
 }
 
-TEST(FramerateController, should_drop_frame) {
-    cxxkit::FramerateController fc(30.0);  // 30fps → 帧间隔 ~33.3ms
+TEST(FramerateController, should_drop_frame)
+{
+    cxxkit::FramerateController fc(30.0); // 30fps → 帧间隔 ~33.3ms
     // 同一时间戳连续查询：第二帧必然丢帧（未到间隔）
     EXPECT_FALSE(fc.should_drop_frame(0));
-    EXPECT_TRUE(fc.should_drop_frame(0));  // 距上帧 0ms < 33ms → 丢
+    EXPECT_TRUE(fc.should_drop_frame(0)); // 距上帧 0ms < 33ms → 丢
     // 时间推进到下一帧间隔后：不丢
-    EXPECT_FALSE(fc.should_drop_frame(40000000));  // +40ms > 33.3ms → 保留
+    EXPECT_FALSE(fc.should_drop_frame(40000000)); // +40ms > 33.3ms → 保留
 }
 
-TEST(FramerateController, NoThrottleByDefault) {
+TEST(FramerateController, NoThrottleByDefault)
+{
     // 默认 maxdouble → 永不丢帧
     cxxkit::FramerateController fc;
     for (int i = 0; i < 100; ++i)
@@ -55,19 +59,21 @@ TEST(FramerateController, NoThrottleByDefault) {
     }
 }
 
-TEST(FramerateController, reset) {
+TEST(FramerateController, reset)
+{
     cxxkit::FramerateController fc(30.0);
     EXPECT_FALSE(fc.should_drop_frame(0));
     EXPECT_TRUE(fc.should_drop_frame(0));
     fc.reset();
     EXPECT_EQ(fc.get_frame_rate(), std::numeric_limits<double>::max());
-    EXPECT_FALSE(fc.should_drop_frame(0));  // reset 后首帧不丢
+    EXPECT_FALSE(fc.should_drop_frame(0)); // reset 后首帧不丢
 }
 
-TEST(FramerateController, BelowMinFpsDropsAll) {
-    cxxkit::FramerateController fc(0.1);  // < kMinFramerate(0.5)
+TEST(FramerateController, BelowMinFpsDropsAll)
+{
+    cxxkit::FramerateController fc(0.1); // < kMinFramerate(0.5)
     EXPECT_TRUE(fc.should_drop_frame(0));
     EXPECT_TRUE(fc.should_drop_frame(1000000000));
 }
 
-}  // namespace
+} // namespace

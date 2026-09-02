@@ -82,5 +82,5 @@ CXXKIT_END_NAMESPACE
  * @param x
  */
 #define CXXKIT_DCHECK_RUN_ON(x)                                                                                        \
-    CXXKIT_DCHECK((x)->is_current()) << "\n" << ContextChecker::expectation_to_string(x);                                 \
-    []() CXXKIT_ATTRIBUTE_ASSERT_EXCLUSIVE_LOCK(x) {}()
+    CXXKIT_DCHECK((x)->is_current()) << "\n" << ContextChecker::expectation_to_string(x);                              \
+    []() CXXKIT_ATTRIBUTE_ASSERT_EXCLUSIVE_LOCK(x) { }()

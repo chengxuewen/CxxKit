@@ -33,7 +33,7 @@
 #include <string>
 #include <vector>
 
-namespace cxxkit {
+CXXKIT_BEGIN_NAMESPACE
 
 // Abstract frame source producing I420 VideoFrameBuffers on demand. Used by
 // FrameGeneratorCapturer for testing/placeholder/demo pipelines.
@@ -59,10 +59,10 @@ public:
     // `frame_repeat_count` determines how many times each slide is shown
     // before a new one is generated (1 = new slide per frame).
     static std::unique_ptr<FrameGenerator> create_slide_show(std::vector<std::string> filenames,
-                                                           OutputType type,
-                                                           int width,
-                                                           int height,
-                                                           int frame_repeat_count);
+                                                             OutputType type,
+                                                             int width,
+                                                             int height,
+                                                             int frame_repeat_count);
 };
 
-}  // namespace cxxkit
+CXXKIT_END_NAMESPACE

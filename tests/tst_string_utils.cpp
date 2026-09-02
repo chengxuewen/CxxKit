@@ -262,7 +262,8 @@ TEST(StringUtils, StringCaseCmp)
 
 TEST(StringUtils, ContainsIgnoreCase)
 {
-    EXPECT_TRUE(cxxkit::utils::string_contains_ignore_case(cxxkit::StringView("Hello World"), cxxkit::StringView("WORLD")));
+    EXPECT_TRUE(
+        cxxkit::utils::string_contains_ignore_case(cxxkit::StringView("Hello World"), cxxkit::StringView("WORLD")));
     EXPECT_FALSE(cxxkit::utils::string_contains_ignore_case(cxxkit::StringView("Hello"), cxxkit::StringView("xyz")));
     EXPECT_TRUE(cxxkit::utils::string_contains_ignore_case(cxxkit::StringView("abc"), 'b'));
     EXPECT_FALSE(cxxkit::utils::string_contains_ignore_case(cxxkit::StringView("abc"), 'z'));

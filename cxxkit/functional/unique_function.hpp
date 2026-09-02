@@ -60,4 +60,3 @@ using UniqueFunction = fu2::unique_function<T>;
  */
 
 CXXKIT_END_NAMESPACE
-

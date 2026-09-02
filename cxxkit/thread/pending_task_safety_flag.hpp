@@ -66,7 +66,10 @@ public:
     void set_not_alive() { mAlive.store(false, std::memory_order_release); }
 
 private:
-    PendingTaskSafetyFlag() : mAlive(true) {}
+    PendingTaskSafetyFlag()
+        : mAlive(true)
+    {
+    }
     PendingTaskSafetyFlag(const PendingTaskSafetyFlag &) = delete;
     PendingTaskSafetyFlag &operator=(const PendingTaskSafetyFlag &) = delete;
 
@@ -82,7 +85,8 @@ private:
 template <class Callable>
 std::function<void()> safe_task(std::shared_ptr<PendingTaskSafetyFlag> flag, Callable &&callable)
 {
-    return [flag, callable]() {
+    return [flag, callable]()
+    {
         if (flag->alive())
         {
             callable();

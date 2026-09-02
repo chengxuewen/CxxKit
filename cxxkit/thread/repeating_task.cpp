@@ -141,10 +141,10 @@ RepeatingTaskHandle RepeatingTaskHandle::start(TaskQueueBase *taskQueue,
 // delayed_start is equivalent to Start except that the first invocation of the closure will be delayed
 // by the given amount.
 RepeatingTaskHandle RepeatingTaskHandle::delayed_start(TaskQueueBase *taskQueue,
-                                                      TimeDelta firstDelay,
-                                                      UniqueFunction<TimeDelta()> closure,
-                                                      Clock *clock,
-                                                      const SourceLocation &location)
+                                                       TimeDelta firstDelay,
+                                                       UniqueFunction<TimeDelta()> closure,
+                                                       Clock *clock,
+                                                       const SourceLocation &location)
 {
     auto aliveFlag = TaskQueueBase::SafetyFlag::create_detached();
     // detail::RepeatingTaskHandleDTraceProbeDelayedStart();

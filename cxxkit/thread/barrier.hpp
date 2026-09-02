@@ -52,7 +52,12 @@ public:
      * @brief Constructs a barrier for @p num_threads threads.
      * @param num_threads Number of threads that must arrive before the barrier opens.
      */
-    explicit Barrier(size_t num_threads) : mNumThreads(num_threads), mCount(num_threads), mPhase(0) {}
+    explicit Barrier(size_t num_threads)
+        : mNumThreads(num_threads)
+        , mCount(num_threads)
+        , mPhase(0)
+    {
+    }
 
     ~Barrier() = default;
 

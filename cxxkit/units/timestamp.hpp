@@ -162,4 +162,3 @@ void absl_stringify(Sink &sink, Timestamp value)
 }
 
 CXXKIT_END_NAMESPACE
-

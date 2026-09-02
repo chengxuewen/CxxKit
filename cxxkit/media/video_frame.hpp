@@ -36,17 +36,19 @@
 
 #include <cstdint>
 
-namespace cxxkit {
+CXXKIT_BEGIN_NAMESPACE
 
 // VideoFrame stores the underlying pixel data (a VideoFrameBuffer) plus frame
 // metadata: id, timestamps, rotation, color space and the updated region.
 // RTP-specific fields (packet infos, render parameters) are intentionally
 // trimmed — CxxKit has no RTP requirement.
-class CXXKIT_MEDIA_API VideoFrame {
+class CXXKIT_MEDIA_API VideoFrame
+{
 public:
     static constexpr uint16_t kNotSetId = 0;
 
-    struct CXXKIT_MEDIA_API UpdateRect {
+    struct CXXKIT_MEDIA_API UpdateRect
+    {
         int x = 0;
         int y = 0;
         int width = 0;
@@ -56,10 +58,10 @@ public:
         UpdateRect(int x, int y, int width, int height);
 
         // Returns the bounding box of this and other rect.
-        UpdateRect Union(const UpdateRect& other) const;
+        UpdateRect Union(const UpdateRect &other) const;
 
         // Returns the intersection of this and other rect (empty if disjoint).
-        UpdateRect intersect(const UpdateRect& other) const;
+        UpdateRect intersect(const UpdateRect &other) const;
 
         // Sets everything to 0, making this UpdateRect a zero-size (empty) update.
         void make_empty_update();
@@ -68,8 +70,8 @@ public:
 
         // Per-member equality check. Empty rectangles with different offsets would
         // be considered different.
-        bool operator==(const UpdateRect& other) const;
-        bool operator!=(const UpdateRect& other) const { return !(*this == other); }
+        bool operator==(const UpdateRect &other) const;
+        bool operator!=(const UpdateRect &other) const { return !(*this == other); }
 
         // Scales updateRect given original frame dimensions.
         // Cropping is applied first, then rect is scaled down.
@@ -79,57 +81,58 @@ public:
         // Note, close but not equal update_rects on original frame may result in
         // the same scaled update rects.
         UpdateRect scale_with_frame(int frame_width,
-                                  int frame_height,
-                                  int crop_x,
-                                  int crop_y,
-                                  int crop_width,
-                                  int crop_height,
-                                  int scaled_width,
-                                  int scaled_height) const;
+                                    int frame_height,
+                                    int crop_x,
+                                    int crop_y,
+                                    int crop_width,
+                                    int crop_height,
+                                    int scaled_width,
+                                    int scaled_height) const;
     };
 
     // Preferred way of building VideoFrame objects.
-    class CXXKIT_MEDIA_API Builder {
+    class CXXKIT_MEDIA_API Builder
+    {
     public:
         Builder() = default;
         ~Builder() = default;
 
         VideoFrame build();
-        Builder& set_video_frame_buffer(const SharedRefPtr<VideoFrameBuffer>& buffer);
+        Builder &set_video_frame_buffer(const SharedRefPtr<VideoFrameBuffer> &buffer);
 
-        Builder& set_timestamp_rtp(uint32_t rtp_timestamp)
+        Builder &set_timestamp_rtp(uint32_t rtp_timestamp)
         {
             mTimestampRtp = rtp_timestamp;
             return *this;
         }
 
-        Builder& set_timestamp_us(int64_t timestamp_us)
+        Builder &set_timestamp_us(int64_t timestamp_us)
         {
             mTimestampUs = timestamp_us;
             return *this;
         }
 
-        Builder& set_rotation(VideoRotation rotation)
+        Builder &set_rotation(VideoRotation rotation)
         {
             mRotation = rotation;
             return *this;
         }
 
-        Builder& set_color_space(const Optional<ColorSpace>& color_space)
+        Builder &set_color_space(const Optional<ColorSpace> &color_space)
         {
             mColorSpace = color_space;
             return *this;
         }
 
-        Builder& set_color_space(const ColorSpace* color_space);
+        Builder &set_color_space(const ColorSpace *color_space);
 
-        Builder& set_id(uint16_t id)
+        Builder &set_id(uint16_t id)
         {
             mId = id;
             return *this;
         }
 
-        Builder& set_update_rect(const Optional<UpdateRect>& update_rect)
+        Builder &set_update_rect(const Optional<UpdateRect> &update_rect)
         {
             mUpdateRect = update_rect;
             return *this;
@@ -146,12 +149,12 @@ public:
     };
 
     VideoFrame(uint16_t id,
-               const SharedRefPtr<VideoFrameBuffer>& video_frame_buffer,
+               const SharedRefPtr<VideoFrameBuffer> &video_frame_buffer,
                int64_t timestamp_us,
                uint32_t timestamp_rtp,
                VideoRotation rotation,
-               const Optional<ColorSpace>& color_space,
-               const Optional<UpdateRect>& update_rect);
+               const Optional<ColorSpace> &color_space,
+               const Optional<UpdateRect> &update_rect);
 
     // System monotonic clock, same timebase as rtc::time_micros().
     int64_t timestamp_us() const { return mTimestampUs; }
@@ -170,23 +173,23 @@ public:
     void set_rotation(VideoRotation rotation) { mRotation = rotation; }
 
     // get color space when available.
-    const Optional<ColorSpace>& color_space() const { return mColorSpace; }
-    void set_color_space(const Optional<ColorSpace>& color_space) { mColorSpace = color_space; }
+    const Optional<ColorSpace> &color_space() const { return mColorSpace; }
+    void set_color_space(const Optional<ColorSpace> &color_space) { mColorSpace = color_space; }
 
     // Return the underlying buffer. Never nullptr for a properly initialized VideoFrame.
     SharedRefPtr<VideoFrameBuffer> video_frame_buffer() const { return mVideoFrameBuffer; }
-    void set_video_frame_buffer(const SharedRefPtr<VideoFrameBuffer>& buffer);
+    void set_video_frame_buffer(const SharedRefPtr<VideoFrameBuffer> &buffer);
 
     int width() const;
     int height() const;
-    uint32_t size() const;  // get frame size in pixels.
+    uint32_t size() const; // get frame size in pixels.
 
     bool has_update_rect() const { return mUpdateRect.has_value(); }
 
     // Returns updateRect set by the builder or set_update_rect() or whole frame rect if no update rect is available.
     UpdateRect update_rect() const { return mUpdateRect.value_or(UpdateRect{0, 0, width(), height()}); }
     // Rectangle must be within the frame dimensions.
-    void set_update_rect(const VideoFrame::UpdateRect& update_rect);
+    void set_update_rect(const VideoFrame::UpdateRect &update_rect);
     void clear_update_rect() { mUpdateRect = utils::nullopt; }
 
 private:
@@ -204,4 +207,4 @@ private:
     Optional<UpdateRect> mUpdateRect;
 };
 
-}  // namespace cxxkit
+CXXKIT_END_NAMESPACE

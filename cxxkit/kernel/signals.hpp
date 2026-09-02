@@ -88,10 +88,10 @@ struct IsCallableImpl<F, P, TypeList<Args...>> : traits::is_invocable<F, P, Args
 };
 template <typename... Args>
 using is_callable = IsCallableImpl<Args...>;
-#if CXXKIT_CC_CPP14_OR_GREATER
+#    if CXXKIT_CC_CPP14_OR_GREATER
 template <typename... Args>
 constexpr bool is_callable_v = is_callable<Args...>::value;
-#endif
+#    endif
 } // namespace detail
 
 template <typename... Args>
@@ -105,20 +105,32 @@ static constexpr bool with_rtti =
 #    endif
 
 template <typename T>
-struct is_pointer : traits::is_pointer<T> {};
+struct is_pointer : traits::is_pointer<T>
+{
+};
 template <typename T>
-struct is_function : traits::is_function<T> {};
+struct is_function : traits::is_function<T>
+{
+};
 template <typename T>
-struct is_weak_ptr : traits::is_weak_ptr<T> {};
+struct is_weak_ptr : traits::is_weak_ptr<T>
+{
+};
 template <typename P>
-struct is_weak_ptr_compatible : traits::is_weak_ptr_compatible<typename std::decay<P>::type> {};
+struct is_weak_ptr_compatible : traits::is_weak_ptr_compatible<typename std::decay<P>::type>
+{
+};
 template <typename T>
-struct has_call_operator : traits::has_call_operator<T> {};
+struct has_call_operator : traits::has_call_operator<T>
+{
+};
 template <typename L, typename... Args>
 using is_callable = detail::is_callable<Args..., L>;
 template <typename T>
-struct is_member_function_pointer : traits::is_member_function_pointer<T> {};
-#if CXXKIT_CC_CPP14_OR_GREATER
+struct is_member_function_pointer : traits::is_member_function_pointer<T>
+{
+};
+#    if CXXKIT_CC_CPP14_OR_GREATER
 template <typename T>
 constexpr bool is_pointer_v = traits::is_pointer<T>::value;
 template <typename T>
@@ -133,7 +145,7 @@ template <typename L, typename... Args>
 constexpr bool is_callable_v = detail::is_callable<Args..., L>::value;
 template <typename T>
 constexpr bool is_member_function_pointer_v = traits::is_member_function_pointer<T>::value;
-#endif
+#    endif
 
 
 template <typename...>
@@ -145,18 +157,18 @@ struct is_signal<SignalBase<L, T...>> : std::true_type
 {
 };
 template <typename T>
-struct is_observer
-    : std::is_base_of<::cxxkit::signals::detail::ObserverType,
-                      typename std::remove_pointer<typename std::remove_reference<T>::type>::type>
+struct is_observer : std::is_base_of<::cxxkit::signals::detail::ObserverType,
+                                     typename std::remove_pointer<typename std::remove_reference<T>::type>::type>
 {
 };
-#if CXXKIT_CC_CPP14_OR_GREATER
+#    if CXXKIT_CC_CPP14_OR_GREATER
 template <typename S>
 constexpr bool is_signal_v = is_signal<S>::value;
 template <typename T>
 constexpr bool is_observer_v =
-    std::is_base_of<::cxxkit::signals::detail::ObserverType, typename std::remove_pointer<typename std::remove_reference<T>::type>::type>::value;
-#endif
+    std::is_base_of<::cxxkit::signals::detail::ObserverType,
+                    typename std::remove_pointer<typename std::remove_reference<T>::type>::type>::value;
+#    endif
 
 } // namespace trait
 
@@ -367,9 +379,9 @@ struct object_pointer<T, typename std::enable_if<trait::is_weak_ptr<T>::value>::
 };
 
 template <typename T>
-struct object_pointer<
-    T,
-    typename std::enable_if<!trait::is_pointer<T>::value && !trait::is_weak_ptr<T>::value && trait::is_weak_ptr_compatible<T>::value>::type>
+struct object_pointer<T,
+                      typename std::enable_if<!trait::is_pointer<T>::value && !trait::is_weak_ptr<T>::value &&
+                                              trait::is_weak_ptr_compatible<T>::value>::type>
 {
     static obj_ptr get(const T &t) { return t ? reinterpret_cast<obj_ptr>(t.get()) : nullptr; }
 };
@@ -464,7 +476,9 @@ public:
     }
 
     template <typename U>
-    explicit copy_on_write(U &&x, typename std::enable_if<!std::is_same<typename std::decay<U>::type, copy_on_write>::value>::type * = nullptr)
+    explicit copy_on_write(
+        U &&x,
+        typename std::enable_if<!std::is_same<typename std::decay<U>::type, copy_on_write>::value>::type * = nullptr)
         : mData(new payload(std::forward<U>(x)))
     {
     }
@@ -1301,7 +1315,8 @@ class SignalBase final : public detail::Cleanable
     using cow_type = typename std::conditional<is_thread_safe<L>::value, detail::copy_on_write<U>, U>::type;
 
     template <typename U, typename L>
-    using cow_copy_type = typename std::conditional<is_thread_safe<L>::value, detail::copy_on_write<U>, const U &>::type;
+    using cow_copy_type =
+        typename std::conditional<is_thread_safe<L>::value, detail::copy_on_write<U>, const U &>::type;
 
     using lock_type = std::unique_lock<Lockable>;
     using slot_base = detail::SlotBase<T...>;
@@ -1392,7 +1407,9 @@ public:
      * @return a connection object that can be used to interact with the slot
      */
     template <typename Callable>
-    typename std::enable_if<trait::detail::is_callable<arg_list, Callable>::value, Connection>::type connect(Callable &&c, GroupId gid = 0)
+    typename std::enable_if<trait::detail::is_callable<arg_list, Callable>::value, Connection>::type connect(
+        Callable &&c,
+        GroupId gid = 0)
     {
         using slot_t = detail::Slot<Callable, T...>;
         auto s = make_slot<slot_t>(std::forward<Callable>(c), gid);
@@ -1412,8 +1429,8 @@ public:
      * @return a connection object that can be used to interact with the slot
      */
     template <typename Callable>
-    typename std::enable_if<trait::detail::is_callable<ext_arg_list, Callable>::value, Connection>::type connect_extended(Callable &&c,
-                                                                                                GroupId gid = 0)
+    typename std::enable_if<trait::detail::is_callable<ext_arg_list, Callable>::value, Connection>::type
+    connect_extended(Callable &&c, GroupId gid = 0)
     {
         using slot_t = detail::SlotExtended<Callable, T...>;
         auto s = make_slot<slot_t>(std::forward<Callable>(c), gid);
@@ -1433,7 +1450,8 @@ public:
      * @return a connection object that can be used to interact with the slot
      */
     template <typename Pmf, typename Ptr>
-    typename std::enable_if<trait::detail::is_callable<arg_list, Pmf, Ptr>::value && trait::is_observer<Ptr>::value, Connection>::type
+    typename std::enable_if<trait::detail::is_callable<arg_list, Pmf, Ptr>::value && trait::is_observer<Ptr>::value,
+                            Connection>::type
     connect(Pmf &&pmf, Ptr &&ptr, GroupId gid = 0)
     {
         using slot_t = detail::slot_pmf<Pmf, Ptr, T...>;
@@ -1454,8 +1472,8 @@ public:
      */
     template <typename Pmf, typename Ptr>
     typename std::enable_if<trait::detail::is_callable<arg_list, Pmf, Ptr>::value && !trait::is_observer<Ptr>::value &&
-                         !trait::is_weak_ptr_compatible<Ptr>::value,
-                     Connection>::type
+                                !trait::is_weak_ptr_compatible<Ptr>::value,
+                            Connection>::type
     connect(Pmf &&pmf, Ptr &&ptr, GroupId gid = 0)
     {
         using slot_t = detail::slot_pmf<Pmf, Ptr, T...>;
@@ -1478,7 +1496,9 @@ public:
      * @return a connection object that can be used to interact with the slot
      */
     template <typename Pmf, typename Ptr>
-    typename std::enable_if<trait::detail::is_callable<ext_arg_list, Pmf, Ptr>::value && !trait::is_weak_ptr_compatible<Ptr>::value, Connection>::type
+    typename std::enable_if<trait::detail::is_callable<ext_arg_list, Pmf, Ptr>::value &&
+                                !trait::is_weak_ptr_compatible<Ptr>::value,
+                            Connection>::type
     connect_extended(Pmf &&pmf, Ptr &&ptr, GroupId gid = 0)
     {
         using slot_t = detail::slot_pmf_extended<Pmf, Ptr, T...>;
@@ -1507,7 +1527,9 @@ public:
      * @return a connection object that can be used to interact with the slot
      */
     template <typename Pmf, typename Ptr>
-    typename std::enable_if<!trait::detail::is_callable<arg_list, Pmf>::value && trait::is_weak_ptr_compatible<Ptr>::value, Connection>::type
+    typename std::enable_if<!trait::detail::is_callable<arg_list, Pmf>::value &&
+                                trait::is_weak_ptr_compatible<Ptr>::value,
+                            Connection>::type
     connect(Pmf &&pmf, Ptr &&ptr, GroupId gid = 0)
     {
         auto w = utils::to_weak_ptr(std::forward<Ptr>(ptr));
@@ -1540,7 +1562,9 @@ public:
      * @return a connection object that can be used to interact with the slot
      */
     template <typename Pmf, typename Ptr>
-    typename std::enable_if<!trait::detail::is_callable<ext_arg_list, Pmf>::value && trait::is_weak_ptr_compatible<Ptr>::value, Connection>::type
+    typename std::enable_if<!trait::detail::is_callable<ext_arg_list, Pmf>::value &&
+                                trait::is_weak_ptr_compatible<Ptr>::value,
+                            Connection>::type
     connect_extended(Pmf &&pmf, Ptr &&ptr, GroupId gid = 0)
     {
         auto w = utils::to_weak_ptr(std::forward<Ptr>(ptr));
@@ -1570,7 +1594,9 @@ public:
      * @return a connection object that can be used to interact with the slot
      */
     template <typename Callable, typename Trackable>
-    typename std::enable_if<trait::detail::is_callable<arg_list, Callable>::value && trait::is_weak_ptr_compatible<Trackable>::value, Connection>::type
+    typename std::enable_if<trait::detail::is_callable<arg_list, Callable>::value &&
+                                trait::is_weak_ptr_compatible<Trackable>::value,
+                            Connection>::type
     connect(Callable &&c, Trackable &&ptr, GroupId gid = 0)
     {
         auto w = utils::to_weak_ptr(std::forward<Trackable>(ptr));
@@ -1603,8 +1629,9 @@ public:
      * @return a connection object that can be used to interact with the slot
      */
     template <typename Callable, typename Trackable>
-    typename std::enable_if<trait::detail::is_callable<ext_arg_list, Callable>::value && trait::is_weak_ptr_compatible<Trackable>::value,
-                     Connection>::type
+    typename std::enable_if<trait::detail::is_callable<ext_arg_list, Callable>::value &&
+                                trait::is_weak_ptr_compatible<Trackable>::value,
+                            Connection>::type
     connect_extended(Callable &&c, Trackable &&ptr, GroupId gid = 0)
     {
         auto w = utils::to_weak_ptr(std::forward<Trackable>(ptr));
@@ -1641,10 +1668,11 @@ public:
      * @return the number of disconnected slots
      */
     template <typename Callable>
-    typename std::enable_if<
-        (trait::detail::is_callable<arg_list, Callable>::value || trait::detail::is_callable<ext_arg_list, Callable>::value ||
-         trait::is_member_function_pointer<Callable>::value)&&detail::function_traits<Callable>::is_disconnectable,
-        size_t>::type
+    typename std::enable_if<(trait::detail::is_callable<arg_list, Callable>::value ||
+                             trait::detail::is_callable<ext_arg_list, Callable>::value ||
+                             trait::is_member_function_pointer<Callable>::value) &&
+                                detail::function_traits<Callable>::is_disconnectable,
+                            size_t>::type
     disconnect(const Callable &c)
     {
         return disconnect_if([&](const slot_ptr &s) { return s->has_full_callable(c); });
@@ -1663,9 +1691,10 @@ public:
      * @return the number of disconnected slots
      */
     template <typename Obj>
-    typename std::enable_if<!trait::detail::is_callable<arg_list, Obj>::value && !trait::detail::is_callable<ext_arg_list, Obj>::value &&
-                         !trait::is_member_function_pointer<Obj>::value,
-                     size_t>::type
+    typename std::enable_if<!trait::detail::is_callable<arg_list, Obj>::value &&
+                                !trait::detail::is_callable<ext_arg_list, Obj>::value &&
+                                !trait::is_member_function_pointer<Obj>::value,
+                            size_t>::type
     disconnect(const Obj &obj)
     {
         return disconnect_if([&](const slot_ptr &s) { return s->has_object(obj); });
@@ -1873,9 +1902,8 @@ private:
  * Freestanding connect function that defers to the `signal_base::connect` member.
  */
 template <typename Lockable, typename Arg, typename... T, typename... Args>
-typename std::enable_if<!trait::is_signal<typename std::decay<Arg>::type>::value, Connection>::type connect(SignalBase<Lockable, T...> &sig,
-                                                                             Arg &&arg,
-                                                                             Args &&...args)
+typename std::enable_if<!trait::is_signal<typename std::decay<Arg>::type>::value, Connection>::type
+connect(SignalBase<Lockable, T...> &sig, Arg &&arg, Args &&...args)
 {
     return sig.connect(std::forward<Arg>(arg), std::forward<Args>(args)...);
 }

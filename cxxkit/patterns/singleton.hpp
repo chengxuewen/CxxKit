@@ -44,7 +44,7 @@ class Singleton<T, false, traits::enable_if_t<true>>
 public:
     static constexpr bool UseManualLifetime = false;
 
-/** @brief Return reference to the static singleton instance.
+    /** @brief Return reference to the static singleton instance.
  * @return Singleton instance, lazily constructed (thread-safe in C++11).
  */
     static T &instance()
@@ -75,7 +75,7 @@ class Singleton<T, true, traits::enable_if_t<true>>
 public:
     static constexpr bool UseManualLifetime = true;
 
-/** @brief Return reference to the manually-managed singleton instance.
+    /** @brief Return reference to the manually-managed singleton instance.
  * @return Singleton instance (created via std::call_once).
  */
     static T &instance()
@@ -89,7 +89,7 @@ protected:
     Singleton() = default;
     virtual ~Singleton() = default;
 
-/** @brief Transfer ownership out of the singleton scope.
+    /** @brief Transfer ownership out of the singleton scope.
  * @return Raw pointer to the instance, disassociated from internal scope.
  */
     T *detach_scoped()
@@ -99,7 +99,7 @@ protected:
         return mInstance.exchange(nullptr);
     }
 
-/** @brief Destroy the singleton instance and release all ownership.
+    /** @brief Destroy the singleton instance and release all ownership.
  * @note Call during process tear-down; afterwards instance() is undefined.
  */
     void destroy() { delete this->detach_scoped(); }
@@ -141,4 +141,3 @@ CXXKIT_END_NAMESPACE
  * @note Place inside the class definition so Singleton can call protected ctor/dtor.
  */
 #define CXXKIT_DECLARE_SINGLETON(CLASS) friend class cxxkit::Singleton<CLASS, UseManualLifetime>;
-

@@ -37,7 +37,7 @@ public:
     DefaultTaskQueueFactory() = default;
     ~DefaultTaskQueueFactory() override { }
     std::unique_ptr<TaskQueueBase, TaskQueueBase::Deleter> create_task_queue(StringView name,
-                                                                           Priority priority) const override
+                                                                             Priority priority) const override
     {
         auto taskQueue = TaskQueueThread::make_unique();
         // taskQueue->set_priority(priority); // TODO

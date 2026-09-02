@@ -40,4 +40,3 @@
 #    define CXXKIT_NETWORK_API
 #    define CXXKIT_NETWORK_HIDDEN
 #endif
-

@@ -51,4 +51,3 @@ protected:
 };
 
 CXXKIT_END_NAMESPACE
-

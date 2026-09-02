@@ -94,10 +94,10 @@ using std::is_void_v;
 #else
 template <typename T>
 using is_void = std::is_void<T>;
-#if CXXKIT_CC_CPP14_OR_GREATER
+#    if CXXKIT_CC_CPP14_OR_GREATER
 template <typename T>
 constexpr bool is_void_v = std::is_void<T>::value;
-#endif
+#    endif
 #endif
 
 /***********************************************************************************************************************
@@ -109,10 +109,10 @@ using std::is_same_v;
 #else
 template <typename T, typename U>
 using is_same = std::is_same<T, U>;
-#if CXXKIT_CC_CPP14_OR_GREATER
+#    if CXXKIT_CC_CPP14_OR_GREATER
 template <typename T, typename U>
 constexpr bool is_same_v = std::is_same<T, U>::value;
-#endif
+#    endif
 #endif
 
 /***********************************************************************************************************************
@@ -126,10 +126,10 @@ using std::is_trivially_destructible_v;
 #else
 template <typename T>
 using is_trivially_copyable = std::is_trivially_copyable<T>;
-#if CXXKIT_CC_CPP14_OR_GREATER
+#    if CXXKIT_CC_CPP14_OR_GREATER
 template <typename T>
 constexpr bool is_trivially_copyable_v = std::is_trivially_copyable<T>::value;
-#endif
+#    endif
 template <typename T>
 struct is_trivially_destructible
     : public std::integral_constant<bool,
@@ -137,23 +137,24 @@ struct is_trivially_destructible
                                         (std::is_trivially_copyable<T>::value || std::is_trivial<T>::value)>
 {
 };
-#if CXXKIT_CC_CPP14_OR_GREATER
+#    if CXXKIT_CC_CPP14_OR_GREATER
 template <typename T>
 constexpr bool is_trivially_destructible_v = is_trivially_destructible<T>::value;
-#endif
+#    endif
 #endif
 
 /***********************************************************************************************************************
  * is_relocatable(is_trivially_copyable && is_trivially_destructible)
 ***********************************************************************************************************************/
 template <typename T>
-struct is_relocatable : public std::integral_constant<bool,
+struct is_relocatable
+    : public std::integral_constant<bool,
 #if defined(CXXKIT_CC_CLANG) || !defined(CXXKIT_CC_GNU) || CXXKIT_CC_GNU >= 501
-                                                      std::is_trivially_copyable<T>::value && is_trivially_destructible<T>::value
+                                    std::is_trivially_copyable<T>::value && is_trivially_destructible<T>::value
 #else
-                                                      std::is_enum<T>::value || std::is_integral<T>::value
+                                    std::is_enum<T>::value || std::is_integral<T>::value
 #endif
-                                                      >
+                                    >
 {
 };
 #if CXXKIT_CC_CPP14_OR_GREATER
@@ -169,10 +170,10 @@ using std::is_convertible_v;
 #else
 template <typename F, typename T>
 using is_convertible = std::is_convertible<F, T>;
-#if CXXKIT_CC_CPP14_OR_GREATER
+#    if CXXKIT_CC_CPP14_OR_GREATER
 template <typename F, typename T>
 constexpr bool is_convertible_v = std::is_convertible<F, T>::value;
-#endif
+#    endif
 #endif
 
 /***********************************************************************************************************************
@@ -184,10 +185,10 @@ using std::is_function_v;
 #else
 template <typename T>
 using is_function = std::is_function<T>;
-#if CXXKIT_CC_CPP14_OR_GREATER
+#    if CXXKIT_CC_CPP14_OR_GREATER
 template <typename T>
 constexpr bool is_function_v = std::is_function<T>::value;
-#endif
+#    endif
 #endif
 
 /***********************************************************************************************************************
@@ -199,10 +200,10 @@ using std::is_pointer_v;
 #else
 template <typename T>
 using is_pointer = std::is_pointer<T>;
-#if CXXKIT_CC_CPP14_OR_GREATER
+#    if CXXKIT_CC_CPP14_OR_GREATER
 template <typename T>
 constexpr bool is_pointer_v = std::is_pointer<T>::value;
-#endif
+#    endif
 #endif
 
 /***********************************************************************************************************************
@@ -214,10 +215,10 @@ using std::is_base_of_v;
 #else
 template <typename B, typename D>
 using is_base_of = std::is_base_of<B, D>;
-#if CXXKIT_CC_CPP14_OR_GREATER
+#    if CXXKIT_CC_CPP14_OR_GREATER
 template <typename B, typename D>
 constexpr bool is_base_of_v = std::is_base_of<B, D>::value;
-#endif
+#    endif
 #endif
 
 /***********************************************************************************************************************
@@ -229,10 +230,10 @@ using std::is_member_function_pointer_v;
 #else
 template <typename T>
 using is_member_function_pointer = std::is_member_function_pointer<T>;
-#if CXXKIT_CC_CPP14_OR_GREATER
+#    if CXXKIT_CC_CPP14_OR_GREATER
 template <typename T>
 constexpr bool is_member_function_pointer_v = std::is_member_function_pointer<T>::value;
-#endif
+#    endif
 #endif
 
 /***********************************************************************************************************************
@@ -471,19 +472,19 @@ struct IsInvocableRImpl<void_t<invoke_result_t<F, Args...>>, R, F, Args...>
 } // namespace detail
 template <typename F, typename... Args>
 using is_invocable = detail::IsInvocableRImpl<void, void, F, Args...>;
-#if CXXKIT_CC_CPP14_OR_GREATER
+#    if CXXKIT_CC_CPP14_OR_GREATER
 template <typename F, typename... Args>
 constexpr bool is_invocable_v = is_invocable<F, Args...>::value;
-#endif
+#    endif
 // Type trait whose member `value` is true if invoking `F` with `Args` is valid,
 // and either the return type is convertible to `R`, or `R` is void.
 // C++11-compatible version of `std::is_invocable_r`.
 template <typename R, typename F, typename... Args>
 using is_invocable_r = detail::IsInvocableRImpl<void, R, F, Args...>;
-#if CXXKIT_CC_CPP14_OR_GREATER
+#    if CXXKIT_CC_CPP14_OR_GREATER
 template <typename R, typename F, typename... Args>
 constexpr bool is_invocable_r_v = is_invocable_r<R, F, Args...>::value;
-#endif
+#    endif
 #endif
 
 /***********************************************************************************************************************

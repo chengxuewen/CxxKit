@@ -114,4 +114,3 @@ void call_once_per_thread(Func func)
 } // namespace utils
 
 CXXKIT_END_NAMESPACE
-

@@ -30,21 +30,29 @@
 #include <cstdint>
 #include <vector>
 
-namespace {
+namespace
+{
 
 // 本地 test double：实现 I420BufferInterface（Task 4 才移植真实 I420Buffer）。
 // VideoFrameBuffer 继承 RefCountInterface，故 double 自带最小引用计数。
-class NativeI420Buffer final : public cxxkit::I420BufferInterface {
+class NativeI420Buffer final : public cxxkit::I420BufferInterface
+{
 public:
     NativeI420Buffer(int w, int h)
-        : data_(static_cast<size_t>(w) * h * 3 / 2), w_(w), h_(h), sy_(w), su_(w / 2), sv_(w / 2)
+        : data_(static_cast<size_t>(w) * h * 3 / 2)
+        , w_(w)
+        , h_(h)
+        , sy_(w)
+        , su_(w / 2)
+        , sv_(w / 2)
     {
     }
 
     void add_ref() const override { ref_count_.inc_ref(); }
     cxxkit::RefCountReleaseStatus release() const override
     {
-        if (ref_count_.dec_ref() == cxxkit::RefCountReleaseStatus::kDroppedLastRef) {
+        if (ref_count_.dec_ref() == cxxkit::RefCountReleaseStatus::kDroppedLastRef)
+        {
             delete this;
             return cxxkit::RefCountReleaseStatus::kDroppedLastRef;
         }
@@ -53,9 +61,9 @@ public:
 
     int width() const override { return w_; }
     int height() const override { return h_; }
-    const uint8_t* get_data_y() const override { return data_.data(); }
-    const uint8_t* get_data_u() const override { return data_.data() + w_ * h_; }
-    const uint8_t* get_data_v() const override { return data_.data() + w_ * h_ * 5 / 4; }
+    const uint8_t *get_data_y() const override { return data_.data(); }
+    const uint8_t *get_data_u() const override { return data_.data() + w_ * h_; }
+    const uint8_t *get_data_v() const override { return data_.data() + w_ * h_ * 5 / 4; }
     int stride_y() const override { return sy_; }
     int stride_u() const override { return su_; }
     int stride_v() const override { return sv_; }
@@ -69,7 +77,8 @@ private:
     int w_, h_, sy_, su_, sv_;
 };
 
-TEST(VideoFrameBuffer, InterfaceType) {
+TEST(VideoFrameBuffer, InterfaceType)
+{
     cxxkit::SharedRefPtr<NativeI420Buffer> buf(new NativeI420Buffer(2, 2));
     EXPECT_EQ(buf->width(), 2);
     EXPECT_EQ(buf->height(), 2);
@@ -79,12 +88,19 @@ TEST(VideoFrameBuffer, InterfaceType) {
     EXPECT_EQ(buf->chroma_height(), 1);
 }
 
-TEST(VideoFrameBuffer, wrap_i420_buffer) {
+TEST(VideoFrameBuffer, wrap_i420_buffer)
+{
     std::vector<uint8_t> mem(6);
     bool released = false;
-    auto wrapped = cxxkit::wrap_i420_buffer(
-        2, 2, mem.data(), 2, mem.data() + 4, 1, mem.data() + 5, 1,
-        [&released]() { released = true; });
+    auto wrapped = cxxkit::wrap_i420_buffer(2,
+                                            2,
+                                            mem.data(),
+                                            2,
+                                            mem.data() + 4,
+                                            1,
+                                            mem.data() + 5,
+                                            1,
+                                            [&released]() { released = true; });
     EXPECT_TRUE(wrapped);
     EXPECT_EQ(wrapped->width(), 2);
     EXPECT_EQ(wrapped->type(), cxxkit::VideoType::kI420);
@@ -92,11 +108,12 @@ TEST(VideoFrameBuffer, wrap_i420_buffer) {
     EXPECT_TRUE(released);
 }
 
-TEST(VideoFrameBuffer, ToI420ReturnsSelf) {
+TEST(VideoFrameBuffer, ToI420ReturnsSelf)
+{
     cxxkit::SharedRefPtr<NativeI420Buffer> buf(new NativeI420Buffer(2, 2));
     auto converted = buf->to_i420();
     ASSERT_TRUE(converted);
     EXPECT_EQ(converted.get(), buf.get());
 }
 
-}  // namespace
+} // namespace

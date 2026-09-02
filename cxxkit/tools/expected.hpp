@@ -42,4 +42,3 @@ using tl::make_unexpected;
 } // namespace utils
 
 CXXKIT_END_NAMESPACE
-

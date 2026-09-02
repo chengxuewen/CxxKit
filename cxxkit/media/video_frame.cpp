@@ -27,7 +27,7 @@
 
 #include <algorithm>
 
-namespace cxxkit {
+CXXKIT_BEGIN_NAMESPACE
 
 // Out-of-line definition for the C++11 ODR-used static constexpr member.
 constexpr uint16_t VideoFrame::kNotSetId;
@@ -43,11 +43,14 @@ bool VideoFrame::UpdateRect::is_empty() const
 }
 
 VideoFrame::UpdateRect::UpdateRect(int x, int y, int width, int height)
-    : x(x), y(y), width(width), height(height)
+    : x(x)
+    , y(y)
+    , width(width)
+    , height(height)
 {
 }
 
-VideoFrame::UpdateRect VideoFrame::UpdateRect::Union(const UpdateRect& other) const
+VideoFrame::UpdateRect VideoFrame::UpdateRect::Union(const UpdateRect &other) const
 {
     if (other.is_empty())
     {
@@ -64,7 +67,7 @@ VideoFrame::UpdateRect VideoFrame::UpdateRect::Union(const UpdateRect& other) co
     return UpdateRect(left, top, right - left, bottom - top);
 }
 
-VideoFrame::UpdateRect VideoFrame::UpdateRect::intersect(const UpdateRect& other) const
+VideoFrame::UpdateRect VideoFrame::UpdateRect::intersect(const UpdateRect &other) const
 {
     if (other.is_empty() || is_empty())
     {
@@ -84,19 +87,19 @@ VideoFrame::UpdateRect VideoFrame::UpdateRect::intersect(const UpdateRect& other
     return UpdateRect(left, top, width, height);
 }
 
-bool VideoFrame::UpdateRect::operator==(const UpdateRect& other) const
+bool VideoFrame::UpdateRect::operator==(const UpdateRect &other) const
 {
     return other.x == x && other.y == y && other.width == width && other.height == height;
 }
 
 VideoFrame::UpdateRect VideoFrame::UpdateRect::scale_with_frame(int frame_width,
-                                                              int frame_height,
-                                                              int crop_x,
-                                                              int crop_y,
-                                                              int crop_width,
-                                                              int crop_height,
-                                                              int scaled_width,
-                                                              int scaled_height) const
+                                                                int frame_height,
+                                                                int crop_x,
+                                                                int crop_y,
+                                                                int crop_width,
+                                                                int crop_height,
+                                                                int scaled_width,
+                                                                int scaled_height) const
 {
     CXXKIT_DCHECK_GT(frame_width, 0);
     CXXKIT_DCHECK_GT(frame_height, 0);
@@ -195,34 +198,28 @@ VideoFrame::UpdateRect VideoFrame::UpdateRect::scale_with_frame(int frame_width,
 VideoFrame VideoFrame::Builder::build()
 {
     CXXKIT_CHECK(mVideoFrameBuffer != nullptr);
-    return VideoFrame(mId,
-                      mVideoFrameBuffer,
-                      mTimestampUs,
-                      mTimestampRtp,
-                      mRotation,
-                      mColorSpace,
-                      mUpdateRect);
+    return VideoFrame(mId, mVideoFrameBuffer, mTimestampUs, mTimestampRtp, mRotation, mColorSpace, mUpdateRect);
 }
 
-VideoFrame::Builder& VideoFrame::Builder::set_video_frame_buffer(const SharedRefPtr<VideoFrameBuffer>& buffer)
+VideoFrame::Builder &VideoFrame::Builder::set_video_frame_buffer(const SharedRefPtr<VideoFrameBuffer> &buffer)
 {
     mVideoFrameBuffer = buffer;
     return *this;
 }
 
-VideoFrame::Builder& VideoFrame::Builder::set_color_space(const ColorSpace* color_space)
+VideoFrame::Builder &VideoFrame::Builder::set_color_space(const ColorSpace *color_space)
 {
     mColorSpace = color_space ? utils::make_optional(*color_space) : utils::nullopt;
     return *this;
 }
 
 VideoFrame::VideoFrame(uint16_t id,
-                       const SharedRefPtr<VideoFrameBuffer>& video_frame_buffer,
+                       const SharedRefPtr<VideoFrameBuffer> &video_frame_buffer,
                        int64_t timestamp_us,
                        uint32_t timestamp_rtp,
                        VideoRotation rotation,
-                       const Optional<ColorSpace>& color_space,
-                       const Optional<UpdateRect>& update_rect)
+                       const Optional<ColorSpace> &color_space,
+                       const Optional<UpdateRect> &update_rect)
     : mId(id)
     , mVideoFrameBuffer(video_frame_buffer)
     , mTimestampRtp(timestamp_rtp)
@@ -255,13 +252,13 @@ uint32_t VideoFrame::size() const
     return width() * height();
 }
 
-void VideoFrame::set_video_frame_buffer(const SharedRefPtr<VideoFrameBuffer>& buffer)
+void VideoFrame::set_video_frame_buffer(const SharedRefPtr<VideoFrameBuffer> &buffer)
 {
     CXXKIT_CHECK(buffer != nullptr);
     mVideoFrameBuffer = buffer;
 }
 
-void VideoFrame::set_update_rect(const VideoFrame::UpdateRect& update_rect)
+void VideoFrame::set_update_rect(const VideoFrame::UpdateRect &update_rect)
 {
     CXXKIT_DCHECK_GE(update_rect.x, 0);
     CXXKIT_DCHECK_GE(update_rect.y, 0);
@@ -270,4 +267,4 @@ void VideoFrame::set_update_rect(const VideoFrame::UpdateRect& update_rect)
     mUpdateRect = update_rect;
 }
 
-}  // namespace cxxkit
+CXXKIT_END_NAMESPACE

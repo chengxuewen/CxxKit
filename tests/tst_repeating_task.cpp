@@ -88,8 +88,8 @@ public:
     }
 
     void post_delayed_task(const Task::SharedPtr &task,
-                         const TimeDelta &delay,
-                         const SourceLocation & /*location*/) override
+                           const TimeDelta &delay,
+                           const SourceLocation & /*location*/) override
     {
         mLastTask = std::move(task);
         mLastDelay = delay;
@@ -288,8 +288,8 @@ TEST(RepeatingTaskTest, CanBeStoppedAfterTaskQueueDeletedTheRepeatingTask)
         .WillOnce(WithArg<0>([&](Task::SharedPtr task) { repeating_task = std::move(task); }));
 
     RepeatingTaskHandle handle = RepeatingTaskHandle::delayed_start(&task_queue,
-                                                                   TimeDelta::millis(100),
-                                                                   [] { return TimeDelta::millis(100); });
+                                                                    TimeDelta::millis(100),
+                                                                    [] { return TimeDelta::millis(100); });
 
     // shutdown task queue: delete all pending tasks and run 'regular' task.
     repeating_task = nullptr;

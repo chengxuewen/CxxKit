@@ -31,9 +31,10 @@
 
 #include <cstring>
 
-namespace cxxkit {
+CXXKIT_BEGIN_NAMESPACE
 
-namespace {
+namespace
+{
 
 // Fills frames with randomly sized and colored squares. Between each new
 // generated frame the squares are freshly randomized (a new "slide").
@@ -95,14 +96,14 @@ private:
 
             for (int yy = y; yy < y + capped_length; ++yy)
             {
-                uint8_t* pos_y = mBuffer->mutable_data_y() + x + yy * mBuffer->stride_y();
+                uint8_t *pos_y = mBuffer->mutable_data_y() + x + yy * mBuffer->stride_y();
                 memset(pos_y, yuv_y, static_cast<size_t>(capped_length));
             }
             for (int yy = y; yy < y + capped_length; yy += 2)
             {
-                uint8_t* pos_u = mBuffer->mutable_data_u() + x / 2 + yy / 2 * mBuffer->stride_u();
+                uint8_t *pos_u = mBuffer->mutable_data_u() + x / 2 + yy / 2 * mBuffer->stride_u();
                 memset(pos_u, yuv_u, static_cast<size_t>(capped_length) / 2);
-                uint8_t* pos_v = mBuffer->mutable_data_v() + x / 2 + yy / 2 * mBuffer->stride_v();
+                uint8_t *pos_v = mBuffer->mutable_data_v() + x / 2 + yy / 2 * mBuffer->stride_v();
                 memset(pos_v, yuv_v, static_cast<size_t>(capped_length) / 2);
             }
         }
@@ -116,13 +117,13 @@ private:
     SharedRefPtr<I420Buffer> mBuffer;
 };
 
-}  // namespace
+} // namespace
 
 std::unique_ptr<FrameGenerator> FrameGenerator::create_slide_show(std::vector<std::string> filenames,
-                                                                OutputType type,
-                                                                int width,
-                                                                int height,
-                                                                int frame_repeat_count)
+                                                                  OutputType type,
+                                                                  int width,
+                                                                  int height,
+                                                                  int frame_repeat_count)
 {
     // ponytail: only the synthetic I420 slideshow is implemented — YUV-file
     // input was trimmed (M5). Pass an empty filenames list; non-empty returns
@@ -132,8 +133,7 @@ std::unique_ptr<FrameGenerator> FrameGenerator::create_slide_show(std::vector<st
         return std::unique_ptr<FrameGenerator>();
     }
     CXXKIT_DCHECK(type == OutputType::kI420);
-    return std::unique_ptr<FrameGenerator>(
-        new SlideShowVideoFrameGenerator(width, height, frame_repeat_count));
+    return std::unique_ptr<FrameGenerator>(new SlideShowVideoFrameGenerator(width, height, frame_repeat_count));
 }
 
-}  // namespace cxxkit
+CXXKIT_END_NAMESPACE
