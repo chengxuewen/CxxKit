@@ -168,3 +168,16 @@ cxxkit 是 OpenCTK（an open cpp toolkit）的成功重构版本 —— 精简�
 - [x] **批次 δ**：coding-style.md 命名段整段替换 + AGENTS.md UNIQUE STYLES 更新（含守卫断言修正）+ C16⑥ 移植改名条款 + check.sh 双 gate（snake/mPascal，spec §4δ 修正版正则）+ D26 决策记录
 - 验证：每批次构建 0 error + ctest 63/63 + clang-format 0 违规；双 gate 实跑 0/0
 - 教训（D26 详录）：类型别名四重普查先行；宏 ## 拼接名扫描盲区；上游 C API/gtest 符号永久豁免；误伤整批回退优于就地补
+
+### 2026-09-02 clang-format 全库统一（D27，pixi 工具链 + Allman 落地）
+
+- [x] **pixi 工具链供 clang-format**：pixi.toml 加 `clang-format = ">=17,<24"`（conda-forge 独立包，pixi.lock 锁 23.1.0，~35MB 不拖 LLVM 工具链）；本机无系统 clang-format 的历史至此终结
+- [x] **裸 namespace 宏迁移（N0）**：24 文件 72 处（media 20 + flat_hash 三件套 + video_types Allman 变体）`namespace cxxkit {` → `CXXKIT_BEGIN_NAMESPACE`；根因：宏内含 MSVC C4251 警告抑制对，裸 namespace 绕过之。containers 三件套顺带补 `#include <cxxkit/base/global.hpp>`（宏不可见曾致 145 error）
+- [x] **clang-format 调用纪律（实测三坑）**：不递归目录（必须 find -print0 | xargs -0）；违规走 stderr（2>/dev/null 会出假 0）；基线 2076 行违例 → F1–F5 五批归零
+- [x] **护栏**：macros.hpp 全宏区 clang-format off（覆盖 `#\s*define` 缩进变体，on 置 #endif 后）；compiler.hpp diff=0 免护栏；Ctrl 枚举表格接受碾平（用户裁定，abseil 同款）
+- [x] **F1–F5 分批格式化**：header-only 六库 → text/tools → memory/units/time → thread/kernel → network/media/crash+tests+examples；每批 build 0 error + ctest 63/63
+- [x] **单行函数裁定（交互确认两轮）**：`AllowShortFunctionsOnASingleLine` 先 All 后**回退 InlineOnly**（用户终裁）——类内内联单行（has_one_ref 样式），类外/cpp 定义一律多行（UpdateRect::is_empty 样式）；F6 补充批次展开 83 处 cpp 类外单行
+- [x] **cpr 上游 API 还原（β 遗留 bug）**：http.cpp 37 处调用点（SetUrl/Get/IsIncludingSubdomains 等）被 β 批次误迁移成 snake——vendored cpr 1.9.9 是 PascalCase API；`.o` 缓存掩盖至今，format 触碰时间戳暴露；已全部还原 + 构建 0 error
+- [x] **check.sh 门禁硬化**：clang-format 缺失时 WARN（不再静默跳过）+ pixi 路径兜底；grep 链 pipefail 零匹配兜底（`|| true` 包裹）；2/8 白名单补 WEBOCTK 注释
+- 验证：全库 dry-run 0 违规（幂等复验）+ 构建 0 error + ctest 63/63；check.sh 1-5/8 绿（6/8 build-shared 需清缓存重配 Ninja——Makefiles 历史残留；7/8/8/8 asan/cov 树待增量重验）
+- 教训：clang-format 每版本格式化结果有差异（lock 锁版本对冲）；类外定义单行不受 AllowShortFunctionsOnASingleLine 控制的认知被实测推翻（All 下保持）；.o 缓存会掩盖编译错误——大改动后应 touch 全量重编一次

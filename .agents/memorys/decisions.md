@@ -125,3 +125,10 @@ sanitizer（ASAN/LSAN/UBSan）与 coverage 用**独立 build 目录**（build-as
 - **执行**: α 机械修复（横幅 82 文件 + D8 + ref_counted_object 混用点）；γ 成员 74 符号 mPascal 化（迭代扫漏到 0）；β 函数 661 符号 snake 化（camel 291 + Pascal 多词 346 + 残余 4 + 宏双参数化 SafeGt 族 + CHECK_OP；22 类型别名甄别剔除；UpdateRect::Union 关键字例外保留；libyuv 上游 C API 豁免）。
 - **方法论教训**: ① 全量符号替换必须先做类型别名普查（using/typedef/class/struct/#define 四扫），否则 Value/SharedPtr 型灾难；② 宏拼接名（Safe##Gt）扫描期不可见——调用点替换前必须 grep 宏体 ## 拼接；③ 上游 C API（libyuv::I420Copy）与 gtest/gmock 符号（testing::Test/IsEmpty/Invoke）设永久豁免；④ 文件级补丁不如全库扫描——color_space.cpp 构造列表漏改教训；⑤ 大批量替换遇误伤时 git checkout 整批回退重做受控子批，优于就地打补丁。
 - **验证**: 每批构建 0 error + ctest 63/63 + clang-format 0 违规；snake gate 与成员 gate 已入 check.sh（spec §4δ 修正版正则）。
+
+## D27: clang-format 全库统一（Allman 落地）（2026-09-02）
+- **决策**: `.clang-format` 的 BreakBeforeBraces: Allman 首次全库强制执行（此前配置从未被执行，挂行 { 193 处 vs 独立行 2840 处双风格共存）；工具经 pixi 供给（conda-forge 独立包，pixi.lock 锁 23.1.0）；风险文件 macros.hpp（宏中枢 ## 拼接敏感）用 clang-format off 护栏，compiler.hpp 实测 diff=0 免护栏
+- **交互裁定四项**: ① AllowShortFunctionsOnASingleLine: InlineOnly（类内内联单行/类外多行，用户终裁，先 All 后回退）；② 连续赋值手工对齐接受碾平（abseil 同款，Ctrl 枚举表格不护栏）；③ FixNamespaceComments: true 保留（N0 后主闭合是宏不受影响）；④ 配置死条目（IndentBraces 在 Allman 下无效）不清理
+- **前置 N0**: 裸 `namespace cxxkit {` 24 文件先迁 CXXKIT_BEGIN/END_NAMESPACE（宏内含 MSVC C4251 抑制对，语义修复先于纯格式化，防 diff 互相污染）
+- **blame 免疫**: 批次提交哈希录入 .git-blame-ignore-revs
+- **验证**: 全库 clang-format --dry-run 0 违规（幂等）+ 构建 0 error + ctest 63/63
