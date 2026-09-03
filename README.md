@@ -96,6 +96,31 @@ cmake --build build --target Docs   # outputs build/doc/html/
 ```
 
 See the file `docs/README.md` for the full documentation index.
+## Examples
+
+`examples/` ships one runnable walkthrough per sublibrary (16 total, `imgui` pending B1).
+Build them with the main build (`cmake --build build`); binaries land in `build/examples/`.
+
+| Example | Sublibrary | Highlights |
+|---|---|---|
+| `exp_base` | base | version/compiler-feature report, pimpl (`CXXKIT_DEFINE_DPTR`), `DISABLE_COPY_MOVE` |
+| `exp_containers` | containers | flat_hash_map/set, ArrayView, InlinedVector, FixedArray |
+| `exp_functional` | functional | FunctionView (non-owning), UniqueFunction (move-only) |
+| `exp_kernel` | kernel | signals-only walkthrough; Object/EventLoop await kernel completion |
+| `exp_media` | media | FrameGenerator pattern -> I420Buffer rotate/scale -> PSNR |
+| `exp_memory` | memory | SharedRefPtr intrusive counting, aligned_malloc, zero_memory |
+| `exp_numerics` | numerics | RunningStatistics, ExpFilter, sequence unwrapping |
+| `exp_patterns` | patterns | Singleton / AutoSingleton lifecycle |
+| `exp_profiling` | profiling | CXXKIT_PROFILE_* zones (Tracy GUI when `CXXKIT_ENABLE_LIB_TRACY=ON`) |
+| `exp_text` | text | StringBuilder, str_split, base64, crc32 |
+| `exp_thread` | thread | ThreadPool, TaskQueueThread FIFO, Barrier |
+| `exp_time` | time | ElapsedTimer, DateTime |
+| `exp_logging` | tools | level macros, custom loggers, runtime filtering |
+| `exp_units` | units | DataSize/DataRate/TimeDelta/Frequency typed arithmetic |
+| `exp_crash` | crash | safe path: config, manual minidump (needs `CXXKIT_ENABLE_LIB_CRASH=ON`) |
+| `exp_network_version` | network | HTTP failure-path demo (needs `CXXKIT_ENABLE_LIB_NETWORK=ON`) |
+
+All examples print deterministic output except where a value is genuinely runtime-dependent (timers, clocks — annotated in-line). No example performs a real network request or a deliberate crash.
 
 ## License
 

@@ -192,3 +192,13 @@ cxxkit 是 OpenCTK（an open cpp toolkit）的成功重构版本 —— 精简�
 - [x] **文档同步**：README 子库表（numerics compiled + 新组件）、fixed_array 对齐限制文档、str_split 空 delimiter 文档修正（abseil per-byte 语义不移植的明示）、D28 决策记录
 - 验证：每件 build 0 error + 定向 ctest + 全量 ctest + clang-format 0 违规；deferred minors 17 条中 2 条必修已修（fixed_array 对齐文档/str_split 文档），其余 no-action 备案
 - P2 备忘：moving_max_counter/moving_average/event_rate_counter/node_hash_* 需求触发再取
+
+### 2026-09-03 examples 一一对应补全（16/17 库全覆盖，imgui N/A）
+
+- [x] **三批次 SDD 并行流水线**（P0 六代理 / P1 六代理 / P2 四代理，16 example）——提交 `33615e5` / `eefadf8` / `c69262e`
+- [x] **矩阵终态**：base/containers/functional/kernel( signals-only)/media/memory/numerics/patterns/profiling/text/thread/time/tools(logging)/units 14 个默认路径可编译可跑；crash(CRASH=ON)/network(NETWORK=ON) 门控注册，验证层级诚实标注；imgui 空目录唯一 N/A
+- [x] **controller 补刀**：exp_profiling 注册移出 if(TRACY) 块——cxxkit_profiling 本就是无条件空操作 INTERFACE target，旧二进制（8/19 TRACY=ON 产物）掩盖了默认路径 target 缺失
+- [x] **README**：Examples 索引表（16 行：example/子库/亮点）+ 确定性声明（无真实外网请求/无故意崩溃）
+- [x] **质量沉淀**：PIT-32（多线程工作项 push_back 共享 vector = 堆损坏，ASAN 实证，槽位预分配解法）/ PIT-33（TaskQueueThread::destroy() 丢弃 pending 非 drain，哨兵信号量模式）
+- 验证：全量 build 0 error + ctest 71/71 + clang-format 0 违规 + 14 example 手跑 rc=0 + 确定性复验（thread 3 次逐字节/containers/media 3 次/kernel 2 次）
+- 备忘：exp_crash/exp_network_version 的运行时验证分别等 CRASH=ON / NETWORK=ON 树（crash 树需 vcpkg breakpad 构建 10-25 分钟）
