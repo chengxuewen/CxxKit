@@ -22,16 +22,52 @@
 **
 ***********************************************************************************************************************/
 
-// Compile check for cxxkit/profiling: the macros must expand to valid code in BOTH states.
-// Built with TRACY=ON (CXXKIT_PROFILING_ENABLED set) and TRACY=OFF (no-op) in CI.
-
+// exp_profiling: CXXKIT_PROFILE_* zone markers; observe with Tracy GUI when TRACY=ON.
 #include <cxxkit/profiling/profiling.hpp>
+
+#include <iostream>
+
+namespace
+{
+
+// TRACY=OFF: CXXKIT_PROFILE_* expand to ((void)0) -- zero overhead, no output.
+void computeChecksum()
+{
+    CXXKIT_PROFILE_SCOPE("computeChecksum");
+    unsigned int checksum = 0;
+    for (int i = 0; i < 10000; ++i)
+    {
+        checksum = checksum * 31u + static_cast<unsigned int>(i);
+    }
+    std::cout << "computeChecksum: " << checksum << std::endl;
+}
+
+void buildPayload()
+{
+    CXXKIT_PROFILE_SCOPE("buildPayload");
+    CXXKIT_PROFILE_SCOPE("buildPayload.loop");
+    unsigned long long payload = 0;
+    for (int i = 0; i < 10000; ++i)
+    {
+        payload += static_cast<unsigned long long>(i) * 7ull;
+    }
+    std::cout << "buildPayload: " << payload << std::endl;
+}
+
+} // namespace
 
 int main()
 {
     {
         CXXKIT_PROFILE_SCOPE("main");
+        computeChecksum();
+        buildPayload();
     }
     CXXKIT_PROFILE_FRAME();
+    std::cout << "This build has CXXKIT_ENABLE_LIB_TRACY=OFF: the CXXKIT_PROFILE_* markers above are" << std::endl;
+    std::cout << "compiled to no-ops (zero overhead). Rebuild with -DCXXKIT_ENABLE_LIB_TRACY=ON, then connect"
+              << std::endl;
+    std::cout << "the Tracy GUI (https://github.com/wolfpld/tracy) to observe 4 zones:" << std::endl;
+    std::cout << "  main, computeChecksum, buildPayload, buildPayload.loop + 1 frame mark." << std::endl;
     return 0;
 }

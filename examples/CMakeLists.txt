@@ -56,6 +56,28 @@ cxxkit_add_executable(cxxkit_exp_time
     LIBRARIES ${CXXKIT_EXAMPLE_LINK_LIBRARIES} cxxkit::time
     INCLUDE_DIRECTORIES ${PROJECT_SOURCE_DIR}
     FOLDER "CxxKit/examples")
+cxxkit_add_executable(cxxkit_exp_patterns
+    SOURCES exp_patterns.cpp
+    LIBRARIES ${CXXKIT_EXAMPLE_LINK_LIBRARIES} cxxkit::patterns
+    INCLUDE_DIRECTORIES ${PROJECT_SOURCE_DIR}
+    FOLDER "CxxKit/examples")
+cxxkit_add_executable(cxxkit_exp_memory
+    SOURCES exp_memory.cpp
+    LIBRARIES ${CXXKIT_EXAMPLE_LINK_LIBRARIES} cxxkit::memory
+    INCLUDE_DIRECTORIES ${PROJECT_SOURCE_DIR}
+    FOLDER "CxxKit/examples")
+cxxkit_add_executable(cxxkit_exp_functional
+    SOURCES exp_functional.cpp
+    LIBRARIES ${CXXKIT_EXAMPLE_LINK_LIBRARIES} cxxkit::functional
+    INCLUDE_DIRECTORIES ${PROJECT_SOURCE_DIR}
+    FOLDER "CxxKit/examples")
+
+cxxkit_add_executable(cxxkit_exp_containers
+    SOURCES exp_containers.cpp
+    LIBRARIES ${CXXKIT_EXAMPLE_LINK_LIBRARIES} cxxkit::containers
+    INCLUDE_DIRECTORIES ${PROJECT_SOURCE_DIR}
+    FOLDER "CxxKit/examples")
+
 
 cxxkit_add_executable(cxxkit_exp_thread
     SOURCES exp_thread.cpp
@@ -63,6 +85,11 @@ cxxkit_add_executable(cxxkit_exp_thread
     INCLUDE_DIRECTORIES ${PROJECT_SOURCE_DIR}
     FOLDER "CxxKit/examples")
 
+cxxkit_add_executable(cxxkit_exp_numerics
+    SOURCES exp_numerics.cpp
+    LIBRARIES ${CXXKIT_EXAMPLE_LINK_LIBRARIES} cxxkit::numerics
+    INCLUDE_DIRECTORIES ${PROJECT_SOURCE_DIR}
+    FOLDER "CxxKit/examples")
 if(CXXKIT_ENABLE_LIB_NETWORK)
     cxxkit_add_executable(cxxkit_exp_network_version
         SOURCES exp_network_version.cpp
@@ -72,13 +99,10 @@ if(CXXKIT_ENABLE_LIB_NETWORK)
     target_link_libraries(cxxkit_exp_network_version PRIVATE cxxkit::network)
 endif()
 
-if(CXXKIT_ENABLE_LIB_TRACY)
-    cxxkit_add_executable(cxxkit_exp_profiling
-        SOURCES exp_profiling.cpp
-        LIBRARIES ${CXXKIT_EXAMPLE_LINK_LIBRARIES}
-        INCLUDE_DIRECTORIES ${PROJECT_SOURCE_DIR}
-        FOLDER "CxxKit/examples")
-    target_link_libraries(cxxkit_exp_profiling PRIVATE cxxkit::profiling)
-    # VM-friendly: skip invariant TSC check (real hardware unaffected)
-    target_compile_definitions(cxxkit_exp_profiling PRIVATE TRACY_NO_INVARIANT_CHECK=1)
-endif()
+cxxkit_add_executable(cxxkit_exp_profiling
+    SOURCES exp_profiling.cpp
+    LIBRARIES ${CXXKIT_EXAMPLE_LINK_LIBRARIES} cxxkit::profiling
+    INCLUDE_DIRECTORIES ${PROJECT_SOURCE_DIR}
+    FOLDER "CxxKit/examples")
+# cxxkit_profiling is an unconditional no-op INTERFACE target; with CXXKIT_ENABLE_LIB_TRACY=ON its
+# INTERFACE compile definitions activate the Tracy backend in this example automatically.
