@@ -743,9 +743,10 @@ TEST(ArrayViewExtension, FromVector)
     EXPECT_EQ(vec[0], 10);
 }
 
-TEST(ArrayViewExtension, MakeConstArrayViewFromInitializerList)
+TEST(ArrayViewExtension, MakeConstArrayViewFromArray)
 {
-    auto view = cxxkit::make_const_array_view({1, 2, 3});
+    const int values[] = {1, 2, 3};
+    auto view = cxxkit::make_const_array_view(values, 3u);
     EXPECT_EQ(view.size(), 3u);
     EXPECT_EQ(view[0], 1);
     EXPECT_EQ(view[2], 3);

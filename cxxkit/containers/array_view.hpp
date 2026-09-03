@@ -33,7 +33,6 @@
 #include <array>
 #include <algorithm>
 #include <stdexcept>
-#include <initializer_list>
 
 CXXKIT_BEGIN_NAMESPACE
 
@@ -415,11 +414,5 @@ inline ArrayView<const T> make_const_array_view(const T *data, size_t size)
     return ArrayView<const T>(data, size);
 }
 
-/// @brief Factory: creates a const ArrayView from an initializer_list.
-template <typename T>
-inline ArrayView<const T> make_const_array_view(std::initializer_list<T> il)
-{
-    return ArrayView<const T>(il.begin(), il.size());
-}
 
 CXXKIT_END_NAMESPACE
