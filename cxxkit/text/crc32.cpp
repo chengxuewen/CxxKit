@@ -39,7 +39,7 @@ const uint32_t kCrc32Polynomial = 0xEDB88320;
 
 /// Returns the lazily generated 256-entry CRC table. Function-local static: initialized on first
 /// use, thread-safe since C++11.
-const uint32_t *loadCrc32Table()
+const uint32_t *load_crc32_table()
 {
     static uint32_t table[256];
     for (uint32_t i = 0; i < 256; ++i)
@@ -65,7 +65,7 @@ const uint32_t *loadCrc32Table()
 
 uint32_t crc32(const void *data, size_t len, uint32_t crc)
 {
-    static const uint32_t *const kTable = loadCrc32Table();
+    static const uint32_t *const kTable = load_crc32_table();
 
     uint32_t c = crc ^ 0xFFFFFFFF;
     const uint8_t *bytes = static_cast<const uint8_t *>(data);
