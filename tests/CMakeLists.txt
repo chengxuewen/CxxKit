@@ -331,6 +331,30 @@ cxxkit_add_test(cxxkit_tst_random
     INCLUDE_DIRECTORIES ${PROJECT_SOURCE_DIR}
     LIBRARIES ${CXXKIT_TEST_LINK_LIBRARIES} ${CMAKE_THREAD_LIBS_INIT})
 
+cxxkit_add_test(cxxkit_tst_running_statistics
+    SOURCES tst_running_statistics.cpp
+    INCLUDE_DIRECTORIES ${PROJECT_SOURCE_DIR}
+    LIBRARIES ${CXXKIT_TEST_LINK_LIBRARIES} ${CMAKE_THREAD_LIBS_INIT})
+
+cxxkit_add_test(cxxkit_tst_sequence_number
+    SOURCES tst_sequence_number.cpp
+    INCLUDE_DIRECTORIES ${PROJECT_SOURCE_DIR}
+    LIBRARIES ${CXXKIT_TEST_LINK_LIBRARIES} ${CMAKE_THREAD_LIBS_INIT})
+
+cxxkit_add_test(cxxkit_tst_percentile_filter
+    SOURCES tst_percentile_filter.cpp
+    INCLUDE_DIRECTORIES ${PROJECT_SOURCE_DIR}
+    LIBRARIES ${CXXKIT_TEST_LINK_LIBRARIES} ${CMAKE_THREAD_LIBS_INIT})
+
+cxxkit_add_test(cxxkit_tst_exp_filter
+    SOURCES tst_exp_filter.cpp
+    INCLUDE_DIRECTORIES ${PROJECT_SOURCE_DIR}
+    LIBRARIES ${CXXKIT_TEST_LINK_LIBRARIES} ${CMAKE_THREAD_LIBS_INIT})
+
+cxxkit_add_test(cxxkit_tst_byte_order
+    SOURCES tst_byte_order.cpp
+    INCLUDE_DIRECTORIES ${PROJECT_SOURCE_DIR}
+    LIBRARIES ${CXXKIT_TEST_LINK_LIBRARIES} ${CMAKE_THREAD_LIBS_INIT})
 
 if(CXXKIT_ENABLE_LIB_CRASH)
     # Standalone crash fixture: installs the handler and raises SIGSEGV in its own process.
@@ -357,3 +381,14 @@ if(CXXKIT_ENABLE_LIB_CRASH)
             TEST_ELFUTILS_LIB_DIR="${CxxKitWrapBackward_ElfUtils_INSTALL_DIR}/lib")
     endif()
 endif()
+
+cxxkit_add_test(cxxkit_tst_str_split
+    SOURCES tst_str_split.cpp
+    INCLUDE_DIRECTORIES ${PROJECT_SOURCE_DIR}
+    LIBRARIES ${CXXKIT_TEST_LINK_LIBRARIES} ${CMAKE_THREAD_LIBS_INIT})
+
+cxxkit_add_test(cxxkit_tst_crc32
+    SOURCES tst_crc32.cpp
+    INCLUDE_DIRECTORIES ${PROJECT_SOURCE_DIR}
+    LIBRARIES ${CXXKIT_TEST_LINK_LIBRARIES} ${CMAKE_THREAD_LIBS_INIT})
+

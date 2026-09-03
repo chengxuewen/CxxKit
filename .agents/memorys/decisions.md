@@ -132,3 +132,13 @@ sanitizer（ASAN/LSAN/UBSan）与 coverage 用**独立 build 目录**（build-as
 - **前置 N0**: 裸 `namespace cxxkit {` 24 文件先迁 CXXKIT_BEGIN/END_NAMESPACE（宏内含 MSVC C4251 抑制对，语义修复先于纯格式化，防 diff 互相污染）
 - **blame 免疫**: 批次提交哈希录入 .git-blame-ignore-revs
 - **验证**: 全库 clang-format --dry-run 0 违规（幂等）+ 构建 0 error + ctest 63/63
+
+## D28: abseil/webrtc 第二批移植 P1（2026-09-02，9 件，SDD 子代理流水线）
+- **决策**: 从 .refinfo（abseil 20220623.2 + libwebrtc rtc_base）移植 9 件：running_statistics / sequence_number_util+unwrapper / percentile_filter / exp_filter（numerics，STATIC 化）/ byte_order（numerics）/ fixed_array（containers）/ str_split 精简版 + crc32（text）。
+- **四项裁定**: ① byte_order 弃 webrtc 平台宏版，C++11 干净实现，命名 load_be16/store_le32（load/store 内存语义，非 SetBE16/GetBE16）；② fixed_array 简化重实现（单 ::operator new 分配，无 allocator/EBO/增长；n=0 合法 data()==nullptr；对齐限于 max_align_t 已文档化）；③ str_split 非 owning（@warning 悬垂警告；空 delimiter 不匹配 → 整体单 token，abseil per-byte 语义不移植）；④ crc32 zlib 兼容语义（内部 init/final XOR，增量链式 crc32(d2,l2,crc32(d1,l1))==crc32(both)）。
+- **Cleanup 不移植**: scope_guard 与 absl::Cleanup API 同构（invoke/cancel/工厂/nodiscard 逐项一致），零功能增量。
+- **不移植清单**: node_hash_map/set（无指针稳定消费方）、btree/Cord/int128/absl::hash/flags（成本/重复建设）、moving_* 家族（等需求，P2 候选）。
+- **执行方式**: SDD 子代理流水线（每 Task 独立实现者 + Momus 独立 review，controller 裁定），8/8 Task 首轮 APPROVED；实现者 token 腐化事故 3 起（自愈：小块写+grep 自验+编译器裁判纪律）。
+- **消费方依据**: media/rtp_headers（sequence_number）、network（byte_order）、媒体质量统计（statistics/percentile/exp_filter）。
+- **验证**: 每件 TDD（RED→GREEN）+ 全量 ctest（63→70，+7 新套件）+ clang-format 0 违规 + build-shared 67/67（numerics STATIC 化后）+ pkg-config .pc 含 -lcxxkit_numerics。
+- **P2 候选备忘**: moving_max_counter/moving_average/event_rate_counter/event_based_exponential_moving_average/node_hash_*——需求触发再取。

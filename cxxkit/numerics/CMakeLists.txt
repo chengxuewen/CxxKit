@@ -26,11 +26,12 @@ cmake_minimum_required(VERSION ${CXXKIT_MIN_NEW_POLICY_CMAKE_VERSION}...${CXXKIT
 cxxkit_configure_library_begin(CxxKitNumerics)
 
 cxxkit_add_library(cxxkit_numerics
-    INTERFACE
+    SOURCES exp_filter.cpp
+    PUBLIC_LIBRARIES cxxkit::base CxxKitWrapOptional::WrapOptional
     EXPORT_NAME numerics
     FOLDER "CxxKit/libs")
-target_link_libraries(cxxkit_numerics INTERFACE cxxkit::base)
-
+cxxkit_find_package(Optional PROVIDED_TARGETS CxxKitWrapOptional::WrapOptional)
+cxxkit_install_public_wrap_headers(cxxkit_numerics WRAPS CxxKitWrapOptional::WrapOptional|tl)
 cxxkit_generate_pkg_config(cxxkit_numerics numerics)
 cxxkit_configure_library_end(CxxKitNumerics)
 

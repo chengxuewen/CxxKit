@@ -181,3 +181,14 @@ cxxkit 是 OpenCTK（an open cpp toolkit）的成功重构版本 —— 精简�
 - [x] **check.sh 门禁硬化**：clang-format 缺失时 WARN（不再静默跳过）+ pixi 路径兜底；grep 链 pipefail 零匹配兜底（`|| true` 包裹）；2/8 白名单补 WEBOCTK 注释
 - 验证：全库 dry-run 0 违规（幂等复验）+ 构建 0 error + ctest 63/63；check.sh 1-5/8 绿（6/8 build-shared 需清缓存重配 Ninja——Makefiles 历史残留；7/8/8/8 asan/cov 树待增量重验）
 - 教训：clang-format 每版本格式化结果有差异（lock 锁版本对冲）；类外定义单行不受 AllowShortFunctionsOnASingleLine 控制的认知被实测推翻（All 下保持）；.o 缓存会掩盖编译错误——大改动后应 touch 全量重编一次
+
+### 2026-09-02 abseil/webrtc 第二批移植 P1（D28，9 件，SDD 流水线）
+
+- [x] **numerics STATIC 化**（`cxxkit_numerics` INTERFACE→compiled）：exp_filter 为首个 .cpp；numerics_global.hpp 导出宏（CXXKIT_NUMERICS_API）；WrapOptional 链 + install_public_wrap_headers（tools 先例）；pkg .pc 含 -lcxxkit_numerics；build-shared 67/67 验证
+- [x] **9 件移植**：running_statistics（Welford）/ sequence_number_util+unwrapper（回绕比较+展开，M 奇偶分支保留）/ percentile_filter（multiset 流式 P 分位）/ exp_filter（RTC 码控滤波）/ byte_order（load_be16/store_le32 族，平台宏版弃用）/ fixed_array（abseil 简化重实现，n=0 合法）/ str_split（by_any_of/by_string + skip_empty/allow_empty 标签分发）/ crc32（zlib 兼容语义，表驱动）
+- [x] **TDD + SDD 流水线**：每件独立实现者子代理 + Momus 独立 review（8/8 首轮 APPROVED）；controller 裁定 2 起（Task 4 numerics 不传显式 STATIC——brief 与 C10 矛盾时从参考模式；Task 8 测试计数 70 正确——controller 误把 crash 条件块计入）
+- [x] **测试 63→70**（+7 套件）：tst_running_statistics/tst_sequence_number/tst_percentile_filter/tst_exp_filter/tst_byte_order/tst_fixed_array/tst_str_split/tst_crc32
+- [x] **实现者 token 腐化 3 起**（Task 4/5/6 写坏文件）——自愈预案固化：小块写+grep 自验+编译器裁判+损坏即删重写禁增量修补；clang-format 禁碰 CMakeLists（Task 7 新坑）
+- [x] **文档同步**：README 子库表（numerics compiled + 新组件）、fixed_array 对齐限制文档、str_split 空 delimiter 文档修正（abseil per-byte 语义不移植的明示）、D28 决策记录
+- 验证：每件 build 0 error + 定向 ctest + 全量 ctest + clang-format 0 违规；deferred minors 17 条中 2 条必修已修（fixed_array 对齐文档/str_split 文档），其余 no-action 备案
+- P2 备忘：moving_max_counter/moving_average/event_rate_counter/node_hash_* 需求触发再取

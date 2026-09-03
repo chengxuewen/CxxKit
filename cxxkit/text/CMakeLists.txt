@@ -26,7 +26,7 @@ cmake_minimum_required(VERSION ${CXXKIT_MIN_NEW_POLICY_CMAKE_VERSION}...${CXXKIT
 cxxkit_configure_library_begin(CxxKitText)
 
 cxxkit_add_library(cxxkit_text
-    SOURCES string_utils.cpp ascii.cpp string.cpp base64.cpp bit_buffer.cpp string_builder.cpp string_encode.cpp
+    SOURCES string_utils.cpp ascii.cpp string.cpp base64.cpp bit_buffer.cpp string_builder.cpp string_encode.cpp crc32.cpp
     PUBLIC_LIBRARIES cxxkit::base cxxkit::numerics CxxKitWrapFmt::WrapFmt CxxKitWrapStringViewLite::WrapStringViewLite cxxkit::tools
     EXPORT_NAME text
     FOLDER "CxxKit/libs")
