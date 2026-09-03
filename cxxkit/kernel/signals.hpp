@@ -1407,7 +1407,7 @@ public:
      * @return a connection object that can be used to interact with the slot
      */
     template <typename Callable>
-    typename std::enable_if<trait::detail::is_callable<arg_list, Callable>::value, Connection>::type connect(
+    typename std::enable_if<trait::detail::is_callable<Callable, arg_list>::value, Connection>::type connect(
         Callable &&c,
         GroupId gid = 0)
     {
@@ -1429,7 +1429,7 @@ public:
      * @return a connection object that can be used to interact with the slot
      */
     template <typename Callable>
-    typename std::enable_if<trait::detail::is_callable<ext_arg_list, Callable>::value, Connection>::type
+    typename std::enable_if<trait::detail::is_callable<Callable, ext_arg_list>::value, Connection>::type
     connect_extended(Callable &&c, GroupId gid = 0)
     {
         using slot_t = detail::SlotExtended<Callable, T...>;
@@ -1450,7 +1450,7 @@ public:
      * @return a connection object that can be used to interact with the slot
      */
     template <typename Pmf, typename Ptr>
-    typename std::enable_if<trait::detail::is_callable<arg_list, Pmf, Ptr>::value && trait::is_observer<Ptr>::value,
+    typename std::enable_if<trait::detail::is_callable<Pmf, Ptr, arg_list>::value && trait::is_observer<Ptr>::value,
                             Connection>::type
     connect(Pmf &&pmf, Ptr &&ptr, GroupId gid = 0)
     {
@@ -1471,7 +1471,7 @@ public:
      * @return a connection object that can be used to interact with the slot
      */
     template <typename Pmf, typename Ptr>
-    typename std::enable_if<trait::detail::is_callable<arg_list, Pmf, Ptr>::value && !trait::is_observer<Ptr>::value &&
+    typename std::enable_if<trait::detail::is_callable<Pmf, Ptr, arg_list>::value && !trait::is_observer<Ptr>::value &&
                                 !trait::is_weak_ptr_compatible<Ptr>::value,
                             Connection>::type
     connect(Pmf &&pmf, Ptr &&ptr, GroupId gid = 0)
@@ -1496,7 +1496,7 @@ public:
      * @return a connection object that can be used to interact with the slot
      */
     template <typename Pmf, typename Ptr>
-    typename std::enable_if<trait::detail::is_callable<ext_arg_list, Pmf, Ptr>::value &&
+    typename std::enable_if<trait::detail::is_callable<Pmf, Ptr, ext_arg_list>::value &&
                                 !trait::is_weak_ptr_compatible<Ptr>::value,
                             Connection>::type
     connect_extended(Pmf &&pmf, Ptr &&ptr, GroupId gid = 0)
@@ -1527,7 +1527,7 @@ public:
      * @return a connection object that can be used to interact with the slot
      */
     template <typename Pmf, typename Ptr>
-    typename std::enable_if<!trait::detail::is_callable<arg_list, Pmf>::value &&
+    typename std::enable_if<!trait::detail::is_callable<Pmf, arg_list>::value &&
                                 trait::is_weak_ptr_compatible<Ptr>::value,
                             Connection>::type
     connect(Pmf &&pmf, Ptr &&ptr, GroupId gid = 0)
@@ -1562,7 +1562,7 @@ public:
      * @return a connection object that can be used to interact with the slot
      */
     template <typename Pmf, typename Ptr>
-    typename std::enable_if<!trait::detail::is_callable<ext_arg_list, Pmf>::value &&
+    typename std::enable_if<!trait::detail::is_callable<Pmf, ext_arg_list>::value &&
                                 trait::is_weak_ptr_compatible<Ptr>::value,
                             Connection>::type
     connect_extended(Pmf &&pmf, Ptr &&ptr, GroupId gid = 0)
@@ -1594,7 +1594,7 @@ public:
      * @return a connection object that can be used to interact with the slot
      */
     template <typename Callable, typename Trackable>
-    typename std::enable_if<trait::detail::is_callable<arg_list, Callable>::value &&
+    typename std::enable_if<trait::detail::is_callable<Callable, arg_list>::value &&
                                 trait::is_weak_ptr_compatible<Trackable>::value,
                             Connection>::type
     connect(Callable &&c, Trackable &&ptr, GroupId gid = 0)
@@ -1629,7 +1629,7 @@ public:
      * @return a connection object that can be used to interact with the slot
      */
     template <typename Callable, typename Trackable>
-    typename std::enable_if<trait::detail::is_callable<ext_arg_list, Callable>::value &&
+    typename std::enable_if<trait::detail::is_callable<Callable, ext_arg_list>::value &&
                                 trait::is_weak_ptr_compatible<Trackable>::value,
                             Connection>::type
     connect_extended(Callable &&c, Trackable &&ptr, GroupId gid = 0)
@@ -1668,8 +1668,8 @@ public:
      * @return the number of disconnected slots
      */
     template <typename Callable>
-    typename std::enable_if<(trait::detail::is_callable<arg_list, Callable>::value ||
-                             trait::detail::is_callable<ext_arg_list, Callable>::value ||
+    typename std::enable_if<(trait::detail::is_callable<Callable, arg_list>::value ||
+                             trait::detail::is_callable<Callable, ext_arg_list>::value ||
                              trait::is_member_function_pointer<Callable>::value) &&
                                 detail::function_traits<Callable>::is_disconnectable,
                             size_t>::type
@@ -1691,7 +1691,7 @@ public:
      * @return the number of disconnected slots
      */
     template <typename Obj>
-    typename std::enable_if<!trait::detail::is_callable<arg_list, Obj>::value &&
+    typename std::enable_if<!trait::detail::is_callable<Obj, arg_list>::value &&
                                 !trait::detail::is_callable<ext_arg_list, Obj>::value &&
                                 !trait::is_member_function_pointer<Obj>::value,
                             size_t>::type

@@ -387,6 +387,11 @@ cxxkit_add_test(cxxkit_tst_str_split
     INCLUDE_DIRECTORIES ${PROJECT_SOURCE_DIR}
     LIBRARIES ${CXXKIT_TEST_LINK_LIBRARIES} ${CMAKE_THREAD_LIBS_INIT})
 
+cxxkit_add_test(cxxkit_tst_signals
+    SOURCES tst_signals.cpp
+    INCLUDE_DIRECTORIES ${PROJECT_SOURCE_DIR}
+    LIBRARIES ${CXXKIT_TEST_LINK_LIBRARIES} ${CMAKE_THREAD_LIBS_INIT})
+
 cxxkit_add_test(cxxkit_tst_crc32
     SOURCES tst_crc32.cpp
     INCLUDE_DIRECTORIES ${PROJECT_SOURCE_DIR}
