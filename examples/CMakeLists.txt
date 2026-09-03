@@ -36,6 +36,32 @@ cxxkit_add_executable(cxxkit_exp_logging
     LIBRARIES ${CXXKIT_EXAMPLE_LINK_LIBRARIES}
     INCLUDE_DIRECTORIES ${PROJECT_SOURCE_DIR}
     FOLDER "CxxKit/examples")
+cxxkit_add_executable(cxxkit_exp_units
+    SOURCES exp_units.cpp
+    LIBRARIES ${CXXKIT_EXAMPLE_LINK_LIBRARIES} cxxkit::units cxxkit::time
+    INCLUDE_DIRECTORIES ${PROJECT_SOURCE_DIR}
+    FOLDER "CxxKit/examples")
+cxxkit_add_executable(cxxkit_exp_text
+    SOURCES exp_text.cpp
+    LIBRARIES ${CXXKIT_EXAMPLE_LINK_LIBRARIES}
+    INCLUDE_DIRECTORIES ${PROJECT_SOURCE_DIR}
+    FOLDER "CxxKit/examples")
+cxxkit_add_executable(cxxkit_exp_base
+    SOURCES exp_base.cpp
+    LIBRARIES ${CXXKIT_EXAMPLE_LINK_LIBRARIES}
+    INCLUDE_DIRECTORIES ${PROJECT_SOURCE_DIR}
+    FOLDER "CxxKit/examples")
+cxxkit_add_executable(cxxkit_exp_time
+    SOURCES exp_time.cpp
+    LIBRARIES ${CXXKIT_EXAMPLE_LINK_LIBRARIES} cxxkit::time
+    INCLUDE_DIRECTORIES ${PROJECT_SOURCE_DIR}
+    FOLDER "CxxKit/examples")
+
+cxxkit_add_executable(cxxkit_exp_thread
+    SOURCES exp_thread.cpp
+    LIBRARIES ${CXXKIT_EXAMPLE_LINK_LIBRARIES} cxxkit::thread
+    INCLUDE_DIRECTORIES ${PROJECT_SOURCE_DIR}
+    FOLDER "CxxKit/examples")
 
 if(CXXKIT_ENABLE_LIB_NETWORK)
     cxxkit_add_executable(cxxkit_exp_network_version

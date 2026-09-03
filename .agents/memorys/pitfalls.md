@@ -199,3 +199,17 @@
 - **解法**: 后台代理运行期间，构建 error 先 `git diff <file>` 确认是否为他人改动；只修自己文件的 error；subagent 完成后重新全量构建确认
 - **验证**: subagent 完成后 `cmake --build build` 0 error（半成品被 subagent 自己修复）
 - **禁止**: 对非自己改动的文件报错做修复编辑——会与 subagent 冲突（双写同一文件）
+
+## PIT-32: 多线程工作项并发 push_back 共享 vector = 堆损坏 (2026-09-03, exp_thread)
+- **症状**: exp_thread 首跑 SIGSEGV/double free，且崩溃点漂移（gdb 指向 TaskQueueThread deleter，ASAN 指向 vector push_back）——堆损坏延迟爆炸，崩溃点≠案发点
+- **根因**: ThreadPool 多 worker 并发 `results.push_back()`；`push_back` 可触发 realloc，并发 realloc = UAF。"收集到容器、join 后打印"策略若用 push_back 就不成立
+- **解法**: 固定容量槽位 `std::vector<std::string> results(n)`，每个 worker 写自己的 `results[i]`（不同槽位 = 无数据竞争，无需锁）
+- **验证**: `./build-asan/examples/cxxkit_exp_thread` 零 sanitizer 诊断；连续 3 次输出逐字节一致
+- **禁止**: 工作项内对共享容器 push_back/emplace_back；并发收集一律预分配槽位
+
+## PIT-33: TaskQueueThread::destroy() 丢弃未运行任务，不是 drain (2026-09-03, exp_thread)
+- **症状**: post 4 个任务后 `queue->destroy()`（或 reset），任务全部没跑（输出空行）
+- **根因**: destroy() 置 `mQuit=true`，pop_next_task 见 mQuit 直接返回 finalTask——**剩余 pending 任务被 clear 丢弃**，非"退出前跑完"
+- **解法**: 库测试同款模式：队列尾部 post 一个 sentinel 任务（`done.release()` 信号量），主线程 `done.acquire()` 后再 reset；FIFO 保证 sentinel 在所有任务之后
+- **验证**: exp_thread 第 2 节 4 任务全输出；tst_task_queue_thread 全用 Semaphore 收尾佐证
+- **禁止**: 用 destroy/析构当同步点；"post 完就等析构" = 任务全丢

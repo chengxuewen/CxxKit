@@ -22,6 +22,8 @@
 **
 ***********************************************************************************************************************/
 
+// exp_logging: tools::Logger levels, custom loggers, runtime filtering, streaming format.
+
 #include <iostream>
 #include <utility>
 
@@ -35,51 +37,42 @@ namespace expns
 {
 std::pair<int, double> myfunction(int a, double b)
 {
-    CXXKIT_WARNING("funcname:%s, extract:%s", CXXKIT_STRFUNC, CXXKIT_STRFUNC_NAME);
+    CXXKIT_WARNING("funcname:{}, extract:{}", CXXKIT_STRFUNC, CXXKIT_STRFUNC_NAME);
     return std::make_pair(a, b);
 }
 } // namespace expns
 
 int main()
 {
-    std::cout << "cxxkit_logging exp!\n" << std::endl;
+    CXXKIT_TRACE("this trace line is filtered (below default Debug)");
+    CXXKIT_DEBUG("CXXKIT_DEBUG");
+    CXXKIT_INFO("CXXKIT_INFO");
+    CXXKIT_WARNING("CXXKIT_WARNING");
+    CXXKIT_ERROR("CXXKIT_ERROR");
+    CXXKIT_CRITICAL("CXXKIT_CRITICAL");
+
+    // 2) Custom logger (default level Debug) + function/line context capture.
+    std::cout << "\n--- 2. custom logger (MY_LOGGER, level Debug) ---" << std::endl;
     expns::myfunction(1, 2);
-    std::cout << "\ncxxkit_logging c!" << std::endl;
+    CXXKIT_LOGGING_INFO(MY_LOGGER(), "info via custom logger, value={}", 42);
+    CXXKIT_LOGGING_TRACE(MY_LOGGER(), "this trace line is filtered (below custom logger level Debug)");
 
-    std::cout << "\ncxxkit_logging cxx!" << std::endl;
-    CXXKIT_LOGGING_WARNING(MY_LOGGER(), "CXXKIT_LOGGING_WARN");
-    CXXKIT_LOGGING_WARNING(MY_LOGGER(), "tst-") << "ss";
-    CXXKIT_LOGGING_WARNING(MY_LOGGER()).format("{}-{}-", "tst", 1) << "ss";
-    CXXKIT_LOGGING_WARNING(MY_LOGGER(), "{}-{}-", "tst", 1);
-    CXXKIT_LOGGING_WARNING(MY_LOGGER()).format("{}-", cxxkit::utils::fmt::ptr(expns::myfunction)) << "ss";
-    CXXKIT_LOGGING_WARNING(MY_LOGGER());
+    // 3) Runtime level filtering: raise global logger to Error, WARNING and below disappear.
+    std::cout << "\n--- 3. runtime filtering (global logger raised to Error) ---" << std::endl;
+    CXXKIT_LOGGER().switch_level(cxxkit::LogLevel::Error);
+    CXXKIT_DEBUG("filtered: Debug < Error");
+    CXXKIT_INFO("filtered: Info < Error");
+    CXXKIT_WARNING("filtered: Warning < Error");
+    CXXKIT_ERROR("CXXKIT_ERROR still passes");
+    CXXKIT_CRITICAL("CXXKIT_CRITICAL still passes");
 
-    CXXKIT_TRACE("CXXKIT_TRACE");
-    CXXKIT_DEBUG("CXXKIT_DEBUG");
-    CXXKIT_INFO("CXXKIT_INFO");
-    CXXKIT_WARNING("CXXKIT_WARN");
-    CXXKIT_ERROR("CXXKIT_ERROR");
-    CXXKIT_CRITICAL("CXXKIT_CRITICAL");
-    // CXXKIT_FATAL("CXXKIT_FATAL");
-
-    CXXKIT_WARNING() << cxxkit::StringView("CXXKIT_WARNING StringView");
-
-    std::cout << "log all!" << std::endl;
+    // 4) Streaming << and fmt-style .format() on one line.
+    std::cout << "\n--- 4. streaming + format mix ---" << std::endl;
     CXXKIT_LOGGER().switch_level(cxxkit::LogLevel::Trace);
-    CXXKIT_TRACE("CXXKIT_TRACE");
-    CXXKIT_TRACE() << "stream CXXKIT_TRACE";
-    CXXKIT_DEBUG("CXXKIT_DEBUG");
-    CXXKIT_DEBUG() << "stream CXXKIT_DEBUG";
-    CXXKIT_INFO("CXXKIT_INFO");
-    CXXKIT_INFO() << "stream CXXKIT_INFO";
-    CXXKIT_WARNING("CXXKIT_WARN");
-    CXXKIT_WARNING() << "stream CXXKIT_WARN";
-    CXXKIT_ERROR("CXXKIT_ERROR");
-    CXXKIT_ERROR() << "stream CXXKIT_ERROR";
-    CXXKIT_CRITICAL("CXXKIT_CRITICAL");
-    CXXKIT_CRITICAL() << "stream CXXKIT_CRITICAL";
-    CXXKIT_FATAL("CXXKIT_FATAL");
-    CXXKIT_FATAL() << "stream CXXKIT_FATAL";
+    CXXKIT_INFO() << "streamed: int=" << 7 << " double=" << 2.5;
+    CXXKIT_INFO("fmt:").format("{} + {} = {}", 1, 2, 3) << " (mixed)";
+    CXXKIT_LOGGING_WARNING(MY_LOGGER(), "custom fmt:").format("{}-{}", "a", 1) << " end";
 
+    std::cout << "\n--- done ---" << std::endl;
     return 0;
 }
