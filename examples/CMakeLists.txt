@@ -90,6 +90,16 @@ cxxkit_add_executable(cxxkit_exp_numerics
     LIBRARIES ${CXXKIT_EXAMPLE_LINK_LIBRARIES} cxxkit::numerics
     INCLUDE_DIRECTORIES ${PROJECT_SOURCE_DIR}
     FOLDER "CxxKit/examples")
+cxxkit_add_executable(cxxkit_exp_media
+    SOURCES exp_media.cpp
+    LIBRARIES ${CXXKIT_EXAMPLE_LINK_LIBRARIES} cxxkit::media
+    INCLUDE_DIRECTORIES ${PROJECT_SOURCE_DIR}
+    FOLDER "CxxKit/examples")
+cxxkit_add_executable(cxxkit_exp_kernel
+    SOURCES exp_kernel.cpp
+    LIBRARIES ${CXXKIT_EXAMPLE_LINK_LIBRARIES} cxxkit::kernel
+    INCLUDE_DIRECTORIES ${PROJECT_SOURCE_DIR}
+    FOLDER "CxxKit/examples")
 if(CXXKIT_ENABLE_LIB_NETWORK)
     cxxkit_add_executable(cxxkit_exp_network_version
         SOURCES exp_network_version.cpp
@@ -106,3 +116,12 @@ cxxkit_add_executable(cxxkit_exp_profiling
     FOLDER "CxxKit/examples")
 # cxxkit_profiling is an unconditional no-op INTERFACE target; with CXXKIT_ENABLE_LIB_TRACY=ON its
 # INTERFACE compile definitions activate the Tracy backend in this example automatically.
+
+if(CXXKIT_ENABLE_LIB_CRASH)
+    cxxkit_add_executable(cxxkit_exp_crash
+        SOURCES exp_crash.cpp
+        LIBRARIES ${CXXKIT_EXAMPLE_LINK_LIBRARIES}
+        INCLUDE_DIRECTORIES ${PROJECT_SOURCE_DIR}
+        FOLDER "CxxKit/examples")
+    target_link_libraries(cxxkit_exp_crash PRIVATE cxxkit::crash)
+endif()
