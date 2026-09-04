@@ -24,6 +24,7 @@ Organized abseil-style: **directory = sublibrary = CMake target**, pick only wha
 | `cxxkit::tools` | compiled | logging, random, assert, clock, status, error, metrics, filesystem, optional, expected, variant |
 | `cxxkit::network` | compiled | http (cpr backend) |
 | `cxxkit::crash` | compiled | crash handler, minidump (breakpad), stack trace (backward-cpp) — opt-in `CXXKIT_ENABLE_LIB_CRASH` |
+| `cxxkit::imgui` | compiled | headless ImGui context (`ImGuiHost`) over host-injected `PlatformBackend`/`RendererBackend` — opt-in `CXXKIT_ENABLE_LIB_IMGUI` |
 
 ## Quick start
 
@@ -98,7 +99,7 @@ cmake --build build --target Docs   # outputs build/doc/html/
 See the file `docs/README.md` for the full documentation index.
 ## Examples
 
-`examples/` ships one runnable walkthrough per sublibrary (16 total, `imgui` pending B1).
+`examples/` ships one runnable walkthrough per sublibrary (17 total, `imgui` opt-in).
 Build them with the main build (`cmake --build build`); binaries land in `build/examples/`.
 
 | Example | Sublibrary | Highlights |
@@ -119,6 +120,7 @@ Build them with the main build (`cmake --build build`); binaries land in `build/
 | `exp_units` | units | DataSize/DataRate/TimeDelta/Frequency typed arithmetic |
 | `exp_crash` | crash | safe path: config, manual minidump (needs `CXXKIT_ENABLE_LIB_CRASH=ON`) |
 | `exp_network_version` | network | HTTP failure-path demo (needs `CXXKIT_ENABLE_LIB_NETWORK=ON`) |
+| `exp_imgui` | imgui | headless context walkthrough — UI code without a window (needs `CXXKIT_ENABLE_LIB_IMGUI=ON`) |
 
 All examples print deterministic output except where a value is genuinely runtime-dependent (timers, clocks — annotated in-line). No example performs a real network request or a deliberate crash.
 

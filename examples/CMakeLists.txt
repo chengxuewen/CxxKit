@@ -125,3 +125,12 @@ if(CXXKIT_ENABLE_LIB_CRASH)
         FOLDER "CxxKit/examples")
     target_link_libraries(cxxkit_exp_crash PRIVATE cxxkit::crash)
 endif()
+
+if(CXXKIT_ENABLE_LIB_IMGUI)
+    cxxkit_add_executable(cxxkit_exp_imgui
+        SOURCES exp_imgui.cpp
+        LIBRARIES ${CXXKIT_EXAMPLE_LINK_LIBRARIES}
+        INCLUDE_DIRECTORIES ${PROJECT_SOURCE_DIR}
+        FOLDER "CxxKit/examples")
+    target_link_libraries(cxxkit_exp_imgui PRIVATE cxxkit::imgui)
+endif()
