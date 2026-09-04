@@ -35,6 +35,12 @@ cxxkit_add_library(cxxkit_imgui
     COMPILE_DEFINITIONS IMGUI_API=CXXKIT_IMGUI_API CXXKIT_IMGUI_API=
     EXPORT_NAME imgui
     FOLDER "CxxKit/libs")
+cxxkit_generate_pkg_config(cxxkit_imgui imgui DESCRIPTION "cxxkit headless imgui context (ImGuiHost + host-injected backends)")
+cxxkit_install_public_wrap_headers(cxxkit_imgui WRAPS CxxKitWrapImGui::WrapImGui|imgui)
+cxxkit_configure_library_end(CxxKitImGui)
+
+# SDL3+OpenGL3 backend (T5+T6): opt-in with the imgui lib itself, after the main target exists.
+add_subdirectory(sdl3)
 cxxkit_install_public_wrap_headers(cxxkit_imgui WRAPS CxxKitWrapImGui::WrapImGui|imgui)
 cxxkit_configure_library_end(CxxKitImGui)
 
