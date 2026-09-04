@@ -212,3 +212,12 @@ cxxkit 是 OpenCTK（an open cpp toolkit）的成功重构版本 —— 精简�
 - [x] **examples 17/17 收官**：imgui 从唯一 N/A 转正（headless 形态，P1 升级窗口化）
 - 验证：主 72/72 / asan 72/72 零诊断 / cov 80.8%（43 files，上游 5 unit 排除）/ exp_imgui 确定性 / OFF 零影响
 - 备注：coverage.sh 新增 unit 名排除清单（basename 须用 $unit 变量——曾误用 basename 忘剥 .gcda 后缀）；SDL3 采纳为 P1 平台层主选（决策 2b）
+
+### 2026-09-04 cxxkit/imgui P1 收官（D29 续，SDL3 + 扩展 + 窗口化）
+
+- [x] **T5+T6**（`c3a9053`）：SDL3 release-3.4.16 **完整 wrap**（libyuv 形态——静态库 20MB 外部构建 10 分钟，stamp 幂等；X11/wayland 自动降级 headless）+ `cxxkit::imgui_sdl3`（Sdl3PlatformBackend：init 存 SDL_Window* + SDL_GL_GetCurrentContext→InitForOpenGL、new_frame 排空 PollEvent+quit_requested()；Sdl3RendererBackend：OpenGL3 Init/Render/Shutdown——宿主拥有 SDL 生命周期）+ imgui 主库 .pc 补齐（T4 遗留闭环）
+- [x] **T7+T8**（`e2abbcf`）：implot v1.1 WIP + ImGuizmo v1.92.5 extract-only wrap + `cxxkit_imgui_plot`/`cxxkit_imgui_gizmo` target——implot demo 不编入库（与 imgui 自带 demo 反向裁定）；ImGuizmo 只取主件对（GraphEditor/imfilebrowser YAGNI）；**PIT-34**（IMPORTED target 只能在创建目录作用域内修改——wrap_header 安装调用必须住进子目录，--trace 干扰项教训）；T7 socket 断连仅留 7z，controller 照 gizmo 先例重建三件
+- [x] **T9**（`a91c245`）：exp_imgui 窗口化（SDL 生命周期由 example 作为宿主演示——cxxkit-never-opens-windows 契约的消费层示范）+ `docs/imgui-smoke.md` 人工运行门禁（有显示环境 + GL 3.0+；与 crash/network 验证分层同款）+ headless rc=1 失败路径即无显示验证证据
+- 验证：主 72/72 / 全链编译 0 error（SDL3 静态链接零系统 GL 依赖——imgui 自带 loader 头）/ nm 符号抽查（ImPlot::CreateContext/13 处 backend 符号）/ stamp 全命中 / clang-format 干净
+- target 拓扑：`cxxkit::imgui` + `imgui_sdl3` + `imgui_plot` + `imgui_gizmo`，单开关 `CXXKIT_ENABLE_LIB_IMGUI`
+- P2 备忘：implot3d / imgui_markdown（单头 Zlib）/ ImGuiFileDialog / imnodes / ColorTextEdit（停滞按需）/ vulkan-dx12 backend / imgui_sdl3 安装树消费验证（CxxKitConfig stub 链，media cf9e1e9 同款）
