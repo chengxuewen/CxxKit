@@ -26,48 +26,22 @@
 // Requires a display + a GL 3+ context to run; headless machines exit with rc=1 at SDL_Init.
 #include <cstdio>
 
-#include <SDL3/SDL.h>
-
 #include <cxxkit/imgui/context.hpp>
 #include <cxxkit/imgui/sdl3/sdl3_backend.hpp>
+
+#include "sdl_host.hpp"
 
 int main()
 {
     // ---- SDL lifecycle block: the EXAMPLE is the host and owns every SDL call ----
     // cxxkit never inits SDL or creates windows (architecture contract, see sdl3_backend.hpp).
-    if (!SDL_Init(SDL_INIT_VIDEO))
+    imgui_example::SdlHost host_sdl;
+    if (!host_sdl.init("cxxkit exp_imgui", 1280, 720))
     {
-        printf("SDL_Init failed: %s\n", SDL_GetError());
         return 1;
     }
-    SDL_GL_SetAttribute(SDL_GL_CONTEXT_MAJOR_VERSION, 3);
-    SDL_GL_SetAttribute(SDL_GL_CONTEXT_MINOR_VERSION, 0);
-    SDL_Window *window = SDL_CreateWindow("cxxkit exp_imgui", 1280, 720, SDL_WINDOW_OPENGL | SDL_WINDOW_RESIZABLE);
-    if (window == nullptr)
-    {
-        printf("SDL_CreateWindow failed: %s\n", SDL_GetError());
-        SDL_Quit();
-        return 1;
-    }
-    SDL_GLContext context = SDL_GL_CreateContext(window);
-    if (context == nullptr)
-    {
-        printf("SDL_GL_CreateContext failed: %s\n", SDL_GetError());
-        SDL_DestroyWindow(window);
-        SDL_Quit();
-        return 1;
-    }
-    if (!SDL_GL_MakeCurrent(window, context))
-    {
-        printf("SDL_GL_MakeCurrent failed: %s\n", SDL_GetError());
-        SDL_GL_DestroyContext(context);
-        SDL_DestroyWindow(window);
-        SDL_Quit();
-        return 1;
-    }
-    SDL_GL_SetSwapInterval(1); // vsync
-
     // ---- cxxkit imgui block: UI code below is identical to what any other backend would run ----
+
     // (same property the headless version proved with fake backends — UI and backend stay decoupled).
     cxxkit::Sdl3PlatformBackend platform;
     cxxkit::Sdl3RendererBackend renderer;
@@ -75,9 +49,7 @@ int main()
     if (!host.init())
     {
         printf("imgui host init failed: %s\n", SDL_GetError());
-        SDL_GL_DestroyContext(context);
-        SDL_DestroyWindow(window);
-        SDL_Quit();
+        host_sdl.shutdown();
         return 1;
     }
 
@@ -106,13 +78,11 @@ int main()
         ImGui::SliderFloat("value", &value, 0.0f, 1.0f);
         ImGui::Button("click");
         host.end_frame(); // ImGui::Render() + renderer.render(draw_data)
-        SDL_GL_SwapWindow(window);
+        SDL_GL_SwapWindow(host_sdl.window);
     }
 
     // ---- teardown: cxxkit side first (renderer + platform shutdown inside), then host SDL ----
-    host.shutdown();                // ImGui_ImplOpenGL3_Shutdown + ImGui_ImplSDL3_Shutdown
-    SDL_GL_DestroyContext(context); // SDL3 name; SDL2's SDL_GL_DeleteContext is a renamed alias
-    SDL_DestroyWindow(window);
-    SDL_Quit();
+    host.shutdown(); // ImGui_ImplOpenGL3_Shutdown + ImGui_ImplSDL3_Shutdown
+    host_sdl.shutdown();
     return 0;
 }

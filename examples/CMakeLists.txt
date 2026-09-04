@@ -127,10 +127,60 @@ if(CXXKIT_ENABLE_LIB_CRASH)
 endif()
 
 if(CXXKIT_ENABLE_LIB_IMGUI)
+    # WrapImplot/WrapImplot3d are IMPORTED targets created in cxxkit/imgui/plot*/CMakeLists.txt
+    # (dir-scoped, PIT-34) — invisible from examples/, so re-run the wrap find here. Stamp-guarded,
+    # idempotent; gives the D6 <cxxkit/3rdparty/implot/...> include root to the example target.
+    cxxkit_find_package(Implot PROVIDED_TARGETS CxxKitWrapImplot::WrapImplot)
+    cxxkit_find_package(Implot3d PROVIDED_TARGETS CxxKitWrapImplot3d::WrapImplot3d)
     cxxkit_add_executable(cxxkit_exp_imgui
-        SOURCES exp_imgui.cpp
+        SOURCES imgui/exp_imgui.cpp
         LIBRARIES ${CXXKIT_EXAMPLE_LINK_LIBRARIES}
         INCLUDE_DIRECTORIES ${PROJECT_SOURCE_DIR}
         FOLDER "CxxKit/examples")
     target_link_libraries(cxxkit_exp_imgui PRIVATE cxxkit::imgui cxxkit::imgui_sdl3)
+    cxxkit_add_executable(cxxkit_exp_imgui_plot
+        SOURCES imgui/exp_imgui_plot.cpp
+        LIBRARIES ${CXXKIT_EXAMPLE_LINK_LIBRARIES}
+        INCLUDE_DIRECTORIES ${PROJECT_SOURCE_DIR}
+        FOLDER "CxxKit/examples")
+    target_link_libraries(cxxkit_exp_imgui_plot PRIVATE cxxkit::imgui cxxkit::imgui_sdl3 cxxkit::imgui_plot CxxKitWrapImplot::WrapImplot)
+    cxxkit_add_executable(cxxkit_exp_imgui_plot3d
+        SOURCES imgui/exp_imgui_plot3d.cpp
+        LIBRARIES ${CXXKIT_EXAMPLE_LINK_LIBRARIES}
+        INCLUDE_DIRECTORIES ${PROJECT_SOURCE_DIR}
+        FOLDER "CxxKit/examples")
+    target_link_libraries(cxxkit_exp_imgui_plot3d PRIVATE cxxkit::imgui cxxkit::imgui_sdl3 cxxkit::imgui_plot3d CxxKitWrapImplot3d::WrapImplot3d)
+    cxxkit_add_executable(cxxkit_exp_imgui_file_dialog
+        SOURCES imgui/exp_imgui_file_dialog.cpp
+        LIBRARIES ${CXXKIT_EXAMPLE_LINK_LIBRARIES}
+        INCLUDE_DIRECTORIES ${PROJECT_SOURCE_DIR}
+        FOLDER "CxxKit/examples")
+    target_link_libraries(cxxkit_exp_imgui_file_dialog PRIVATE cxxkit::imgui cxxkit::imgui_sdl3 cxxkit::imgui_file_dialog)
+    cxxkit_add_executable(cxxkit_exp_imgui_headless
+        SOURCES imgui/exp_imgui_headless.cpp
+        LIBRARIES ${CXXKIT_EXAMPLE_LINK_LIBRARIES}
+        INCLUDE_DIRECTORIES ${PROJECT_SOURCE_DIR}
+        FOLDER "CxxKit/examples")
+    target_link_libraries(cxxkit_exp_imgui_headless PRIVATE cxxkit::imgui)
+    cxxkit_add_executable(cxxkit_exp_imgui_markdown
+        SOURCES imgui/exp_imgui_markdown.cpp
+        LIBRARIES ${CXXKIT_EXAMPLE_LINK_LIBRARIES}
+        INCLUDE_DIRECTORIES ${PROJECT_SOURCE_DIR}
+        FOLDER "CxxKit/examples")
+    target_link_libraries(cxxkit_exp_imgui_markdown PRIVATE cxxkit::imgui cxxkit::imgui_sdl3 cxxkit::imgui_markdown)
+    cxxkit_add_executable(cxxkit_exp_imgui_nodes
+        SOURCES imgui/exp_imgui_nodes.cpp
+        LIBRARIES ${CXXKIT_EXAMPLE_LINK_LIBRARIES}
+        INCLUDE_DIRECTORIES ${PROJECT_SOURCE_DIR}
+        FOLDER "CxxKit/examples")
+    target_link_libraries(cxxkit_exp_imgui_nodes PRIVATE cxxkit::imgui cxxkit::imgui_sdl3 cxxkit::imgui_nodes)
+    cxxkit_add_executable(cxxkit_exp_imgui_gizmo
+        SOURCES imgui/exp_imgui_gizmo.cpp
+        LIBRARIES ${CXXKIT_EXAMPLE_LINK_LIBRARIES}
+        INCLUDE_DIRECTORIES ${PROJECT_SOURCE_DIR}
+        FOLDER "CxxKit/examples")
+    target_link_libraries(cxxkit_exp_imgui_gizmo PRIVATE cxxkit::imgui cxxkit::imgui_sdl3 cxxkit::imgui_gizmo)
+    # imgui_markdown's MarkdownHeadingFormat carries an NSDMI under IMGUI_HAS_TEXTURES
+    # (imgui 1.92) — the header itself then requires C++14 (PIT-35); this TU compiles it.
+    set_property(TARGET cxxkit_exp_imgui_markdown PROPERTY CXX_STANDARD 14)
 endif()
