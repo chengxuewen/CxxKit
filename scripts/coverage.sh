@@ -22,6 +22,13 @@ find "$BUILD_DIR" -name '*.cpp.gcda' -print0 2>/dev/null | while IFS= read -r -d
     case "$gcda" in
         "$BUILD_DIR"/3rdparty/*|"$BUILD_DIR"/tests/*) continue ;;
     esac
+    # Upstream imgui 5 units are compiled INTO cxxkit_imgui (extract-only wrap, decision 8 of
+    # the imgui P0 plan): their .gcda lands under cxxkit/imgui/ so the path filter above does
+    # not hit. Vendored upstream code does not belong to cxxkit's own coverage gate (libyuv
+    # precedent: it is built in its wrap dir and excluded by path).
+    case "$unit" in
+        imgui.cpp|imgui_draw.cpp|imgui_tables.cpp|imgui_widgets.cpp|imgui_demo.cpp) continue ;;
+    esac
     out="$(cd "$(dirname "$gcda")" && gcov -b -c "$(basename "$gcda")" 2>/dev/null || true)"
     exec_line="$(printf '%s\n' "$out" | awk -v u="${unit}" '
         /^File .*/            { if (index($0,"/" u) > 0) cur=1; else cur=0; next }
