@@ -184,6 +184,8 @@ cxxkit_option(CXXKIT_ENABLE_LIB_TRACY "Enable this to build enable Tracy profile
     OR_CONDITION CXXKIT_BUILD_ALL)
 cxxkit_option(CXXKIT_ENABLE_LIB_CRASH "Enable this to build enable crash lib" OFF
     OR_CONDITION CXXKIT_BUILD_ALL)
+cxxkit_option(CXXKIT_ENABLE_LIB_IMGUI "Enable this to build enable imgui lib" OFF
+    OR_CONDITION CXXKIT_BUILD_ALL)
 
 #-----------------------------------------------------------------------------------------------------------------------
 # Sanitizers (ASAN/LSAN/UBSan) - applied at top-level scope so add_compile_options/add_link_options
@@ -249,6 +251,7 @@ set_property(GLOBAL PROPERTY USE_FOLDER ON)
 # Sublibraries (abseil-style: directory = sublibrary = CMake target)
 cxxkit_add_subdirectory(cxxkit/network CXXKIT_ENABLE_LIB_NETWORK)
 cxxkit_add_subdirectory(cxxkit/crash CXXKIT_ENABLE_LIB_CRASH)
+cxxkit_add_subdirectory(cxxkit/imgui CXXKIT_ENABLE_LIB_IMGUI)
 cxxkit_add_subdirectory(tests CXXKIT_BUILD_TESTS)
 cxxkit_add_subdirectory(examples CXXKIT_BUILD_EXAMPLES)
 
