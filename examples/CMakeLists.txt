@@ -132,5 +132,5 @@ if(CXXKIT_ENABLE_LIB_IMGUI)
         LIBRARIES ${CXXKIT_EXAMPLE_LINK_LIBRARIES}
         INCLUDE_DIRECTORIES ${PROJECT_SOURCE_DIR}
         FOLDER "CxxKit/examples")
-    target_link_libraries(cxxkit_exp_imgui PRIVATE cxxkit::imgui)
+    target_link_libraries(cxxkit_exp_imgui PRIVATE cxxkit::imgui cxxkit::imgui_sdl3)
 endif()
