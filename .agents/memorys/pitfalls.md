@@ -227,3 +227,9 @@
 - **解法**: 隔离实验用 `git stash -u` 或干脆不动工作树（复制到 /tmp 验证）；发现文件消失立即从自身交付物记录重建（本例 write 工具重写 2 个文件，5 分钟恢复）
 - **验证**: 恢复后 `git status --short` 核对预期文件清单 + configure 0 error
 - **禁止**: 并行代理活跃期间对工作树做 stash/clean/rm 组合操作
+
+## PIT-36: imgui_markdown 头在 IMGUI_HAS_TEXTURES 下需要 C++14 (2026-09-04)
+- **症状**: `imgui_markdown.h:340: could not convert '{0, true}' to 'ImGui::MarkdownHeadingFormat'`，-std=c++11 必现；C++14 干净。
+- **根因**: 上游 `MarkdownHeadingFormat` 在 IMGUI_HAS_TEXTURES（imgui 1.92 恒定义）下带成员初始化器 `float fontSize = 0.0f;`——NSDMI 使 struct 非聚合，C++11 聚合初始化 `{NULL, true}` 非法；C++14 允许。
+- **解法**: 消费 markdown 头的 TU 用 ≥C++14 编译。
+- **验证**: `g++ -std=c++11 -fsyntax-only`（markdown include）→ 报 340 行错；`-std=c++14` 同 TU → 干净。

@@ -49,7 +49,11 @@ if(NOT EXISTS "${CxxKitWrapImnodes_STAMP_FILE_PATH}")
     file(COPY
         "${CxxKitWrapImnodes_SOURCE_DIR}/imnodes.h"
         "${CxxKitWrapImnodes_SOURCE_DIR}/imnodes_internal.h"
-        DESTINATION "${CxxKitWrapImnodes_INSTALL_DIR}/include/cxxkit/3rdparty/imnodes")
+        # Stage UN-namespaced (include/imnodes/): cxxkit_install_public_wrap_headers re-prefixes
+        # include/ content into <cxxkit/3rdparty>, so staging an already-namespaced tree
+        # (imgui-family precedent) double-nests to cxxkit/3rdparty/cxxkit/3rdparty in the
+        # build/install trees. include/imnodes/ lands flat at the D6 path.
+        DESTINATION "${CxxKitWrapImnodes_INSTALL_DIR}/include/imnodes")
     message(STATUS "${CxxKitWrapImnodes_NAME} headers staged")
     cxxkit_make_stamp_file("${CxxKitWrapImnodes_STAMP_FILE_PATH}")
 endif()

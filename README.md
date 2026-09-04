@@ -120,7 +120,7 @@ Build them with the main build (`cmake --build build`); binaries land in `build/
 | `exp_units` | units | DataSize/DataRate/TimeDelta/Frequency typed arithmetic |
 | `exp_crash` | crash | safe path: config, manual minidump (needs `CXXKIT_ENABLE_LIB_CRASH=ON`) |
 | `exp_network_version` | network | HTTP failure-path demo (needs `CXXKIT_ENABLE_LIB_NETWORK=ON`) |
-| `exp_imgui` | imgui | headless context walkthrough — UI code without a window (needs `CXXKIT_ENABLE_LIB_IMGUI=ON`) |
+| `exp_imgui` | imgui | SDL3+GL3 windowed core; plus `examples/imgui/` family: headless, plot, plot3d, gizmo, file_dialog, markdown, nodes |
 
 All examples print deterministic output except where a value is genuinely runtime-dependent (timers, clocks — annotated in-line). No example performs a real network request or a deliberate crash.
 

@@ -30,3 +30,17 @@ crash/network examples.
   windows (host-owns-SDL contract, `cxxkit/imgui/sdl3/sdl3_backend.hpp`).
 - `imgui` sublibrary unit tests (`cxxkit_tst_imgui`) cover the host/fake-backend contract only;
   the GL/SDL3 backend has no automated runtime test anywhere in this repo.
+
+
+## Examples matrix (P2b: examples/imgui/)
+
+| Example | What to verify visually |
+|---|---|
+| `exp_imgui` | window 1280x720, default font crisp, SliderFloat drags, FPS near vsync rate |
+| `exp_imgui_headless` | no window needed — rc=0, prints 3-frame vertex stats (CI gate) |
+| `exp_imgui_plot` | "signals" plot: two smooth lines; second plot shows a histogram; legend toggles |
+| `exp_imgui_plot3d` | 3D surface grid renders, draggable rotation, axes labels visible |
+| `exp_imgui_gizmo` | gizmo drawn over the grid; dragging changes the printed translation; OPERATION buttons switch mode |
+| `exp_imgui_file_dialog` | "Open..." raises modal; browsing works; picked path printed in window; Esc/cancel closes |
+| `exp_imgui_markdown` | headings/list/bold/link/code render with distinct styles; link click logs (if callback wired) |
+| `exp_imgui_nodes` | two nodes visible + draggable, one link line between attributes, mini pan/zoom |
