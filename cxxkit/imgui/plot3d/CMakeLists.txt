@@ -38,7 +38,7 @@ cxxkit_add_library(cxxkit_imgui_plot3d
 # install-time export free of build-dir-prefixed paths.
 target_include_directories(cxxkit_imgui_plot3d PUBLIC
     $<BUILD_INTERFACE:${CxxKitWrapImGui_SOURCE_DIR}>
-    $<BUILD_INTERFACE:${CxxKitWrapImplot3d_SOURCE_DIR}>)
+    $<BUILD_INTERFACE:${CxxKitWrapImplot3d_SOURCE_DIR}>    $<BUILD_INTERFACE:${CxxKitWrapImplot3d_INSTALL_DIR}/include>)
 
 if(CXXKIT_BUILD_INSTALL)
     install(TARGETS cxxkit_imgui_plot3d EXPORT cxxkitTargets)

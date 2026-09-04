@@ -42,7 +42,10 @@ cxxkit_add_library(cxxkit_imgui_file_dialog
 # paths (CMake rejects those).
 target_include_directories(cxxkit_imgui_file_dialog PUBLIC
     $<BUILD_INTERFACE:${CxxKitWrapImGui_SOURCE_DIR}>
-    $<BUILD_INTERFACE:${CxxKitWrapImGuiFileDialog_SOURCE_DIR}>)
+    $<BUILD_INTERFACE:${CxxKitWrapImGuiFileDialog_SOURCE_DIR}>
+    # Staged D6 headers (<cxxkit/3rdparty/...>) must reach consumers too — the wrap INTERFACE
+    # include root is not propagated transitively unless the consumer links the wrap directly.
+    $<BUILD_INTERFACE:${CxxKitWrapImGuiFileDialog_INSTALL_DIR}/include>)
 
 if(CXXKIT_BUILD_INSTALL)
     install(TARGETS cxxkit_imgui_file_dialog EXPORT cxxkitTargets)
