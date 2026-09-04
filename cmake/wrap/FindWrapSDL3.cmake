@@ -74,6 +74,9 @@ if(NOT EXISTS "${CxxKitWrapSDL3_STAMP_FILE_PATH}")
         -DCMAKE_POLICY_VERSION_MINIMUM=3.5
         -DSDL_SHARED=OFF
         -DSDL_STATIC=ON
+        # PIC is mandatory: this static lib gets linked into libcxxkit_imgui_sdl3.so in the
+        # shared build (check.sh 5/8) — without it the link dies on R_X86_64_PC32 relocations.
+        -DCMAKE_POSITION_INDEPENDENT_CODE=ON
         -DSDL_TEST_LIBRARY=OFF
         -DSDL_TESTS=OFF
         ${_sdl3_extra_flags}
