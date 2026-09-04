@@ -213,3 +213,17 @@
 - **解法**: 库测试同款模式：队列尾部 post 一个 sentinel 任务（`done.release()` 信号量），主线程 `done.acquire()` 后再 reset；FIFO 保证 sentinel 在所有任务之后
 - **验证**: exp_thread 第 2 节 4 任务全输出；tst_task_queue_thread 全用 Semaphore 收尾佐证
 - **禁止**: 用 destroy/析构当同步点；"post 完就等析构" = 任务全丢
+
+## PIT-34: 父 CMakeLists 禁对子目录创建的 IMPORTED target 做 target_include_directories (2026-09-04, imgui_gizmo)
+- **症状**: `cxxkit_install_public_wrap_headers(... WRAPS CxxKitWrapImGuizmo::WrapImGuizmo|imguizmo)` 在父目录 cxxkit/imgui/CMakeLists.txt 调用时，CMake Error: "Cannot specify include directories for target ... which is not built by this project"（helper CxxKitInstallHelpers.cmake:63）
+- **根因**: CMake 规则——IMPORTED target 只有创建它的目录（及子孙）能修改。`WrapImGui` 与调用方同目录所以从未触发；`WrapImGuizmo` 在子目录 gizmo/ 内 `cxxkit_find_package` 创建 → 父目录调用必炸。干扰项：`--trace` 模式下 CMake 记录了继续执行的过程，误以为成功
+- **解法**: 子目录 wrap 的 install-headers 调用放子目录 CMakeLists 内（可改父目录创建的普通 target）
+- **验证**: `cmake -S . -B build 2>&1 | grep -c "CMake Error"` 为 0
+- **禁止**: 新增 subdirectory target 时把 wrap 安装接线留在父目录
+
+## PIT-35: git stash 不保护未跟踪文件——并行多代理树上 stash+rm 会吞掉他人的新文件 (2026-09-04, imgui_gizmo)
+- **症状**: 隔离 configure 报错时 `git stash && rm -rf <dirs> && 复验 && git stash pop`，pop 后 gizmo/plot 的新 CMakeLists + FindWrap 模块全部消失（未跟踪文件被 stash 收走，但 rm 发生在 stash 之后 → pop 还原失败/还原了但随即被误判删除）
+- **根因**: stash 默认不含 untracked；对多代理并行工作树做 stash/rm 组合操作前未 `git status --short` 核对未跟踪文件归属
+- **解法**: 隔离实验用 `git stash -u` 或干脆不动工作树（复制到 /tmp 验证）；发现文件消失立即从自身交付物记录重建（本例 write 工具重写 2 个文件，5 分钟恢复）
+- **验证**: 恢复后 `git status --short` 核对预期文件清单 + configure 0 error
+- **禁止**: 并行代理活跃期间对工作树做 stash/clean/rm 组合操作

@@ -37,12 +37,16 @@ cxxkit_add_library(cxxkit_imgui
     FOLDER "CxxKit/libs")
 cxxkit_generate_pkg_config(cxxkit_imgui imgui DESCRIPTION "cxxkit headless imgui context (ImGuiHost + host-injected backends)")
 cxxkit_install_public_wrap_headers(cxxkit_imgui WRAPS CxxKitWrapImGui::WrapImGui|imgui)
+# ImGuizmo staged header ships with the imgui lib install (gizmo wrap's include tree).
 cxxkit_configure_library_end(CxxKitImGui)
 
 # SDL3+OpenGL3 backend (T5+T6): opt-in with the imgui lib itself, after the main target exists.
 add_subdirectory(sdl3)
-cxxkit_install_public_wrap_headers(cxxkit_imgui WRAPS CxxKitWrapImGui::WrapImGui|imgui)
-cxxkit_configure_library_end(CxxKitImGui)
+add_subdirectory(plot)
+add_subdirectory(gizmo)
+# ImGuizmo staged header ships with the imgui lib install — the install call lives in
+# gizmo/CMakeLists.txt: CMake forbids a parent dir from target_include_directories on an
+# IMPORTED target created in a subdirectory (helper line 63 would error "not built by this project").
 
 if(CXXKIT_BUILD_INSTALL)
     install(TARGETS cxxkit_imgui EXPORT cxxkitTargets)
