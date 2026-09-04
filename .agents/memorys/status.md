@@ -202,3 +202,13 @@ cxxkit 是 OpenCTK（an open cpp toolkit）的成功重构版本 —— 精简�
 - [x] **质量沉淀**：PIT-32（多线程工作项 push_back 共享 vector = 堆损坏，ASAN 实证，槽位预分配解法）/ PIT-33（TaskQueueThread::destroy() 丢弃 pending 非 drain，哨兵信号量模式）
 - 验证：全量 build 0 error + ctest 71/71 + clang-format 0 违规 + 14 example 手跑 rc=0 + 确定性复验（thread 3 次逐字节/containers/media 3 次/kernel 2 次）
 - 备忘：exp_crash/exp_network_version 的运行时验证分别等 CRASH=ON / NETWORK=ON 树（crash 树需 vcpkg breakpad 构建 10-25 分钟）
+
+### 2026-09-03 cxxkit/imgui P0 落地（D29，B1 imgui 半边解除）
+
+- [x] **调研→裁定→SDD 流水线**：团队调研（2 子代理交付 + 2 由 lead 补位实证 GitHub API）+ 8 项交互裁定 + Momus 计划审核（APPROVE-WITH-FIXES F1-F6 全修订）+ 4 Task SDD（T3 socket 断连由 controller 收尾验证）
+- [x] **五提交**：`ab8f906`(vendored v1.92.9b + extract-only FindWrapImGui) / `15f8fc0`(ImGuiHost+双接口骨架) / `4db1fa7`(fake backend+7 用例+coverage 决策 8) / `732e056`(exp_imgui+README) / `5b76925`(计划文档)
+- [x] **新 wrap 形态 extract-only**：无构建无 .a/.so，头暂存 INSTALL_DIR 供 install_public_wrap_headers，SOURCES 变量供 target 直编上游 5 cpp；`IMGUI_API=CXXKIT_IMGUI_API` 双通道（头收编 include + COMPILE_DEFINITIONS）
+- [x] **测试**：tst_imgui 7 用例（生命周期/帧计数/DrawData 顶点>0/shutdown 幂等/RAII/demo 冒烟/顺序钉子）——imgui 1.92 headless 三坑实证并文档化
+- [x] **examples 17/17 收官**：imgui 从唯一 N/A 转正（headless 形态，P1 升级窗口化）
+- 验证：主 72/72 / asan 72/72 零诊断 / cov 80.8%（43 files，上游 5 unit 排除）/ exp_imgui 确定性 / OFF 零影响
+- 备注：coverage.sh 新增 unit 名排除清单（basename 须用 $unit 变量——曾误用 basename 忘剥 .gcda 后缀）；SDL3 采纳为 P1 平台层主选（决策 2b）

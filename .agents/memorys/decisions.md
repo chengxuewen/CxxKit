@@ -142,3 +142,10 @@ sanitizer（ASAN/LSAN/UBSan）与 coverage 用**独立 build 目录**（build-as
 - **消费方依据**: media/rtp_headers（sequence_number）、network（byte_order）、媒体质量统计（statistics/percentile/exp_filter）。
 - **验证**: 每件 TDD（RED→GREEN）+ 全量 ctest（63→70，+7 新套件）+ clang-format 0 违规 + build-shared 67/67（numerics STATIC 化后）+ pkg-config .pc 含 -lcxxkit_numerics。
 - **P2 候选备忘**: moving_max_counter/moving_average/event_rate_counter/event_based_exponential_moving_average/node_hash_*——需求触发再取。
+
+## D29: cxxkit/imgui 子库落地 P0（2026-09-03，B1 半边解除）
+- **决策**: 集成 Dear ImGui v1.92.9b（stable，不用 docking），opt-in `CXXKIT_ENABLE_LIB_IMGUI`。八项裁定：① wrap 走 **extract-only** 新形态（imgui few-files 无构建系统，上游 5 cpp 直编进 cxxkit_imgui target，IMGUI_API 重定义为 CXXKIT_IMGUI_API——imgui.h 官方 `#ifndef IMGUI_API` 空默认守卫支持；行业先例 imgui_bundle/vcpkg port 全是直编派）；② P0 用 fake backend 保无 GPU CI 全绿，真实平台层 P1 用 **SDL3**（dummy driver 可无头运行、渲染中立、imgui_impl_sdl3/sdlrenderer3/sdlgpu3 官方内置；有构建系统走完整 wrap——与 extract-only 组成双轨规则）；③ 单父开关全建扩展子 target；④ 扩展梯队 P1: implot+ImGuizmo，P2: implot3d/imgui_markdown/FileDialog/imnodes；⑤ Platform+Renderer 双接口 + ImGuiHost（宿主注入已有原生句柄，cxxkit 永不开窗）；⑥ C++11 零提升（imgui core 官方 C++11 兼容）；⑦ 上游 5 unit 从 coverage 全口径排除（决策 8——extract-only 使 .gcda 落 cxxkit/imgui/ 下，路径过滤失效；libyuv 先例是 wrap 目录独立构建天然被排除）；⑧ demo windows 编入（R5，可宏关）。
+- **Momus 审核三缺口**（APPROVE-WITH-FIXES 全修订）：F1 覆盖率分母（上游 ~4.5 万行直编会砸穿 80% 门禁→24.83% 实证，排除后 80.78%）；F2 `cxxkit_install_public_wrap_headers` 强制消费 `_INSTALL_DIR`（extract-only 也须头暂存 `include/cxxkit/3rdparty/imgui/` 布局，否则头静默不装）；F3 IMGUI_API 到达上游 5 TU 的唯一通道是 target COMPILE_DEFINITIONS（它们不包含 imgui_global.hpp）。
+- **imgui 1.92 headless 三坑**（实证）：NewFrame 断言 font atlas 已构建（legacy 路径需 GetTexDataAsRGBA32）；首帧 ImDrawData::Valid=false、窗口类内容第 2 帧起才有顶点；demo 窗口需连续 2 帧调用才出顶点（Active 延迟）。
+- **验证**: 主 72/72 / asan 72/72 零诊断 / cov 80.8%（43 files）/ exp_imgui 3 次逐字节一致 / OFF 树零影响 / 二次 configure stamp 命中 / nm 符号断言过。提交 `ab8f906`..`5b76925` 5 个。
+- **P1 备忘**: SDL3 vendored（完整 wrap）→ imgui_sdl3 backend → implot → ImGuizmo → exp_imgui 窗口化 + smoke checklist。P2: implot3d/imgui_markdown（单头 Zlib）/FileDialog/imnodes/ColorTextEdit（停滞按需）。
