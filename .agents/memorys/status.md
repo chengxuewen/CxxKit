@@ -221,3 +221,12 @@ cxxkit 是 OpenCTK（an open cpp toolkit）的成功重构版本 —— 精简�
 - 验证：主 72/72 / 全链编译 0 error（SDL3 静态链接零系统 GL 依赖——imgui 自带 loader 头）/ nm 符号抽查（ImPlot::CreateContext/13 处 backend 符号）/ stamp 全命中 / clang-format 干净
 - target 拓扑：`cxxkit::imgui` + `imgui_sdl3` + `imgui_plot` + `imgui_gizmo`，单开关 `CXXKIT_ENABLE_LIB_IMGUI`
 - P2 备忘：implot3d / imgui_markdown（单头 Zlib）/ ImGuiFileDialog / imnodes / ColorTextEdit（停滞按需）/ vulkan-dx12 backend / imgui_sdl3 安装树消费验证（CxxKitConfig stub 链，media cf9e1e9 同款）
+
+### 2026-09-04 cxxkit/imgui P2b examples/imgui 全家桶（8 例目录化）
+
+- [x] **三提交**：`bc8ed1d`(计划) / `edb4ac0`(目录化+8 例) / `f0a5220`(smoke 矩阵+README) / `822d79e`(联调修复)
+- [x] **目录化**：examples/imgui/ + 共享 sdl_host.hpp（example 内部件——cxxkit-never-opens-windows 契约在消费层示范）；headless 例独立（CI rc=0 唯一 imgui 可跑面）
+- [x] **联调抓盲 4 起**（controller 修复）：①5 扩展 target PUBLIC 缺暂存 D6 include root（P2a 埋雷消费引爆，`822d79e`）②gizmo/file_dialog 例 include 顺序违上游契约（imgui.h 必须在前）③file_dialog API 名想当然（FileBrowser 不存在→实证 Display/Close）④markdown 例 NSDMI 需 C++14→目标级 CXX_STANDARD 14（D25 口子）
+- [x] **知识沉淀**：PIT-35（stash 不保护 untracked——多代理树红线）/ PIT-36（markdown NSDMI C++14）/ smoke 清单 8 例视觉验证矩阵
+- 验证：全链 0 error / rc 矩阵 headless=0 + 7 窗口例=1 / ctest 72/72 / format 干净
+- 教训：error_count grep 假绿（二次增量构建归零）——构建退出码为准
