@@ -80,6 +80,7 @@ public:
      */
     virtual void stop_timer(int timer_id) = 0;
 
+private:
     CXXKIT_DISABLE_COPY_MOVE(AbstractEventDispatcher)
 };
 

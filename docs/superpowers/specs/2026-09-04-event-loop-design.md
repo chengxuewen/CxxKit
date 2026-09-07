@@ -14,8 +14,6 @@
 3. **跨线程信号投递**：`connect_queued(signal, loop, fn)` 自由函数——emit 线程参数拷贝后投递到目标 loop 执行。
 
 > 术语速查：**EventLoop** = 用户面壳（你调用的）；**Dispatcher** = 构造时注入一次的驱动接口（详见 §3.5 Glossary）。
-2. **嵌入宿主循环**：典型场景——Qt 应用宿主进程里，cxxkit 的定时器/post 任务挂在 Qt 循环上跑，不另起线程。
-3. **跨线程信号投递**：`connect_queued(signal, loop, fn)` 自由函数——emit 线程参数拷贝后投递到目标 loop 执行。
 
 ### 非目标（一期明确不做）
 - `register_socket_notifier`（IO 多路复用）——一期不进接口（D2），完整签名记录在 §9 二期行
