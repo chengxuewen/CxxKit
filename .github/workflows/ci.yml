@@ -36,10 +36,12 @@ jobs:
         if: runner.os == 'Linux'
         run: |
           sudo apt-get update
-          sudo apt-get install -y ninja-build pkg-config
+          sudo apt-get install -y ninja-build pkg-config qt6-base-dev
 
+      # CXXKIT_ENABLE_LIB_QT=ON is a compile-only gate (headless declared): the cxxkit::qt
+      # dispatcher and exp_qt_embed must build on CI; the runtime gate is docs/qt-embed-smoke.md.
       - name: Configure
-        run: cmake -S . -B build -G Ninja -DCXXKIT_BUILD_TESTS=ON -DCMAKE_EXPORT_COMPILE_COMMANDS=ON
+        run: cmake -S . -B build -G Ninja -DCXXKIT_BUILD_TESTS=ON -DCXXKIT_ENABLE_LIB_QT=ON -DCMAKE_EXPORT_COMPILE_COMMANDS=ON
 
       - name: Build
         run: cmake --build build --parallel 2
