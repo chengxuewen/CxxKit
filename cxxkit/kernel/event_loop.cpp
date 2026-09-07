@@ -169,9 +169,10 @@ int EventLoop::exec(ProcessFlags flags)
         return -1;
     }
 
-    // exit() before exec(): the preset code is returned without running a round (shell contract —
-    // detected via a non-sentinel retcode; a never-exited loop carries mRetCode == -1).
-    if (d->mExit.load() && d->mRetCode.load() != -1)
+    // exit() before exec(): the preset code is returned without running a round (shell
+    // contract). mHasExitCode distinguishes a real preset exit from the never-exited fresh
+    // state — mRetCode alone cannot (exit(-1) is a legal preset).
+    if (d->mExit.load() && d->mHasExitCode.load())
     {
         return d->mRetCode.load();
     }
@@ -205,6 +206,7 @@ void EventLoop::exit(int retCode)
 {
     CXXKIT_D(EventLoop);
     d->mRetCode.store(retCode);
+    d->mHasExitCode.store(true);
     d->mExit.store(true);
     // M4: unconditionally ring the bell — a loop blocked in process_events never wakes otherwise.
     d->mDispatcher->wake_up();

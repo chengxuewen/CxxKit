@@ -25,13 +25,6 @@
 #pragma once
 
 #include <cxxkit/kernel/abstract_event_dispatcher.hpp>
-#include <atomic>
-#include <deque>
-#include <functional>
-#include <map>
-#include <mutex>
-#include <utility>
-#include <vector>
 
 #include <atomic>
 #include <deque>
@@ -39,6 +32,7 @@
 #include <map>
 #include <mutex>
 #include <utility>
+#include <vector>
 
 #if CXXKIT_FEATURE_ENABLE_KERNEL
 
@@ -82,15 +76,12 @@ public:
     void start_timer(int timer_id, uint64_t interval_ms, std::function<void()> fn) override
     {
         std::lock_guard<std::mutex> lock(mTimerMutex);
+        if (!fn)
+        {
+            return;
+        }
+        mTimerIds.push_back(timer_id);
         mTimers[timer_id] = std::make_pair(interval_ms, std::move(fn));
-        if (fn)
-        {
-            mTimerIds.push_back(timer_id);
-        }
-        else
-        {
-            mTimerIds.clear();
-        }
     }
 
     void stop_timer(int timer_id) override

@@ -25,12 +25,8 @@
 #include <cxxkit/base/global.hpp>
 
 #include <cxxkit/kernel/event_loop.hpp>
-#include <cxxkit/kernel/abstract_event_dispatcher.hpp>
 
 #include "fake_dispatcher.hpp"
-#include <cxxkit/kernel/abstract_event_dispatcher.hpp>
-
-#include <fake_dispatcher.hpp>
 
 #include <gtest/gtest.h>
 
@@ -167,6 +163,21 @@ TEST_F(EventLoopTest, WakeUpOnExit)
     int before = mDispatcherPtr->mWakeUpCount.load();
     mLoop->exit(0);
     EXPECT_GE(mDispatcherPtr->mWakeUpCount.load(), before + 1);
+}
+
+// 12. exit(-1) before exec() is a real preset (not confusable with fresh state): exec returns
+// -1 immediately without running a round.
+TEST_F(EventLoopTest, ExitNegativeCodePresetReturns)
+{
+    bool ran = false;
+    mDispatcherPtr->mOnProcessEvents = [&](EventLoop::ProcessFlags)
+    {
+        ran = true;
+        return true;
+    };
+    mLoop->exit(-1);
+    EXPECT_EQ(-1, mLoop->exec());
+    EXPECT_FALSE(ran); // no round ran
 }
 
 // 11. null dispatcher is a fatal construction error.

@@ -78,6 +78,7 @@ public:
     bool mInExec{false};
     std::atomic<bool> mExit{true};
     std::atomic<int> mRetCode{-1};
+    std::atomic<bool> mHasExitCode{false}; // exit() ran — distinguishes preset exit from fresh state
     ReferenceCounter mRefCounter;
 };
 
