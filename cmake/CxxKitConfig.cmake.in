@@ -15,6 +15,11 @@ foreach(_dep IN ITEMS @CXXKIT_VENDORED_FIND_DEPS@)
         NO_DEFAULT_PATH)
 endforeach()
 
+# Qt host dependency (M10): consumed by the exported cxxkit::qt target when the package was built with
+# CXXKIT_ENABLE_LIB_QT. System Qt — NO_DEFAULT_PATH intentionally NOT set (contrast the vendored chain).
+if(@CXXKIT_QT_ENABLED@)
+    find_dependency(Qt6 COMPONENTS Core)
+endif()
 # Tracy headers are namespaced under include/cxxkit/3rdparty/tracy/; drop the official
 # include/tracy path from the imported target so it does not dangle in the install tree.
 if(TARGET Tracy::TracyClient)
