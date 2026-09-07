@@ -176,6 +176,7 @@ int main(int argc, char** argv) {
 2. **Qt 双版本（5/6）兼容**：接口面只碰 QCoreApplication/QObject/QTimer/invokeMethod，5/6 同 API，编译门禁装 Qt6 即可（文档注明 Qt5 未验）
 3. **嵌套 process_events 语义**（Qt QEventLoop 嵌套）一期按 Qt 直通处理，语义等价性靠 smoke 验证
 4. EventLoop 骨架的 `mInExec`/`mExit`/`mRetCode` 原子量已存在，exec 循环改成调 dispatcher——骨架兼容性实现期确认
+5. **asio 后端二期备忘**（2026-09-04 调研）：接口映射 3 原生（process_events/run_one_for、timer）+ 3 可绕或缺失（wake_up 无公开跨线程唤醒、interrupt 的 stop() 是放弃一切+需 restart 语义、socket_notifier 需 0-length read re-arm 状态机模拟、嵌入不公开 backend fd）。一期不做（libuv 两头占优）；二期触发条件：network 子库迁 asio / 协程需求 / Qt 循环跑 asio 回调。形态=并存不替代（uSockets 三后端先例），standalone asio pin 1.28.x~1.30.x 保 C++11 + extract-only vendored
 
 ## 9. IO/网络扩展分期路线图（2026-09-04 调研后补充）
 
