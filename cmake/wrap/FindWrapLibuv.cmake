@@ -110,9 +110,13 @@ find_package(libuv PATHS "${CxxKitWrapLibuv_INSTALL_DIR}/lib/cmake" NO_DEFAULT_P
 if(NOT TARGET CxxKitWrapLibuv::WrapLibuv)
     add_library(CxxKitWrapLibuv::WrapLibuv STATIC IMPORTED)
 endif()
+if(WIN32)
+    set(CxxKitWrapLibuv_LIBNAME uv_a.lib)
+else()
+    set(CxxKitWrapLibuv_LIBNAME libuv.a)
+endif()
 set_target_properties(CxxKitWrapLibuv::WrapLibuv PROPERTIES
-    IMPORTED_LOCATION
-    "${CxxKitWrapLibuv_INSTALL_DIR}/lib/$<IF:$<PLATFORM_ID:Windows>,uv_a.lib,libuv.a>"
+    IMPORTED_LOCATION "${CxxKitWrapLibuv_INSTALL_DIR}/lib/${CxxKitWrapLibuv_LIBNAME}"
     # D6 include root: headers live at <install>/include/cxxkit/3rdparty/libuv/ — expose the
     # include/ root so <cxxkit/3rdparty/libuv/uv.h> resolves (build + install faces).
     INTERFACE_INCLUDE_DIRECTORIES
@@ -130,11 +134,15 @@ else()
     if(CMAKE_SYSTEM_NAME STREQUAL "Linux")
         find_library(CxxKitWrapLibuv_NSL_LIB nsl)
         find_library(CxxKitWrapLibuv_SOCKET_LIB socket)
+        find_library(CxxKitWrapLibuv_RT_LIB rt)
         if(CxxKitWrapLibuv_NSL_LIB)
             list(APPEND CxxKitWrapLibuv_INTERFACE_LIBS ${CxxKitWrapLibuv_NSL_LIB})
         endif()
         if(CxxKitWrapLibuv_SOCKET_LIB)
             list(APPEND CxxKitWrapLibuv_INTERFACE_LIBS ${CxxKitWrapLibuv_SOCKET_LIB})
+        endif()
+        if(CxxKitWrapLibuv_RT_LIB)
+            list(APPEND CxxKitWrapLibuv_INTERFACE_LIBS ${CxxKitWrapLibuv_RT_LIB})
         endif()
     endif()
     set_target_properties(CxxKitWrapLibuv::WrapLibuv PROPERTIES
