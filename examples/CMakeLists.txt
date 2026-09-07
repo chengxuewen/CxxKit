@@ -193,3 +193,14 @@ if(CXXKIT_ENABLE_LIB_UV)
         FOLDER "CxxKit/examples")
     target_link_libraries(cxxkit_exp_event_loop PRIVATE cxxkit::uv cxxkit::kernel)
 endif()
+
+if(CXXKIT_ENABLE_LIB_QT)
+    cxxkit_add_executable(cxxkit_exp_qt_embed
+        SOURCES exp_qt_embed.cpp
+        LIBRARIES ${CXXKIT_EXAMPLE_LINK_LIBRARIES}
+        INCLUDE_DIRECTORIES ${PROJECT_SOURCE_DIR}
+        FOLDER "CxxKit/examples")
+    target_link_libraries(cxxkit_exp_qt_embed PRIVATE cxxkit::qt cxxkit::kernel)
+    # Qt headers need C++17 (qt target property, M9 precedent) — the helper default is 11.
+    set_property(TARGET cxxkit_exp_qt_embed PROPERTY CXX_STANDARD 17)
+endif()
