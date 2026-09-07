@@ -76,7 +76,7 @@ public:
 };
 ```
 
-- 一期不做 register_socket_notifier（YAGNI，libuv 留门）
+- `register_socket_notifier(fd, Read/Write, fn)` / `unregister_socket_notifier(fd)`：**预留纯虚**（一期不实现，但接口进抽象——uv/qt/未来 asio 都留 override 点）。一期 scope 限 fd-pollable（socket/pipe/tty）；普通文件排除（epoll 不支持，异步文件走 thread_pool——libuv uv_fs 本质也是 threadpool，Chromium base::File 纯同步同款共识）
 - timer 用 id（与 EventLoop 公开 API 对齐，Qt startTimer 风格）
 - **所有权**：EventLoop 构造时注入 dispatcher（`std::unique_ptr`）。kernel 只暴露注入接口、不依赖任何引擎子库（依赖方向：kernel ← uv/qt）；默认装配由启用方完成——uv 子库提供 `make_default_dispatcher()` 工厂，消费方一行 `EventLoop loop(make_default_dispatcher())`；嵌入场景本来就显式传引擎
 
@@ -175,10 +175,5 @@ int main(int argc, char** argv) {
 1. **libuv wrap 搭建**是新 wrap（第 24 个 FindWrap）——成熟链路照抄 breakpad，风险低
 2. **Qt 双版本（5/6）兼容**：接口面只碰 QCoreApplication/QObject/QTimer/invokeMethod，5/6 同 API，编译门禁装 Qt6 即可（文档注明 Qt5 未验）
 3. **嵌套 process_events 语义**（Qt QEventLoop 嵌套）一期按 Qt 直通处理，语义等价性靠 smoke 验证
+3. **嵌套 process_events 语义**（Qt QEventLoop 嵌套）一期按 Qt 直通处理，语义等价性靠 smoke 验证
 4. EventLoop 骨架的 `mInExec`/`mExit`/`mRetCode` 原子量已存在，exec 循环改成调 dispatcher——骨架兼容性实现期确认
-
-## 9. 实施顺序（预告，详细计划走 writing-plans）
-
-1. kernel：AbstractEventDispatcher + EventLoop 填实现 + fake dispatcher gtest + connect_queued
-2. uv 子库：wrap 基建 + UvEventDispatcher + gtest 全断言 + exp_event_loop
-3. qt 子库：QtEventDispatcher + 编译门禁 + smoke 文档 + exp_qt_embed
