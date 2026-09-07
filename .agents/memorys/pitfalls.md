@@ -233,3 +233,10 @@
 - **根因**: 上游 `MarkdownHeadingFormat` 在 IMGUI_HAS_TEXTURES（imgui 1.92 恒定义）下带成员初始化器 `float fontSize = 0.0f;`——NSDMI 使 struct 非聚合，C++11 聚合初始化 `{NULL, true}` 非法；C++14 允许。
 - **解法**: 消费 markdown 头的 TU 用 ≥C++14 编译。
 - **验证**: `g++ -std=c++11 -fsyntax-only`（markdown include）→ 报 340 行错；`-std=c++14` 同 TU → 干净。
+
+## PIT-37: 跨子库 forward-declare 同名类 = shared 构建 ODR 隐患（2026-09-04, event-loop-plan T0）
+- **症状**: `cxxkit/thread/event_loop_thread.hpp` 内 `#if 0` 死骨架 forward-declare `EventLoopPrivate`（文件级声明在 `#if 0` 外仍参与编译预处理语境），与 kernel 子库 `detail/event_loop_p.hpp` 的 `EventLoopPrivate` 同名；shared 构建下两个翻译单元各自的同名类声明是潜在 ODR 冲突。
+- **根因**: 跨子库复用类名前未查重；死骨架（`#if 0`）半声明意图模糊，会误导后来者『补全』而非删除，隐患持续存在。
+- **解法**: 删除 `#if 0` 死骨架整块（含随之无用的 include），不做注释保留。
+- **验证**: `cmake --build build --target cxxkit_thread` 0 error；`ctest --test-dir build -R thread` 3/3 绿。
+- **禁止**: 跨子库 forward-declare 同名类；死骨架用 `#if 0` 半保留——处置一律是删除，不留半声明。
