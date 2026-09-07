@@ -41,9 +41,10 @@ target_link_libraries(cxxkit_qt PUBLIC cxxkit::base)
 
 # M9 (PIT-36 precedent): Qt headers need C++17 — target-level standard override, helper has no such knob.
 set_property(TARGET cxxkit_qt PROPERTY CXX_STANDARD 17)
-# R-C1-1: no Q_OBJECT custom class (functor invokeMethod) — no moc pass. Off explicitly in case a parent
-# project enables CMAKE_AUTOMOC globally.
-set(CMAKE_AUTOMOC OFF)
+# R-C1-1: no Q_OBJECT custom class (functor invokeMethod) — no moc pass. Target property (a directory-level
+# set(CMAKE_AUTOMOC OFF) here only lands after add_library and does not cover it, and would not scope to this
+# target in a parent project's directory chain anyway) — off explicitly in case a parent enables AUTOMOC.
+set_target_properties(cxxkit_qt PROPERTIES AUTOMOC OFF)
 
 cxxkit_configure_library_end(CxxKitQt)
 

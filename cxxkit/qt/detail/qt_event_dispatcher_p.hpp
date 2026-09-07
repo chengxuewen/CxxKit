@@ -57,7 +57,8 @@ public:
     std::map<int, QTimer *> mTimers; /// timer_id -> live QTimer (heap-allocated, deleteLater'd)
     std::atomic<bool> mBellPending{
         false}; /// doorbell coalescing: set by wake_up, cleared at process_events entry (R-C1-6)
-    std::atomic<bool> mInterrupted{false}; /// set by interrupt(); near no-op under the pass-through shape (R-C1-8)
+    std::atomic<bool> mInterrupted{
+        false}; /// set by interrupt(); near no-op under the pass-through shape (R-C1-8). Retained on purpose: no consumer after the honest blocking downgrade — kept for a future blocking form / diagnostics extension.
 };
 
 CXXKIT_END_NAMESPACE

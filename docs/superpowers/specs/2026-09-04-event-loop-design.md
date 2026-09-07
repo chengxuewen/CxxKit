@@ -154,9 +154,9 @@ public:
 | cxxkit 接口 | Qt 翻译 |
 |---|---|
 | post(fn) | 队列 push + invokeMethod 空参门铃（QueuedConnection），回调排空 |
-| wake_up() | 同上门铃 |
+| wake_up() | 同上门铃；mBellPending 标志自合并（一次排空前至多挂一个控制事件） |
 | process_events(非阻塞) | QCoreApplication::processEvents() 直通 |
-| process_events(阻塞) | 短暂 QEventLoop（Qt 官方嵌套循环机制） |
+| process_events(阻塞) | processEvents() 直通（阻塞由宿主循环承担，诚实降级） |
 | start_timer | 每定时器一个 QTimer（宿主一等源） |
 | interrupt | 原子 flag + 门铃，process_events 提前返回 |
 
@@ -168,6 +168,10 @@ int main(int argc, char** argv) {
     cxxkit::EventLoop loop(std::make_unique<cxxkit::QtEventDispatcher>());
     cxxkit::connect_queued(worker.on_data, &loop, [](Data d) { /* Qt 主线程 */ });
     loop.start_timer(100, [&]{ /* 周期任务 */ });
+    // 嵌入桥：宿主侧周期调壳 process_events（qt 引擎约束——壳的 post 队列只有桥/显式调用会排空，见头文件注释）
+    QTimer bridge;
+    QObject::connect(&bridge, &QTimer::timeout, [&]{ loop.process_events(); });
+    bridge.start(10);
     return app.exec();   // cxxkit 全由 Qt 循环驱动，零额外线程
 }
 ```
