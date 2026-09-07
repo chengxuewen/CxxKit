@@ -28,6 +28,8 @@
 
 #include "fake_dispatcher.hpp"
 
+#include <cxxkit/kernel/connect_queued.hpp>
+
 #include <gtest/gtest.h>
 
 #include <memory>
@@ -178,6 +180,64 @@ TEST_F(EventLoopTest, ExitNegativeCodePresetReturns)
     mLoop->exit(-1);
     EXPECT_EQ(-1, mLoop->exec());
     EXPECT_FALSE(ran); // no round ran
+}
+
+// 13. connect_queued: emit does not run fn inline; process_events delivers on the loop
+// thread with args passed by value.
+TEST_F(EventLoopTest, ConnectQueuedDeliversOnLoopThread)
+{
+    cxxkit::Signal<int, std::string> sig;
+    int deliveredInt = 0;
+    std::string deliveredStr;
+    cxxkit::signals::Connection conn = connect_queued(sig,
+                                                      mLoop.get(),
+                                                      [&](int v, const std::string &s)
+                                                      {
+                                                          deliveredInt = v;
+                                                          deliveredStr = s;
+                                                      });
+    EXPECT_TRUE(conn.connected());
+
+    sig(7, "seven"); // emit on the test thread — fn must NOT run yet
+    EXPECT_EQ(0, deliveredInt);
+    EXPECT_TRUE(deliveredStr.empty());
+    EXPECT_GE(mDispatcherPtr->mWakeUpCount.load(), 1); // emit kicked the dispatcher
+
+    mLoop->process_events(EventLoop::ProcessFlag::kAllEvents);
+    EXPECT_EQ(7, deliveredInt);
+    EXPECT_EQ("seven", deliveredStr);
+}
+
+// 14. connect_queued returns a live Connection; disconnect stops future deliveries.
+TEST_F(EventLoopTest, ConnectQueuedReturnsConnectionForDisconnect)
+{
+    cxxkit::Signal<int> sig;
+    int delivered = 0;
+    cxxkit::signals::Connection conn = connect_queued(sig, mLoop.get(), [&delivered](int v) { delivered = v; });
+    ASSERT_TRUE(conn.connected());
+    conn.disconnect();
+    EXPECT_FALSE(conn.connected());
+
+    int wakeBefore = mDispatcherPtr->mWakeUpCount.load();
+    sig(1); // no slot left: no post, no wake_up
+    mLoop->process_events(EventLoop::ProcessFlag::kAllEvents);
+    EXPECT_EQ(0, delivered);
+    EXPECT_EQ(wakeBefore, mDispatcherPtr->mWakeUpCount.load());
+}
+
+// 15. connect_queued copies args at emit time; mutating the source afterwards does not
+// change what the loop thread receives.
+TEST_F(EventLoopTest, ConnectQueuedArgsCopiedNotReferenced)
+{
+    cxxkit::Signal<int> sig;
+    int delivered = 0;
+    connect_queued(sig, mLoop.get(), [&delivered](int v) { delivered = v; });
+
+    int value = 1;
+    sig(value);
+    value = 2; // mutate the source after emit
+    mLoop->process_events(EventLoop::ProcessFlag::kAllEvents);
+    EXPECT_EQ(1, delivered);
 }
 
 // 11. null dispatcher is a fatal construction error.
