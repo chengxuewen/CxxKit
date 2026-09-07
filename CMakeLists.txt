@@ -188,6 +188,8 @@ cxxkit_option(CXXKIT_ENABLE_LIB_IMGUI "Enable this to build enable imgui lib" OF
     OR_CONDITION CXXKIT_BUILD_ALL)
 cxxkit_option(CXXKIT_ENABLE_LIB_UV "Enable this to build enable uv (libuv event loop) lib" OFF
     OR_CONDITION CXXKIT_BUILD_ALL)
+cxxkit_option(CXXKIT_ENABLE_LIB_QT "Enable this to build enable qt (Qt event loop bridge) lib" OFF
+    OR_CONDITION CXXKIT_BUILD_ALL)
 
 #-----------------------------------------------------------------------------------------------------------------------
 # Sanitizers (ASAN/LSAN/UBSan) - applied at top-level scope so add_compile_options/add_link_options
@@ -255,6 +257,7 @@ cxxkit_add_subdirectory(cxxkit/network CXXKIT_ENABLE_LIB_NETWORK)
 cxxkit_add_subdirectory(cxxkit/crash CXXKIT_ENABLE_LIB_CRASH)
 cxxkit_add_subdirectory(cxxkit/imgui CXXKIT_ENABLE_LIB_IMGUI)
 cxxkit_add_subdirectory(cxxkit/uv CXXKIT_ENABLE_LIB_UV)
+cxxkit_add_subdirectory(cxxkit/qt CXXKIT_ENABLE_LIB_QT)
 cxxkit_add_subdirectory(tests CXXKIT_BUILD_TESTS)
 cxxkit_add_subdirectory(examples CXXKIT_BUILD_EXAMPLES)
 
@@ -331,6 +334,7 @@ if(CXXKIT_BUILD_INSTALL)
     if(CXXKIT_ENABLE_LIB_UV)
         list(APPEND CXXKIT_VENDORED_FIND_DEPS "libuv")
     endif()
+    set(CXXKIT_QT_ENABLED ${CXXKIT_ENABLE_LIB_QT})
     configure_package_config_file(
         "${CXXKIT_CMAKE_DIR}/CxxKitConfig.cmake.in"
         "${CMAKE_CURRENT_BINARY_DIR}/cxxkitConfig.cmake"

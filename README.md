@@ -26,6 +26,7 @@ Organized abseil-style: **directory = sublibrary = CMake target**, pick only wha
 | `cxxkit::crash` | compiled | crash handler, minidump (breakpad), stack trace (backward-cpp) — opt-in `CXXKIT_ENABLE_LIB_CRASH` |
 | `cxxkit::imgui` | compiled | headless ImGui context (`ImGuiHost`) over host-injected `PlatformBackend`/`RendererBackend` — opt-in `CXXKIT_ENABLE_LIB_IMGUI` |
 | `cxxkit::uv` | compiled | event loop dispatcher over vendored libuv — opt-in `CXXKIT_ENABLE_LIB_UV` |
+| `cxxkit::qt` | compiled | event-loop bridge onto a host Qt event loop (`QtEventDispatcher`) — opt-in `CXXKIT_ENABLE_LIB_QT` (CMake-only consumption, no .pc) |
 
 ## Quick start
 

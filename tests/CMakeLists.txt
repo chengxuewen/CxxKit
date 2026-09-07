@@ -415,3 +415,16 @@ if(CXXKIT_ENABLE_LIB_UV)
         INCLUDE_DIRECTORIES ${PROJECT_SOURCE_DIR}
         LIBRARIES ${CXXKIT_TEST_LINK_LIBRARIES} cxxkit::uv ${CMAKE_THREAD_LIBS_INIT})
 endif()
+
+if(CXXKIT_ENABLE_LIB_QT)
+    cxxkit_add_test(cxxkit_tst_qt_event_dispatcher
+        SOURCES tst_qt_event_dispatcher.cpp
+        INCLUDE_DIRECTORIES ${PROJECT_SOURCE_DIR}
+        LIBRARIES ${CXXKIT_TEST_LINK_LIBRARIES} cxxkit::qt ${CMAKE_THREAD_LIBS_INIT})
+    # Qt6 headers require C++17 (M9): the test target follows the cxxkit_qt library standard.
+    set_property(TARGET cxxkit_tst_qt_event_dispatcher PROPERTY CXX_STANDARD 17)
+    # pixi/conda Qt6 ships its own libstdc++ (>= 3.4.30) next to libQt6Core; system g++ 10.5's is 3.4.28.
+    # Add Qt's lib dir to the link search path so the shared-lib dependency chain resolves there, not
+    # against the system libstdc++ (harmless no-op when Qt comes from the system).
+    target_link_directories(cxxkit_tst_qt_event_dispatcher PRIVATE "${Qt6_DIR}/../..")
+endif()
