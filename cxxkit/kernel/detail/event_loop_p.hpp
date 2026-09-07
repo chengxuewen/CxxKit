@@ -25,8 +25,15 @@
 #pragma once
 
 #include <cxxkit/kernel/event_loop.hpp>
+#include <cxxkit/kernel/abstract_event_dispatcher.hpp>
 #include <cxxkit/kernel/detail/object_p.hpp>
 #include <cxxkit/thread/reference_counter.hpp>
+
+#include <atomic>
+#include <deque>
+#include <functional>
+#include <memory>
+#include <mutex>
 
 #if CXXKIT_FEATURE_ENABLE_KERNEL
 
@@ -50,6 +57,24 @@ public:
         }
     }
 
+    /**
+     * @brief Moves out and returns all pending posted tasks (lock held only for the swap).
+     *
+     * Swap-under-lock keeps callbacks outside the mutex: re-entrant post() from a callback
+     * cannot deadlock (S10/I4 drain invariant).
+     */
+    std::deque<std::function<void()>> take_post_queue()
+    {
+        std::lock_guard<std::mutex> lock(mPostMutex);
+        std::deque<std::function<void()>> tasks;
+        tasks.swap(mPostQueue);
+        return tasks;
+    }
+
+    std::unique_ptr<AbstractEventDispatcher> mDispatcher;
+    std::mutex mPostMutex;
+    std::deque<std::function<void()>> mPostQueue;
+    std::atomic<int> mNextTimerId{0};
     bool mInExec{false};
     std::atomic<bool> mExit{true};
     std::atomic<int> mRetCode{-1};

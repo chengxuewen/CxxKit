@@ -30,10 +30,15 @@
 #include <cxxkit/tools/enum_flags.hpp>
 #include <cxxkit/base/core_config.hpp>
 
+#include <cstdint>
+#include <functional>
+#include <memory>
+
 #if CXXKIT_FEATURE_ENABLE_KERNEL
 
 CXXKIT_BEGIN_NAMESPACE
 
+class AbstractEventDispatcher;
 class EventLoopPrivate;
 class CXXKIT_KERNEL_API EventLoop : public Object
 {
@@ -50,11 +55,48 @@ public:
     };
     CXXKIT_DECLARE_ENUM_FLAGS(ProcessFlags, ProcessFlag)
 
-    explicit EventLoop(Object *parent = nullptr);
+    /**
+     * @brief Creates an EventLoop driven by @p dispatcher.
+     *
+     * The dispatcher is injected once and owned exclusively by the loop. A null dispatcher is
+     * a fatal error — there is no valid dispatcher-less state.
+     */
+    explicit EventLoop(std::unique_ptr<AbstractEventDispatcher> dispatcher, Object *parent = nullptr);
     ~EventLoop() override;
 
+    /**
+     * @brief Processes pending events without blocking; returns what the dispatcher returned.
+     */
     bool process_events(ProcessFlags flags = ProcessFlag::kAllEvents);
-    void process_events(ProcessFlags flags, int maximumTime);
+
+    /**
+     * @brief Processes events for at most @p maximum_ms.
+     *
+     * Shell synthesis: a one-shot interrupt timer is registered through the public timer path;
+     * the loop drains posted tasks and delegates to the dispatcher with kWaitForMoreEvents until
+     * the timeout fires or an event arrives. Returns true if at least one event was processed,
+     * false on timeout.
+     */
+    bool process_events(ProcessFlags flags, uint64_t maximum_ms);
+
+    /**
+     * @brief Enqueues @p fn for execution on the loop thread. Thread-safe; callable from any thread.
+     */
+    void post(std::function<void()> fn);
+
+    /**
+     * @brief Registers a timer; returns its id (unique, non-zero).
+     *
+     * With repeat == false the shell wraps @p fn into "stop_timer(id) first, then fn" so the
+     * callback fires exactly once (M3). The wrapper captures this — see the lifecycle contract
+     * (event-loop design spec, appendix C): the loop must outlive pending one-shot timers.
+     */
+    int start_timer(uint64_t interval_ms, std::function<void()> fn, bool repeat = true);
+
+    /**
+     * @brief Cancels a timer previously registered by start_timer.
+     */
+    void stop_timer(int timer_id);
 
     int exec(ProcessFlags flags = ProcessFlag::kAllEvents);
     void wake_up();

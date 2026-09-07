@@ -26,6 +26,14 @@
 
 #include <cxxkit/base/global.hpp>
 
+// kernel sublibrary is unconditionally configured and built (top-level add_subdirectory has no gate).
+// The CXXKIT_FEATURE_ENABLE_KERNEL guard is an OpenCTK migration leftover that nothing defines —
+// it turned the whole sublibrary into dead preprocessor code. Activate it here so every kernel
+// header (which includes this file first) sees it.
+#ifndef CXXKIT_FEATURE_ENABLE_KERNEL
+#    define CXXKIT_FEATURE_ENABLE_KERNEL 1
+#endif
+
 /***********************************************************************************************************************
    cxxkit Compiler specific cmds for export and import code to DLL
 ***********************************************************************************************************************/

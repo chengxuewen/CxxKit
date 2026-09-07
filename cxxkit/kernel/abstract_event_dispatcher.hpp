@@ -49,6 +49,7 @@ class EventLoop;
 class CXXKIT_KERNEL_API AbstractEventDispatcher
 {
 public:
+    AbstractEventDispatcher() = default;
     virtual ~AbstractEventDispatcher() = default;
 
     /**

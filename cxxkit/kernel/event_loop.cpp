@@ -23,7 +23,10 @@
 ***********************************************************************************************************************/
 
 #include <cxxkit/kernel/detail/event_loop_p.hpp>
+#include <cxxkit/tools/checks.hpp>
 #include <cxxkit/tools/logging.hpp>
+
+#include <chrono>
 
 #if CXXKIT_FEATURE_ENABLE_KERNEL
 
@@ -38,9 +41,15 @@ EventLoopPrivate::~EventLoopPrivate()
 {
 }
 
-EventLoop::EventLoop(Object *parent)
+EventLoop::EventLoop(std::unique_ptr<AbstractEventDispatcher> dispatcher, Object *parent)
     : Object(parent)
 {
+    CXXKIT_CHECK(dispatcher != nullptr) << "EventLoop requires a dispatcher";
+    // The Object(parent) ctor installed a plain ObjectPrivate in mDPtr; replace it with the
+    // EventLoopPrivate this class actually uses (virtual dtor keeps the unique_ptr delete safe).
+    mDPtr.reset(new EventLoopPrivate(this));
+    CXXKIT_D(EventLoop);
+    d->mDispatcher = std::move(dispatcher);
 }
 
 EventLoop::~EventLoop()
@@ -50,23 +59,105 @@ EventLoop::~EventLoop()
 bool EventLoop::is_running() const
 {
     CXXKIT_D(const EventLoop);
-    return !d->mExit.load();
+    return !d->mExit.load() && d->mInExec;
 }
 
-void EventLoop::process_events(ProcessFlags flags, int maximumTime)
+void EventLoop::post(std::function<void()> fn)
 {
+    CXXKIT_CHECK(fn != nullptr) << "EventLoop::post requires a callable";
+    CXXKIT_D(EventLoop);
+    {
+        std::lock_guard<std::mutex> lock(d->mPostMutex);
+        d->mPostQueue.push_back(std::move(fn));
+    }
+    d->mDispatcher->wake_up();
+}
+
+int EventLoop::start_timer(uint64_t interval_ms, std::function<void()> fn, bool repeat)
+{
+    CXXKIT_CHECK(fn != nullptr) << "EventLoop::start_timer requires a callable";
+    CXXKIT_D(EventLoop);
+    const int timerId = d->mNextTimerId.fetch_add(1) + 1; // ids start at 1
+    if (repeat)
+    {
+        d->mDispatcher->start_timer(timerId, interval_ms, std::move(fn));
+    }
+    else
+    {
+        // M3 one-shot shell wrap: the callback stops itself before running, so it fires
+        // exactly once even if the driver keeps the registration. The wrapper captures this —
+        // the loop must outlive a pending one-shot timer (lifecycle contract, spec appendix C).
+        EventLoop *self = this;
+        d->mDispatcher->start_timer(timerId,
+                                    interval_ms,
+                                    [self, timerId, fn]
+                                    {
+                                        self->stop_timer(timerId);
+                                        fn();
+                                    });
+    }
+    return timerId;
+}
+
+void EventLoop::stop_timer(int timer_id)
+{
+    CXXKIT_D(EventLoop);
+    d->mDispatcher->stop_timer(timer_id);
 }
 
 bool EventLoop::process_events(ProcessFlags flags)
 {
     CXXKIT_D(EventLoop);
-    // auto threadData = d->threadData.loadRelaxed();
-    // if (!threadData->hasEventDispatcher())
-    // {
-    //     return false;
-    // }
-    // return threadData->eventDispatcher.loadRelaxed()->process_events(flags);
-    return false;
+    // Drain posted tasks first: swap the whole queue under the lock, run the callbacks outside
+    // it — re-entrant post() from a callback enqueues instead of deadlocking (S10/I4).
+    std::deque<std::function<void()>> tasks = d->take_post_queue();
+    if (!tasks.empty())
+    {
+        while (!tasks.empty())
+        {
+            std::function<void()> fn = tasks.front();
+            tasks.pop_front();
+            if (fn)
+            {
+                fn();
+            }
+        }
+        return true;
+    }
+    return d->mDispatcher->process_events(flags);
+}
+
+bool EventLoop::process_events(ProcessFlags flags, uint64_t maximum_ms)
+{
+    // D10 shell synthesis: an immediate drain round first (posted work or a non-blocking
+    // dispatcher poll); if nothing was processed, repeated kWaitForMoreEvents rounds bounded
+    // by a monotonic deadline, with a shell-owned one-shot interrupt timer so a real blocking
+    // driver returns on timeout. maximum_ms == 0 never enters the timed loop.
+    if (this->process_events(flags))
+    {
+        return true;
+    }
+    if (maximum_ms == 0)
+    {
+        return false;
+    }
+
+    CXXKIT_D(EventLoop);
+    EventLoop *self = this;
+    const int timeoutId = this->start_timer(maximum_ms, [self] { self->d_func()->mDispatcher->interrupt(); }, false);
+    bool processed = false;
+    const std::chrono::steady_clock::time_point deadline = std::chrono::steady_clock::now() +
+                                                           std::chrono::milliseconds(maximum_ms);
+    while (!d->mExit.load() && std::chrono::steady_clock::now() < deadline)
+    {
+        if (this->process_events(flags | ProcessFlag::kWaitForMoreEvents))
+        {
+            processed = true;
+            break;
+        }
+    }
+    this->stop_timer(timeoutId);
+    return processed;
 }
 
 int EventLoop::exec(ProcessFlags flags)
@@ -78,20 +169,45 @@ int EventLoop::exec(ProcessFlags flags)
         return -1;
     }
 
-    while (!d->mExit.load())
+    // exit() before exec(): the preset code is returned without running a round (shell contract —
+    // detected via a non-sentinel retcode; a never-exited loop carries mRetCode == -1).
+    if (d->mExit.load() && d->mRetCode.load() != -1)
     {
-        this->process_events(flags | ProcessFlag::kWaitForMoreEvents | ProcessFlag::kEventLoopExec);
+        return d->mRetCode.load();
     }
 
+    d->mInExec = true;
+    d->mExit.store(false); // a fresh loop is born exited; exec owns the running state now
+    while (!d->mExit.load())
+    {
+        if (this->process_events(flags | ProcessFlag::kWaitForMoreEvents | ProcessFlag::kEventLoopExec))
+        {
+            continue; // work was processed; loop condition re-checks mExit before the next round
+        }
+        // D7 checkpoint: re-check after process_events returned, before the next (blocking) round —
+        // an exit() racing with wake_up must not leave the loop blocked or spinning.
+        if (d->mExit.load())
+        {
+            break;
+        }
+    }
+    d->mInExec = false;
     return d->mRetCode.load();
 }
 
 void EventLoop::wake_up()
 {
+    CXXKIT_D(EventLoop);
+    d->mDispatcher->wake_up();
 }
 
 void EventLoop::exit(int retCode)
 {
+    CXXKIT_D(EventLoop);
+    d->mRetCode.store(retCode);
+    d->mExit.store(true);
+    // M4: unconditionally ring the bell — a loop blocked in process_events never wakes otherwise.
+    d->mDispatcher->wake_up();
 }
 
 void EventLoop::quit()
