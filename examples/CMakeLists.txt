@@ -184,3 +184,12 @@ if(CXXKIT_ENABLE_LIB_IMGUI)
     # (imgui 1.92) — the header itself then requires C++14 (PIT-35); this TU compiles it.
     set_property(TARGET cxxkit_exp_imgui_markdown PROPERTY CXX_STANDARD 14)
 endif()
+
+if(CXXKIT_ENABLE_LIB_UV)
+    cxxkit_add_executable(cxxkit_exp_event_loop
+        SOURCES exp_event_loop.cpp
+        LIBRARIES ${CXXKIT_EXAMPLE_LINK_LIBRARIES}
+        INCLUDE_DIRECTORIES ${PROJECT_SOURCE_DIR}
+        FOLDER "CxxKit/examples")
+    target_link_libraries(cxxkit_exp_event_loop PRIVATE cxxkit::uv cxxkit::kernel)
+endif()
