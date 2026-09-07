@@ -175,5 +175,19 @@ int main(int argc, char** argv) {
 1. **libuv wrap 搭建**是新 wrap（第 24 个 FindWrap）——成熟链路照抄 breakpad，风险低
 2. **Qt 双版本（5/6）兼容**：接口面只碰 QCoreApplication/QObject/QTimer/invokeMethod，5/6 同 API，编译门禁装 Qt6 即可（文档注明 Qt5 未验）
 3. **嵌套 process_events 语义**（Qt QEventLoop 嵌套）一期按 Qt 直通处理，语义等价性靠 smoke 验证
-3. **嵌套 process_events 语义**（Qt QEventLoop 嵌套）一期按 Qt 直通处理，语义等价性靠 smoke 验证
 4. EventLoop 骨架的 `mInExec`/`mExit`/`mRetCode` 原子量已存在，exec 循环改成调 dispatcher——骨架兼容性实现期确认
+
+## 9. IO/网络扩展分期路线图（2026-09-04 调研后补充）
+
+**封装库选型结论**：直包 libuv C API，不引第三方封装——uvw 需 C++17（header-only 传染消费 TU，一票否决 C4/D3）；uv-cpp 休眠 5 年且网络栈与 cxxkit::network(cpr) 重叠；libuv 官方 LINKS 里的 C++ 使用者（Node.js HandleWrap/ReqWrap、mediasoup）全部自包 C API，Node 的薄 wrap 模式即范本。
+
+| 期 | 交付 | 关键决策 |
+|---|---|---|
+| **一期**（本 spec） | EventLoop + 4 虚函数 dispatcher + uv/qt 引擎 + connect_queued | register_socket_notifier 只留纯虚预留位 |
+| **二期** | `SocketNotifier` 实现（uv_poll 底座）+ `TcpSocket/TcpServer/UdpSocket/PipeStream`（仅 uv 子库） | SocketNotifier 构造**显式传 dispatcher**（asio 式，不照搬 Qt thread-local 隐式注册）；scope 限 fd-pollable（socket/pipe/tty）；回调接现有 cxxkit::signals（不引入新 emitter）；不加虚基类，构造传 dispatcher 为三期模板化留门 |
+| **三期** | 跨引擎网络抽象 | **默认不做**——Qt 嵌入场景直接复用 QTcpSocket（零成本）；真要跨引擎走 asio 式模板化（编译期），不建第二层虚接口（dispatcher 已虚一层） |
+| **不做** | 普通文件异步 IO | epoll 不支持磁盘文件；uv_fs 本质 threadpool（默认 4 线程）——异步文件 API = thread_pool 提交包装，非 loop 集成（Chromium base::File 纯同步同款共识） |
+
+行业共识佐证：循环绑定一律构造期决定；watcher 全行业向回调收敛（Chromium 亲手废了自己的虚接口 Watcher，迁到回调+RAII Controller）。
+
+## 10. 实施顺序（预告，详细计划走 writing-plans）
