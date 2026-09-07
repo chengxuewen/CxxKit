@@ -143,17 +143,28 @@ bool EventLoop::process_events(ProcessFlags flags, uint64_t maximum_ms)
     }
 
     CXXKIT_D(EventLoop);
+    // Exit-state capture (B2 acceptance finding): a fresh loop is born with mExit == true
+    // (exec owns flipping it), so gating the timed loop on !mExit made process_events(flags, ms)
+    // return immediately when called outside exec — the deadline was silently lost. The timed
+    // path is bounded by the deadline and the interrupt timer; exit() short-circuits via the
+    // dispatcher's interrupt round only if it fires during the wait, which is the documented
+    // "return as soon as possible" semantic either way.
+    const bool exitRequested = d->mExit.load() && d->mHasExitCode.load();
     EventLoop *self = this;
     const int timeoutId = this->start_timer(maximum_ms, [self] { self->d_func()->mDispatcher->interrupt(); }, false);
     bool processed = false;
     const std::chrono::steady_clock::time_point deadline = std::chrono::steady_clock::now() +
                                                            std::chrono::milliseconds(maximum_ms);
-    while (!d->mExit.load() && std::chrono::steady_clock::now() < deadline)
+    while (!exitRequested && std::chrono::steady_clock::now() < deadline)
     {
         if (this->process_events(flags | ProcessFlag::kWaitForMoreEvents))
         {
             processed = true;
             break;
+        }
+        if (d->mExit.load() && d->mHasExitCode.load())
+        {
+            break; // exit() was called while we waited — honor it without consuming the deadline
         }
     }
     this->stop_timer(timeoutId);
