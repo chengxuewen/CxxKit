@@ -408,3 +408,10 @@ if(CXXKIT_ENABLE_LIB_IMGUI)
         INCLUDE_DIRECTORIES ${PROJECT_SOURCE_DIR}
         LIBRARIES ${CXXKIT_TEST_LINK_LIBRARIES} cxxkit::imgui ${CMAKE_THREAD_LIBS_INIT})
 endif()
+
+if(CXXKIT_ENABLE_LIB_UV)
+    cxxkit_add_test(cxxkit_tst_uv_event_dispatcher
+        SOURCES tst_uv_event_dispatcher.cpp
+        INCLUDE_DIRECTORIES ${PROJECT_SOURCE_DIR}
+        LIBRARIES ${CXXKIT_TEST_LINK_LIBRARIES} cxxkit::uv ${CMAKE_THREAD_LIBS_INIT})
+endif()
