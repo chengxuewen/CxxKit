@@ -235,7 +235,7 @@
 - **验证**: `g++ -std=c++11 -fsyntax-only`（markdown include）→ 报 340 行错；`-std=c++14` 同 TU → 干净。
 
 ## PIT-37: 跨子库 forward-declare 同名类 = shared 构建 ODR 隐患（2026-09-04, event-loop-plan T0）
-- **症状**: `cxxkit/thread/event_loop_thread.hpp` 内 `#if 0` 死骨架 forward-declare `EventLoopPrivate`（文件级声明在 `#if 0` 外仍参与编译预处理语境），与 kernel 子库 `detail/event_loop_p.hpp` 的 `EventLoopPrivate` 同名；shared 构建下两个翻译单元各自的同名类声明是潜在 ODR 冲突。
+- **症状**: `cxxkit/thread/event_loop_thread.hpp` 内 `#if 0` 死骨架 forward-declare `EventLoopPrivate`——若被启用（取消 `#if 0`），将与 kernel 子库 `detail/event_loop_p.hpp` 的同名类构成 shared 构建 ODR 冲突；当前 `#if 0` 使其不参与编译，无真实冲突，隐患为潜在性。
 - **根因**: 跨子库复用类名前未查重；死骨架（`#if 0`）半声明意图模糊，会误导后来者『补全』而非删除，隐患持续存在。
 - **解法**: 删除 `#if 0` 死骨架整块（含随之无用的 include），不做注释保留。
 - **验证**: `cmake --build build --target cxxkit_thread` 0 error；`ctest --test-dir build -R thread` 3/3 绿。
