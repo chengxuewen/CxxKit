@@ -95,9 +95,11 @@ public:
     /**
      * @brief Sets the callback invoked once per accepted connection, on the loop thread.
      *
-     * The @c unique_ptr hands over the accepted socket's ownership — the consumer stores it (and
-     * closes it) or lets it die (the destructor closes + pumps). Sockets still in the kernel
-     * backlog when no callback is set are accepted into closed handles (discarded silently).
+     * The @c unique_ptr hands over the accepted socket's ownership. Store it and dispose of it
+     * OUTSIDE this callback (or post() a follow-up to drop it later): destroying it here would
+     * drain the loop from inside a dispatcher callback and trip the I5 nested-iteration fatal.
+     * Sockets still in the kernel backlog when no callback is set are accepted into closed
+     * handles (discarded silently).
      * Loop thread only.
      */
     void on_connection(std::function<void(std::unique_ptr<TcpSocket>)> fn);
