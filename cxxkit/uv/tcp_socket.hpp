@@ -35,6 +35,10 @@
 
 #if CXXKIT_FEATURE_ENABLE_KERNEL
 
+struct
+    uv_tcp_s; // libuv tcp handle (global scope: same type uv.h typedefs as uv_tcp_t; D8 keeps uv out of public headers)
+
+
 CXXKIT_BEGIN_NAMESPACE
 
 class TcpSocketPrivate;
@@ -132,6 +136,17 @@ public:
      * phase-2 test rigging (socketpair peers) and TcpServer accept (T3, F10 preview). Loop thread only.
      */
     static std::unique_ptr<TcpSocket> adopt_fd(EventLoop &loop, int fd);
+
+    /**
+     * @brief Adopts an already-initialized, already-connected @c uv_tcp_t handle (R-T3-1).
+     *
+     * TcpServer's accept path: the server inits a bare handle, @c uv_accept fills it, then hands
+     * it over here. The handle must be initialized on @p loop 's uv engine and in the connected
+     * (accepted) state. Ownership of the handle (and its @c uv_close) transfers to the returned
+     * TcpSocket — the caller must not touch or close it afterwards. Enters kConnected directly.
+     * Loop thread only.
+     */
+    static std::unique_ptr<TcpSocket> adopt_uv_tcp(EventLoop &loop, uv_tcp_s *taken);
 
 private:
     CXXKIT_DECLARE_PRIVATE(TcpSocket)

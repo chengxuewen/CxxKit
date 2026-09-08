@@ -104,10 +104,30 @@ std::unique_ptr<TcpSocket> TcpSocket::adopt_fd(EventLoop &loop, int fd)
         uv_close(reinterpret_cast<uv_handle_t *>(handle), &TcpSocketPrivate::on_closed);
         CXXKIT_FATAL() << "TcpSocket::adopt_fd: uv_tcp_open failed (" << open_rc << ") for fd " << fd;
     }
-    handle->data = d;
-    d->mHandle = handle;
-    d->mState = TcpSocketPrivate::State::kConnected; // adopted fd is already connected
+    d->attach_connected_handle(handle);
     return socket;
+}
+
+std::unique_ptr<TcpSocket> TcpSocket::adopt_uv_tcp(EventLoop &loop, struct uv_tcp_s *taken)
+{
+    std::unique_ptr<TcpSocket> socket(new TcpSocket(loop));
+    TcpSocketPrivate *d = socket->mDPtr.get();
+    d->check_loop_thread("adopt_uv_tcp");
+    CXXKIT_CHECK(taken != nullptr) << "TcpSocket::adopt_uv_tcp: null handle";
+
+    // The handle was initialized on the server's loop engine — same engine by contract; a foreign
+    // loop would corrupt uv's internal queues. Verify rather than trust (debugging aid, cheap).
+    CXXKIT_CHECK(reinterpret_cast<void *>(taken->loop) == reinterpret_cast<void *>(&d->mDispatcher->loop()))
+        << "TcpSocket::adopt_uv_tcp: handle belongs to a different uv loop";
+    d->attach_connected_handle(taken);
+    return socket;
+}
+
+void TcpSocketPrivate::attach_connected_handle(uv_tcp_t *handle)
+{
+    handle->data = this;
+    mHandle = handle;
+    mState = State::kConnected; // adopted handle is already connected
 }
 
 void TcpSocket::connect(const std::string &ip, uint16_t port, std::function<void(bool ok)> on_connected)

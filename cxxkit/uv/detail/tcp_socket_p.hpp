@@ -78,6 +78,13 @@ public:
     /** @brief I1 fatal: every public entry is loop-thread only (R-B2-5 shape, always-on). */
     void check_loop_thread(const char *api) const;
 
+    /**
+     * @brief Shared pimpl assembly for the two adopt entries (R-T3-1): binds an already-connected
+     * handle (fresh uv_tcp_open result, or a server-accepted uv_tcp_t) to this socket's state machine.
+     * Takes ownership of @p handle on every path that does not abort.
+     */
+    void attach_connected_handle(uv_tcp_t *handle);
+
     /** @brief Submits the front of pending_writes (at most one uv_write in flight). */
     void submit_next_write();
 

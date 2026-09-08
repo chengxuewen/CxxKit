@@ -428,6 +428,10 @@ if(CXXKIT_ENABLE_LIB_UV)
         SOURCES tst_tcp_socket.cpp
         INCLUDE_DIRECTORIES ${PROJECT_SOURCE_DIR}
         LIBRARIES ${CXXKIT_TEST_LINK_LIBRARIES} cxxkit::uv ${CMAKE_THREAD_LIBS_INIT})
+    cxxkit_add_test(cxxkit_tst_tcp_server
+        SOURCES tst_tcp_server.cpp
+        INCLUDE_DIRECTORIES ${PROJECT_SOURCE_DIR}
+        LIBRARIES ${CXXKIT_TEST_LINK_LIBRARIES} cxxkit::uv ${CMAKE_THREAD_LIBS_INIT})
 endif()
 
 if(CXXKIT_ENABLE_LIB_QT)
