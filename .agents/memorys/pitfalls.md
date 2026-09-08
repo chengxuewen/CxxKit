@@ -240,3 +240,17 @@
 - **解法**: 删除 `#if 0` 死骨架整块（含随之无用的 include），不做注释保留。
 - **验证**: `cmake --build build --target cxxkit_thread` 0 error；`ctest --test-dir build -R thread` 3/3 绿。
 - **禁止**: 跨子库 forward-declare 同名类；死骨架用 `#if 0` 半保留——处置一律是删除，不留半声明。
+
+## PIT-38: Qt 的 #define signals 宏炸 cxxkit::signals 命名空间 (2026-09-08)
+- **症状**: 同一 TU 里 Qt 头先于 cxxkit kernel 头被 parse 时，`namespace signals` 被宏展开成 `namespace Q_SIGNALS`（=public）→ 硬编译错
+- **根因**: Qt qobjectdefs.h `#define signals Q_SIGNALS` 是全局 token 重写；cxxkit::signals 是扁平命名空间名
+- **解法**: include 纪律 = cxxkit kernel 头必须在 Qt 头之前被 parse（`cxxkit < QtCore` 字母序天然满足 clang-format 排序）；文件体使用前 `#undef signals` 恢复 token（exp_qt_embed 同款三行注释）
+- **验证**: `g++ -fsyntax-only` 带 Qt 头序翻转应报错；exp_qt_embed rc=0
+- **禁止**: 在 Qt 头之后声明/使用 `signals` 相关 cxxkit 符号而不 undef；不要依赖"以后再 undef"
+
+## PIT-39: 本机 g++10.5 链 conda libQt6Core 的 GLIBCXX/GCC 符号缺口 (2026-09-08)
+- **症状**: 链接 qt 消费 target 时 libQt6Core 报 undefined reference `@GLIBCXX_3.4.30`/`@GCC_12.0.0`（系统 libstdc++ 3.4.28/libgcc 过旧）；且 `-L conda/lib` 全局注入会污染其他 target 的库解析顺序
+- **根因**: conda-forge Qt 由 gcc12 编译；系统 g++ 10.5 工具链符号版本不匹配。全局 EXE_LINKER_FLAGS 注入让所有 -L 搜索先撞 conda 目录
+- **解法**: 顶层 CMakeLists `CXXKIT_QT_LOCAL_STDCPP` 变量（EXISTS 守卫指向 conda 的 libstdc++.so.6 + libgcc_s.so.1 全路径，作 link item 而非 -L）——qt 消费者（exp_qt_embed/tst_qt_event_dispatcher）显式引用；CI（gcc≥11+系统 Qt）守卫为空串零影响。必须定义在顶层（子目录作用域 examples 不可见）
+- **验证**: `cmake --build build --target cxxkit_exp_qt_embed` 0 error + 二进制 rc=0；CI configure 时变量为空
+- **禁止**: 全局 `-L conda` 注入（曾致 11 个 thread 测试二进制污染）；把 CXXKIT_QT_LOCAL_STDCPP 定义放子目录作用域

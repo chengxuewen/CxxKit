@@ -28,9 +28,9 @@ fi
 echo "namespace OK"
 
 echo "=== 命名一致性检查（snake 函数 + mPascal 成员）==="
-SNAKE_GATE=$( { grep -rnP '\b(?!m[A-Z])[a-z]+[A-Z][a-zA-Z0-9]*\s*\(' cxxkit --include="*.hpp" --include="*.cpp" 2>/dev/null || true; } | { grep -vP ':\d+:\s*(//|\*|/\*)' || true; } | { grep -vP '\b(std::|libyuv::|[A-Z]\w+::)(if|for|while|switch|return|sizeof|catch)\b' || true; } | wc -l)
+SNAKE_GATE=$( { grep -rnP '(?<![\w>:.-])(?<!->)(?<!\.)\b(?!m[A-Z])[a-z]+[A-Z][a-zA-Z0-9]*\s*\(' cxxkit --include="*.hpp" --include="*.cpp" 2>/dev/null || true; } | { grep -vP ':\d+:\s*(//|\*|/\*)' || true; } | { grep -vP '\b(std::|libyuv::|[A-Z]\w+::)(if|for|while|switch|return|sizeof|catch)\b' || true; } | wc -l)
 if [ "$SNAKE_GATE" != "0" ]; then
-    echo "发现非 snake 函数残留（camel/Pascal 函数名）:"; grep -rnP '\b(?!m[A-Z])[a-z]+[A-Z][a-zA-Z0-9]*\s*\(' cxxkit --include="*.hpp" --include="*.cpp" 2>/dev/null | grep -vP ':\d+:\s*(//|\*|/\*)' | head -5
+    echo "发现非 snake 函数残留（camel/Pascal 函数名）:"; grep -rnP '(?<![\w>:.-])(?<!->)(?<!\.)\b(?!m[A-Z])[a-z]+[A-Z][a-zA-Z0-9]*\s*\(' cxxkit --include="*.hpp" --include="*.cpp" 2>/dev/null | grep -vP ':\d+:\s*(//|\*|/\*)' | head -5
     exit 1
 fi
 MEMBER_GATE=$( { grep -rnE '^\s+.*\b[a-z][a-z0-9_]*_\s*(;|=|\{)' cxxkit --include="*.hpp" --include="*.cpp" 2>/dev/null || true; } | { grep -v preprocessor.hpp || true; } | wc -l)
@@ -58,7 +58,7 @@ fi
 
 echo "=== 5/8 共享构建验证（CXXKIT_BUILD_SHARED_LIBS 动态形态; 若 build-shared 存在）==="
 if [ -d build-shared ]; then
-    cmake -S . -B build-shared -G Ninja -DCXXKIT_BUILD_SHARED_LIBS=ON -DCXXKIT_BUILD_TESTS=ON -DCXXKIT_ENABLE_LIB_NETWORK=OFF -DCXXKIT_ENABLE_LIB_CRASH=OFF
+    cmake -S . -B build-shared -DCXXKIT_BUILD_SHARED_LIBS=ON -DCXXKIT_BUILD_TESTS=ON -DCXXKIT_ENABLE_LIB_NETWORK=OFF -DCXXKIT_ENABLE_LIB_CRASH=OFF
     cmake --build build-shared --parallel 4
     ctest --test-dir build-shared --output-on-failure || exit 1
 else
@@ -66,7 +66,7 @@ else
 fi
 
 echo "=== 6/8 构建 ==="
-cmake -S . -B build -G Ninja -DCXXKIT_BUILD_TESTS=ON -DCXXKIT_ENABLE_LIB_NETWORK=ON
+cmake -S . -B build -DCXXKIT_BUILD_TESTS=ON -DCXXKIT_ENABLE_LIB_NETWORK=ON
 cmake --build build --parallel 4
 
 echo "=== 7/8 测试 ==="

@@ -230,3 +230,13 @@ cxxkit 是 OpenCTK（an open cpp toolkit）的成功重构版本 —— 精简�
 - [x] **知识沉淀**：PIT-35（stash 不保护 untracked——多代理树红线）/ PIT-36（markdown NSDMI C++14）/ smoke 清单 8 例视觉验证矩阵
 - 验证：全链 0 error / rc 矩阵 headless=0 + 7 窗口例=1 / ctest 72/72 / format 干净
 - 教训：error_count grep 假绿（二次增量构建归零）——构建退出码为准
+
+### 2026-09-08 事件循环子系统一期落地（D30，kernel+uv+qt 三子库 SDD 流水线）
+
+- [x] **架构**：AbstractEventDispatcher 5 纯虚 + EventLoop 壳（post/exit→wake_up 耦合/maximumTime 合成/repeat 壳包装）+ connect_queued（header-only 返 Connection）+ uv/qt 双 opt-in 引擎（libuv 1.49.2 vendored/Qt6 系统包）
+- [x] **hyperplan 对抗收敛**：4 人审核（30 findings）+ 4 人对抗三轮 → D1-D16 终局裁定 + I1-I7 两级不变量（契约级零豁免）
+- [x] **测试**：75 套件全绿（kernel 15 + uv 8 + qt 7 + kernel_event 4 新增）；asan 74/74 零诊断；coverage 80.5%（48-file，uv 88.46%+factory 100%）
+- [x] **check.sh 8/8 ALL PASSED**：naming gate 修误报（->method() 链）/5+6/8 去 -G Ninja 硬编码耦/NETWORK=ON 增量重链
+- [x] **examples 19/19**：exp_event_loop（CI rc=0）+ exp_qt_embed（本机 rc=0，spec §5.2 桥形态）
+- [x] **S5 顺手修**：crash.pc Breakpad 双分支误映射 TracyClient（`4ba89f9`）
+- 裁定/教训全录：decisions.md D30 + pitfalls.md PIT-38/39

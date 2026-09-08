@@ -149,3 +149,20 @@ sanitizer（ASAN/LSAN/UBSan）与 coverage 用**独立 build 目录**（build-as
 - **imgui 1.92 headless 三坑**（实证）：NewFrame 断言 font atlas 已构建（legacy 路径需 GetTexDataAsRGBA32）；首帧 ImDrawData::Valid=false、窗口类内容第 2 帧起才有顶点；demo 窗口需连续 2 帧调用才出顶点（Active 延迟）。
 - **验证**: 主 72/72 / asan 72/72 零诊断 / cov 80.8%（43 files）/ exp_imgui 3 次逐字节一致 / OFF 树零影响 / 二次 configure stamp 命中 / nm 符号断言过。提交 `ab8f906`..`5b76925` 5 个。
 - **P1 备忘**: SDL3 vendored（完整 wrap）→ imgui_sdl3 backend → implot → ImGuizmo → exp_imgui 窗口化 + smoke checklist。P2: implot3d/imgui_markdown（单头 Zlib）/FileDialog/imnodes/ColorTextEdit（停滞按需）。
+
+## D30: 事件循环子系统一期落地（2026-09-04~08，kernel 抽象 + uv/qt 双引擎）
+
+**架构**（spec docs/superpowers/specs/2026-09-04-event-loop-design.md + bundle D1-D16 + I1-I7 两级不变量）：
+- AbstractEventDispatcher 5 纯虚（process_events/wake_up/interrupt/start_timer/stop_timer）；register_socket_notifier 留 §9 二期（D2 裁定：预留虚函数=死 API 债，二期新声明带默认空实现+@since）
+- EventLoop 壳：ctor 注入 dispatcher（null CHECK）+ post 队列住壳（mutex+swap 排空，S10/I4）+ exit→wake_up 强耦合（M4/D7 三检查点）+ maximumTime 壳合成（**deadline timer 必须 repeat=true**——one-shot 在门铃先耗尽的轮次后 epoll 无超时源永久阻塞，`de4ce96`）+ repeat=false 壳包装（先 stop 再 fn，M3）
+- connect_queued（header-only）：返回 signals::Connection（M1）；std::bind 实现（M2 C++11）；type_identity 非推导上下文单源推导（A3 R2）
+- cxxkit::uv（第 18 子库）：UvEventDispatcher——uv_async 空体门铃+壳排空（R-B2-2）/uv_timer 恒 repeat=ms（R-B2-4）/线程断言恒开（R-B2-5）/嵌套 fatal（R-B2-7 真触发面=timer 回调）；vendored libuv 1.49.2（FindWrapLibuv libyuv 形态+PIC+Config 克隆 pthread;dl;rt）
+- cxxkit::qt（第 19 子库）：QtEventDispatcher——QPointer 门铃+桥 QTimer 嵌入约束（R-C1-5，宿主侧周期调壳 process_events）/mBellPending 自合并（R-C1-6）/阻塞形态诚实降级（R-C1-8）；M9 target C++17；M10 cxxkitConfig 独立 Qt 分支（无 NO_DEFAULT_PATH）
+
+**关键教训**：
+- kernel 曾是死预处理代码 8 个月（CXXKIT_FEATURE_ENABLE_KERNEL 无人定义）——A2 R1 激活
+- DISABLE_COPY_MOVE 抑制隐式默认 ctor——抽象基类必须显式 `= default`（A2 R2）
+- maximumTime 一次性 interrupt timer 的 deadline 失守链（A2 预言→B2 实证→de4ce96 修复：repeat=true）
+- check.sh naming gate 正则把 `->method()` 链误报为 camel 函数——负向回顾排除成员访问
+- check.sh 5/8+6/8 硬编码 -G Ninja 与树实际生成器冲突——去耦（沿用缓存生成器）
+- PIT-38/39（Qt signals 宏纪律/conda libstdc++ 显式链接）

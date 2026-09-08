@@ -188,6 +188,13 @@ cxxkit_option(CXXKIT_ENABLE_LIB_IMGUI "Enable this to build enable imgui lib" OF
     OR_CONDITION CXXKIT_BUILD_ALL)
 cxxkit_option(CXXKIT_ENABLE_LIB_UV "Enable this to build enable uv (libuv event loop) lib" OFF
     OR_CONDITION CXXKIT_BUILD_ALL)
+# Local machine (g++ 10.5) only: qt consumers link the conda libstdc++ explicitly so
+# libQt6Core's GLIBCXX_3.4.30+ symbols resolve. CI (gcc>=11, system Qt) never sees this
+# (EXISTS guard = no-op). Defined at top level so examples/tests scopes inherit it. PIT-39.
+set(CXXKIT_QT_LOCAL_STDCPP "")
+if(EXISTS "/tmp/opencode/qt-env/.pixi/envs/default/lib/libstdc++.so.6")
+    set(CXXKIT_QT_LOCAL_STDCPP "/tmp/opencode/qt-env/.pixi/envs/default/lib/libstdc++.so.6" "/tmp/opencode/qt-env/.pixi/envs/default/lib/libgcc_s.so.1")
+endif()
 cxxkit_option(CXXKIT_ENABLE_LIB_QT "Enable this to build enable qt (Qt event loop bridge) lib" OFF
     OR_CONDITION CXXKIT_BUILD_ALL)
 

@@ -200,7 +200,12 @@ if(CXXKIT_ENABLE_LIB_QT)
         LIBRARIES ${CXXKIT_EXAMPLE_LINK_LIBRARIES}
         INCLUDE_DIRECTORIES ${PROJECT_SOURCE_DIR}
         FOLDER "CxxKit/examples")
-    target_link_libraries(cxxkit_exp_qt_embed PRIVATE cxxkit::qt cxxkit::kernel)
+    target_link_libraries(cxxkit_exp_qt_embed PRIVATE cxxkit::qt cxxkit::kernel ${CXXKIT_QT_LOCAL_STDCPP})
+    # Local conda-Qt link surface (g++ 10.5 libstdc++ too old for libQt6Core; CI gcc>=11 needs none of this).
+    # Target-scoped on purpose: a global EXE_LINKER_FLAGS injection poisons every other target's -L search.
+    if(EXISTS "/tmp/opencode/qt-env/.pixi/envs/default/lib/stubs")
+        set_property(TARGET cxxkit_exp_qt_embed PROPERTY LINK_DIRECTORIES "/tmp/opencode/qt-env/.pixi/envs/default/lib" "/tmp/opencode/qt-env/.pixi/envs/default/lib/stubs")
+    endif()
     # Qt headers need C++17 (qt target property, M9 precedent) — the helper default is 11.
     set_property(TARGET cxxkit_exp_qt_embed PROPERTY CXX_STANDARD 17)
 endif()
