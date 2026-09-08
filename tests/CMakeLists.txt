@@ -407,6 +407,11 @@ cxxkit_add_test(cxxkit_tst_event_loop
     INCLUDE_DIRECTORIES ${PROJECT_SOURCE_DIR} ${PROJECT_SOURCE_DIR}/tests
     LIBRARIES ${CXXKIT_TEST_LINK_LIBRARIES} ${CMAKE_THREAD_LIBS_INIT})
 
+cxxkit_add_test(cxxkit_tst_kernel_event_loop_ext
+    SOURCES tst_kernel_event_loop_ext.cpp
+    INCLUDE_DIRECTORIES ${PROJECT_SOURCE_DIR} ${PROJECT_SOURCE_DIR}/tests
+    LIBRARIES ${CXXKIT_TEST_LINK_LIBRARIES} ${CMAKE_THREAD_LIBS_INIT})
+
 if(CXXKIT_ENABLE_LIB_IMGUI)
     cxxkit_add_test(cxxkit_tst_imgui
         SOURCES tst_imgui.cpp

@@ -90,6 +90,13 @@ public:
      * With repeat == false the shell wraps @p fn into "stop_timer(id) first, then fn" so the
      * callback fires exactly once (M3). The wrapper captures this — see the lifecycle contract
      * (event-loop design spec, appendix C): the loop must outlive pending one-shot timers.
+     *
+     * Zero-interval one-shot fast path: start_timer(0, fn, false) delegates to post(fn)
+     * (Qt singleShotImpl precedent) — the callback runs FIFO with posted work on the next
+     * drain, no engine timer registration. The returned id is a ghost id: unique and non-zero,
+     * but no dispatcher entry exists for it, so stop_timer(ghostId) is a no-op (safe to call).
+     * repeat == true with interval_ms == 0 still registers through the engine: a zero-period
+     * repeating timer fires every loop round (Qt semantics).
      */
     int start_timer(uint64_t interval_ms, std::function<void()> fn, bool repeat = true);
 

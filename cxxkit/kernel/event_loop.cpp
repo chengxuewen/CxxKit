@@ -80,7 +80,14 @@ int EventLoop::start_timer(uint64_t interval_ms, std::function<void()> fn, bool 
     const int timerId = d->mNextTimerId.fetch_add(1) + 1; // ids start at 1
     if (repeat)
     {
+        // Zero-period repeating timer stays on the engine: fires every round (Qt semantics).
         d->mDispatcher->start_timer(timerId, interval_ms, std::move(fn));
+    }
+    else if (interval_ms == 0)
+    {
+        // Zero-interval one-shot fast path (Qt singleShotImpl precedent): delegate to the posted queue — FIFO with post(fn), no engine registration. timerId is a ghost id;
+        // stop_timer on it is a harmless no-op (documented in the header).
+        this->post(std::move(fn));
     }
     else
     {
