@@ -25,7 +25,7 @@ Organized abseil-style: **directory = sublibrary = CMake target**, pick only wha
 | `cxxkit::network` | compiled | http (cpr backend) |
 | `cxxkit::crash` | compiled | crash handler, minidump (breakpad), stack trace (backward-cpp) — opt-in `CXXKIT_ENABLE_LIB_CRASH` |
 | `cxxkit::imgui` | compiled | headless ImGui context (`ImGuiHost`) over host-injected `PlatformBackend`/`RendererBackend` — opt-in `CXXKIT_ENABLE_LIB_IMGUI` |
-| `cxxkit::uv` | compiled | event loop dispatcher over vendored libuv — opt-in `CXXKIT_ENABLE_LIB_UV` |
+| `cxxkit::uv` | compiled | event loop dispatcher + TcpSocket/TcpServer (memcached-style state machines) over vendored libuv — opt-in `CXXKIT_ENABLE_LIB_UV` |
 | `cxxkit::qt` | compiled | event-loop bridge onto a host Qt event loop (`QtEventDispatcher`) — opt-in `CXXKIT_ENABLE_LIB_QT` (CMake-only consumption, no .pc) |
 
 ## Quick start
@@ -101,7 +101,7 @@ cmake --build build --target Docs   # outputs build/doc/html/
 See the file `docs/README.md` for the full documentation index.
 ## Examples
 
-`examples/` ships one runnable walkthrough per sublibrary (19 total, `imgui` opt-in).
+`examples/` ships one runnable walkthrough per sublibrary (20 total, `imgui` opt-in).
 Build them with the main build (`cmake --build build`); binaries land in `build/examples/`.
 
 | Example | Sublibrary | Highlights |
@@ -124,6 +124,7 @@ Build them with the main build (`cmake --build build`); binaries land in `build/
 | `exp_network_version` | network | HTTP failure-path demo (needs `CXXKIT_ENABLE_LIB_NETWORK=ON`) |
 | `exp_imgui` | imgui | SDL3+GL3 windowed core; plus `examples/imgui/` family: headless, plot, plot3d, gizmo, file_dialog, markdown, nodes |
 | `exp_event_loop` | uv | deterministic 3-tick timer loop, rc=0 (needs `CXXKIT_ENABLE_LIB_UV=ON`) |
+| `exp_tcp_echo` | uv | TcpServer+TcpSocket loopback echo over an ephemeral port, fixed stdout, rc=0 (needs `CXXKIT_ENABLE_LIB_UV=ON`) |
 | `exp_qt_embed` | qt | cxxkit EventLoop embedded in a host Qt loop: bridge QTimer pump, queued signal delivery, rc=0 (needs `CXXKIT_ENABLE_LIB_QT=ON`; runtime gate `docs/qt-embed-smoke.md`) |
 
 All examples print deterministic output except where a value is genuinely runtime-dependent (timers, clocks — annotated in-line). No example performs a real network request or a deliberate crash.

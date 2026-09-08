@@ -192,6 +192,12 @@ if(CXXKIT_ENABLE_LIB_UV)
         INCLUDE_DIRECTORIES ${PROJECT_SOURCE_DIR}
         FOLDER "CxxKit/examples")
     target_link_libraries(cxxkit_exp_event_loop PRIVATE cxxkit::uv cxxkit::kernel)
+    cxxkit_add_executable(cxxkit_exp_tcp_echo
+        SOURCES exp_tcp_echo.cpp
+        LIBRARIES ${CXXKIT_EXAMPLE_LINK_LIBRARIES}
+        INCLUDE_DIRECTORIES ${PROJECT_SOURCE_DIR}
+        FOLDER "CxxKit/examples")
+    target_link_libraries(cxxkit_exp_tcp_echo PRIVATE cxxkit::uv cxxkit::kernel)
 endif()
 
 if(CXXKIT_ENABLE_LIB_QT)
