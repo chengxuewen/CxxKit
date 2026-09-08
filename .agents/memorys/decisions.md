@@ -166,3 +166,19 @@ sanitizer（ASAN/LSAN/UBSan）与 coverage 用**独立 build 目录**（build-as
 - check.sh naming gate 正则把 `->method()` 链误报为 camel 函数——负向回顾排除成员访问
 - check.sh 5/8+6/8 硬编码 -G Ninja 与树实际生成器冲突——去耦（沿用缓存生成器）
 - PIT-38/39（Qt signals 宏纪律/conda libstdc++ 显式链接）
+
+## D31: 事件循环子系统二期落地（2026-09-08，SocketNotifier + TcpSocket/TcpServer + timer 精化）
+
+**架构**（plan docs/superpowers/plans/2026-09-08-event-loop-phase2-plan.md，T0→T3 SDD 流水线 + Momus review，T4 全链验收）：
+- **register_socket_notifier 家族声明于 AbstractEventDispatcher**（F6 三处有意偏离 spec §9 字面，源码注释 + 本条对账）：① 基类默认实现 = `CXXKIT_CHECK(false, E1 文案)` 而非「默认空实现」——fail-loud 优于静默 no-op（fd 永不就绪类 bug 静默化更难查），源码级兼容不变（不 override 仍编译，调用才 fatal）；② 回调签名 `std::function<void(SocketEventMask)>` 带 fired mask（对齐 curl event_bitmap 回灌），非字面 `void()`；③ std::function 而非 signals（轻量，signals 版可薄封装其上）。独立 RAII SocketNotifier 类 deferred（TcpSocket 直消费 dispatcher API 无独立消费者，YAGNI，F7）
+- **uv 侧**：uv_poll level-triggered 常驻注册（vs curl edge 重注册制——声明式披露于 porting-scan A5 对照表）；同 fd 重 register = 幂等更新兴趣（uv_poll_start 语义，memcached 每转换重挂前提）；poll 活跃期关 fd = 调用者 UB（libuv 契约，先 unregister 后 close）
+- **TcpSocket**：memcached drive_machine 直译（kIdle/kConnecting/kConnected/kClosing/kClosed 显式状态机 + 每转换重挂兴趣）；读缓冲 beast flat_buffer 形状（单块连续 vector+游标），不做 prepare/commit 泛化；构造显式传 EventLoop（asio 式无虚基类，三期模板化留门）；accept 侧 `TcpServer::adopt_uv_tcp`（F10，detail/tcp_socket_p.hpp 内部构造）
+- **loop() API 边界裁定**：EventLoop 暴露 `dispatcher()` accessor（F3）——TcpSocket 经 loop 拿注册入口，EventLoopPrivate 私有不可达
+- **I5 on_connection 契约**：on_connection 回调内销毁 server 触发 fatal（0d71d27）——所有权语义：回调期间 server 必须存活
+- **TcpSocket use-after-free 坑（F8-①）**：on_data 回调里 close 摧毁 mOnData 本体——修复 = 回调入口局部拷贝 std::function 再调用（PIT-40）
+
+**timer 精化小件包**：0ms 直投已落（T0）；aggregate connect / coarse timer deferred（与 queued 异步语义冲突/需求触发）；ratas wheel 不移植（uv handle 模型已够，A1 留档）
+
+**F6 对账记录（T4 收口）**：grep 全库 "F6" —— abstract_event_dispatcher.hpp 1 处集中标注（①②③全录）+ D31 本条 + task-T1-report.md；三处偏离均与 vendored libuv 实源核对过（T1 review：uv_poll_start 换集幂等/invalidate_fd 在飞防护）
+
+**验证（T4 全链）**：主树 UV+QT=ON 78/78（套件 75→78：+kernel_event_loop_ext/tcp_socket/tcp_server）；shared UV=ON 78/78（T1 kernel 头 include tools/checks.hpp 链接闭包天然成立，无断链）；asan UV=ON 78/78 零新增诊断（仅 2 条既有良性 runtime error：nonstd string_view null 参数+glibc __forced_unwind，B2 先例）；coverage 全口径 80.7%（50 files，3429/4248）——tcp_server 80.00%、tcp_socket 83.26%（<85% 目标：uv 侧 uv_poll 分支/错误路径未全触发，用例覆盖主状态机路径；后续按需补）+ uv_event_dispatcher 87.96%；check.sh 8/8 ALL PASSED（naming gate 补字符串字面量排除——kIdle( 式 log 消息误报）；rc 矩阵 exp_event_loop=0 / exp_tcp_echo=0 / exp_qt_embed=0（无链接摩擦）

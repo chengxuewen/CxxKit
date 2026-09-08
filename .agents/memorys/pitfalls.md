@@ -254,3 +254,10 @@
 - **解法**: 顶层 CMakeLists `CXXKIT_QT_LOCAL_STDCPP` 变量（EXISTS 守卫指向 conda 的 libstdc++.so.6 + libgcc_s.so.1 全路径，作 link item 而非 -L）——qt 消费者（exp_qt_embed/tst_qt_event_dispatcher）显式引用；CI（gcc≥11+系统 Qt）守卫为空串零影响。必须定义在顶层（子目录作用域 examples 不可见）
 - **验证**: `cmake --build build --target cxxkit_exp_qt_embed` 0 error + 二进制 rc=0；CI configure 时变量为空
 - **禁止**: 全局 `-L conda` 注入（曾致 11 个 thread 测试二进制污染）；把 CXXKIT_QT_LOCAL_STDCPP 定义放子目录作用域
+
+## PIT-40: uv 回调里销毁成员 std::function = use-after-free（TcpSocket on_data，2026-09-08）
+- **症状**: on_data 回调体内调用 close()/read_stop() 时——回调正执行的是 `d->mOnData` 这个成员 std::function 本体；close 析构链把 mOnData 置空/析构 → 执行中的 std::function 被摧毁 = use-after-free（asan 捕获）
+- **根因**: libuv 回调直接经 handle->data 回 C++ 成员；回调自身生命周期挂在成员上，「执行中销毁自己」是自指析构。mOnData 在 close 路径被置 nullptr（tcp_socket.cpp:289），若正执行其中代码即 UAF
+- **解法**: 回调入口先局部拷贝再调用——`std::function<...> cb = d->mOnData; cb(...);`（F8-① copy discipline，tcp_socket.cpp:395）；终态投递分支用 move+置空（383-384）同样效果。on_write_done 同款（move-out 后再 delete req）
+- **验证**: tst_tcp_socket 含「回调内 close」用例（asan 树 78/78 零新增诊断）；`grep -n "copy discipline" cxxkit/uv/tcp_socket.cpp` 非空
+- **禁止**: 在 libuv/C 回调内直接调用成员 std::function 而不先拷贝/move-out；凡「回调即成员本体」的 wrap 均适用（Node tcp_wrap 同款纪律）

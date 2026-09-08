@@ -20,7 +20,7 @@
 - 落点：EventLoop::start_timer 增 `enum TimerType { kPrecise, kCoarse, kVeryCoarse }` 壳层实现；或与 A1 wheel 的 schedule_in_range 合并设计
 - C++11 可行（steady_clock + 排序 vector）
 
-### A3. memcached drive_machine 状态机 —— 二期 TcpSocket 内核
+### A3. memcached drive_machine 状态机 —— 二期 TcpSocket 内核（**已消费 2026-09-08**，D31）
 - C/BSD/极活跃（github.com/memcached/memcached）
 - 机制：conn_listening→waiting→read→parse_cmd→nread→swallow→mwrite→closing 显式状态机 + `conn_set_state()` 每次转换**重挂 event 兴趣标志**（读态挂 IN、写态挂 OUT）；固定 rbuf/wbuf 双缓冲 + rcurr/rbytes 游标；超大请求 rbuf_switch_to_malloc 逃生
 - 落点：状态枚举→uv read_cb/connect_cb 直译，无虚基类，正合 spec §9 二期路线（uv_tcp 封装/不加虚基类）
@@ -30,9 +30,10 @@
 - 机制：三回调 f_send/f_recv/f_recv_timeout；handshake/read/write 返 WANT_READ/WANT_WRITE = 「等对应 fd 事件后重入」非错误
 - 落点：uv_read/write 回调喂 BIO，WANT_* → 重挂 poll 兴趣。三期 TLS 走此路，不引新 TLS 库
 
-### A5. libcurl multi_socket 契约 —— SocketNotifier 接口验收标准（已 vendored）
+### A5. libcurl multi_socket 契约 —— SocketNotifier 接口验收标准（已 vendored；**已消费 2026-09-08**，D31）
 - 机制：CURLMOPT_SOCKETFUNCTION（fd+IN/OUT/INOUT/REMOVE 兴趣推送）+ CURLMOPT_TIMERFUNCTION（全局单发定时器，-1=删/0=立即）+ curl_multi_socket_action(fd, bitmask) 回灌
 - 落点：其 socket_cb 形状即二期 register_socket_notifier 的接口验收标准；「HTTP over cxxkit 事件循环」的二期后手（cpr 只用 easy 接口）
+- **消费对账（A5 形状对照表，2026-09-08 D31）**：register = CURLMOPT_SOCKETFUNCTION 注册方向（fd + 兴趣 mask + 回调，kRead|kWrite 合法组合 ≈ CURLMOPT_IN|OUT）；回调接 fired mask ≈ `curl_multi_socket_action(fd, bitmask)` event_bitmap 回灌；unregister ≈ CURLMOPT_REMOVE；语义差异声明式披露：curl 是 edge 驱动重注册制，cxxkit 按 libuv uv_poll **level-triggered 常驻注册**（F7：同 fd 重 register = 幂等更新兴趣，交付形态以此为准）
 
 ### A6. Chromium Once/Repeating 契约层 —— 信号槽唯一实质增量
 - 机制：OnceCallback move-only（bind 后不可重复触发）vs RepeatingCallback 二分；配合已有 unique_function 天然可落

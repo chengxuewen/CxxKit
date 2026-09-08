@@ -28,9 +28,9 @@ fi
 echo "namespace OK"
 
 echo "=== 命名一致性检查（snake 函数 + mPascal 成员）==="
-SNAKE_GATE=$( { grep -rnP '(?<![\w>:.-])(?<!->)(?<!\.)\b(?!m[A-Z])[a-z]+[A-Z][a-zA-Z0-9]*\s*\(' cxxkit --include="*.hpp" --include="*.cpp" 2>/dev/null || true; } | { grep -vP ':\d+:\s*(//|\*|/\*)' || true; } | { grep -vP '\b(std::|libyuv::|[A-Z]\w+::)(if|for|while|switch|return|sizeof|catch)\b' || true; } | wc -l)
+SNAKE_GATE=$( { grep -rnP '(?<![\w>:.-])(?<!->)(?<!\.)\b(?!m[A-Z])[a-z]+[A-Z][a-zA-Z0-9]*\s*\(' cxxkit --include="*.hpp" --include="*.cpp" 2>/dev/null || true; } | { grep -vP ':\d+:\s*(//|\*|/\*)' || true; } | { grep -vP '\b(std::|libyuv::|[A-Z]\w+::)(if|for|while|switch|return|sizeof|catch)\b' || true; } | { grep -vP ':[0-9]+:.*"[^"]*(?<![A-Za-z0-9_])[a-z]+[A-Z][a-zA-Z0-9]*\s*\(' || true; } | wc -l)
 if [ "$SNAKE_GATE" != "0" ]; then
-    echo "发现非 snake 函数残留（camel/Pascal 函数名）:"; grep -rnP '(?<![\w>:.-])(?<!->)(?<!\.)\b(?!m[A-Z])[a-z]+[A-Z][a-zA-Z0-9]*\s*\(' cxxkit --include="*.hpp" --include="*.cpp" 2>/dev/null | grep -vP ':\d+:\s*(//|\*|/\*)' | head -5
+    echo "发现非 snake 函数残留（camel/Pascal 函数名）:"; grep -rnP '(?<![\w>:.-])(?<!->)(?!\.)\b(?!m[A-Z])[a-z]+[A-Z][a-zA-Z0-9]*\s*\(' cxxkit --include="*.hpp" --include="*.cpp" 2>/dev/null | grep -vP ':\d+:\s*(//|\*|/\*)' | grep -vP ':[0-9]+:.*"[^"]*(?<![A-Za-z0-9_])[a-z]+[A-Z][a-zA-Z0-9]*\s*\(' | head -5
     exit 1
 fi
 MEMBER_GATE=$( { grep -rnE '^\s+.*\b[a-z][a-z0-9_]*_\s*(;|=|\{)' cxxkit --include="*.hpp" --include="*.cpp" 2>/dev/null || true; } | { grep -v preprocessor.hpp || true; } | wc -l)
