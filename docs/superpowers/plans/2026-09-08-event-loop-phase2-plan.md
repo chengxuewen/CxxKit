@@ -54,27 +54,36 @@
 - Modify: `tests/fake_dispatcher.hpp` + `tests/tst_uv_event_dispatcher.cpp`
 
 **Interfaces:**
-- Produces（全 dispatcher 家族统一签名，A5 curl socket_cb 验收标准）:
+- Produces（全 dispatcher 家族统一签名，A5 curl socket_cb 验收标准；**Momus F3/F4/F6/F7/F8 修订后**）:
 ```cpp
 // @since 0.2
 enum class SocketEventMask { kRead = 1, kWrite = 2 };
-// readiness 通知：回调后如需继续监听须重挂（level-triggered，对齐 uv_poll 语义）
+// F4 组合语义：kRead|kWrite 必须合法（TcpSocket 双工挂 IN|OUT、curl INOUT、memcached 每转换重挂）
+// —— enum class 需显式 operator|（C++11 合法，返回 SocketEventMask）
+inline SocketEventMask operator|(SocketEventMask a, SocketEventMask b);
+// readiness 通知：level-triggered（对齐 uv_poll），回调后如需继续监听须重挂；
+// 回调带 mask 参数（F6 有意偏离 spec §9 字面 std::function<void()>：对齐 curl event_bitmap 回灌）
 virtual void register_socket_notifier(int fd, SocketEventMask mask, std::function<void(SocketEventMask)> fn);
 virtual void unregister_socket_notifier(int fd);
 ```
-- kernel 默认实现：`CXXKIT_CHECK(false, "...not supported...")` 文案按 E1 全文（audit-reviewer 文案裁定）
-- uv 实现：`uv_poll_t` map<fd, poll_t*>（对照 uv_timer map 模式）；**fd 与 socket 双入口**（uv_poll_init / uv_poll_init_socket——memcached 是 fd、TcpSocket 是 uv_tcp_t 的 socket）；回调里 mHadEvents=true（B2 留档闭合）；**析构纪律 I6**：map 全 uv_close + 收尾 run；**stop 后 handle 生命周期**：uv_close 异步 → close_cb delete，防 use-after-free
-- fake：记录型（registered set + 最后 mask + 回调可直接手动触发）
+- **F6 偏离标注（三处，T4 D31 收口对账）**：①基类默认实现 = `CXXKIT_CHECK(false, E1 文案)` **有意偏离 D2 字面「默认空实现」**——fail-loud 优于静默 no-op（fd 永不就绪类 bug 静默化更难查）；源码级兼容目标不变（旧子类不 override 仍可编译，调用才 fatal）。②回调签名带 mask（对齐 curl）。③std::function 而非 signals（轻量；signals 版可薄封装其上）
+- **F7 fd 生命周期三裁定**：①同 fd 重复 register = **幂等更新兴趣**（uv_poll_start 天然支持——memcached 每状态转换重挂的前提）；②**poll 活跃期关闭 fd = UB**（libuv 调用者契约）——文档「先 unregister 后 close」+ register 撞已活跃 fd = 更新而非 CHECK；③spec §9 独立 `SocketNotifier` RAII 类 **deferred**——TcpSocket 直消费 dispatcher API 无独立消费者（YAGNI），其「析构自动 unregister」价值由 TcpSocket pimpl 析构等价实现
+- **F8 竞态策略**：register 回调**先拷贝 std::function 再调用**（回调中 unregister 自身不撕裂执行中的 function；erase 延迟到调用后）
+- kernel 默认实现：`CXXKIT_CHECK(false, "not supported by this dispatcher (phase-2 feature; UvEventDispatcher implements it). For file IO use cxxkit thread_pool instead.")`（E1 全文）
+- uv 实现：`uv_poll_t` map<fd, handle_t>（handle_t 含 poll_t* + fn + mask，对照 uv_timer map 模式）；**fd 与 socket 双入口**（uv_poll_init / uv_poll_init_socket）；回调里 mHadEvents=true（**B2 留档同批闭合**）；析构 I6：map 全 uv_close + 收尾 run；uv_close 异步 → close_cb delete（防 use-after-free）
+- fake：记录型（registered map + 最后 mask + 回调可手动触发）
 
-- [ ] **Step 1: 失败测试**（tst_uv 新增 3 用例）：RegisterPollFiresOnReadable（socketpair 写端触发读通知）/ PollInterestMaskRespected（只挂 Write 不误报 Read）/ PollUnregisterStopsDelivery + 析构清理用例（I6 ASAN watch 同 B2 先例）
-- [ ] **Step 2: 三侧落位**（kernel 默认 → uv 真 → fake 记录 → qt CHECK 升级）→ **Step 3: 绿**（uv 8+3=11 用例）→ **Step 4: asan 树 UV=ON 零诊断** → **Step 5: 提交** `feat(kernel+uv): socket notifier phase-2 — uv_poll backend + family-wide declaration (D2/S13/E1)`
+- [ ] **Step 1: 失败测试**（tst_uv 新增 5 用例）：RegisterPollFiresOnReadable（socketpair 写端触发读通知）/ PollInterestMaskRespected（只挂 Write 不误报 Read；含 kRead|kWrite 组合态）/ PollUnregisterStopsDelivery / PollReregisterSameFdUpdates（F7-①幂等更新）/ PollUnregisterInsideCallback（F8-①自拆不撕裂）+ 析构清理用例（I6 ASAN watch 同 B2 先例）
+- [ ] **Step 2: 三侧落位**（kernel 默认 → uv 真 → fake 记录 → qt CHECK 升级）→ **Step 3: 绿**（uv 用例 9 基线 +5，以实跑为准）→ **Step 4: asan 树 UV=ON 零诊断** → **Step 5: 提交** `feat(kernel+uv): socket notifier phase-2 — uv_poll backend + family-wide declaration (D2/S13/E1)`
 
 ### Task T2：TcpSocket（memcached 状态机内核）
 
 **Files:**
 - Create: `cxxkit/uv/tcp_socket.hpp/.cpp` + `detail/tcp_socket_p.hpp`
+- Modify: `cxxkit/kernel/event_loop.hpp/.cpp`（**F3 裁定**：新增 `AbstractEventDispatcher& dispatcher()` public accessor——TcpSocket 经 loop 拿注册入口；EventLoopPrivate::mDispatcher 是 kernel 私有不可达）
 - Modify: `cxxkit/uv/CMakeLists.txt`（源文件进 GLOB 自动，确认即可）
 - Create: `tests/tst_tcp_socket.cpp`
+- Modify: `tests/CMakeLists.txt`（**F5**：注册 cxxkit_tst_tcp_socket，UV 门控块内）
 
 **Interfaces:**
 - Produces:
@@ -96,19 +105,21 @@ public:
 };
 ```
 - **状态机（memcached 范式）**：`enum class State { kIdle, kConnecting, kConnected, kReading, kWriting, kClosing, kClosed }` + 每次转换**重挂兴趣**（读态挂 IN、写态挂 OUT——porting-scan 规避清单硬约束）
-- **写背压纪律（lws）**：write 请求在 awaiting_on_written 期间排队（pending_writes deque），on_written 回调后才发下一条；**跨线程写拒绝**——write/read_start 仅限 loop 线程（I1 + porting-scan「跨线程写必须 post 序列化」——文档明示 + debug 断言）
+- **写背压纪律（lws）**：write 请求在 awaiting_on_written 期间排队（pending_writes deque），on_written 回调后才发下一条；**跨线程写拒绝**——write/read_start 仅限 loop 线程（I1；**有意比规避清单更严**：清单允许 post 序列化，我们直接拒绝——序列化由调用方显式做更清晰）+ 文档明示
 - **缓冲（beast flat_buffer 形状）**：read 侧单块连续 std::vector<uint8_t> + 游标（rcurr/rbytes memcached 式）；**不做** prepare/commit 泛化（beast 接口形状是二期读缓冲的实现指引非 API 复刻——报告裁定记录）
-- **错误处理**：uv 回调 status<0 → 映射 close（状态机 kClosing）+ on_data(EOF)/on_connected(false)——**错误态粘滞规避**（porting-scan TLS 清单同源：关闭后一切操作 CHECK/no-op）
+- **错误处理**：uv 回调 status<0 → 映射 close（状态机 kClosing）+ on_data(EOF)/on_connected(false)——**错误态粘滞规避**（关闭后一切操作 CHECK/no-op）
+- **F8-② close 窗口裁定**：`mCloseRequested` 幂等（二次 close no-op——uv_close 异步下二次 close = use-after-free）；close() 时 pending_writes 全部补发 `on_written(false)`（丢弃语义，文档化）；析构若 close_cb 未跑完 → 收尾 run 排空（一期 uv dispatcher 同款）
 
-- [ ] **Step 1: 失败测试**（tst_tcp_socket.cpp，真实 loopback）：ConnectEchoRoundTrip（本地 echo server + write + on_data 收回）/ WriteBackpressureQueueing（on_written 前多次 write 排队按序发）/ ReadStopRespectsMask / CloseInsideCallback（I3：on_data 里 close 自身不崩）/ DestructorMidTransfer（I6 ASAN）/ ErrorPathRemoteClose（对端关闭 → on_data(0)）
+- [ ] **Step 1: 失败测试**（tst_tcp_socket.cpp，真实 loopback）：ConnectEchoRoundTrip（本地 echo server + write + on_data 收回）/ WriteBackpressureQueueing（on_written 前多次 write 排队按序发）/ ReadStopRespectsMask / CloseInsideCallback（I3：on_data 里 close 自身不崩）/ DestructorMidTransfer（I6 ASAN）/ ErrorPathRemoteClose（对端关闭 → on_data(0)）/ CloseTwiceIdempotent（F8-②幂等 + pending writes 收 false）/ CrossThreadWriteRejected（F11：非 loop 线程 write → fatal）
 - [ ] **Step 2: 实现**（状态机 + uv_tcp_t 直包，Node tcp_wrap 模式 handle->data 回 C++）→ **Step 3: 绿** → **Step 4: asan 零诊断** → **Step 5: 提交** `feat(uv): TcpSocket — memcached state machine over uv_tcp (A3/背压纪律/I1/I3/I6)`
 
 ### Task T3：TcpServer + echo example
 
 **Files:**
-- Create: `cxxkit/uv/tcp_server.hpp/.cpp`（accept 产出 TcpSocket——共享 pimpl 结构或 socket 移植构造）
+- Create: `cxxkit/uv/tcp_server.hpp/.cpp`（**F10 裁定**：detail/tcp_socket_p.hpp 提供 `static std::unique_ptr<TcpSocket> adopt(uv_tcp_t*, EventLoop&)` 内部构造——写死一种）
+- Create: `tests/tst_tcp_server.cpp`（**F5 补**）
 - Create: `examples/exp_tcp_echo.cpp`
-- Modify: `examples/CMakeLists.txt`（UV=ON 门控）、`README.md`（uv 行扩展：tcp echo）
+- Modify: `tests/CMakeLists.txt`（注册）、`examples/CMakeLists.txt`（UV=ON 门控）、`README.md`（uv 行扩展：tcp echo）
 
 **Interfaces:**
 - Produces:
@@ -130,7 +141,7 @@ public:
 ### Task T4：收尾（文档/CI/memory/全链）
 
 **Files:**
-- Modify: spec §9（二期行 → 已交付标注 + 实际签名对齐）、`docs/porting-scan-report.md`（A3/A5 标注已消费）
+- Modify: spec §9（二期行 → 已交付标注 + 实际签名对齐）、`docs/superpowers/specs/2026-09-08-porting-scan-report.md`（A3/A5 标注已消费 + F6 对账）
 - Modify: `README.md`（子库表 uv 行内容更新：socket notifier + tcp）、AGENTS.md 结构段（如有必要）
 - Modify: `.agents/memorys/`（status.md 二期段落 + decisions.md D31 + pitfalls 查 Qt/uv 新坑——如 uv_poll fd vs socket 双入口的陷阱）
 - **全链验收**：主树（UV+QT=ON）75+N 全绿 / shared 74+ / asan 零诊断 / coverage ≥80%（uv 新文件水位 ≥85%）/ check.sh 8/8 exit=0 / rc 矩阵（exp_event_loop + exp_qt_embed + exp_tcp_echo 三例）
@@ -147,7 +158,7 @@ T1（notifier 三侧）─┼─→ T2（TcpSocket）─→ T3（TcpServer+examp
 
 ## 验收门禁（继承 D2 证据链标准）
 
-- 主树 UV+QT=ON：全绿（75→约 82 用例新增）
+- 主树 UV+QT=ON：全绿（**套件 75→78**：+tst_kernel_event_loop_ext/+tst_tcp_socket/+tst_tcp_server；用例数以实跑为准）
 - shared/asan（UV=ON）：绿/零诊断（新增 ASAN watch 用例同 B2 先例）
 - coverage：≥80% 全口径，uv 新文件 ≥85%
 - check.sh 8/8 exit=0；rc 矩阵三例
