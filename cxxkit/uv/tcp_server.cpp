@@ -72,7 +72,7 @@ TcpServer::~TcpServer()
     CXXKIT_D(TcpServer);
     // I6: close (idempotent), then pump NOWAIT rounds until the uv close callback ran — the same
     // drain discipline as TcpSocket's destructor. Accepted sockets are NOT touched (I6 boundary).
-    if (d->mHandle != nullptr && !d->mCloseRequested)
+    if (d->mHandle != nullptr && !d->mCloseRequested && !uv_is_closing(reinterpret_cast<uv_handle_t *>(d->mHandle)))
     {
         d->mCloseRequested = true;
         uv_close(reinterpret_cast<uv_handle_t *>(d->mHandle), &TcpServerPrivate::on_closed);
@@ -120,7 +120,10 @@ bool TcpServer::listen(const std::string &ip, uint16_t port, int backlog)
         // The handle IS registered with the loop (init did that) — the only clean teardown is
         // uv_close + pump until the callback freed it (TcpSocket dtor discipline), so a retry
         // starts from a clean slate and the loop never carries a zombie handle.
-        uv_close(reinterpret_cast<uv_handle_t *>(d->mHandle), &TcpServerPrivate::on_closed);
+        if (!uv_is_closing(reinterpret_cast<uv_handle_t *>(d->mHandle)))
+        {
+            uv_close(reinterpret_cast<uv_handle_t *>(d->mHandle), &TcpServerPrivate::on_closed);
+        }
         for (int rounds = 0; rounds < 1000 && d->mHandle != nullptr; ++rounds)
         {
             d->mLoop.process_events(EventLoop::ProcessFlag::kAllEvents);
