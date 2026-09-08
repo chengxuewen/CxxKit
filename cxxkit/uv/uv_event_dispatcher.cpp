@@ -382,9 +382,12 @@ void UvEventDispatcher::register_socket_notifier(int fd, SocketEventMask mask, s
     const int start_rc = uv_poll_start(handle, to_uv_poll_events(mask), &UvEventDispatcherPrivate::on_poll_ready);
     if (start_rc != 0)
     {
-        delete key;
-        delete handle;
-        CXXKIT_FATAL() << "UvEventDispatcher::register_socket_notifier: uv_poll_start failed (" << start_rc << ")";
+        // T1 review LOW-1: the handle is already initialized in the loop — raw delete would leave a live
+        // uv handle in the loop's internal lists (use-after-free on the next round). uv_close detaches it
+        // safely; on_poll_closed frees the fd key + handle once the loop runs the close callback.
+        uv_close(reinterpret_cast<uv_handle_t *>(handle), &UvEventDispatcherPrivate::on_poll_closed);
+        CXXKIT_FATAL() << "UvEventDispatcher::register_socket_notifier: uv_poll_start failed (" << start_rc
+                       << ") for fd " << fd;
     }
 
     UvEventDispatcherPrivate::PollEntry entry;
