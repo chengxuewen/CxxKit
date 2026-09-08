@@ -254,6 +254,12 @@ bool EventLoop::event(Event *event)
     }
 }
 
+AbstractEventDispatcher &EventLoop::dispatcher()
+{
+    CXXKIT_D(EventLoop);
+    return *d->mDispatcher;
+}
+
 CXXKIT_END_NAMESPACE
 
 #endif // #if CXXKIT_FEATURE_ENABLE_KERNEL

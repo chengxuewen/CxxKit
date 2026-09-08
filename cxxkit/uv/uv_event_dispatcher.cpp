@@ -419,6 +419,12 @@ void UvEventDispatcher::unregister_socket_notifier(int fd)
     }
 }
 
+struct uv_loop_s &UvEventDispatcher::loop()
+{
+    CXXKIT_D(UvEventDispatcher);
+    return d->mLoop;
+}
+
 CXXKIT_END_NAMESPACE
 
 #endif // #if CXXKIT_FEATURE_ENABLE_KERNEL

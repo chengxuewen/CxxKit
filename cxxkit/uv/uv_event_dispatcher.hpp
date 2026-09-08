@@ -32,6 +32,8 @@
 
 #if CXXKIT_FEATURE_ENABLE_KERNEL
 
+struct uv_loop_s; // libuv loop (global scope: same type uv.h typedefs as uv_loop_t; D8 keeps uv out of public headers)
+
 CXXKIT_BEGIN_NAMESPACE
 
 class UvEventDispatcherPrivate;
@@ -95,6 +97,13 @@ public:
 
     /** @brief Stops and closes the fd's poll handle; no-op for an unregistered fd. Loop thread only. */
     void unregister_socket_notifier(int fd) override;
+
+    /**
+     * @brief The underlying uv loop — phase-2 IO classes (TcpSocket/TcpServer) initialize their own
+     * handles on the SAME loop the dispatcher drives, so their callbacks interleave with timer/post
+     * rounds in one thread. Loop thread only (the loop is not thread-safe). @since 0.2
+     */
+    struct uv_loop_s &loop();
 
 private:
     CXXKIT_DECLARE_PRIVATE(UvEventDispatcher)

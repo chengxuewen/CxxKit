@@ -113,6 +113,16 @@ public:
 
     bool is_running() const;
 
+    /**
+     * @brief Returns the loop's injected dispatcher (phase-2 IO consumers).
+     *
+     * The dispatcher is owned exclusively by the loop and is never null (construction contract).
+     * Phase-2 IO classes (TcpSocket/TcpServer over cxxkit::uv) reach the engine through this accessor
+     * instead of each carrying their own engine reference. The dispatcher's own threading contract
+     * applies — engine registrations are loop-thread only.
+     */
+    AbstractEventDispatcher &dispatcher();
+
     bool event(Event *event) override;
 
 private:
