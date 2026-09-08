@@ -103,6 +103,7 @@ public:
 void post(std::function<void()> fn);            // 任意线程可调
 int  start_timer(uint64_t interval_ms, std::function<void()> fn, bool repeat = true);
 void stop_timer(int timer_id);                  // id 由 start_timer 返回（原子自增分配）
+bool process_events(ProcessFlags flags, uint64_t maximum_ms);   // D10 壳合成：一次性 interrupt 定时器 + kWaitForMoreEvents 循环
 ```
 
 ### 4.3 post 数据流（竞态核心设计）
@@ -128,11 +129,12 @@ void stop_timer(int timer_id);                  // id 由 start_timer 返回（�
 
 ```cpp
 template <typename... Args>
-void connect_queued(Signal<Args...>& sig, EventLoop* loop, std::function<void(Args...)> fn)
+signals::Connection connect_queued(Signal<Args...>& sig, EventLoop* loop, std::function<void(Args...)> fn)
 {
     sig.connect([loop, fn](const Args&... args) {
         loop->post([fn, args...]() { fn(args...); });   // emit 时参数值拷贝一次
     });
+    // 返回 signals::Connection——I7 disconnect 契约的操作句柄
 }
 ```
 
@@ -168,7 +170,7 @@ int main(int argc, char** argv) {
     cxxkit::EventLoop loop(std::make_unique<cxxkit::QtEventDispatcher>());
     cxxkit::connect_queued(worker.on_data, &loop, [](Data d) { /* Qt 主线程 */ });
     loop.start_timer(100, [&]{ /* 周期任务 */ });
-    // 嵌入桥：宿主侧周期调壳 process_events（qt 引擎约束——壳的 post 队列只有桥/显式调用会排空，见头文件注释）
+    // 嵌入桥：宿主侧周期调壳 process_events（qt 驱动约束——壳的 post 队列只有桥/显式调用会排空，见头文件注释）
     QTimer bridge;
     QObject::connect(&bridge, &QTimer::timeout, [&]{ loop.process_events(); });
     bridge.start(10);
