@@ -95,6 +95,18 @@ public:
     void start_timer(int timer_id, uint64_t interval_ms, std::function<void()> fn) override;
     void stop_timer(int timer_id) override;
 
+    /**
+     * @brief Phase-2 socket notifier is NOT implemented on the Qt bridge. @since 0.2
+     *
+     * Explicit override of the base fatal default (E1) so the refusal is visible in this class, not
+     * inherited: the Qt bridge has no QSocketNotifier integration yet — for readiness IO use
+     * UvEventDispatcher; for file IO use cxxkit thread_pool instead.
+     */
+    void register_socket_notifier(int fd, SocketEventMask mask, std::function<void(SocketEventMask)> fn) override;
+
+    /** @brief No-op mirror of the base default: unregistering an fd the bridge never registered is not a bug. */
+    void unregister_socket_notifier(int fd) override;
+
 private:
     CXXKIT_DECLARE_PRIVATE(QtEventDispatcher)
     CXXKIT_DEFINE_DPTR(QtEventDispatcher)

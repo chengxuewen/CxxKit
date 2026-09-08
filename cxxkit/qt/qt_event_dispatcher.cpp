@@ -201,6 +201,24 @@ void QtEventDispatcher::stop_timer(int timer_id)
     timer->deleteLater();
 }
 
+void QtEventDispatcher::register_socket_notifier(int fd, SocketEventMask mask, std::function<void(SocketEventMask)> fn)
+{
+    CXXKIT_UNUSED(fd);
+    CXXKIT_UNUSED(mask);
+    CXXKIT_UNUSED(fn);
+    // E1 (explicit override of the base fatal default): the Qt bridge has no QSocketNotifier integration
+    // yet. Fail-loud instead of a silent no-op — an fd that never becomes ready is much harder to debug.
+    CXXKIT_CHECK(false) << "QtEventDispatcher::register_socket_notifier: not supported by this dispatcher "
+                           "(phase-2 feature; UvEventDispatcher implements it). For file IO use cxxkit thread_pool "
+                           "instead.";
+}
+
+void QtEventDispatcher::unregister_socket_notifier(int fd)
+{
+    CXXKIT_UNUSED(fd); // silent no-op mirror of the base default (P2-3: unknown fd is not a bug)
+}
+
+
 CXXKIT_END_NAMESPACE
 
 #endif // #if CXXKIT_FEATURE_ENABLE_KERNEL

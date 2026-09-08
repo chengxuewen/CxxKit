@@ -90,6 +90,18 @@ public:
         mTimers.erase(timer_id);
     }
 
+    void register_socket_notifier(int fd, SocketEventMask mask, std::function<void(SocketEventMask)> fn) override
+    {
+        std::lock_guard<std::mutex> lock(mSocketMutex);
+        mSocketRegistrationCount++;
+        mSockets[fd] = SocketRecord{mask, std::move(fn)}; // F7-①: re-register = idempotent update
+    }
+
+    void unregister_socket_notifier(int fd) override
+    {
+        std::lock_guard<std::mutex> lock(mSocketMutex);
+        mSockets.erase(fd);
+    }
     /** Runs all posted tasks FIFO; returns true if at least one ran (dispatcher contract). */
     bool drain()
     {
@@ -149,6 +161,55 @@ public:
         return mTimerIds.at(static_cast<size_t>(index));
     }
 
+    // ---- phase-2 socket notifier recording ("recording (registered map + mask) + manually triggerable test callback") ----
+
+    /** @brief Recorded per-fd registration: interests + the callback registered for them. */
+    struct SocketRecord
+    {
+        AbstractEventDispatcher::SocketEventMask mMask{AbstractEventDispatcher::SocketEventMask::kRead};
+        std::function<void(AbstractEventDispatcher::SocketEventMask)> mFn;
+    };
+
+    bool has_socket(int fd)
+    {
+        std::lock_guard<std::mutex> lock(mSocketMutex);
+        return mSockets.find(fd) != mSockets.end();
+    }
+
+    /** @brief Interests registered for @p fd (kRead if absent — check has_socket first). */
+    AbstractEventDispatcher::SocketEventMask socket_mask(int fd)
+    {
+        std::lock_guard<std::mutex> lock(mSocketMutex);
+        return mSockets[fd].mMask; // operator[] default-constructs when absent; tests check has_socket first
+    }
+
+    /** @brief Test-side trigger: delivers @p mask to the fd's callback (the recording double has no real
+     *  poll — the test plays the kernel). F8-① shape: copies the function before invoking, like the uv engine. */
+    void fire_socket(int fd, AbstractEventDispatcher::SocketEventMask mask)
+    {
+        std::function<void(AbstractEventDispatcher::SocketEventMask)> fn;
+        {
+            std::lock_guard<std::mutex> lock(mSocketMutex);
+            std::map<int, SocketRecord>::iterator it = mSockets.find(fd);
+            if (it == mSockets.end())
+            {
+                return;
+            }
+            fn = it->second.mFn; // copy under the lock, invoke outside it (uv F8-① discipline)
+        }
+        if (fn)
+        {
+            fn(mask);
+        }
+    }
+
+    /** Total register_socket_notifier calls received (not live count) — F7-① re-register counting. */
+    int socket_registration_count()
+    {
+        std::lock_guard<std::mutex> lock(mSocketMutex);
+        return mSocketRegistrationCount;
+    }
+
     std::atomic<int> mProcessCount{0};
     std::atomic<int> mWakeUpCount{0};
     std::atomic<int> mInterruptCount{0};
@@ -160,6 +221,10 @@ public:
 
     std::mutex mPostedMutex;
     std::deque<std::function<void()>> mPosted;
+
+    std::mutex mSocketMutex;
+    std::map<int, SocketRecord> mSockets;
+    int mSocketRegistrationCount{0};
 };
 
 CXXKIT_END_NAMESPACE

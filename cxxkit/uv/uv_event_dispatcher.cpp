@@ -1,6 +1,5 @@
-/***********************************************************************************************************************
-**
-** Library: CxxKit
+/***
+Library: CxxKit
 **
 ** Copyright (C) 2026~Present ChengXueWen.
 **
@@ -14,9 +13,9 @@
 ** The above copyright notice and this permission notice shall be included in all copies or substantial portions
 ** of the Software.
 **
-** THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLIED, INCLUDING BUT NOT LIMITED TO
-** THE WARRANTIES OF MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
-** AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER LIABILITY, WHETHER IN AN ACTION OF
+** THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLIED, INCLUDING BUT NOT LIMITED
+** TO THE WARRANTIES OF MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL
+** THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER LIABILITY, WHETHER IN AN ACTION OF
 ** CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS
 ** IN THE SOFTWARE.
 **
@@ -43,6 +42,42 @@ struct TimerCallback
     int mTimerId;
 };
 
+/** @brief fd key carried in a poll handle's data (the PollEntry lives in the pimpl's mPolls map — F8-①). */
+struct PollFdKey
+{
+    int mFd;
+};
+
+/** @brief SocketEventMask -> uv_poll event bits (kRead/kWrite mirror UV_READABLE/UV_WRITABLE). */
+int to_uv_poll_events(AbstractEventDispatcher::SocketEventMask mask)
+{
+    int events = 0;
+    if ((static_cast<int>(mask) & static_cast<int>(AbstractEventDispatcher::SocketEventMask::kRead)) != 0)
+    {
+        events |= UV_READABLE;
+    }
+    if ((static_cast<int>(mask) & static_cast<int>(AbstractEventDispatcher::SocketEventMask::kWrite)) != 0)
+    {
+        events |= UV_WRITABLE;
+    }
+    return events;
+}
+
+/** @brief uv_poll fired-event bits -> SocketEventMask (the mask fed back to the callback, curl-style). */
+AbstractEventDispatcher::SocketEventMask to_socket_mask(int events)
+{
+    int mask = 0;
+    if ((events & UV_READABLE) != 0)
+    {
+        mask |= static_cast<int>(AbstractEventDispatcher::SocketEventMask::kRead);
+    }
+    if ((events & UV_WRITABLE) != 0)
+    {
+        mask |= static_cast<int>(AbstractEventDispatcher::SocketEventMask::kWrite);
+    }
+    return static_cast<AbstractEventDispatcher::SocketEventMask>(mask);
+}
+
 } // namespace
 
 UvEventDispatcherPrivate::UvEventDispatcherPrivate(UvEventDispatcher *p)
@@ -65,7 +100,7 @@ UvEventDispatcherPrivate::~UvEventDispatcherPrivate()
 {
     // I6 teardown discipline. Order matters:
     //   1. mClosed: reject wake_up()/interrupt() arriving after this point (in-flight send protection).
-    //   2. uv_close everything: async + every live timer (close callbacks free the TimerCallback).
+    //   2. uv_close everything: async + every live timer and poll (close callbacks free the heap state).
     //   3. one final uv_run(NOWAIT): lets the close callbacks execute so all heap state is freed.
     //   4. uv_loop_close: fails with UV_EBUSY if any handle survived — that is a teardown bug, fatal.
     mClosed.store(true);
@@ -82,6 +117,18 @@ UvEventDispatcherPrivate::~UvEventDispatcherPrivate()
         if (!uv_is_closing(reinterpret_cast<uv_handle_t *>(it->second)))
         {
             uv_close(reinterpret_cast<uv_handle_t *>(it->second), &UvEventDispatcherPrivate::on_handle_closed);
+        }
+    }
+
+    // Phase-2 (I6): active poll handles go down the same close-everything path — the fd stays OPEN (the
+    // caller owns it); we only stop watching it and free the handle + callback storage.
+    std::map<int, PollEntry> polls;
+    mPolls.swap(polls);
+    for (std::map<int, PollEntry>::iterator it = polls.begin(); it != polls.end(); ++it)
+    {
+        if (it->second.mHandle != nullptr && !uv_is_closing(reinterpret_cast<uv_handle_t *>(it->second.mHandle)))
+        {
+            uv_close(reinterpret_cast<uv_handle_t *>(it->second.mHandle), &UvEventDispatcherPrivate::on_poll_closed);
         }
     }
 
@@ -116,6 +163,33 @@ void UvEventDispatcherPrivate::on_timer_expired(uv_timer_t *handle)
     }
 }
 
+void UvEventDispatcherPrivate::on_poll_ready(uv_poll_t *handle, int status, int events)
+{
+    UvEventDispatcherPrivate *d = static_cast<UvEventDispatcherPrivate *>(handle->loop->data);
+    if (d == nullptr)
+    {
+        return;
+    }
+    d->mHadEvents = true; // B2 closure: poll activity counts as processed events, same as timers
+
+    // F8-① race policy: the PollEntry lives in the pimpl's mPolls map (NOT in handle->data — that carries
+    // only the fd key). Copy the std::function BEFORE invoking: a callback that unregisters or re-registers
+    // its own fd mutates mPolls, and the copy keeps this in-flight invocation tearing-free.
+    const int fd = static_cast<PollFdKey *>(handle->data)->mFd;
+    std::map<int, PollEntry>::iterator it = d->mPolls.find(fd);
+    if (it == d->mPolls.end())
+    {
+        return; // unregistered between the epoll wakeup and here — nothing to deliver
+    }
+    std::function<void(AbstractEventDispatcher::SocketEventMask)> fn = it->second.mFn; // the F8-① copy
+
+    if (status < 0)
+    {
+        return; // error delivery (e.g. EBADF after peer close): no readiness bits to report — drop quietly
+    }
+    fn(to_socket_mask(events));
+}
+
 void UvEventDispatcherPrivate::on_handle_closed(uv_handle_t *handle)
 {
     if (handle->data != nullptr)
@@ -124,6 +198,15 @@ void UvEventDispatcherPrivate::on_handle_closed(uv_handle_t *handle)
         handle->data = nullptr;
     }
     delete handle; // timers and the wake async are heap cells; freeing here is uniform
+}
+
+void UvEventDispatcherPrivate::on_poll_closed(uv_handle_t *handle)
+{
+    // uv_close is asynchronous: this runs on a later loop round. The PollEntry in mPolls (callback +
+    // interests) was already erased by unregister/teardown; only the fd key cell and the handle remain.
+    delete static_cast<PollFdKey *>(handle->data);
+    handle->data = nullptr;
+    delete handle;
 }
 
 void UvEventDispatcherPrivate::check_loop_thread(const char *api) const
@@ -247,6 +330,89 @@ void UvEventDispatcher::stop_timer(int timer_id)
     if (!uv_is_closing(reinterpret_cast<uv_handle_t *>(handle)))
     {
         uv_close(reinterpret_cast<uv_handle_t *>(handle), &UvEventDispatcherPrivate::on_handle_closed);
+    }
+}
+
+void UvEventDispatcher::register_socket_notifier(int fd, SocketEventMask mask, std::function<void(SocketEventMask)> fn)
+{
+    CXXKIT_D(UvEventDispatcher);
+    d->check_loop_thread("register_socket_notifier");
+    CXXKIT_CHECK(fn != nullptr) << "UvEventDispatcher::register_socket_notifier requires a callable";
+    if (d->mClosed.load())
+    {
+        return; // tearing down: no new handles
+    }
+
+    // F7-① idempotent re-register: a live fd re-registers by UPDATING interests in place (uv_poll_start on
+    // an already-started handle just swaps the event set) — memcached-style per-transition re-arm relies on
+    // this; it is an update, never an error. The callback is replaced too (curl socket_cb re-attach shape).
+    std::map<int, UvEventDispatcherPrivate::PollEntry>::iterator it = d->mPolls.find(fd);
+    if (it != d->mPolls.end())
+    {
+        uv_poll_t *handle = it->second.mHandle;
+        it->second.mFn = std::move(fn);
+        it->second.mMask = mask;
+        const int rc = uv_poll_start(handle, to_uv_poll_events(mask), &UvEventDispatcherPrivate::on_poll_ready);
+        CXXKIT_CHECK(rc == 0) << "UvEventDispatcher::register_socket_notifier: uv_poll_start failed (" << rc << ")";
+        return;
+    }
+
+    // Dual entry point (fd vs socket): uv_poll_init takes a POSIX fd, uv_poll_init_socket takes a SOCKET
+    // handle on Windows. On non-Windows both route to the fd form; the branch keeps the Windows contract
+    // explicit instead of relying on uv's internal #define.
+    uv_poll_t *handle = new uv_poll_t;
+    PollFdKey *key = new PollFdKey();
+    key->mFd = fd;
+    handle->data = key;
+
+    const int init_rc = uv_poll_init(&d->mLoop, handle, fd);
+    if (init_rc != 0)
+    {
+        // On Windows the fd entry point fails for real SOCKET handles; retry the socket form (S13).
+        const int socket_rc = uv_poll_init_socket(&d->mLoop, handle, static_cast<uv_os_sock_t>(fd));
+        if (socket_rc != 0)
+        {
+            delete key;
+            delete handle;
+            CXXKIT_FATAL() << "UvEventDispatcher::register_socket_notifier: uv_poll_init(" << init_rc
+                           << ") and uv_poll_init_socket(" << socket_rc << ") both failed for fd " << fd;
+        }
+    }
+
+    const int start_rc = uv_poll_start(handle, to_uv_poll_events(mask), &UvEventDispatcherPrivate::on_poll_ready);
+    if (start_rc != 0)
+    {
+        delete key;
+        delete handle;
+        CXXKIT_FATAL() << "UvEventDispatcher::register_socket_notifier: uv_poll_start failed (" << start_rc << ")";
+    }
+
+    UvEventDispatcherPrivate::PollEntry entry;
+    entry.mHandle = handle;
+    entry.mFn = std::move(fn);
+    entry.mMask = mask;
+    d->mPolls[fd] = entry;
+}
+
+void UvEventDispatcher::unregister_socket_notifier(int fd)
+{
+    CXXKIT_D(UvEventDispatcher);
+    d->check_loop_thread("unregister_socket_notifier");
+
+    std::map<int, UvEventDispatcherPrivate::PollEntry>::iterator it = d->mPolls.find(fd);
+    if (it == d->mPolls.end())
+    {
+        return; // unknown fd is a no-op (P2-3 mirror of stop_timer)
+    }
+    uv_poll_t *handle = it->second.mHandle;
+    // Erase the PollEntry FIRST (callback storage dies here): the uv_close close callback only frees the
+    // fd key + handle. If a poll event for this fd is already in flight inside this loop round, on_poll_ready
+    // finds no map entry and drops it (F8-① lookup discipline).
+    d->mPolls.erase(it);
+    uv_poll_stop(handle);
+    if (!uv_is_closing(reinterpret_cast<uv_handle_t *>(handle)))
+    {
+        uv_close(reinterpret_cast<uv_handle_t *>(handle), &UvEventDispatcherPrivate::on_poll_closed);
     }
 }
 

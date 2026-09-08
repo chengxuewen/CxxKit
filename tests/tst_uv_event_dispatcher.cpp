@@ -30,6 +30,9 @@
 
 #include <cxxkit/thread/semaphore.hpp>
 
+#include <sys/socket.h>
+#include <unistd.h>
+
 #include <gtest/gtest.h>
 
 #include <atomic>
@@ -45,6 +48,7 @@
 namespace
 {
 
+using cxxkit::AbstractEventDispatcher;
 using cxxkit::EventLoop;
 using cxxkit::make_uv_dispatcher;
 
@@ -239,6 +243,218 @@ TEST(UvEventDispatcherTest, ProcessEventsTimeoutWithRealDriver)
     EXPECT_GE(elapsed_ms, 95);   // honored the timeout (5ms band)
     EXPECT_LE(elapsed_ms, 2000); // did not hang: generous ceiling, catches deadline-loss regressions
 }
+
+// Phase-2 socket notifier (uv_poll): real fds via socketpair(2). The dispatcher is reachable through the
+// loop's dispatcher() accessor — register/unregister are dispatcher-level APIs (TcpSocket will consume them).
+using SocketMask = AbstractEventDispatcher::SocketEventMask;
+
+// 9. Write into a socketpair: the readable notification fires on the peer fd.
+TEST(UvEventDispatcherTest, RegisterPollFiresOnReadable)
+{
+    std::unique_ptr<AbstractEventDispatcher> dispatcher = make_uv_dispatcher();
+    cxxkit::UvEventDispatcher *uv = static_cast<cxxkit::UvEventDispatcher *>(dispatcher.get());
+    EventLoop loop(std::move(dispatcher));
+    int fds[2];
+    ASSERT_EQ(0, ::socketpair(AF_UNIX, SOCK_STREAM, 0, fds));
+
+    cxxkit::Semaphore fired;
+    uv->register_socket_notifier(
+        fds[0],
+        SocketMask::kRead,
+        [&](SocketMask mask)
+        {
+            EXPECT_EQ(static_cast<int>(SocketMask::kRead),
+                      static_cast<int>(mask) & static_cast<int>(SocketMask::kRead));
+            char buf[16];
+            const ssize_t n = ::read(fds[0], buf, sizeof(buf)); // drain: level-triggered re-arm check
+            EXPECT_EQ(1, n);
+            fired.release();
+        });
+
+    char byte = 'x';
+    ASSERT_EQ(1, ::write(fds[1], &byte, 1)); // producer: peer fd becomes readable
+    EXPECT_TRUE(loop.process_events(EventLoop::ProcessFlag::kWaitForMoreEvents, 1000));
+    EXPECT_TRUE(fired.try_acquire());
+
+    uv->unregister_socket_notifier(fds[0]);
+    ::close(fds[0]);
+    ::close(fds[1]);
+}
+
+// 10. Interest mask respected: Write-only registration does NOT fire for readability; kRead|kWrite
+// duplex registration fires with both bits on a readable-with-writable-buffer fd.
+TEST(UvEventDispatcherTest, PollInterestMaskRespected)
+{
+    std::unique_ptr<AbstractEventDispatcher> dispatcher = make_uv_dispatcher();
+    cxxkit::UvEventDispatcher *uv = static_cast<cxxkit::UvEventDispatcher *>(dispatcher.get());
+    EventLoop loop(std::move(dispatcher));
+    int fds[2];
+    ASSERT_EQ(0, ::socketpair(AF_UNIX, SOCK_STREAM, 0, fds));
+
+    int readHits = 0; // not atomic: callback and asserts are both on the loop (= test) thread
+    int writeHits = 0;
+    int duplexHits = 0;
+    SocketMask duplexSeen;
+
+    // fds[0]: write-only. A fresh socketpair buffer is writable, so this fires — with kWrite ONLY.
+    uv->register_socket_notifier(fds[0],
+                                 SocketMask::kWrite,
+                                 [&](SocketMask mask)
+                                 {
+                                     EXPECT_EQ(static_cast<int>(SocketMask::kWrite),
+                                               static_cast<int>(mask)); // no kRead bit leaked
+                                     ++writeHits;
+                                 });
+    // fds[1]: duplex. Fresh buffer: writable; nothing buffered to read yet -> first fire is kWrite only.
+    uv->register_socket_notifier(
+        fds[1],
+        SocketMask::kRead | SocketMask::kWrite,
+        [&](SocketMask mask)
+        {
+            ++duplexHits;
+            duplexSeen = mask;
+            if ((static_cast<int>(mask) & static_cast<int>(SocketMask::kRead)) != 0)
+            {
+                char buf[16];
+                ::read(fds[1], buf, sizeof(buf)); // drain so the duplex fd stops re-firing readable
+            }
+        });
+
+    char byte = 'y';
+    ASSERT_EQ(1, ::write(fds[0], &byte, 1)); // -> fds[1] readable; fds[0] still never readable
+    EXPECT_TRUE(loop.process_events(EventLoop::ProcessFlag::kAllEvents, 500));
+
+    EXPECT_EQ(0, readHits);   // write-only fd: no read notification ever (the whole point)
+    EXPECT_GE(writeHits, 1);  // its writable buffer did fire — kWrite
+    EXPECT_GE(duplexHits, 1); // duplex fd fired with kWrite (+kRead after the write)
+    EXPECT_NE(0, static_cast<int>(duplexSeen) & static_cast<int>(SocketMask::kWrite));
+
+    uv->unregister_socket_notifier(fds[0]);
+    uv->unregister_socket_notifier(fds[1]);
+    ::close(fds[0]);
+    ::close(fds[1]);
+}
+
+// 11. Unregister stops delivery: a written byte after unregister produces no callback (fd still open).
+TEST(UvEventDispatcherTest, PollUnregisterStopsDelivery)
+{
+    std::unique_ptr<AbstractEventDispatcher> dispatcher = make_uv_dispatcher();
+    cxxkit::UvEventDispatcher *uv = static_cast<cxxkit::UvEventDispatcher *>(dispatcher.get());
+    EventLoop loop(std::move(dispatcher));
+    int fds[2];
+    ASSERT_EQ(0, ::socketpair(AF_UNIX, SOCK_STREAM, 0, fds));
+
+    int hits = 0;
+    uv->register_socket_notifier(fds[0], SocketMask::kRead, [&](SocketMask) { ++hits; });
+
+    char byte = 'z';
+    ASSERT_EQ(1, ::write(fds[1], &byte, 1));
+    EXPECT_TRUE(loop.process_events(EventLoop::ProcessFlag::kAllEvents, 500));
+    ASSERT_GE(hits, 1); // pre-unregister delivery works
+
+    char sink[16];
+    ASSERT_EQ(1, ::read(fds[0], sink, sizeof(sink))); // drain so the fd is quiet again
+    uv->unregister_socket_notifier(fds[0]);
+
+    ASSERT_EQ(1, ::write(fds[1], &byte, 1)); // readable again — but nobody is listening
+    EXPECT_FALSE(loop.process_events(EventLoop::ProcessFlag::kAllEvents, 100));
+    EXPECT_EQ(1, hits); // no second delivery
+
+    ::close(fds[0]);
+    ::close(fds[1]);
+}
+
+// 12. F7-①: re-registering the same fd updates interests in place (idempotent, not an error) — memcached-
+// style per-transition re-arm. Write-only then Read-only on the same fd: only read readiness delivers.
+TEST(UvEventDispatcherTest, PollReregisterSameFdUpdates)
+{
+    std::unique_ptr<AbstractEventDispatcher> dispatcher = make_uv_dispatcher();
+    cxxkit::UvEventDispatcher *uv = static_cast<cxxkit::UvEventDispatcher *>(dispatcher.get());
+    EventLoop loop(std::move(dispatcher));
+    int fds[2];
+    ASSERT_EQ(0, ::socketpair(AF_UNIX, SOCK_STREAM, 0, fds));
+
+    int writeHits = 0;
+    int readHits = 0;
+    auto write_cb = [&](SocketMask) { ++writeHits; };
+    auto read_cb = [&](SocketMask mask)
+    {
+        EXPECT_EQ(static_cast<int>(SocketMask::kRead), static_cast<int>(mask));
+        ++readHits;
+        char buf[16];
+        ::read(fds[0], buf, sizeof(buf));
+    };
+
+    uv->register_socket_notifier(fds[0], SocketMask::kWrite, write_cb);
+    // Same fd, new interests + new callback (curl socket_cb re-attach shape):
+    uv->register_socket_notifier(fds[0], SocketMask::kRead, read_cb);
+
+    char byte = 'r';
+    ASSERT_EQ(1, ::write(fds[1], &byte, 1));
+    EXPECT_TRUE(loop.process_events(EventLoop::ProcessFlag::kAllEvents, 500));
+
+    EXPECT_EQ(1, readHits);  // the UPDATED registration delivered read readiness
+    EXPECT_EQ(0, writeHits); // the stale write interest is gone (swapped, not accumulated)
+
+    uv->unregister_socket_notifier(fds[0]);
+    ::close(fds[0]);
+    ::close(fds[1]);
+}
+
+// 13. F8-①: a callback that unregisters its own fd mid-flight must not tear its own execution — the
+// engine copies the std::function before invoking, so the callback runs to completion.
+TEST(UvEventDispatcherTest, PollUnregisterInsideCallback)
+{
+    std::unique_ptr<AbstractEventDispatcher> dispatcher = make_uv_dispatcher();
+    cxxkit::UvEventDispatcher *uv = static_cast<cxxkit::UvEventDispatcher *>(dispatcher.get());
+    EventLoop loop(std::move(dispatcher));
+    int fds[2];
+    ASSERT_EQ(0, ::socketpair(AF_UNIX, SOCK_STREAM, 0, fds));
+
+    bool afterUnregister = false; // proves execution continued past the unregister call
+    uv->register_socket_notifier(fds[0],
+                                 SocketMask::kRead,
+                                 [&](SocketMask)
+                                 {
+                                     uv->unregister_socket_notifier(fds[0]); // self-dismantle mid-callback (F8-①)
+                                     afterUnregister = true; // still executing the copied function — no use-after-free
+                                     char buf[16];
+                                     const ssize_t n = ::read(fds[0], buf, sizeof(buf));
+                                     EXPECT_EQ(1, n);
+                                 });
+
+    char byte = 's';
+    ASSERT_EQ(1, ::write(fds[1], &byte, 1));
+    EXPECT_TRUE(loop.process_events(EventLoop::ProcessFlag::kAllEvents, 500));
+    EXPECT_TRUE(afterUnregister);
+
+    // The fd is unregistered now: another write delivers nothing.
+    ASSERT_EQ(1, ::write(fds[1], &byte, 1));
+    EXPECT_FALSE(loop.process_events(EventLoop::ProcessFlag::kAllEvents, 100));
+
+    ::close(fds[0]);
+    ::close(fds[1]);
+}
+
+// 14. I6 + poll handles: destruction with an ACTIVE poll registration (never unregistered) tears down
+// cleanly — the destructor closes the poll handle without touching the still-open fd. ASAN tree watches.
+TEST(UvEventDispatcherTest, DestructorCleansUpActivePolls)
+{
+    int fds[2];
+    ASSERT_EQ(0, ::socketpair(AF_UNIX, SOCK_STREAM, 0, fds));
+    int hits = 0;
+    {
+        std::unique_ptr<AbstractEventDispatcher> dispatcher = make_uv_dispatcher();
+        cxxkit::UvEventDispatcher *uv = static_cast<cxxkit::UvEventDispatcher *>(dispatcher.get());
+        EventLoop loop(std::move(dispatcher));
+        uv->register_socket_notifier(fds[0], SocketMask::kRead, [&](SocketMask) { ++hits; });
+        loop.process_events(EventLoop::ProcessFlag::kAllEvents); // NOWAIT round, fd quiet: no delivery
+    } // destruction with a live poll registration
+    EXPECT_EQ(0, hits);
+    ::close(fds[0]); // fd still valid after dispatcher teardown — the engine never closed it
+    ::close(fds[1]);
+}
+
 
 } // namespace
 

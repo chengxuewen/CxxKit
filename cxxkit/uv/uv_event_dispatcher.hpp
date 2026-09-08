@@ -82,6 +82,20 @@ public:
     void start_timer(int timer_id, uint64_t interval_ms, std::function<void()> fn) override;
     void stop_timer(int timer_id) override;
 
+    /**
+     * @brief Phase-2 socket readiness over @c uv_poll (level-triggered). @since 0.2
+     *
+     * One @c uv_poll_t per fd, keyed in a map (the uv_timer map pattern). Dual entry point: fd via
+     * @c uv_poll_init, Windows SOCKET via @c uv_poll_init_socket fallback. Re-registering a live fd is
+     * an idempotent interest update (F7-①). The callback is copied before invocation (F8-①) so a
+     * self-unregistering callback cannot tear its own execution. Closing the fd while a poll is active
+     * is caller UB — unregister first (F7-②). Loop thread only.
+     */
+    void register_socket_notifier(int fd, SocketEventMask mask, std::function<void(SocketEventMask)> fn) override;
+
+    /** @brief Stops and closes the fd's poll handle; no-op for an unregistered fd. Loop thread only. */
+    void unregister_socket_notifier(int fd) override;
+
 private:
     CXXKIT_DECLARE_PRIVATE(UvEventDispatcher)
     CXXKIT_DEFINE_DPTR(UvEventDispatcher)
