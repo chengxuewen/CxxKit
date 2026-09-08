@@ -27,6 +27,9 @@
 
 #include <cxxkit/tools/checks.hpp>
 
+#include <limits>
+
+
 #include <QtCore/QCoreApplication>
 #include <QtCore/QMetaObject>
 
@@ -165,6 +168,8 @@ void QtEventDispatcher::start_timer(int timer_id, uint64_t interval_ms, std::fun
     // (periodicity lives here) and shell-wraps one-shot timers as "stop_timer(id); fn();" — stop_timer erases
     // the map entry and deleteLater's, so a second fire is impossible. Uniform engine, shell semantics.
     timer->setSingleShot(false);
+    CXXKIT_CHECK(interval_ms <= static_cast<uint64_t>(std::numeric_limits<int>::max()))
+        << "QtEventDispatcher: interval too large (ms > INT_MAX)";
     timer->setInterval(static_cast<int>(interval_ms));
     QObject::connect(timer,
                      &QTimer::timeout,

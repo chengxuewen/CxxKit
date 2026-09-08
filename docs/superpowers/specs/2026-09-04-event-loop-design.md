@@ -20,7 +20,7 @@
 - Qt 式 `ConnectionType` 连接参数 / thread affinity / 自动断连（signals.hpp 不动）
 - 对象级 `postEvent(Object*, Event*)` 投递通道（骨架已留，后续补）
 - BlockingQueuedConnection（同步等待语义）
-- 异常安全：post/start_timer 回调中抛出异常 = 异常不穿越事件循环，进程终止（abort）；timer 与 post 同契约；排空循环不因单回调异常中断（一期不做异常安全保证）（D6/A5）
+- 异常安全：post/start_timer 回调不得让异常穿越事件循环；穿越的异常是未定义行为（通常导致进程终止，但不保证）；timer 与 post 同契约；排空循环不因单回调异常中断（一期不做异常安全保证）（D6/A5）
 
 ## 2. 调研结论支撑（浓缩）
 

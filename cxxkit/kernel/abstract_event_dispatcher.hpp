@@ -43,8 +43,9 @@ class EventLoop;
  * (e.g. Uv/Qt dispatchers) implement this.
  *
  * A dispatcher is injected into its EventLoop once at construction and owns the platform event source.
- * Callbacks (timer callbacks and post tasks) always run on the loop thread. Exceptions escaping a
- * callback terminate the process (no exception crosses the event loop).
+ * Callbacks (timer callbacks and post tasks) always run on the loop thread. Callbacks must not let
+ * exceptions escape; an escaping exception is undefined behavior (it will typically terminate the
+ * process, but this is not guaranteed).
  */
 class CXXKIT_KERNEL_API AbstractEventDispatcher
 {

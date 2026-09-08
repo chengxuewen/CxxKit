@@ -47,7 +47,6 @@ struct type_identity
 
 /**
  * @brief Connects @p sig to a slot that hops onto @p loop: each emission copies the arguments
- * @brief Connects @p sig to a slot that hops onto @p loop: each emission copies the arguments
  * and enqueues @p fn to run on the loop thread via EventLoop::post.
  *
  * Value-copy semantics: arguments are copied once at emit time (std::bind decay-copies), so

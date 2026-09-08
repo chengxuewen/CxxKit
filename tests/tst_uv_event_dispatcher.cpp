@@ -37,8 +37,6 @@
 #include <csignal>
 #include <functional>
 #include <memory>
-#include <chrono>
-#include <memory>
 #include <thread>
 #include <vector>
 
