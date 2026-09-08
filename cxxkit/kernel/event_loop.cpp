@@ -150,8 +150,14 @@ bool EventLoop::process_events(ProcessFlags flags, uint64_t maximum_ms)
     // dispatcher's interrupt round only if it fires during the wait, which is the documented
     // "return as soon as possible" semantic either way.
     const bool exitRequested = d->mExit.load() && d->mHasExitCode.load();
+    // C14 discipline (flaky hang root-caused 2026-09-08): the interrupt timer MUST repeat. A one-shot
+    // timer fires exactly once — if its async doorbell gets consumed by the very next UV_RUN_ONCE round
+    // (pending cleared by the empty wake callback, mHadEvents still false), the following round enters
+    // uv_run with no timers and an already-drained async: backend_timeout == -1 blocks in epoll forever
+    // and the shell never re-checks the deadline (it only checks between rounds). A repeating timer keeps
+    // a finite poll timeout armed every round until the shell stops it at the deadline.
     EventLoop *self = this;
-    const int timeoutId = this->start_timer(maximum_ms, [self] { self->d_func()->mDispatcher->interrupt(); }, false);
+    const int timeoutId = this->start_timer(maximum_ms, [self] { self->d_func()->mDispatcher->interrupt(); }, true);
     bool processed = false;
     const std::chrono::steady_clock::time_point deadline = std::chrono::steady_clock::now() +
                                                            std::chrono::milliseconds(maximum_ms);
