@@ -40,8 +40,12 @@ jobs:
 
       # CXXKIT_ENABLE_LIB_QT=ON is a compile-only gate (headless declared): the cxxkit::qt
       # dispatcher and exp_qt_embed must build on CI; the runtime gate is docs/qt-embed-smoke.md.
+      # Linux only for now — macos runners have no preinstalled Qt and find_package(Qt6 REQUIRED)
+      # would fail; a brew-based mac gate is future work.
       - name: Configure
-        run: cmake -S . -B build -G Ninja -DCXXKIT_BUILD_TESTS=ON -DCXXKIT_ENABLE_LIB_QT=ON -DCMAKE_EXPORT_COMPILE_COMMANDS=ON
+        run: |
+          QT_FLAG=$([[ "$RUNNER_OS" == "Linux" ]] && echo ON || echo OFF)
+          cmake -S . -B build -G Ninja -DCXXKIT_BUILD_TESTS=ON -DCXXKIT_ENABLE_LIB_QT=$QT_FLAG -DCMAKE_EXPORT_COMPILE_COMMANDS=ON
 
       - name: Build
         run: cmake --build build --parallel 2

@@ -34,12 +34,10 @@
 #include <QtCore/QObject>
 #include <QtCore/QTimer>
 
-#undef signals // Qt rewrites this token to Q_SIGNALS; cxxkit::signals:: is the kernel signals namespace
-#include <cxxkit/kernel/connect_queued.hpp>
-#include <cxxkit/kernel/event_loop.hpp>
-#include <cxxkit/qt/qt_event_dispatcher.hpp>
-#include <QtCore/QObject>
-#include <QtCore/QTimer>
+// Qt rewrites `signals` to Q_SIGNALS; the kernel headers above are parsed BEFORE any Qt header
+// (letter-sort: cxxkit < QtCore), so cxxkit::signals:: was declared clean. This #undef restores
+// the token for the body below.
+#undef signals
 
 #include <cstdio>
 #include <memory>

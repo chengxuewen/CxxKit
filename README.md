@@ -101,7 +101,7 @@ cmake --build build --target Docs   # outputs build/doc/html/
 See the file `docs/README.md` for the full documentation index.
 ## Examples
 
-`examples/` ships one runnable walkthrough per sublibrary (18 total, `imgui` opt-in).
+`examples/` ships one runnable walkthrough per sublibrary (19 total, `imgui` opt-in).
 Build them with the main build (`cmake --build build`); binaries land in `build/examples/`.
 
 | Example | Sublibrary | Highlights |
