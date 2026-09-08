@@ -31,7 +31,6 @@ cxxkit_configure_library_begin(CxxKitUv)
 cxxkit_find_package(Libuv PROVIDED_TARGETS CxxKitWrapLibuv::WrapLibuv)
 cxxkit_add_library(cxxkit_uv
     SOURCES uv_event_dispatcher.cpp dispatcher_factory.cpp tcp_socket.cpp
-    SOURCES uv_event_dispatcher.cpp dispatcher_factory.cpp
     PUBLIC_LIBRARIES cxxkit::kernel cxxkit::tools CxxKitWrapLibuv::WrapLibuv
     EXPORT_NAME uv
     FOLDER "CxxKit/libs")
