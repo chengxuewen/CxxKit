@@ -251,3 +251,14 @@ cxxkit 是 OpenCTK（an open cpp toolkit）的成功重构版本 —— 精简�
 - [x] **rc 矩阵**：exp_event_loop=0 / exp_tcp_echo=0（tcp echo roundtrip ok）/ exp_qt_embed=0（queued 42 + 3 ticks）
 - 裁定/教训全录：decisions.md D31（F6 对账）+ pitfalls.md PIT-40（uv 回调销毁成员 std::function = UAF）
 - 备忘：tcp_socket/tcp_server 覆盖率补测到 85%+（错误分支）；UdpSocket/PipeStream 需求触发；三期 TLS 走 mbedTLS ssl_set_bio 路（A4 已备）
+
+### 2026-09-08 事件循环二期落地（D31 续，SocketNotifier + TcpSocket/TcpServer，T0-T4 SDD 流水线）
+
+- [x] **架构**：register/unregister_socket_notifier 虚函数家族声明于 AbstractEventDispatcher（kernel，F6 三处有意偏离 spec §9 字面——CHECK(false) 默认/回调带 fired mask/std::function，对账完成）；UvEventDispatcher uv_poll 实现（level-triggered 常驻注册 + 同 fd 幂等更新）；TcpSocket（memcached 状态机 kIdle→kClosed 直译 + beast flat_buffer 形状读缓冲 + F8-① 回调局部拷贝纪律）；TcpServer（uv_listen + accept 产出 adopt_uv_tcp 包 TcpSocket，I5 on_connection 契约）
+- [x] **五提交**：T0 热身 0ms 直投 0ms→post 直投绕引擎 / T1 notifier 三侧 `01e45fd` / T2 TcpSocket `0d43bab`→`b6075b0` 链 / T3 TcpServer+exp_tcp_echo `63ebb19`/`d4bbd45`/`0d71d27` / 文档见 task-T*-report
+- [x] **测试 75→78 套件**：+tst_kernel_event_loop_ext/+tst_tcp_socket/+tst_tcp_server；主树 UV+QT=ON 78/78、shared UV=ON 78/78、asan 零新增诊断
+- [x] **coverage**：全口径 80.7%（50 files）；uv_event_dispatcher 87.96% / tcp_server 85.71%（FU1 故障注入后）/ tcp_socket 83.33%（CHECK/FATAL 消息分支占比高，封顶备案）
+- [x] **check.sh 8/8**：naming gate 字符串字面量排除（"kIdle (" 式 log 消息误报）
+- [x] **rc 矩阵**：exp_event_loop=0 / exp_tcp_echo=0 / exp_qt_embed=0
+- 裁定/教训全录：decisions.md D31（F6 对账）+ pitfalls.md PIT-40（uv 回调内 close 摧毁执行中成员 std::function = UAF，局部拷贝纪律）
+- 备忘：三期 TLS 走 mbedTLS ssl_set_bio + WANT_* 重挂 poll 兴趣（A4 已备）
