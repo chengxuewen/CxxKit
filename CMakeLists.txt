@@ -398,10 +398,6 @@ if(CXXKIT_BUILD_INSTALL)
         "${CXXKIT_CMAKE_DIR}/CxxKitConfig.cmake.in"
         "${CMAKE_CURRENT_BINARY_DIR}/cxxkitConfig.cmake"
         INSTALL_DESTINATION lib/cmake/cxxkit)
-    configure_package_config_file(
-        "${CXXKIT_CMAKE_DIR}/CxxKitConfig.cmake.in"
-        "${CMAKE_CURRENT_BINARY_DIR}/cxxkitConfig.cmake"
-        INSTALL_DESTINATION lib/cmake/cxxkit)
     write_basic_package_version_file(
         "${CMAKE_CURRENT_BINARY_DIR}/cxxkitConfigVersion.cmake"
         VERSION ${PROJECT_VERSION}

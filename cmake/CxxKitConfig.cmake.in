@@ -15,11 +15,9 @@ foreach(_dep IN ITEMS @CXXKIT_VENDORED_FIND_DEPS@)
         NO_DEFAULT_PATH)
 endforeach()
 
-# Qt host dependency (M10): consumed by the exported cxxkit::qt target when the package was built with
-# CXXKIT_ENABLE_LIB_QT. System Qt — NO_DEFAULT_PATH intentionally NOT set (contrast the vendored chain).
-if(@CXXKIT_QT_ENABLED@)
-    find_dependency(Qt6 COMPONENTS Core)
-endif()
+# Qt host dependency (M10, M1 修订): resolved AFTER cxxkitTargets.cmake below and only
+# when the consumer requests the qt component — Qt-less consumers of other
+# components must not be dragged into a Qt6 requirement.
 # Tracy headers are namespaced under include/cxxkit/3rdparty/tracy/; drop the official
 # include/tracy path from the imported target so it does not dangle in the install tree.
 if(TARGET Tracy::TracyClient)
@@ -85,13 +83,26 @@ endif()
 
 include("${CMAKE_CURRENT_LIST_DIR}/cxxkitTargets.cmake")
 
+# Qt host dependency (M1 修订): only for consumers that request the qt component —
+# the imported cxxkit::qt target alone does not require Qt6 at find time.
+if(TARGET cxxkit::qt AND qt IN_LIST cxxkit_FIND_COMPONENTS)
+    find_dependency(Qt6 COMPONENTS Core)
+endif()
+
 # Component support: each component maps to an exported target (cxxkit::<comp>)
+set(_cxxkit_missing_components "")
 foreach(_comp ${cxxkit_FIND_COMPONENTS})
     if(TARGET cxxkit::${_comp})
         set(cxxkit_${_comp}_FOUND TRUE)
-    elseif(cxxkit_FIND_REQUIRED_${_comp})
-        set(cxxkit_FOUND FALSE)
+    else()
+        list(APPEND _cxxkit_missing_components "${_comp}")
+        if(cxxkit_FIND_REQUIRED_${_comp})
+            set(cxxkit_FOUND FALSE)
+        endif()
     endif()
 endforeach()
+if(_cxxkit_missing_components)
+    set(cxxkit_NOT_FOUND_MESSAGE "cxxkit missing requested components: ${_cxxkit_missing_components}")
+endif()
 
 check_required_components(cxxkit)
