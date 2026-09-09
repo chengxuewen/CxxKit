@@ -219,6 +219,12 @@ void QtEventDispatcher::unregister_socket_notifier(int fd)
 }
 
 
+std::unique_ptr<AbstractEventDispatcher> make_qt_dispatcher(QObject *context)
+{
+    return std::unique_ptr<AbstractEventDispatcher>(new QtEventDispatcher(context));
+}
+
+
 CXXKIT_END_NAMESPACE
 
 #endif // #if CXXKIT_FEATURE_ENABLE_KERNEL

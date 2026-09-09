@@ -46,7 +46,7 @@ int main(int argc, char *argv[])
 {
     QCoreApplication app(argc, argv);
 
-    cxxkit::EventLoop loop(std::unique_ptr<cxxkit::QtEventDispatcher>(new cxxkit::QtEventDispatcher()));
+    cxxkit::EventLoop loop(cxxkit::make_qt_dispatcher());
 
     // Embedded-form constraint (R-C1-5): the shell post queue drains only when someone calls
     // process_events — pump it from a host-side bridge QTimer on a short cadence.

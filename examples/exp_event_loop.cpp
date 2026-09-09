@@ -27,7 +27,6 @@
 
 #include <cxxkit/kernel/event_loop.hpp>
 #include <cxxkit/uv/dispatcher_factory.hpp>
-#include <cxxkit/uv/uv_event_dispatcher.hpp>
 
 #include <cstdio>
 #include <memory>

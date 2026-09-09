@@ -29,6 +29,7 @@
 #include <cxxkit/kernel/abstract_event_dispatcher.hpp>
 
 #include <functional>
+#include <memory>
 
 #if CXXKIT_FEATURE_ENABLE_KERNEL
 
@@ -112,6 +113,18 @@ private:
     CXXKIT_DEFINE_DPTR(QtEventDispatcher)
     CXXKIT_DISABLE_COPY_MOVE(QtEventDispatcher)
 };
+
+/**
+ * @brief Creates a @ref QtEventDispatcher as its @ref AbstractEventDispatcher interface (uv @c make_uv_dispatcher mirror).
+ *
+ * Flat cxxkit factory name (D12): @c make_qt_dispatcher, not @c make_default — kernel depends on no driver
+ * sublibrary; consumers opt in by linking @c cxxkit::qt and injecting the result into
+ * @c EventLoop(std::unique_ptr<AbstractEventDispatcher>).
+ *
+ * @param context Host @c QObject context (null → @c QCoreApplication::instance()).
+ * @since 0.2
+ */
+CXXKIT_QT_API std::unique_ptr<AbstractEventDispatcher> make_qt_dispatcher(QObject *context = nullptr);
 
 CXXKIT_END_NAMESPACE
 
