@@ -276,6 +276,12 @@ if(CXXKIT_ENABLE_LIB_MEMORY)
         INCLUDE_DIRECTORIES ${PROJECT_SOURCE_DIR}
         LIBRARIES ${CXXKIT_TEST_LINK_LIBRARIES} ${CMAKE_THREAD_LIBS_INIT})
 endif()
+if(CXXKIT_ENABLE_LIB_MEMORY)
+    cxxkit_add_test(cxxkit_tst_weak_ptr
+        SOURCES tst_weak_ptr.cpp
+        INCLUDE_DIRECTORIES ${PROJECT_SOURCE_DIR}
+        LIBRARIES ${CXXKIT_TEST_LINK_LIBRARIES} ${CMAKE_THREAD_LIBS_INIT})
+endif()
 if(CXXKIT_ENABLE_LIB_TOOLS)
     cxxkit_add_test(cxxkit_tst_source_location
         SOURCES tst_source_location.cpp
