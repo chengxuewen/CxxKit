@@ -261,4 +261,12 @@ TEST(Object, delete_later_before_exec_fails)
 }
 
 
+TEST(Object, set_parent_rejects_descendant_cycle)
+{
+    RecordingObject a;
+    RecordingObject b(&a);
+    RecordingObject c(&b);
+    EXPECT_DEATH(a.set_parent(&c), ""); // 空匹配器仓内惯例
+}
+
 #endif // CXXKIT_FEATURE_ENABLE_KERNEL

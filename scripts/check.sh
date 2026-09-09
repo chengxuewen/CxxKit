@@ -50,6 +50,8 @@ echo "=== 4/8 sanitizer 测试（build-asan，LSAN suppression）==="
 if [ -d build-asan ]; then
     # C6：用独立 build-asan 目录（CXXKIT_BUILD_SANITIZERS=ON 生成），不动主 build
     # LSAN_OPTIONS 指向 commit 的 scripts/lsan.supp（设计进程单例，Task 4/F1 文档化）
+    cmake --build build-asan --parallel 4
+
     LSAN_OPTIONS="suppressions=$(pwd)/scripts/lsan.supp" ctest --test-dir build-asan --output-on-failure || exit 1
     echo "sanitizer OK"
 else
@@ -60,6 +62,7 @@ echo "=== 5/8 共享构建验证（CXXKIT_BUILD_SHARED_LIBS 动态形态; 若 bu
 if [ -d build-shared ]; then
     cmake -S . -B build-shared -DCXXKIT_BUILD_SHARED_LIBS=ON -DCXXKIT_BUILD_TESTS=ON -DCXXKIT_ENABLE_LIB_NETWORK=OFF -DCXXKIT_ENABLE_LIB_CRASH=OFF
     cmake --build build-shared --parallel 4
+
     ctest --test-dir build-shared --output-on-failure || exit 1
 else
     echo "跳过（无 build-shared——配置 CXXKIT_BUILD_SHARED_LIBS=ON 生成后验证动态库）"
