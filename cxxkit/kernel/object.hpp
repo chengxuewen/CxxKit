@@ -51,6 +51,28 @@ public:
     virtual bool event_filter(Object *watched, Event *event);
 
 protected:
+    /**
+     * @brief 预销毁回调：~Object 顶部调用（派生成员仍存活、children 未级联）。
+     *
+     * 注意：析构期虚派发只到当前动态类型层（Object）——派生类 override 不会被调用（Qt 同款规则）。
+     * 钩子价值 = Object 层内部清理时序锚点 + 外部观察者可见的“children 级联前”时刻；
+     * signals 断连不依赖它（cxxkit signals sender 析构自断连）。
+     * @since 0.2
+     */
+    virtual void destroying();
+
+public:
+    /**
+     * @brief 请求在当前线程 EventLoop 下一次排空时删除 this（Qt deleteLater 语义）。
+     *
+     * 无当前环 = fatal。已知限制：父与子不可同时 delete_later——队列 [delete 父, delete 子]
+     * 时父级联已直接 delete 子，残留闭包再 delete = 二次 delete（Qt 靠 ~QObject 清 pending
+     * DeferredDelete，本版不做，文档化限制）。
+     * @since 0.2
+     */
+    void delete_later();
+
+protected:
     virtual void timer_event(TimerEvent *event);
     virtual void child_event(ChildEvent *event);
     virtual void custom_event(Event *event);

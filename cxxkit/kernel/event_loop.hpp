@@ -105,6 +105,14 @@ public:
      */
     void stop_timer(int timer_id);
 
+    /**
+     * @brief Returns the EventLoop running on the calling thread, or nullptr if none.
+     *
+     * Set by exec() for its duration (nested exec restores the previous value on exit);
+     * cleared in ~EventLoop if it still points here.
+     */
+    static EventLoop *current();
+
     int exec(ProcessFlags flags = ProcessFlag::kAllEvents);
     void wake_up();
 

@@ -24,6 +24,7 @@
 
 #include <cxxkit/kernel/detail/object_p.hpp>
 
+#include <cxxkit/kernel/event_loop.hpp>
 #include <cxxkit/tools/checks.hpp>
 
 #if CXXKIT_FEATURE_ENABLE_KERNEL
@@ -66,6 +67,7 @@ Object::Object(ObjectPrivate *d)
 Object::~Object()
 {
     CXXKIT_D(Object);
+    this->destroying(); // 预销毁锚点：派生成员仍存活、children 未级联（析构期派发只到 Object 层）
     // 级联析构：子 dtor 会通过 set_parent(nullptr)/detach 自摘链，所以 while(!empty) 安全。
     while (!d->mChildren.empty())
     {
@@ -75,6 +77,17 @@ Object::~Object()
     {
         d->mParent->d_func()->detach_child(this);
     }
+}
+
+void Object::destroying()
+{
+}
+
+void Object::delete_later()
+{
+    EventLoop *loop = EventLoop::current();
+    CXXKIT_CHECK(loop != nullptr) << "Object::delete_later: no running EventLoop on this thread";
+    loop->post([this]() { delete this; });
 }
 
 Object *Object::parent() const
