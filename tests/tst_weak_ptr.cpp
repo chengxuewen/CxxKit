@@ -11,7 +11,7 @@
 ** the rights to use, copy, modify, merge, publish, distribute, sublicense, and/or sell copies of the Software,
 ** and to permit persons to whom the Software is furnished to do so, subject to the following conditions:
 **
-** Jhe above copyright notice and this permission notice shall be included in all copies or substantial portions
+** The above copyright notice and this permission notice shall be included in all copies or substantial portions
 ** of the Software.
 **
 ** THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLIED, INCLUDING BUT NOT LIMITED
@@ -78,17 +78,16 @@ TEST(WeakPtr, multiple_weak_ptrs_share_invalidation)
 {
     // Arrange
     Thing thing(1);
-    WeakPtrFactory<Thing> factory(&thing);
-    WeakPtr<Thing> weak_a = factory.get_weak_ptr();
-    WeakPtr<Thing> weak_b = factory.get_weak_ptr();
+    std::unique_ptr<WeakPtrFactory<Thing>> factory(new WeakPtrFactory<Thing>(&thing));
+    WeakPtr<Thing> weak_a = factory->get_weak_ptr();
+    WeakPtr<Thing> weak_b = factory->get_weak_ptr();
     WeakPtr<Thing> weak_c = weak_a;
     ASSERT_TRUE(weak_a);
     ASSERT_TRUE(weak_b);
     ASSERT_TRUE(weak_c);
 
     // Act
-    factory.~WeakPtrFactory();
-    new (&factory) WeakPtrFactory<Thing>(&thing); // placement-new: restore for destruction balance
+    factory.reset();
 
     // Assert
     EXPECT_FALSE(weak_a);
