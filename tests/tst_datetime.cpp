@@ -70,9 +70,12 @@ TEST(DateTime, SystemTimeMonotonic)
     const int64_t us = DateTime::system_time_u_secs();
     const int64_t ns = DateTime::system_time_n_secs();
 
-    EXPECT_GT(ms, secs * 1000);
-    EXPECT_GT(us, ms * 1000);
-    EXPECT_GT(ns, us * 1000);
+    // GE not GT: equality is legal when the coarser read lands exactly on a unit
+    // boundary (first read in the first millisecond of a second, second read in
+    // the same millisecond). Still catches unit-scaling bugs (secs < secs*1000).
+    EXPECT_GE(ms, secs * 1000);
+    EXPECT_GE(us, ms * 1000);
+    EXPECT_GE(ns, us * 1000);
     // Epoch sanity (year >= 2020 in seconds from 1970).
     EXPECT_GT(secs, 1577836800); // 2020-01-01
 }
@@ -84,9 +87,10 @@ TEST(DateTime, SteadyTimeMonotonic)
     const int64_t us = DateTime::steady_time_u_secs();
     const int64_t ns = DateTime::steady_time_n_secs();
 
-    EXPECT_GT(ms, secs * 1000);
-    EXPECT_GT(us, ms * 1000);
-    EXPECT_GT(ns, us * 1000);
+    // GE not GT: exact unit-boundary equality is legal (see SystemTimeMonotonic).
+    EXPECT_GE(ms, secs * 1000);
+    EXPECT_GE(us, ms * 1000);
+    EXPECT_GE(ns, us * 1000);
 
     // Steady time advances (a later call is >= an earlier one).
     const int64_t before = DateTime::steady_time_n_secs();
