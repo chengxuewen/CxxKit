@@ -106,7 +106,7 @@ public:
     /**
      * @brief Arms read interest; @p on_data delivers received bytes on the loop thread.
      *
-     * Legal from kConnected. @c nread > 0 delivers @c (data, nread); @c nread == 0 is Nothing-Eelse
+     * Legal from kConnected. @c nread > 0 delivers @c (data, nread); @c nread == 0 is EAGAIN/no-data (interest stays armed)
      * (EAGAIN/EWOULDBLOCK) and is NOT delivered; a null pointer with @c nread <= 0 is EOF or error
      * (peer close included) — after which the socket is closed and @c read_start is disarmed. The
      * buffer is valid only during the callback. Loop thread only.

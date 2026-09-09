@@ -96,6 +96,7 @@ std::unique_ptr<TcpSocket> TcpSocket::adopt_fd(EventLoop &loop, int fd)
         delete handle;
         CXXKIT_FATAL() << "TcpSocket::adopt_fd: uv_tcp_init failed (" << init_rc << ")";
     }
+    handle->data = d; // set before open so the failure-path close callback sees us
     const int open_rc = uv_tcp_open(handle, static_cast<uv_os_sock_t>(fd));
     if (open_rc != 0)
     {
@@ -372,7 +373,7 @@ void TcpSocketPrivate::on_read(uv_stream_t *stream, ssize_t nread, const uv_buf_
     TcpSocketPrivate *d = static_cast<TcpSocketPrivate *>(stream->data);
     if (nread == 0)
     {
-        return; // EAGAIN (Nothing-Eelse): no delivery, keep the interest armed
+        return; // EAGAIN/no-data: no delivery, keep the interest armed
     }
     if (nread < 0)
     {
