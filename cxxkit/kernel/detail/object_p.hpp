@@ -40,6 +40,9 @@ public:
     explicit ObjectPrivate(Object *p);
     virtual ~ObjectPrivate();
 
+    void attach_child(Object *child); // children.push_back(child)
+    void detach_child(Object *child); // children.remove(child)
+
     Object *mParent{nullptr};
     Children mChildren;
 

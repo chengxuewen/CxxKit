@@ -24,6 +24,8 @@
 
 #include <cxxkit/kernel/detail/object_p.hpp>
 
+#include <cxxkit/tools/checks.hpp>
+
 #if CXXKIT_FEATURE_ENABLE_KERNEL
 
 CXXKIT_BEGIN_NAMESPACE
@@ -37,9 +39,23 @@ ObjectPrivate::~ObjectPrivate()
 {
 }
 
+void ObjectPrivate::attach_child(Object *child)
+{
+    mChildren.push_back(child);
+}
+
+void ObjectPrivate::detach_child(Object *child)
+{
+    mChildren.remove(child);
+}
+
 Object::Object(Object *parent)
     : Object(new ObjectPrivate(this))
 {
+    if (parent != nullptr)
+    {
+        this->set_parent(parent); // 统一走 set_parent（构造期父链上有 ChildEvent 派发）
+    }
 }
 
 Object::Object(ObjectPrivate *d)
@@ -49,6 +65,16 @@ Object::Object(ObjectPrivate *d)
 
 Object::~Object()
 {
+    CXXKIT_D(Object);
+    // 级联析构：子 dtor 会通过 set_parent(nullptr)/detach 自摘链，所以 while(!empty) 安全。
+    while (!d->mChildren.empty())
+    {
+        delete d->mChildren.front();
+    }
+    if (d->mParent != nullptr)
+    {
+        d->mParent->d_func()->detach_child(this);
+    }
 }
 
 Object *Object::parent() const
@@ -60,7 +86,32 @@ Object *Object::parent() const
 void Object::set_parent(Object *parent)
 {
     CXXKIT_D(Object);
-    d->mParent = parent;
+    if (d->mParent == parent)
+    {
+        return;
+    }
+    if (parent != nullptr)
+    {
+        // 环检测：new parent 不能是自己的后代（沿 parent 链上行不能遇到 this）
+        for (Object *it = parent; it != nullptr; it = it->parent())
+        {
+            CXXKIT_CHECK(it != this) << "Object::set_parent: cycle detected";
+        }
+    }
+    if (d->mParent != nullptr)
+    {
+        d->mParent->d_func()->detach_child(this);
+        ChildEvent removed(Event::Type::kChildRemoved, this);
+        d->mParent->event(&removed);
+        d->mParent = nullptr;
+    }
+    if (parent != nullptr)
+    {
+        d->mParent = parent;
+        parent->d_func()->attach_child(this);
+        ChildEvent added(Event::Type::kChildAdded, this);
+        parent->event(&added);
+    }
 }
 
 const Object::Children &Object::children() const
