@@ -261,3 +261,17 @@
 - **解法**: 回调入口先局部拷贝再调用——`std::function<...> cb = d->mOnData; cb(...);`（F8-① copy discipline，tcp_socket.cpp:395）；终态投递分支用 move+置空（383-384）同样效果。on_write_done 同款（move-out 后再 delete req）
 - **验证**: tst_tcp_socket 含「回调内 close」用例（asan 树 78/78 零新增诊断）；`grep -n "copy discipline" cxxkit/uv/tcp_socket.cpp` 非空
 - **禁止**: 在 libuv/C 回调内直接调用成员 std::function 而不先拷贝/move-out；凡「回调即成员本体」的 wrap 均适用（Node tcp_wrap 同款纪律）
+
+## PIT-41: cxxkit_option 对 DEPENDS 即时求值——声明顺序 = 求值顺序（2026-09-08）
+- **症状**: 下游开关的 cxxkit_option 写在上游开关声明之前时，DEPENDS 表达式里的上游变量求值为空 → 钳制逻辑失真（依赖看似不满足/永不满足），开关矩阵静默错乱
+- **根因**: cxxkit_option 在调用点**即时** evaluate DEPENDS 字符串（`if(${expr})`），非延迟引用；CMake 变量未定义时 if() 按假值/空值路径走，无任何报错
+- **解法**: 17 个开关一律按依赖**拓扑序**声明（base/profiling 锚变量最先，text → containers → functional → numerics → patterns → units → memory → kernel → thread → media → 门控库）；新增开关必须插在其全部 DEPENDS 上游之后
+- **验证**: `grep -n "cxxkit_option(CXXKIT_ENABLE_LIB" CMakeLists.txt` 输出顺序 = 拓扑序；裁剪态 configure 出现预期 clamp WARNING（如 TEXT=OFF 时 NETWORK 请求 ON 被钳）
+- **禁止**: 在依赖拓扑序之前插入新 cxxkit_option；依赖 DEPENDS 引用尚未声明的开关变量
+
+## PIT-42: configure_file @VAR@ 展开成字面 if(ON)——Qt6 find_dependency 连坐所有消费方（2026-09-08）
+- **症状**: 裁剪安装树（无 Qt 环境）消费 cxxkit 时 find_package 失败报 Qt6 缺失，哪怕消费方只要 base/text 组件、从不碰 cxxkit::qt
+- **根因**: CxxKitConfig.cmake.in 里 `if(TARGET cxxkit::qt) find_dependency(Qt6 ...)` 经 configure_file 后 TARGET 恒真（target 列表随安装固化），即字面 `if(ON)` 对**所有**消费方执行——qt target 的存在 ≠ 消费方请求 qt 组件
+- **解法**: 组件级条件必须双条件 AND：`if(TARGET cxxkit::qt AND qt IN_LIST cxxkit_FIND_COMPONENTS)`——只有显式 `COMPONENTS ... qt` 的消费方才触发 find_dependency(Qt6)；NOT_FOUND_MESSAGE 点名缺失组件（`82e7661`）
+- **验证**: 无 Qt 环境 + `find_package(cxxkit COMPONENTS base text)` 必须 FOUND；`find_package(cxxkit COMPONENTS qt)` 才要求 Qt6
+- **禁止**: Config.cmake.in 中用 target 存在性单条件驱动 find_dependency——凡按组件可选的依赖一律 AND IN_LIST FIND_COMPONENTS

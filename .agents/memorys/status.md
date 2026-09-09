@@ -262,3 +262,13 @@ cxxkit 是 OpenCTK（an open cpp toolkit）的成功重构版本 —— 精简�
 - [x] **rc 矩阵**：exp_event_loop=0 / exp_tcp_echo=0 / exp_qt_embed=0
 - 裁定/教训全录：decisions.md D31（F6 对账）+ pitfalls.md PIT-40（uv 回调内 close 摧毁执行中成员 std::function = UAF，局部拷贝纪律）
 - 备忘：三期 TLS 走 mbedTLS ssl_set_bio + WANT_* 重挂 poll 兴趣（A4 已备）
+
+### 2026-09-08 按需模块开关落地（D32，M0/M1/M2 SDD 流水线）
+
+- [x] **开关体系**：10 实开关（text/containers/functional/numerics/patterns/units/memory/kernel/thread/media，拓扑序声明——cxxkit_option 即时求值 DEPENDS，PIT-41）+ 门控 network/crash/imgui/uv/qt/tracy；base/profiling/tools/time 无条件（tools=符号枢纽 nm 6 库实证、time↔tools 符号级环 Ruling v2——**预案 12 开关追认为 10+2**，解耦债务备案：checks/logging 下沉 base 或 clock 移 time）
+- [x] **钳制语义**（octk/QExt 同款）：依赖 OFF 时请求 ON 被 clamp + WARNING，不自动传播；INPUT_ 与 direct 双通道行为等价
+- [x] **M1 Qt 连坐修复**（`82e7661`）：cxxkitConfig find_dependency(Qt6) 加 `qt IN_LIST cxxkit_FIND_COMPONENTS` 组件级条件（PIT-42）；NOT_FOUND_MESSAGE 点名缺失组件；F6 VENDORED find_dependency 全部随开关条件化
+- [x] **测试/示例守卫**（`01da5f8`）：按开关条件注册，条件链接聚合随子库缺失降级
+- [x] **三态验证**：默认 79/79（基线 78→79 FU1 祖先）+ asan 78/78 零诊断 + shared 79/79；裁剪态 TEXT=OFF——clamp WARNING + 套件按裁剪下降 + BuildInstall + 消费方 REQUIRED 缺组件点名；最小态 base-only 消费方 build/run 过；install 三态 + INPUT 通道全记录
+- [x] **check.sh 8/8 ALL PASSED**（M2 收口 exit=0：主 79 + shared 79 + asan 78 + coverage 全口径不阻断）
+- 已知限制：text→numerics / date_time→text 安装树 include 级传递边（裁剪组合消费对应头需自行启用组件）；INPUT_ 残留 cache 持续 FORCE（D25 同款）

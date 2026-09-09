@@ -182,3 +182,19 @@ sanitizer（ASAN/LSAN/UBSan）与 coverage 用**独立 build 目录**（build-as
 **F6 对账记录（T4 收口）**：grep 全库 "F6" —— abstract_event_dispatcher.hpp 1 处集中标注（①②③全录）+ D31 本条 + task-T1-report.md；三处偏离均与 vendored libuv 实源核对过（T1 review：uv_poll_start 换集幂等/invalidate_fd 在飞防护）
 
 **验证（T4 全链）**：主树 UV+QT=ON 78/78（套件 75→78：+kernel_event_loop_ext/tcp_socket/tcp_server）；shared UV=ON 78/78（T1 kernel 头 include tools/checks.hpp 链接闭包天然成立，无断链）；asan UV=ON 78/78 零新增诊断（仅 2 条既有良性 runtime error：nonstd string_view null 参数+glibc __forced_unwind，B2 先例）；coverage 全口径 80.7%（50 files，3429/4248）——tcp_server 80.00%、tcp_socket 83.26%（<85% 目标：uv 侧 uv_poll 分支/错误路径未全触发，用例覆盖主状态机路径；后续按需补）+ uv_event_dispatcher 87.96%；check.sh 8/8 ALL PASSED（naming gate 补字符串字面量排除——kIdle( 式 log 消息误报）；rc 矩阵 exp_event_loop=0 / exp_tcp_echo=0 / exp_qt_embed=0（无链接摩擦）
+
+## D32: 按需模块开关落地（2026-09-08，17 开关拓扑序声明 + M0/M1 SDD 流水线）
+
+**架构**（plan docs/superpowers/plans/2026-09-08-opt-in-modules-plan.md，M0→M1→M2 三任务）：
+- **10 个实开关**（text/containers/functional/numerics/patterns/units/memory/kernel/thread/media + 门控 network/crash/imgui/uv/qt/tracy）：`cxxkit_option` + DEPENDS 表达式钳制（octk/QExt 同款：依赖 OFF 时请求 ON 被 clamp + WARNING，**不自动传播**）；base/profiling 无选项（依赖图根 + 零受益者，选项=纯噪音，R-M0-1）；tools/time 无条件（设 ON + OFF 时 WARNING 提示被忽略）
+- **controller 追认 12→10 偏离**（M0 预案 12 开关 → 落地 10 实开关 + 2 无条件）：tools = 符号枢纽（nm 实证 6 库头文件引用其 CHECK/logging 符号，自身又需 time——改 OFF 即成环，opt-in 无意义）；time 经 R1 链式逼出（tools/clock.cpp 引用 DateTime 符号 + time 头引用 CXXKIT_LOGGER，nm 双向实证符号级环，Ruling v2）。**解耦债务备案**：checks/logging 下沉 base 或 clock 移 time，下次触碰 logging 体系时澄清（含 F-R1：tools↔text extract_function_name 边在 R3 撤链后仍存在——同批澄清）
+- **Momus F1 拓扑序铁律**：cxxkit_option 对 DEPENDS **即时求值**，上游依赖必须先声明——声明顺序 = 求值顺序（text → containers → functional → numerics → patterns → units → memory → kernel → thread → media）
+- **M1 Qt 连坐修复**（`82e7661`）：cxxkitConfig 的 find_dependency(Qt6) 原为 `TARGET cxxkit::qt` 单条件——任何裁剪安装树含 qt target 都逼所有消费方配 Qt6。修复 = `TARGET cxxkit::qt AND qt IN_LIST cxxkit_FIND_COMPONENTS`（组件级条件）；NOT_FOUND_MESSAGE 点名缺失组件
+- **F6 VENDORED find_dependency 条件化**：fmt/spdlog/network 链/Tracy/breakpad/libuv 各随对应开关 `IN_LIST CXXKIT_VENDORED_FIND_DEPS`——裁剪安装树的消费方不再 find 不存在组件的依赖
+- **测试/示例守卫**（`01da5f8`）：tests/examples 按开关条件注册，条件链接聚合（aggregate target 随子库缺失降级）
+
+**验证**：默认态 79/79 ctest（基线 78→79，FU1 祖先）；asan 78/78 零诊断 + shared 79/79；裁剪态 TEXT=OFF：clamp WARNING + 套件按裁剪下降 + BuildInstall + REQUIRED 缺组件点名；最小态 base-only 消费方 build/run 过；INPUT_ 通道与 direct 通道钳制行为等价（措辞两分支，D-M1-4）；check.sh 8/8（M2 收口实测 exit=0，主 79 + shared 79 + asan 78）
+
+**明确不做**：feature 系统（方案 C，850 行移植不值）/ domain bundle（方案 B，YAGNI）/ 依赖自动传播 / cxxkitConfig 组件化重构
+
+**已知限制（M1 备案）**：text→numerics 安装树脆弱（NUMERICS=OFF 时 bit_buffer.hpp 传递 include safe_conversions.hpp 断供——header-only 传递边）；date_time.hpp → text/string_view.hpp include 级边未申报；INPUT_ 残留 cache 持续 FORCE（D25 同款，清 CMakeCache 解除）

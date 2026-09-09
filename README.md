@@ -39,10 +39,21 @@ cmake --build build --target BuildInstall   # build + install to build/install/
 ctest --test-dir build              # run tests
 ```
 
-Options: `-DCXXKIT_BUILD_TESTS=OFF`, `-DCXXKIT_ENABLE_LIB_NETWORK=ON`,
-`-DCXXKIT_ENABLE_LIB_CRASH=ON`, `-DCXXKIT_BUILD_DOCS=ON`, `-DCMAKE_INSTALL_PREFIX=/path/to/prefix`.
+Options: `-DCXXKIT_BUILD_TESTS=OFF`, `-DCXXKIT_ENABLE_LIB_NETWORK=ON`, `-DCXXKIT_ENABLE_LIB_CRASH=ON`, `-DCXXKIT_BUILD_DOCS=ON`, `-DCMAKE_INSTALL_PREFIX=/path/to/prefix`.
 Sanitizer / coverage（`scripts/check.sh` 步骤 4/7 与 7/7 会自动接入，若对应 build 目录存在）:
 `-DCXXKIT_BUILD_SANITIZERS=ON`（用 -B build-asan 生成）、`-DCXXKIT_BUILD_COVERAGE=ON`（用 -B build-cov 生成，`coverage` target 产出 `build-cov/coverage/summary.txt`）。
+
+**On-demand sublibraries**: each core sublibrary has a `-DCXXKIT_ENABLE_LIB_<SUB>=ON/OFF` switch (text, containers, functional, numerics, patterns, units, memory, kernel, thread, media) plus the opt-in gates network/crash/imgui/uv/qt/tracy. `base`, `tools`, `time` and `profiling` are always built (dependency-graph root / symbol hub / time↔tools cycle). Dependencies are clamped, not auto-enabled: requesting a sublibrary whose dependency is OFF emits a WARNING and stays OFF.
+
+Minimal build (header-only core only):
+
+```bash
+cmake -S . -B build \
+  -DCXXKIT_ENABLE_LIB_TEXT=OFF -DCXXKIT_ENABLE_LIB_CONTAINERS=ON -DCXXKIT_ENABLE_LIB_FUNCTIONAL=ON \
+  -DCXXKIT_ENABLE_LIB_NUMERICS=ON -DCXXKIT_ENABLE_LIB_PATTERNS=ON -DCXXKIT_ENABLE_LIB_MEMORY=OFF \
+  -DCXXKIT_ENABLE_LIB_KERNEL=OFF -DCXXKIT_ENABLE_LIB_THREAD=OFF -DCXXKIT_ENABLE_LIB_MEDIA=OFF
+cmake --build build --parallel
+```
 
 ### crash sublibrary (breakpad + backward-cpp)
 
