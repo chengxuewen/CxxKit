@@ -67,10 +67,10 @@ cxxkit_add_subdirectory(cxxkit/containers CXXKIT_ENABLE_LIB_CONTAINERS)
 - **裁定（R-M0-2）**：默认全 ON；`CXXKIT_BUILD_ALL` 已有总闸语义（OR_CONDITION）沿用——不开 BUILD_ALL 时逐库裁剪，开时全开。
 - **tests/examples 守卫**（Momus F5 修订）：现有守卫 tests 仅 4 个（CRASH/IMGUI/UV/QT）、examples 仅 5 个——**media 全裸**（tests 8 块 + exp_media）。本任务补：tests **12 块**（11 核心 + media；network 无测试）、examples **12 块**（11 核心 + media）。
 
-- [ ] **Step 1: 声明区 12 option**（DEPENDS 按依赖图逐个写；先 cxxkit_option 源码确认 DEPENDS 接受 AND 表达式——CxxKitOptionHelpers 实查）
-- [ ] **Step 2: L242-255 条件化**（containers→units 顺序保持；base 保留无条件）
-- [ ] **Step 3: tests/examples 守卫补齐**（11 个核心库块——现有无条件块逐一包 if）
-- [ ] **Step 4: 三态验证**：①默认全 ON configure+build+ctest（78 套件不回归）②`-DCXXKIT_ENABLE_LIB_MEDIA=OFF -DCXXKIT_ENABLE_LIB_TEXT=OFF`（钳制链：media OFF→network/crash 自动 OFF+WARNING 出现；text OFF→network OFF）→ build+ctest（套件数下降且无 media/text 测试）③最小 `-DCXXKIT_ENABLE_LIB_<非base全部>=OFF` → configure 过 + 只剩 header-only+base 套件
+- [ ] **Step 1: 声明区 17 开关按拓扑序重排**（12 核心 ON 默认插在 ENABLE_LIB_NETWORK 之前 + 5 既有补 DEPENDS；Momus F1/F2——cxxkit_option 即时求值，上游必须先声明）
+- [ ] **Step 2: L242-255 条件化**（13 库改 cxxkit_add_subdirectory；base/profiling 保留无条件）
+- [ ] **Step 3: 聚合变量条件化（F3）+ tests/examples 守卫补齐 24 块（F5）+ VENDORED_FIND_DEPS 条件化（F6）**
+- [ ] **Step 4: 三态验证**：①默认全 ON：configure+build+ctest 78 套件不回归 ②**裁剪链（Momus F4 方向修正）**：`-DCXXKIT_ENABLE_LIB_TEXT=OFF` → network 自动 OFF+WARNING、再 `-DCXXKIT_ENABLE_LIB_MEDIA=OFF` → 仅 media 套件消失（media 是叶）；`-DCXXKIT_ENABLE_LIB_TOOLS=OFF` → memory/text/kernel/thread/media/network/crash/imgui/uv/qt 全链钳 OFF（钳制>总闸已实测）③**写死最小态（Momus F8）**：containers/functional/patterns/numerics ON 其余全 OFF → 4 个 header-only 库存活、期望套件=这 4 库的测试清单（执行时列实数）
 - [ ] **Step 5: 提交** `feat(cmake): per-sublibrary opt-in switches for the 12 core libraries (octk/qext pattern)`
 
 ### Task M1：Config/export 对账 + INPUT 通道验证
