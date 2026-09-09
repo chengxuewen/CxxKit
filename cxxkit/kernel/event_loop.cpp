@@ -60,17 +60,16 @@ EventLoop::EventLoop(std::unique_ptr<AbstractEventDispatcher> dispatcher, Object
     mDPtr.reset(new EventLoopPrivate(this));
     CXXKIT_D(EventLoop);
     d->mDispatcher = std::move(dispatcher);
-    // 构造即绑定当前线程：delete_later 的投递目标是"当前线程的环"，绑定先于 exec（简报测试形状：
-    // delete_later 在 exec 前调用）。exec 的 save/restore 维护嵌套语义；析构若仍指向自身则清空。
-    t_current_loop = this;
 }
 
 EventLoop::~EventLoop()
 {
     CXXKIT_D(EventLoop);
     // 析构排空：delete_later 闭包必须执行到——丢弃 = 对象泄漏。swap-under-lock、锁外逐个执行
-    // （S10/I4 排空不变量）。排空期间新 post 不再回排（队列已搬走，loop 即将亡）——与 Qt
-    // ~QObject 不再投递语义一致。
+    // （S10/I4 排空不变量）。
+    // 已知限制（L1）：排空期间闭包内再 post（如级联 delete_later）会投到将死环的新队列静默丢失；
+    // （L2）排空执行时 current 已不指向自身（exec-only 语义，dtor 无清理）——闭包内 delete_later
+    // 会 fatal 而非静默丢。二者均文档化限制，Qt 靠 ~QObject 清 pending DeferredDelete，本版不做。
     std::deque<std::function<void()>> tasks = d->take_post_queue();
     while (!tasks.empty())
     {
@@ -80,10 +79,6 @@ EventLoop::~EventLoop()
         {
             fn();
         }
-    }
-    if (t_current_loop == this)
-    {
-        t_current_loop = nullptr;
     }
 }
 

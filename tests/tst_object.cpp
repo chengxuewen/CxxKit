@@ -233,8 +233,14 @@ TEST(Object, delete_later_runs_on_loop_exec)
     cxxkit::EventLoop loop(std::unique_ptr<cxxkit::AbstractEventDispatcher>(new FakeDispatcher));
     Counter::alive = 0;
     CountedObject *victim = new CountedObject;
-    victim->delete_later();
-    loop.post([&loop]() { loop.exit(0); }); // FIFO：delete_later 闭包先执行、后 exit——确定性
+    // exec-only：闭包在 exec 期执行 → current 已置 → delete_later 合法；
+    // 同闭包尾部再投 exit——FIFO 保证下一轮排空 delete 先于 exit 执行
+    loop.post(
+        [victim, &loop]()
+        {
+            victim->delete_later();
+            loop.post([&loop]() { loop.exit(0); });
+        });
     EXPECT_EQ(loop.exec(), 0);
     EXPECT_EQ(Counter::alive, 0); // delete_later 在 exec 期间执行了 delete
 }
@@ -244,5 +250,15 @@ TEST(Object, delete_later_without_current_loop_fails)
     CountedObject victim; // 栈对象：当前环为空的线程上下文直接 fatal
     EXPECT_DEATH(victim.delete_later(), "");
 }
+
+TEST(Object, delete_later_before_exec_fails)
+{
+    CountedObject victim;
+    cxxkit::EventLoop loop(std::unique_ptr<cxxkit::AbstractEventDispatcher>(new FakeDispatcher));
+    // exec-only 语义钉子：环已构造但未 exec —— current 未置，delete_later fatal
+    EXPECT_DEATH(victim.delete_later(), "");
+    EXPECT_EQ(Counter::alive, 1); // fatal 未实际删除 victim
+}
+
 
 #endif // CXXKIT_FEATURE_ENABLE_KERNEL

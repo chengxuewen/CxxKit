@@ -65,9 +65,11 @@ public:
     /**
      * @brief 请求在当前线程 EventLoop 下一次排空时删除 this（Qt deleteLater 语义）。
      *
-     * 无当前环 = fatal。已知限制：父与子不可同时 delete_later——队列 [delete 父, delete 子]
-     * 时父级联已直接 delete 子，残留闭包再 delete = 二次 delete（Qt 靠 ~QObject 清 pending
-     * DeferredDelete，本版不做，文档化限制）。
+     * 仅在当前线程存在**运行中**（exec 内）的 EventLoop 时合法；否则（含环已构造但未 exec）= fatal。
+     * 已知限制：①父与子不可同时 delete_later——队列 [delete 父, delete 子] 时父级联已直接 delete 子，
+     * 残留闭包再 delete = 二次 delete（Qt 靠 ~QObject 清 pending DeferredDelete，本版不做）；
+     * ②~EventLoop 析构排空期间闭包内再 post（如级联 delete_later）投到将死环新队列静默丢失，
+     * 且排空时 current 已不指向自身——闭包内 delete_later 会 fatal。均文档化限制。
      * @since 0.2
      */
     void delete_later();
