@@ -178,15 +178,67 @@ cxxkit_option(CXXKIT_BUILD_EXAMPLES "Enable this to build examples" ON
     OR_CONDITION CXXKIT_BUILD_ALL)
 cxxkit_option(CXXKIT_BUILD_INSTALL "Enable this to build the installer" ${CXXKIT_WILL_INSTALL_VALUE}
     OR_CONDITION CXXKIT_BUILD_ALL)
+# base/profiling stay unconditional (R-M0-1): base is the dependency-graph root
+# (turning it off = everything off — the option would be pure noise), profiling has
+# zero dependencies and zero beneficiaries. The anchor variable still exists so the
+# DEPENDS expressions below stay uniform.
+set(CXXKIT_ENABLE_LIB_BASE ON)
+set(CXXKIT_ENABLE_LIB_PROFILING ON)
+# 12 core sublibrary opt-in switches (Momus F1: topological order — cxxkit_option
+# evaluates DEPENDS immediately, so upstream dependencies must be declared first:
+# text → containers → functional → numerics → patterns → units → memory → kernel → thread →
+# media (10 switches; base/time/tools/profiling unconditional — symbol-cycle rulings).
+# time is unconditional like tools (Ruling v2, M0): tools/clock.cpp references
+# DateTime symbols (time), while time headers reference tools' CXXKIT_LOGGER — a
+# symbol-level cycle (nm-verified both directions). Neither is separable.
+if(DEFINED CXXKIT_ENABLE_LIB_TIME AND NOT CXXKIT_ENABLE_LIB_TIME)
+    message(WARNING "CXXKIT_ENABLE_LIB_TIME=OFF ignored: time is unconditional (time↔tools symbol cycle, M0 Ruling v2).")
+endif()
+set(CXXKIT_ENABLE_LIB_TIME ON)
+cxxkit_option(CXXKIT_ENABLE_LIB_TEXT "Enable this to build text lib" ON
+    DEPENDS "CXXKIT_ENABLE_LIB_BASE" OR_CONDITION CXXKIT_BUILD_ALL)
+# tools is unconditional like base (Ruling, M0): its CHECK/logging symbols (CXXKIT_LOGGER,
+# Logger::output) are referenced by the headers of time/units/containers/numerics/functional/
+# patterns — every path back into tools' .cpp creates a cycle (tools needed time; time's
+# headers need tools symbols). An opt-in switch for it would be pure noise.
+if(DEFINED CXXKIT_ENABLE_LIB_TOOLS AND NOT CXXKIT_ENABLE_LIB_TOOLS)
+    message(WARNING "CXXKIT_ENABLE_LIB_TOOLS=OFF ignored: tools is unconditional (symbol hub, M0 Ruling).")
+endif()
+set(CXXKIT_ENABLE_LIB_TOOLS ON)
+cxxkit_option(CXXKIT_ENABLE_LIB_CONTAINERS "Enable this to build containers lib" ON
+    DEPENDS "CXXKIT_ENABLE_LIB_BASE AND CXXKIT_ENABLE_LIB_TOOLS" OR_CONDITION CXXKIT_BUILD_ALL)
+cxxkit_option(CXXKIT_ENABLE_LIB_FUNCTIONAL "Enable this to build functional lib" ON
+    DEPENDS "CXXKIT_ENABLE_LIB_BASE AND CXXKIT_ENABLE_LIB_TOOLS" OR_CONDITION CXXKIT_BUILD_ALL)
+cxxkit_option(CXXKIT_ENABLE_LIB_NUMERICS "Enable this to build numerics lib" ON
+    DEPENDS "CXXKIT_ENABLE_LIB_BASE AND CXXKIT_ENABLE_LIB_TOOLS" OR_CONDITION CXXKIT_BUILD_ALL)
+cxxkit_option(CXXKIT_ENABLE_LIB_PATTERNS "Enable this to build patterns lib" ON
+    DEPENDS "CXXKIT_ENABLE_LIB_BASE AND CXXKIT_ENABLE_LIB_TOOLS" OR_CONDITION CXXKIT_BUILD_ALL)
+cxxkit_option(CXXKIT_ENABLE_LIB_UNITS "Enable this to build units lib" ON
+    DEPENDS "CXXKIT_ENABLE_LIB_BASE AND CXXKIT_ENABLE_LIB_CONTAINERS AND CXXKIT_ENABLE_LIB_NUMERICS AND CXXKIT_ENABLE_LIB_TOOLS"
+    OR_CONDITION CXXKIT_BUILD_ALL)
+cxxkit_option(CXXKIT_ENABLE_LIB_MEMORY "Enable this to build memory lib" ON
+    DEPENDS "CXXKIT_ENABLE_LIB_BASE AND CXXKIT_ENABLE_LIB_TOOLS" OR_CONDITION CXXKIT_BUILD_ALL)
+cxxkit_option(CXXKIT_ENABLE_LIB_KERNEL "Enable this to build kernel lib" ON
+    DEPENDS "CXXKIT_ENABLE_LIB_BASE AND CXXKIT_ENABLE_LIB_MEMORY AND CXXKIT_ENABLE_LIB_TOOLS"
+    OR_CONDITION CXXKIT_BUILD_ALL)
+cxxkit_option(CXXKIT_ENABLE_LIB_THREAD "Enable this to build thread lib" ON
+    DEPENDS "CXXKIT_ENABLE_LIB_BASE AND CXXKIT_ENABLE_LIB_FUNCTIONAL AND CXXKIT_ENABLE_LIB_KERNEL AND CXXKIT_ENABLE_LIB_MEMORY AND CXXKIT_ENABLE_LIB_TIME AND CXXKIT_ENABLE_LIB_TOOLS AND CXXKIT_ENABLE_LIB_UNITS"
+    OR_CONDITION CXXKIT_BUILD_ALL)
+cxxkit_option(CXXKIT_ENABLE_LIB_MEDIA "Enable this to build media lib" ON
+    DEPENDS "CXXKIT_ENABLE_LIB_BASE AND CXXKIT_ENABLE_LIB_THREAD AND CXXKIT_ENABLE_LIB_TOOLS"
+    OR_CONDITION CXXKIT_BUILD_ALL)
 cxxkit_option(CXXKIT_ENABLE_LIB_NETWORK "Enable this to build enable network lib" OFF
+    DEPENDS "CXXKIT_ENABLE_LIB_BASE AND CXXKIT_ENABLE_LIB_TEXT AND CXXKIT_ENABLE_LIB_THREAD AND CXXKIT_ENABLE_LIB_MEMORY AND CXXKIT_ENABLE_LIB_TOOLS"
     OR_CONDITION CXXKIT_BUILD_ALL)
 cxxkit_option(CXXKIT_ENABLE_LIB_TRACY "Enable this to build enable Tracy profiler lib" OFF
     OR_CONDITION CXXKIT_BUILD_ALL)
 cxxkit_option(CXXKIT_ENABLE_LIB_CRASH "Enable this to build enable crash lib" OFF
+    DEPENDS "CXXKIT_ENABLE_LIB_BASE AND CXXKIT_ENABLE_LIB_PATTERNS AND CXXKIT_ENABLE_LIB_TOOLS"
     OR_CONDITION CXXKIT_BUILD_ALL)
 cxxkit_option(CXXKIT_ENABLE_LIB_IMGUI "Enable this to build enable imgui lib" OFF
-    OR_CONDITION CXXKIT_BUILD_ALL)
+    DEPENDS "CXXKIT_ENABLE_LIB_BASE AND CXXKIT_ENABLE_LIB_TOOLS" OR_CONDITION CXXKIT_BUILD_ALL)
 cxxkit_option(CXXKIT_ENABLE_LIB_UV "Enable this to build enable uv (libuv event loop) lib" OFF
+    DEPENDS "CXXKIT_ENABLE_LIB_BASE AND CXXKIT_ENABLE_LIB_KERNEL AND CXXKIT_ENABLE_LIB_TOOLS"
     OR_CONDITION CXXKIT_BUILD_ALL)
 # Local machine (g++ 10.5) only: qt consumers link the conda libstdc++ explicitly so
 # libQt6Core's GLIBCXX_3.4.30+ symbols resolve. CI (gcc>=11, system Qt) never sees this
@@ -196,6 +248,7 @@ if(EXISTS "/tmp/opencode/qt-env/.pixi/envs/default/lib/libstdc++.so.6")
     set(CXXKIT_QT_LOCAL_STDCPP "/tmp/opencode/qt-env/.pixi/envs/default/lib/libstdc++.so.6" "/tmp/opencode/qt-env/.pixi/envs/default/lib/libgcc_s.so.1")
 endif()
 cxxkit_option(CXXKIT_ENABLE_LIB_QT "Enable this to build enable qt (Qt event loop bridge) lib" OFF
+    DEPENDS "CXXKIT_ENABLE_LIB_BASE AND CXXKIT_ENABLE_LIB_KERNEL AND CXXKIT_ENABLE_LIB_TOOLS"
     OR_CONDITION CXXKIT_BUILD_ALL)
 
 #-----------------------------------------------------------------------------------------------------------------------
@@ -236,30 +289,23 @@ if(CXXKIT_BUILD_COVERAGE)
         COMMENT "Collecting gcov coverage report")
 endif()
 
-#-----------------------------------------------------------------------------------------------------------------------
-# Sublibraries (Phase 1: base + header-only)
-#-----------------------------------------------------------------------------------------------------------------------
+# Sublibraries (abseil-style: directory = sublibrary = CMake target).
+# base/time/tools/profiling unconditional (R-M0-1 + M0 Rulings); 10 core libs opt-in per switch.
 add_subdirectory(cxxkit/base)
-add_subdirectory(cxxkit/containers)
-add_subdirectory(cxxkit/functional)
-add_subdirectory(cxxkit/memory)
-add_subdirectory(cxxkit/numerics)
-add_subdirectory(cxxkit/patterns)
-add_subdirectory(cxxkit/units)
-add_subdirectory(cxxkit/kernel)
-add_subdirectory(cxxkit/thread)
-add_subdirectory(cxxkit/time)
-add_subdirectory(cxxkit/text)
-add_subdirectory(cxxkit/tools)
-add_subdirectory(cxxkit/media)
+cxxkit_add_subdirectory(cxxkit/containers CXXKIT_ENABLE_LIB_CONTAINERS)
+cxxkit_add_subdirectory(cxxkit/functional CXXKIT_ENABLE_LIB_FUNCTIONAL)
+cxxkit_add_subdirectory(cxxkit/memory CXXKIT_ENABLE_LIB_MEMORY)
+cxxkit_add_subdirectory(cxxkit/numerics CXXKIT_ENABLE_LIB_NUMERICS)
+cxxkit_add_subdirectory(cxxkit/patterns CXXKIT_ENABLE_LIB_PATTERNS)
+cxxkit_add_subdirectory(cxxkit/units CXXKIT_ENABLE_LIB_UNITS)
+cxxkit_add_subdirectory(cxxkit/kernel CXXKIT_ENABLE_LIB_KERNEL)
+cxxkit_add_subdirectory(cxxkit/thread CXXKIT_ENABLE_LIB_THREAD)
+add_subdirectory(cxxkit/time)  # unconditional (Ruling v2, M0): time↔tools symbol cycle
+cxxkit_add_subdirectory(cxxkit/text CXXKIT_ENABLE_LIB_TEXT)
+add_subdirectory(cxxkit/tools)  # unconditional (Ruling M0): CHECK/logging symbol hub
+cxxkit_add_subdirectory(cxxkit/media CXXKIT_ENABLE_LIB_MEDIA)
 add_subdirectory(cxxkit/profiling)
 
-#-----------------------------------------------------------------------------------------------------------------------
-# IDE solution folders (VS/Xcode; no-op for make/ninja)
-#-----------------------------------------------------------------------------------------------------------------------
-set_property(GLOBAL PROPERTY USE_FOLDER ON)
-
-# Sublibraries (abseil-style: directory = sublibrary = CMake target)
 cxxkit_add_subdirectory(cxxkit/network CXXKIT_ENABLE_LIB_NETWORK)
 cxxkit_add_subdirectory(cxxkit/crash CXXKIT_ENABLE_LIB_CRASH)
 cxxkit_add_subdirectory(cxxkit/imgui CXXKIT_ENABLE_LIB_IMGUI)
@@ -328,7 +374,13 @@ if(CXXKIT_BUILD_INSTALL)
     include(CMakePackageConfigHelpers)
     # Vendored deps with their own Config.cmake (vcpkg-style find_dependency chain).
     # Tracy is included only when the profiling lib is enabled.
-    set(CXXKIT_VENDORED_FIND_DEPS "fmt;spdlog")  # base vendored via text/tools
+    set(CXXKIT_VENDORED_FIND_DEPS "")
+    if(CXXKIT_ENABLE_LIB_TEXT OR CXXKIT_ENABLE_LIB_TOOLS)
+        list(APPEND CXXKIT_VENDORED_FIND_DEPS "fmt")  # vendored via text/tools
+    endif()
+    if(CXXKIT_ENABLE_LIB_TOOLS)
+        list(APPEND CXXKIT_VENDORED_FIND_DEPS "spdlog")  # tools-only
+    endif()
     if(CXXKIT_ENABLE_LIB_NETWORK)
         list(APPEND CXXKIT_VENDORED_FIND_DEPS "cpr" "CURL" "MbedTLS")  # network-only
     endif()

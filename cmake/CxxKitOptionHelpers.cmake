@@ -37,12 +37,16 @@ function(cxxkit_parse_all_arguments prefix type options one_value_args multi_val
 endfunction()
 
 # Evaluate a CMake boolean expression, supporting variables, NOT/AND/OR.
+# Space-separated operators (DEPENDS "A AND B") arrive as ONE argument; if(${expr})
+# would then receive a single space-containing string (evaluated as a variable name →
+# always false). Splitting on spaces turns it into a proper argument list for if().
 function(cxxkit_evaluate_expression result)
     if(NOT "${ARGN}" STREQUAL "")
         set(expression "${ARGN}")
     else()
         set(expression "${result}")
     endif()
+    string(REPLACE " " ";" expression "${expression}")
     if(${expression})
         set(${result} ON PARENT_SCOPE)
     else()
@@ -113,8 +117,14 @@ function(cxxkit_option variable description value)
         endif()
     else()
         # Depends failed: greyed out with an explanatory value (OpenCTK behavior).
+        # Warn whenever the desired value was ON — the default (result) OR a user/cache
+        # request — so clamped-to-OFF switches are visible in configure output (Momus F4).
         if(${result})
             message(WARNING "Option ${variable} is depends on ${arg_DEPENDS}.")
+        elseif(${variable})
+            # -D (cache) request for ON: still clamped. The FORCE below hasn't run yet,
+            # so the cache still holds the user's ON — surface it (Momus F4).
+            message(WARNING "Option ${variable} requested ON but clamped OFF: depends on ${arg_DEPENDS}.")
         endif()
         set(${variable} "OFF" CACHE STRING "${description} depends on ${arg_DEPENDS}!" FORCE)
         set(_option_string_type_if_cache_${variable} ON CACHE INTERNAL "${description}" FORCE)

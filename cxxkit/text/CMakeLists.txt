@@ -27,7 +27,10 @@ cxxkit_configure_library_begin(CxxKitText)
 
 cxxkit_add_library(cxxkit_text
     SOURCES string_utils.cpp ascii.cpp string.cpp base64.cpp bit_buffer.cpp string_builder.cpp string_encode.cpp crc32.cpp
-    PUBLIC_LIBRARIES cxxkit::base cxxkit::numerics CxxKitWrapFmt::WrapFmt CxxKitWrapStringViewLite::WrapStringViewLite cxxkit::tools
+    # cxxkit::numerics dropped: text only consumes numerics headers (safe_conversions/
+    # bits/safe_minmax — header-only, sources tree) and links zero numerics symbols (nm-verified);
+    # keeping the target link would force NUMERICS ON whenever TEXT is ON.
+    PUBLIC_LIBRARIES cxxkit::base CxxKitWrapFmt::WrapFmt CxxKitWrapStringViewLite::WrapStringViewLite cxxkit::tools
     EXPORT_NAME text
     FOLDER "CxxKit/libs")
 cxxkit_find_package(Fmt PROVIDED_TARGETS CxxKitWrapFmt::WrapFmt)
