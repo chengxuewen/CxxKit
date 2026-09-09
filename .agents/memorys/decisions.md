@@ -198,3 +198,14 @@ sanitizer（ASAN/LSAN/UBSan）与 coverage 用**独立 build 目录**（build-as
 **明确不做**：feature 系统（方案 C，850 行移植不值）/ domain bundle（方案 B，YAGNI）/ 依赖自动传播 / cxxkitConfig 组件化重构
 
 **已知限制（M1 备案）**：text→numerics 安装树脆弱（NUMERICS=OFF 时 bit_buffer.hpp 传递 include safe_conversions.hpp 断供——header-only 传递边）；date_time.hpp → text/string_view.hpp include 级边未申报；INPUT_ 残留 cache 持续 FORCE（D25 同款，清 CMakeCache 解除）
+
+## D33: Object 树 + delete_later + WeakPtr 落地（2026-09-09，T1-T3 SDD 流水线）
+
+**架构**（plan docs/superpowers/plans/2026-09-09-object-tree-weakptr-plan.md，T0-T4，81 套件基线）：
+- **T1 Object 树四件套**（`5c85a1c`）：构造挂父（`Object(parent)` 委托后 set_parent）/ set_parent 摘旧挂新 + 环检测 `CXXKIT_CHECK` fatal / 析构级联 `while(!empty) delete front` / children 真实维护 + **ChildEvent 同步派发**——派发对象是**已构造完整的父**（构造期坑不触发：Qt 构造期坑只在接收方未构造完时成立，本设计接收方恒为父且父先于子构造完成）
+- **T2 delete_later**（`65b52ed`+`970c8b4`）：**exec-only 语义**（controller 裁定 Option A：仅运行中环可收；构造后未 exec 调用 = fatal 而非静默丢——显式失败优于隐式吞）+ `destroying()` 虚函数（~Object 顶部调用；**析构期虚派发只到 Object 层、派生 override 不被调用**——Qt 同款规则，不可用于派生清理）+ ~EventLoop 排空防泄漏（swap-under-lock、锁外逐个执行，S10/I4 排空不变量）。已知限制：①排空期闭包内再 post 静默丢失（级联 delete_later 场景，L1）②排空执行时 current 不指向自身，闭包内 delete_later 会 fatal（L2）③父子不可同投 delete_later（二次 delete）。exec save/restore 对称无构造绑定（`970c8b4` review M1）
+- **T3 WeakPtr/WeakPtrFactory**（`3556684`+`50462c4`）：cxxkit::memory，**Chromium 形非侵入**——shared_ptr<atomic<bool>> 标志块 + weak_ptr，release/acquire 内存序足够；**拒绝 intrusive 轨道**（QPointer 式侵入构造需改所有派生类 = API 破坏，非侵入零耦合）。契约：Factory 生命周期不晚于 owner
+
+**Phase 2/3 备忘**（需求触发再取）：事件投递（postEvent/ChildEvent 异步化）、线程亲和（moveToThread/亲和断言）——Object 树当前为单线程语义，跨线程 set_parent/delete_later 未定义
+
+**验证**：主树 81/81（79 基线 + tst_object + tst_weak_ptr）；check.sh 全链见 task-4-report

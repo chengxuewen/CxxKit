@@ -272,3 +272,12 @@ cxxkit 是 OpenCTK（an open cpp toolkit）的成功重构版本 —— 精简�
 - [x] **三态验证**：默认 79/79（基线 78→79 FU1 祖先）+ asan 78/78 零诊断 + shared 79/79；裁剪态 TEXT=OFF——clamp WARNING + 套件按裁剪下降 + BuildInstall + 消费方 REQUIRED 缺组件点名；最小态 base-only 消费方 build/run 过；install 三态 + INPUT 通道全记录
 - [x] **check.sh 8/8 ALL PASSED**（M2 收口 exit=0：主 79 + shared 79 + asan 78 + coverage 全口径不阻断）
 - 已知限制：text→numerics / date_time→text 安装树 include 级传递边（裁剪组合消费对应头需自行启用组件）；INPUT_ 残留 cache 持续 FORCE（D25 同款）
+
+### 2026-09-09 Object 树 + WeakPtr 落地（D33，T1-T3 SDD 流水线）
+
+- [x] **T1 Object 树四件套**（`5c85a1c`）：构造挂父 / set_parent 摘旧挂新+环检测 CXXKIT_CHECK fatal / 析构级联 while(!empty) delete front / ChildEvent 同步派发（派发对象是父，构造期坑不触发——Qt 构造期坑只在接收方未构造完时成立）
+- [x] **T2 delete_later + destroying**（`65b52ed`+`970c8b4`）：exec-only 语义（controller 裁定 Option A：仅运行中环可收，未 exec 调用 = fatal）+ destroying() 虚函数（析构期虚派发只到 Object 层，派生 override 不被调用——Qt 同款）+ ~EventLoop 排空防泄漏（L1 排空期再 post 静默丢失 / L2 排空期 delete_later fatal / 父子不可同投——已知限制全备案）
+- [x] **T3 WeakPtr/WeakPtrFactory**（`3556684`+`50462c4`）：cxxkit::memory Chromium 形非侵入（shared_ptr<atomic<bool>> 标志块 + weak_ptr），拒绝 QPointer 式 intrusive 轨道（侵入构造改所有派生类 = API 破坏）；契约 Factory 生命周期不晚于 owner
+- [x] **测试 79→81 套件**：+tst_object +tst_weak_ptr；PIT-43（exec FIFO 轮次陷阱：exit 与依赖前置效果的投递必须同闭包串联）
+- 裁定/教训全录：decisions.md D33 + pitfalls.md PIT-43
+- 备忘：Phase 2/3（事件投递 postEvent / 线程亲和 moveToThread）需求触发再取——Object 树当前单线程语义

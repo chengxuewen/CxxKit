@@ -275,3 +275,10 @@
 - **解法**: 组件级条件必须双条件 AND：`if(TARGET cxxkit::qt AND qt IN_LIST cxxkit_FIND_COMPONENTS)`——只有显式 `COMPONENTS ... qt` 的消费方才触发 find_dependency(Qt6)；NOT_FOUND_MESSAGE 点名缺失组件（`82e7661`）
 - **验证**: 无 Qt 环境 + `find_package(cxxkit COMPONENTS base text)` 必须 FOUND；`find_package(cxxkit COMPONENTS qt)` 才要求 Qt6
 - **禁止**: Config.cmake.in 中用 target 存在性单条件驱动 find_dependency——凡按组件可选的依赖一律 AND IN_LIST FIND_COMPONENTS
+
+## PIT-43: exec FIFO 轮次陷阱——exit 置位后同轮投递永不执行（2026-09-09）
+- **症状**: 连续投 [请求闭包(内含 delete_later), exit 闭包] 两个任务，exec 第 1 轮处理后 mExit 置位即退出循环；请求闭包内新投的 delete_later 落到第 2 轮队列——环已停转，永不执行（对象"看似 delete 了"实则泄漏，仅靠 ~EventLoop 排空兜底）
+- **根因**: exec 退出条件在每轮任务处理后检查——exit 与"依赖其前置效果的任务"分属两轮时，前置闭包产生的后续投递全部迟到；FIFO 只保证**同轮**内顺序，不保证跨轮续命
+- **解法**: exit 与依赖其前置效果的投递必须**同一闭包串联**（或保证二者同轮：exit 闭包内先做完依赖效果再置位）；测试侧用 post(exit) 收尾而非先 post 后 exit
+- **验证**: tst_object/tst_kernel_event_loop 相关用例：delete_later + post(exit) 同投时对象析构计数必须归零；`grep -n "PIT-43" .agents/memorys/pitfalls.md` 非空
+- **禁止**: 把 exit 当独立任务先投、依赖效果的闭包后投（跨轮断链）；在 exit 之后还期望"再来一轮"的任何投递语义

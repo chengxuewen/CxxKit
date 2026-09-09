@@ -68,7 +68,7 @@ EventLoop::~EventLoop()
     // 析构排空：delete_later 闭包必须执行到——丢弃 = 对象泄漏。swap-under-lock、锁外逐个执行
     // （S10/I4 排空不变量）。
     // 已知限制（L1）：排空期间闭包内再 post（如级联 delete_later）会投到将死环的新队列静默丢失；
-    // （L2）排空执行时 current 已不指向自身（exec-only 语义，dtor 无清理）——闭包内 delete_later
+    // （L2）排空执行时 current 已不指向自身（exec-only 语义，dtor 无清理；支持路径：exec 已退出）——闭包内 delete_later
     // 会 fatal 而非静默丢。二者均文档化限制，Qt 靠 ~QObject 清 pending DeferredDelete，本版不做。
     std::deque<std::function<void()>> tasks = d->take_post_queue();
     while (!tasks.empty())
