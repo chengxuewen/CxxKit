@@ -27,334 +27,474 @@ find_package(Threads REQUIRED)
 cxxkit_find_package(GTest PROVIDED_TARGETS CxxKitWrapGTest::WrapGTest)
 cxxkit_find_package(Benchmark PROVIDED_TARGETS CxxKitWrapBenchmark::WrapBenchmark)
 
-set(CXXKIT_TEST_LINK_LIBRARIES
-    cxxkit::base
-    cxxkit::containers
-    cxxkit::functional
-    cxxkit::numerics
-    cxxkit::patterns
-    cxxkit::memory
-    cxxkit::units
-    cxxkit::time
-    cxxkit::kernel
-    cxxkit::thread
-    cxxkit::text
-    cxxkit::tools
-    CxxKitWrapGTest::WrapGTest
-    CxxKitWrapBenchmark::WrapBenchmark)
+# Conditional aggregate (Momus F3): base is unconditional; each core lib appends only
+# when its switch is ON. Guarded test blocks below keep per-lib targets in sync.
+set(CXXKIT_TEST_LINK_LIBRARIES cxxkit::base)
+if(CXXKIT_ENABLE_LIB_CONTAINERS)
+    list(APPEND CXXKIT_TEST_LINK_LIBRARIES cxxkit::containers)
+endif()
+if(CXXKIT_ENABLE_LIB_FUNCTIONAL)
+    list(APPEND CXXKIT_TEST_LINK_LIBRARIES cxxkit::functional)
+endif()
+if(CXXKIT_ENABLE_LIB_NUMERICS)
+    list(APPEND CXXKIT_TEST_LINK_LIBRARIES cxxkit::numerics)
+endif()
+if(CXXKIT_ENABLE_LIB_PATTERNS)
+    list(APPEND CXXKIT_TEST_LINK_LIBRARIES cxxkit::patterns)
+endif()
+if(CXXKIT_ENABLE_LIB_MEMORY)
+    list(APPEND CXXKIT_TEST_LINK_LIBRARIES cxxkit::memory)
+endif()
+if(CXXKIT_ENABLE_LIB_UNITS)
+    list(APPEND CXXKIT_TEST_LINK_LIBRARIES cxxkit::units)
+endif()
+if(CXXKIT_ENABLE_LIB_TIME)
+    list(APPEND CXXKIT_TEST_LINK_LIBRARIES cxxkit::time)
+endif()
+if(CXXKIT_ENABLE_LIB_KERNEL)
+    list(APPEND CXXKIT_TEST_LINK_LIBRARIES cxxkit::kernel)
+endif()
+if(CXXKIT_ENABLE_LIB_THREAD)
+    list(APPEND CXXKIT_TEST_LINK_LIBRARIES cxxkit::thread)
+endif()
+if(CXXKIT_ENABLE_LIB_TEXT)
+    list(APPEND CXXKIT_TEST_LINK_LIBRARIES cxxkit::text)
+endif()
+if(CXXKIT_ENABLE_LIB_TOOLS)
+    list(APPEND CXXKIT_TEST_LINK_LIBRARIES cxxkit::tools)
+endif()
+list(APPEND CXXKIT_TEST_LINK_LIBRARIES CxxKitWrapGTest::WrapGTest CxxKitWrapBenchmark::WrapBenchmark)
 
-cxxkit_add_test(cxxkit_tst_array_view
-    SOURCES tst_array_view.cpp
-    INCLUDE_DIRECTORIES ${PROJECT_SOURCE_DIR}
-    LIBRARIES ${CXXKIT_TEST_LINK_LIBRARIES} ${CMAKE_THREAD_LIBS_INIT})
+if(CXXKIT_ENABLE_LIB_CONTAINERS)
+    cxxkit_add_test(cxxkit_tst_array_view
+        SOURCES tst_array_view.cpp
+        INCLUDE_DIRECTORIES ${PROJECT_SOURCE_DIR}
+        LIBRARIES ${CXXKIT_TEST_LINK_LIBRARIES} ${CMAKE_THREAD_LIBS_INIT})
 
-cxxkit_add_test(cxxkit_tst_flat_hash_map
-    SOURCES tst_flat_hash_map.cpp
-    INCLUDE_DIRECTORIES ${PROJECT_SOURCE_DIR}
-    LIBRARIES ${CXXKIT_TEST_LINK_LIBRARIES} ${CMAKE_THREAD_LIBS_INIT})
+    cxxkit_add_test(cxxkit_tst_flat_hash_map
+        SOURCES tst_flat_hash_map.cpp
+        INCLUDE_DIRECTORIES ${PROJECT_SOURCE_DIR}
+        LIBRARIES ${CXXKIT_TEST_LINK_LIBRARIES} ${CMAKE_THREAD_LIBS_INIT})
 
-cxxkit_add_test(cxxkit_tst_flat_hash_set
-    SOURCES tst_flat_hash_set.cpp
-    INCLUDE_DIRECTORIES ${PROJECT_SOURCE_DIR}
-    LIBRARIES ${CXXKIT_TEST_LINK_LIBRARIES} ${CMAKE_THREAD_LIBS_INIT})
+    cxxkit_add_test(cxxkit_tst_flat_hash_set
+        SOURCES tst_flat_hash_set.cpp
+        INCLUDE_DIRECTORIES ${PROJECT_SOURCE_DIR}
+        LIBRARIES ${CXXKIT_TEST_LINK_LIBRARIES} ${CMAKE_THREAD_LIBS_INIT})
+endif()
 
 
-cxxkit_add_test(cxxkit_tst_media_color_space
-    SOURCES tst_media_color_space.cpp
-    INCLUDE_DIRECTORIES ${PROJECT_SOURCE_DIR}
-    LIBRARIES ${CXXKIT_TEST_LINK_LIBRARIES} cxxkit::media ${CMAKE_THREAD_LIBS_INIT})
+if(CXXKIT_ENABLE_LIB_MEDIA)
+    cxxkit_add_test(cxxkit_tst_media_color_space
+        SOURCES tst_media_color_space.cpp
+        INCLUDE_DIRECTORIES ${PROJECT_SOURCE_DIR}
+        LIBRARIES ${CXXKIT_TEST_LINK_LIBRARIES} cxxkit::media ${CMAKE_THREAD_LIBS_INIT})
 
-cxxkit_add_test(cxxkit_tst_media_video_frame_buffer
-    SOURCES tst_media_video_frame_buffer.cpp
-    INCLUDE_DIRECTORIES ${PROJECT_SOURCE_DIR}
-    LIBRARIES ${CXXKIT_TEST_LINK_LIBRARIES} cxxkit::media ${CMAKE_THREAD_LIBS_INIT})
+    cxxkit_add_test(cxxkit_tst_media_video_frame_buffer
+        SOURCES tst_media_video_frame_buffer.cpp
+        INCLUDE_DIRECTORIES ${PROJECT_SOURCE_DIR}
+        LIBRARIES ${CXXKIT_TEST_LINK_LIBRARIES} cxxkit::media ${CMAKE_THREAD_LIBS_INIT})
 
-cxxkit_add_test(cxxkit_tst_media_framerate_controller
-    SOURCES tst_media_framerate_controller.cpp
-    INCLUDE_DIRECTORIES ${PROJECT_SOURCE_DIR}
-    LIBRARIES ${CXXKIT_TEST_LINK_LIBRARIES} cxxkit::media ${CMAKE_THREAD_LIBS_INIT})
+    cxxkit_add_test(cxxkit_tst_media_framerate_controller
+        SOURCES tst_media_framerate_controller.cpp
+        INCLUDE_DIRECTORIES ${PROJECT_SOURCE_DIR}
+        LIBRARIES ${CXXKIT_TEST_LINK_LIBRARIES} cxxkit::media ${CMAKE_THREAD_LIBS_INIT})
 
-cxxkit_add_test(cxxkit_tst_media_video_frame
-    SOURCES tst_media_video_frame.cpp
-    INCLUDE_DIRECTORIES ${PROJECT_SOURCE_DIR}
-    LIBRARIES ${CXXKIT_TEST_LINK_LIBRARIES} cxxkit::media ${CMAKE_THREAD_LIBS_INIT})
+    cxxkit_add_test(cxxkit_tst_media_video_frame
+        SOURCES tst_media_video_frame.cpp
+        INCLUDE_DIRECTORIES ${PROJECT_SOURCE_DIR}
+        LIBRARIES ${CXXKIT_TEST_LINK_LIBRARIES} cxxkit::media ${CMAKE_THREAD_LIBS_INIT})
 
-cxxkit_add_test(cxxkit_tst_media_i420_buffer
-    SOURCES tst_media_i420_buffer.cpp
-    INCLUDE_DIRECTORIES ${PROJECT_SOURCE_DIR}
-    LIBRARIES ${CXXKIT_TEST_LINK_LIBRARIES} cxxkit::media ${CMAKE_THREAD_LIBS_INIT})
+    cxxkit_add_test(cxxkit_tst_media_i420_buffer
+        SOURCES tst_media_i420_buffer.cpp
+        INCLUDE_DIRECTORIES ${PROJECT_SOURCE_DIR}
+        LIBRARIES ${CXXKIT_TEST_LINK_LIBRARIES} cxxkit::media ${CMAKE_THREAD_LIBS_INIT})
 
-cxxkit_add_test(cxxkit_tst_media_video_frame_buffer_pool
-    SOURCES tst_media_video_frame_buffer_pool.cpp
-    INCLUDE_DIRECTORIES ${PROJECT_SOURCE_DIR}
-    LIBRARIES ${CXXKIT_TEST_LINK_LIBRARIES} cxxkit::media ${CMAKE_THREAD_LIBS_INIT})
+    cxxkit_add_test(cxxkit_tst_media_video_frame_buffer_pool
+        SOURCES tst_media_video_frame_buffer_pool.cpp
+        INCLUDE_DIRECTORIES ${PROJECT_SOURCE_DIR}
+        LIBRARIES ${CXXKIT_TEST_LINK_LIBRARIES} cxxkit::media ${CMAKE_THREAD_LIBS_INIT})
 
-cxxkit_add_test(cxxkit_tst_media_webrtc_libyuv
-    SOURCES tst_media_webrtc_libyuv.cpp
-    INCLUDE_DIRECTORIES ${PROJECT_SOURCE_DIR}
-    LIBRARIES ${CXXKIT_TEST_LINK_LIBRARIES} cxxkit::media ${CMAKE_THREAD_LIBS_INIT})
+    cxxkit_add_test(cxxkit_tst_media_webrtc_libyuv
+        SOURCES tst_media_webrtc_libyuv.cpp
+        INCLUDE_DIRECTORIES ${PROJECT_SOURCE_DIR}
+        LIBRARIES ${CXXKIT_TEST_LINK_LIBRARIES} cxxkit::media ${CMAKE_THREAD_LIBS_INIT})
 
-# tst_inlined_vector.cpp deferred to Phase 2 (depends on absl test_instance_tracker, not vendored in OpenCTK either)
+    # tst_inlined_vector.cpp deferred to Phase 2 (depends on absl test_instance_tracker, not vendored in OpenCTK either)
 
-cxxkit_add_test(cxxkit_tst_media_frame_generator
-    SOURCES tst_media_frame_generator.cpp
-    INCLUDE_DIRECTORIES ${PROJECT_SOURCE_DIR}
-    LIBRARIES ${CXXKIT_TEST_LINK_LIBRARIES} cxxkit::media ${CMAKE_THREAD_LIBS_INIT})
+    cxxkit_add_test(cxxkit_tst_media_frame_generator
+        SOURCES tst_media_frame_generator.cpp
+        INCLUDE_DIRECTORIES ${PROJECT_SOURCE_DIR}
+        LIBRARIES ${CXXKIT_TEST_LINK_LIBRARIES} cxxkit::media ${CMAKE_THREAD_LIBS_INIT})
+endif()
 
-cxxkit_add_test(cxxkit_tst_divide_round
-    SOURCES tst_divide_round.cpp
-    INCLUDE_DIRECTORIES ${PROJECT_SOURCE_DIR}
-    LIBRARIES ${CXXKIT_TEST_LINK_LIBRARIES} ${CMAKE_THREAD_LIBS_INIT})
+if(CXXKIT_ENABLE_LIB_NUMERICS)
+    cxxkit_add_test(cxxkit_tst_divide_round
+        SOURCES tst_divide_round.cpp
+        INCLUDE_DIRECTORIES ${PROJECT_SOURCE_DIR}
+        LIBRARIES ${CXXKIT_TEST_LINK_LIBRARIES} ${CMAKE_THREAD_LIBS_INIT})
+endif()
 
-cxxkit_add_test(cxxkit_tst_checks
-    SOURCES tst_checks.cpp
-    INCLUDE_DIRECTORIES ${PROJECT_SOURCE_DIR}
-    LIBRARIES ${CXXKIT_TEST_LINK_LIBRARIES} ${CMAKE_THREAD_LIBS_INIT})
+if(CXXKIT_ENABLE_LIB_TOOLS)
+    cxxkit_add_test(cxxkit_tst_checks
+        SOURCES tst_checks.cpp
+        INCLUDE_DIRECTORIES ${PROJECT_SOURCE_DIR}
+        LIBRARIES ${CXXKIT_TEST_LINK_LIBRARIES} ${CMAKE_THREAD_LIBS_INIT})
+endif()
 
-cxxkit_add_test(cxxkit_tst_enum_flags
-    SOURCES tst_enum_flags.cpp
-    INCLUDE_DIRECTORIES ${PROJECT_SOURCE_DIR}
-    LIBRARIES ${CXXKIT_TEST_LINK_LIBRARIES} ${CMAKE_THREAD_LIBS_INIT})
+if(CXXKIT_ENABLE_LIB_TOOLS)
+    cxxkit_add_test(cxxkit_tst_enum_flags
+        SOURCES tst_enum_flags.cpp
+        INCLUDE_DIRECTORIES ${PROJECT_SOURCE_DIR}
+        LIBRARIES ${CXXKIT_TEST_LINK_LIBRARIES} ${CMAKE_THREAD_LIBS_INIT})
+endif()
 
-cxxkit_add_test(cxxkit_tst_function_view
-    SOURCES tst_function_view.cpp
-    INCLUDE_DIRECTORIES ${PROJECT_SOURCE_DIR}
-    LIBRARIES ${CXXKIT_TEST_LINK_LIBRARIES} ${CMAKE_THREAD_LIBS_INIT})
+if(CXXKIT_ENABLE_LIB_FUNCTIONAL)
+    cxxkit_add_test(cxxkit_tst_function_view
+        SOURCES tst_function_view.cpp
+        INCLUDE_DIRECTORIES ${PROJECT_SOURCE_DIR}
+        LIBRARIES ${CXXKIT_TEST_LINK_LIBRARIES} ${CMAKE_THREAD_LIBS_INIT})
+endif()
 
 # Phase 2: remaining OpenCTK-enabled tests (30 total, 28 added here)
-cxxkit_add_test(cxxkit_tst_bit_buffer
-    SOURCES tst_bit_buffer.cpp
-    INCLUDE_DIRECTORIES ${PROJECT_SOURCE_DIR}
-    LIBRARIES ${CXXKIT_TEST_LINK_LIBRARIES} ${CMAKE_THREAD_LIBS_INIT})
-cxxkit_add_test(cxxkit_tst_concurrent
-    SOURCES tst_concurrent.cpp
-    INCLUDE_DIRECTORIES ${PROJECT_SOURCE_DIR}
-    LIBRARIES ${CXXKIT_TEST_LINK_LIBRARIES} ${CMAKE_THREAD_LIBS_INIT})
-cxxkit_add_test(cxxkit_tst_context_checker
-    SOURCES tst_context_checker.cpp
-    INCLUDE_DIRECTORIES ${PROJECT_SOURCE_DIR}
-    LIBRARIES ${CXXKIT_TEST_LINK_LIBRARIES} ${CMAKE_THREAD_LIBS_INIT})
-cxxkit_add_test(cxxkit_tst_ctordtor
-    SOURCES tst_ctordtor.cpp
-    INCLUDE_DIRECTORIES ${PROJECT_SOURCE_DIR}
-    LIBRARIES ${CXXKIT_TEST_LINK_LIBRARIES} ${CMAKE_THREAD_LIBS_INIT})
-cxxkit_add_test(cxxkit_tst_elapsed_timer
-    SOURCES tst_elapsed_timer.cpp
-    INCLUDE_DIRECTORIES ${PROJECT_SOURCE_DIR}
-    LIBRARIES ${CXXKIT_TEST_LINK_LIBRARIES} ${CMAKE_THREAD_LIBS_INIT})
-cxxkit_add_test(cxxkit_tst_error
-    SOURCES tst_error.cpp
-    INCLUDE_DIRECTORIES ${PROJECT_SOURCE_DIR}
-    LIBRARIES ${CXXKIT_TEST_LINK_LIBRARIES} ${CMAKE_THREAD_LIBS_INIT})
-cxxkit_add_test(cxxkit_tst_exception
-    SOURCES tst_exception.cpp
-    INCLUDE_DIRECTORIES ${PROJECT_SOURCE_DIR}
-    LIBRARIES ${CXXKIT_TEST_LINK_LIBRARIES} ${CMAKE_THREAD_LIBS_INIT})
-cxxkit_add_test(cxxkit_tst_filesystem
-    SOURCES tst_filesystem.cpp
-    INCLUDE_DIRECTORIES ${PROJECT_SOURCE_DIR}
-    LIBRARIES ${CXXKIT_TEST_LINK_LIBRARIES} ${CMAKE_THREAD_LIBS_INIT})
-cxxkit_add_test(cxxkit_tst_move_wrapper
-    SOURCES tst_move_wrapper.cpp
-    INCLUDE_DIRECTORIES ${PROJECT_SOURCE_DIR}
-    LIBRARIES ${CXXKIT_TEST_LINK_LIBRARIES} ${CMAKE_THREAD_LIBS_INIT})
-cxxkit_add_test(cxxkit_tst_mutex
-    SOURCES tst_mutex.cpp
-    INCLUDE_DIRECTORIES ${PROJECT_SOURCE_DIR}
-    LIBRARIES ${CXXKIT_TEST_LINK_LIBRARIES} ${CMAKE_THREAD_LIBS_INIT})
-cxxkit_add_test(cxxkit_tst_mutex_benchmark
-    SOURCES tst_mutex_benchmark.cpp
-    INCLUDE_DIRECTORIES ${PROJECT_SOURCE_DIR}
-    LIBRARIES ${CXXKIT_TEST_LINK_LIBRARIES} ${CMAKE_THREAD_LIBS_INIT})
-cxxkit_add_test(cxxkit_tst_platform_thread
-    SOURCES tst_platform_thread.cpp
-    INCLUDE_DIRECTORIES ${PROJECT_SOURCE_DIR}
-    LIBRARIES ${CXXKIT_TEST_LINK_LIBRARIES} ${CMAKE_THREAD_LIBS_INIT})
-cxxkit_add_test(cxxkit_tst_repeating_task
-    SOURCES tst_repeating_task.cpp
-    INCLUDE_DIRECTORIES ${PROJECT_SOURCE_DIR}
-    LIBRARIES ${CXXKIT_TEST_LINK_LIBRARIES} ${CMAKE_THREAD_LIBS_INIT})
-cxxkit_add_test(cxxkit_tst_result
-    SOURCES tst_result.cpp
-    INCLUDE_DIRECTORIES ${PROJECT_SOURCE_DIR}
-    LIBRARIES ${CXXKIT_TEST_LINK_LIBRARIES} ${CMAKE_THREAD_LIBS_INIT})
-cxxkit_add_test(cxxkit_tst_safe_minmax
-    SOURCES tst_safe_minmax.cpp
-    INCLUDE_DIRECTORIES ${PROJECT_SOURCE_DIR}
-    LIBRARIES ${CXXKIT_TEST_LINK_LIBRARIES} ${CMAKE_THREAD_LIBS_INIT})
-cxxkit_add_test(cxxkit_tst_sanitizer
-    SOURCES tst_sanitizer.cpp
-    INCLUDE_DIRECTORIES ${PROJECT_SOURCE_DIR}
-    LIBRARIES ${CXXKIT_TEST_LINK_LIBRARIES} ${CMAKE_THREAD_LIBS_INIT})
-cxxkit_add_test(cxxkit_tst_scope_guard
-    SOURCES tst_scope_guard.cpp
-    INCLUDE_DIRECTORIES ${PROJECT_SOURCE_DIR}
-    LIBRARIES ${CXXKIT_TEST_LINK_LIBRARIES} ${CMAKE_THREAD_LIBS_INIT})
-cxxkit_add_test(cxxkit_tst_semaphore
-    SOURCES tst_semaphore.cpp
-    INCLUDE_DIRECTORIES ${PROJECT_SOURCE_DIR}
-    LIBRARIES ${CXXKIT_TEST_LINK_LIBRARIES} ${CMAKE_THREAD_LIBS_INIT})
-cxxkit_add_test(cxxkit_tst_shared_data
-    SOURCES tst_shared_data.cpp
-    INCLUDE_DIRECTORIES ${PROJECT_SOURCE_DIR}
-    LIBRARIES ${CXXKIT_TEST_LINK_LIBRARIES} ${CMAKE_THREAD_LIBS_INIT})
-cxxkit_add_test(cxxkit_tst_shared_pointer
-    SOURCES tst_shared_pointer.cpp
-    INCLUDE_DIRECTORIES ${PROJECT_SOURCE_DIR}
-    LIBRARIES ${CXXKIT_TEST_LINK_LIBRARIES} ${CMAKE_THREAD_LIBS_INIT})
-cxxkit_add_test(cxxkit_tst_source_location
-    SOURCES tst_source_location.cpp
-    INCLUDE_DIRECTORIES ${PROJECT_SOURCE_DIR}
-    LIBRARIES ${CXXKIT_TEST_LINK_LIBRARIES} ${CMAKE_THREAD_LIBS_INIT})
-cxxkit_add_test(cxxkit_tst_status
-    SOURCES tst_status.cpp
-    INCLUDE_DIRECTORIES ${PROJECT_SOURCE_DIR}
-    LIBRARIES ${CXXKIT_TEST_LINK_LIBRARIES} ${CMAKE_THREAD_LIBS_INIT})
-cxxkit_add_test(cxxkit_tst_string_builder
-    SOURCES tst_string_builder.cpp
-    INCLUDE_DIRECTORIES ${PROJECT_SOURCE_DIR}
-    LIBRARIES ${CXXKIT_TEST_LINK_LIBRARIES} ${CMAKE_THREAD_LIBS_INIT})
-cxxkit_add_test(cxxkit_tst_string_utils
-    SOURCES tst_string_utils.cpp
-    INCLUDE_DIRECTORIES ${PROJECT_SOURCE_DIR}
-    LIBRARIES ${CXXKIT_TEST_LINK_LIBRARIES} ${CMAKE_THREAD_LIBS_INIT})
-cxxkit_add_test(cxxkit_tst_task_queue_thread
-    SOURCES tst_task_queue_thread.cpp
-    INCLUDE_DIRECTORIES ${PROJECT_SOURCE_DIR}
-    LIBRARIES ${CXXKIT_TEST_LINK_LIBRARIES} ${CMAKE_THREAD_LIBS_INIT})
-cxxkit_add_test(cxxkit_tst_thread_pool
-    SOURCES tst_thread_pool.cpp
-    INCLUDE_DIRECTORIES ${PROJECT_SOURCE_DIR}
-    LIBRARIES ${CXXKIT_TEST_LINK_LIBRARIES} ${CMAKE_THREAD_LIBS_INIT})
-cxxkit_add_test(cxxkit_tst_type_traits
-    SOURCES tst_type_traits.cpp
-    INCLUDE_DIRECTORIES ${PROJECT_SOURCE_DIR}
-    LIBRARIES ${CXXKIT_TEST_LINK_LIBRARIES} ${CMAKE_THREAD_LIBS_INIT})
-cxxkit_add_test(cxxkit_tst_unique_function
-    SOURCES tst_unique_function.cpp
-    INCLUDE_DIRECTORIES ${PROJECT_SOURCE_DIR}
-    LIBRARIES ${CXXKIT_TEST_LINK_LIBRARIES} ${CMAKE_THREAD_LIBS_INIT})
+if(CXXKIT_ENABLE_LIB_TEXT)
+    cxxkit_add_test(cxxkit_tst_bit_buffer
+        SOURCES tst_bit_buffer.cpp
+        INCLUDE_DIRECTORIES ${PROJECT_SOURCE_DIR}
+        LIBRARIES ${CXXKIT_TEST_LINK_LIBRARIES} ${CMAKE_THREAD_LIBS_INIT})
+endif()
+if(CXXKIT_ENABLE_LIB_THREAD)
+    cxxkit_add_test(cxxkit_tst_concurrent
+        SOURCES tst_concurrent.cpp
+        INCLUDE_DIRECTORIES ${PROJECT_SOURCE_DIR}
+        LIBRARIES ${CXXKIT_TEST_LINK_LIBRARIES} ${CMAKE_THREAD_LIBS_INIT})
+endif()
+if(CXXKIT_ENABLE_LIB_THREAD)
+    cxxkit_add_test(cxxkit_tst_context_checker
+        SOURCES tst_context_checker.cpp
+        INCLUDE_DIRECTORIES ${PROJECT_SOURCE_DIR}
+        LIBRARIES ${CXXKIT_TEST_LINK_LIBRARIES} ${CMAKE_THREAD_LIBS_INIT})
+endif()
+if(CXXKIT_ENABLE_LIB_KERNEL)
+    cxxkit_add_test(cxxkit_tst_ctordtor
+        SOURCES tst_ctordtor.cpp
+        INCLUDE_DIRECTORIES ${PROJECT_SOURCE_DIR}
+        LIBRARIES ${CXXKIT_TEST_LINK_LIBRARIES} ${CMAKE_THREAD_LIBS_INIT})
+endif()
+if(CXXKIT_ENABLE_LIB_TIME)
+    cxxkit_add_test(cxxkit_tst_elapsed_timer
+        SOURCES tst_elapsed_timer.cpp
+        INCLUDE_DIRECTORIES ${PROJECT_SOURCE_DIR}
+        LIBRARIES ${CXXKIT_TEST_LINK_LIBRARIES} ${CMAKE_THREAD_LIBS_INIT})
+endif()
+if(CXXKIT_ENABLE_LIB_TOOLS)
+    cxxkit_add_test(cxxkit_tst_error
+        SOURCES tst_error.cpp
+        INCLUDE_DIRECTORIES ${PROJECT_SOURCE_DIR}
+        LIBRARIES ${CXXKIT_TEST_LINK_LIBRARIES} ${CMAKE_THREAD_LIBS_INIT})
+endif()
+if(CXXKIT_ENABLE_LIB_TOOLS)
+    cxxkit_add_test(cxxkit_tst_exception
+        SOURCES tst_exception.cpp
+        INCLUDE_DIRECTORIES ${PROJECT_SOURCE_DIR}
+        LIBRARIES ${CXXKIT_TEST_LINK_LIBRARIES} ${CMAKE_THREAD_LIBS_INIT})
+endif()
+if(CXXKIT_ENABLE_LIB_TOOLS)
+    cxxkit_add_test(cxxkit_tst_filesystem
+        SOURCES tst_filesystem.cpp
+        INCLUDE_DIRECTORIES ${PROJECT_SOURCE_DIR}
+        LIBRARIES ${CXXKIT_TEST_LINK_LIBRARIES} ${CMAKE_THREAD_LIBS_INIT})
+endif()
+if(CXXKIT_ENABLE_LIB_TOOLS)
+    cxxkit_add_test(cxxkit_tst_move_wrapper
+        SOURCES tst_move_wrapper.cpp
+        INCLUDE_DIRECTORIES ${PROJECT_SOURCE_DIR}
+        LIBRARIES ${CXXKIT_TEST_LINK_LIBRARIES} ${CMAKE_THREAD_LIBS_INIT})
+endif()
+if(CXXKIT_ENABLE_LIB_THREAD)
+    cxxkit_add_test(cxxkit_tst_mutex
+        SOURCES tst_mutex.cpp
+        INCLUDE_DIRECTORIES ${PROJECT_SOURCE_DIR}
+        LIBRARIES ${CXXKIT_TEST_LINK_LIBRARIES} ${CMAKE_THREAD_LIBS_INIT})
+endif()
+if(CXXKIT_ENABLE_LIB_THREAD)
+    cxxkit_add_test(cxxkit_tst_mutex_benchmark
+        SOURCES tst_mutex_benchmark.cpp
+        INCLUDE_DIRECTORIES ${PROJECT_SOURCE_DIR}
+        LIBRARIES ${CXXKIT_TEST_LINK_LIBRARIES} ${CMAKE_THREAD_LIBS_INIT})
+endif()
+if(CXXKIT_ENABLE_LIB_THREAD)
+    cxxkit_add_test(cxxkit_tst_platform_thread
+        SOURCES tst_platform_thread.cpp
+        INCLUDE_DIRECTORIES ${PROJECT_SOURCE_DIR}
+        LIBRARIES ${CXXKIT_TEST_LINK_LIBRARIES} ${CMAKE_THREAD_LIBS_INIT})
+endif()
+if(CXXKIT_ENABLE_LIB_THREAD)
+    cxxkit_add_test(cxxkit_tst_repeating_task
+        SOURCES tst_repeating_task.cpp
+        INCLUDE_DIRECTORIES ${PROJECT_SOURCE_DIR}
+        LIBRARIES ${CXXKIT_TEST_LINK_LIBRARIES} ${CMAKE_THREAD_LIBS_INIT})
+endif()
+if(CXXKIT_ENABLE_LIB_TOOLS)
+    cxxkit_add_test(cxxkit_tst_result
+        SOURCES tst_result.cpp
+        INCLUDE_DIRECTORIES ${PROJECT_SOURCE_DIR}
+        LIBRARIES ${CXXKIT_TEST_LINK_LIBRARIES} ${CMAKE_THREAD_LIBS_INIT})
+endif()
+if(CXXKIT_ENABLE_LIB_NUMERICS)
+    cxxkit_add_test(cxxkit_tst_safe_minmax
+        SOURCES tst_safe_minmax.cpp
+        INCLUDE_DIRECTORIES ${PROJECT_SOURCE_DIR}
+        LIBRARIES ${CXXKIT_TEST_LINK_LIBRARIES} ${CMAKE_THREAD_LIBS_INIT})
+endif()
+if(CXXKIT_ENABLE_LIB_TOOLS)
+    cxxkit_add_test(cxxkit_tst_sanitizer
+        SOURCES tst_sanitizer.cpp
+        INCLUDE_DIRECTORIES ${PROJECT_SOURCE_DIR}
+        LIBRARIES ${CXXKIT_TEST_LINK_LIBRARIES} ${CMAKE_THREAD_LIBS_INIT})
+endif()
+if(CXXKIT_ENABLE_LIB_TOOLS)
+    cxxkit_add_test(cxxkit_tst_scope_guard
+        SOURCES tst_scope_guard.cpp
+        INCLUDE_DIRECTORIES ${PROJECT_SOURCE_DIR}
+        LIBRARIES ${CXXKIT_TEST_LINK_LIBRARIES} ${CMAKE_THREAD_LIBS_INIT})
+endif()
+if(CXXKIT_ENABLE_LIB_THREAD)
+    cxxkit_add_test(cxxkit_tst_semaphore
+        SOURCES tst_semaphore.cpp
+        INCLUDE_DIRECTORIES ${PROJECT_SOURCE_DIR}
+        LIBRARIES ${CXXKIT_TEST_LINK_LIBRARIES} ${CMAKE_THREAD_LIBS_INIT})
+endif()
+if(CXXKIT_ENABLE_LIB_THREAD)
+    cxxkit_add_test(cxxkit_tst_shared_data
+        SOURCES tst_shared_data.cpp
+        INCLUDE_DIRECTORIES ${PROJECT_SOURCE_DIR}
+        LIBRARIES ${CXXKIT_TEST_LINK_LIBRARIES} ${CMAKE_THREAD_LIBS_INIT})
+endif()
+if(CXXKIT_ENABLE_LIB_MEMORY)
+    cxxkit_add_test(cxxkit_tst_shared_pointer
+        SOURCES tst_shared_pointer.cpp
+        INCLUDE_DIRECTORIES ${PROJECT_SOURCE_DIR}
+        LIBRARIES ${CXXKIT_TEST_LINK_LIBRARIES} ${CMAKE_THREAD_LIBS_INIT})
+endif()
+if(CXXKIT_ENABLE_LIB_TOOLS)
+    cxxkit_add_test(cxxkit_tst_source_location
+        SOURCES tst_source_location.cpp
+        INCLUDE_DIRECTORIES ${PROJECT_SOURCE_DIR}
+        LIBRARIES ${CXXKIT_TEST_LINK_LIBRARIES} ${CMAKE_THREAD_LIBS_INIT})
+endif()
+if(CXXKIT_ENABLE_LIB_TOOLS)
+    cxxkit_add_test(cxxkit_tst_status
+        SOURCES tst_status.cpp
+        INCLUDE_DIRECTORIES ${PROJECT_SOURCE_DIR}
+        LIBRARIES ${CXXKIT_TEST_LINK_LIBRARIES} ${CMAKE_THREAD_LIBS_INIT})
+endif()
+if(CXXKIT_ENABLE_LIB_TEXT)
+    cxxkit_add_test(cxxkit_tst_string_builder
+        SOURCES tst_string_builder.cpp
+        INCLUDE_DIRECTORIES ${PROJECT_SOURCE_DIR}
+        LIBRARIES ${CXXKIT_TEST_LINK_LIBRARIES} ${CMAKE_THREAD_LIBS_INIT})
+endif()
+if(CXXKIT_ENABLE_LIB_TEXT)
+    cxxkit_add_test(cxxkit_tst_string_utils
+        SOURCES tst_string_utils.cpp
+        INCLUDE_DIRECTORIES ${PROJECT_SOURCE_DIR}
+        LIBRARIES ${CXXKIT_TEST_LINK_LIBRARIES} ${CMAKE_THREAD_LIBS_INIT})
+endif()
+if(CXXKIT_ENABLE_LIB_THREAD)
+    cxxkit_add_test(cxxkit_tst_task_queue_thread
+        SOURCES tst_task_queue_thread.cpp
+        INCLUDE_DIRECTORIES ${PROJECT_SOURCE_DIR}
+        LIBRARIES ${CXXKIT_TEST_LINK_LIBRARIES} ${CMAKE_THREAD_LIBS_INIT})
+endif()
+if(CXXKIT_ENABLE_LIB_THREAD)
+    cxxkit_add_test(cxxkit_tst_thread_pool
+        SOURCES tst_thread_pool.cpp
+        INCLUDE_DIRECTORIES ${PROJECT_SOURCE_DIR}
+        LIBRARIES ${CXXKIT_TEST_LINK_LIBRARIES} ${CMAKE_THREAD_LIBS_INIT})
+endif()
+if(CXXKIT_ENABLE_LIB_TOOLS)
+    cxxkit_add_test(cxxkit_tst_type_traits
+        SOURCES tst_type_traits.cpp
+        INCLUDE_DIRECTORIES ${PROJECT_SOURCE_DIR}
+        LIBRARIES ${CXXKIT_TEST_LINK_LIBRARIES} ${CMAKE_THREAD_LIBS_INIT})
+endif()
+if(CXXKIT_ENABLE_LIB_FUNCTIONAL)
+    cxxkit_add_test(cxxkit_tst_unique_function
+        SOURCES tst_unique_function.cpp
+        INCLUDE_DIRECTORIES ${PROJECT_SOURCE_DIR}
+        LIBRARIES ${CXXKIT_TEST_LINK_LIBRARIES} ${CMAKE_THREAD_LIBS_INIT})
+endif()
 
-cxxkit_add_test(cxxkit_tst_boundary
-    SOURCES tst_boundary.cpp
-    INCLUDE_DIRECTORIES ${PROJECT_SOURCE_DIR}
-    LIBRARIES ${CXXKIT_TEST_LINK_LIBRARIES} ${CMAKE_THREAD_LIBS_INIT})
+if(CXXKIT_ENABLE_LIB_TOOLS AND CXXKIT_ENABLE_LIB_TEXT)
+    cxxkit_add_test(cxxkit_tst_boundary
+        SOURCES tst_boundary.cpp
+        INCLUDE_DIRECTORIES ${PROJECT_SOURCE_DIR}
+        LIBRARIES ${CXXKIT_TEST_LINK_LIBRARIES} ${CMAKE_THREAD_LIBS_INIT})
+endif()
 
 # Coverage: low-coverage library .cpp files (raise library coverage toward 80%)
-cxxkit_add_test(cxxkit_tst_ascii
-    SOURCES tst_ascii.cpp
-    INCLUDE_DIRECTORIES ${PROJECT_SOURCE_DIR}
-    LIBRARIES ${CXXKIT_TEST_LINK_LIBRARIES} ${CMAKE_THREAD_LIBS_INIT})
-cxxkit_add_test(cxxkit_tst_string
-    SOURCES tst_string.cpp
-    INCLUDE_DIRECTORIES ${PROJECT_SOURCE_DIR}
-    LIBRARIES ${CXXKIT_TEST_LINK_LIBRARIES} ${CMAKE_THREAD_LIBS_INIT})
-cxxkit_add_test(cxxkit_tst_datetime
-    SOURCES tst_datetime.cpp
-    INCLUDE_DIRECTORIES ${PROJECT_SOURCE_DIR}
-    LIBRARIES ${CXXKIT_TEST_LINK_LIBRARIES} ${CMAKE_THREAD_LIBS_INIT})
-cxxkit_add_test(cxxkit_tst_clock
-    SOURCES tst_clock.cpp
-    INCLUDE_DIRECTORIES ${PROJECT_SOURCE_DIR}
-    LIBRARIES ${CXXKIT_TEST_LINK_LIBRARIES} ${CMAKE_THREAD_LIBS_INIT})
-cxxkit_add_test(cxxkit_tst_logging
-    SOURCES tst_logging.cpp
-    INCLUDE_DIRECTORIES ${PROJECT_SOURCE_DIR}
-    LIBRARIES ${CXXKIT_TEST_LINK_LIBRARIES} ${CMAKE_THREAD_LIBS_INIT})
-cxxkit_add_test(cxxkit_tst_assert
-    SOURCES tst_assert.cpp
-    INCLUDE_DIRECTORIES ${PROJECT_SOURCE_DIR}
-    LIBRARIES ${CXXKIT_TEST_LINK_LIBRARIES} ${CMAKE_THREAD_LIBS_INIT})
+if(CXXKIT_ENABLE_LIB_TEXT)
+    cxxkit_add_test(cxxkit_tst_ascii
+        SOURCES tst_ascii.cpp
+        INCLUDE_DIRECTORIES ${PROJECT_SOURCE_DIR}
+        LIBRARIES ${CXXKIT_TEST_LINK_LIBRARIES} ${CMAKE_THREAD_LIBS_INIT})
+endif()
+if(CXXKIT_ENABLE_LIB_TEXT)
+    cxxkit_add_test(cxxkit_tst_string
+        SOURCES tst_string.cpp
+        INCLUDE_DIRECTORIES ${PROJECT_SOURCE_DIR}
+        LIBRARIES ${CXXKIT_TEST_LINK_LIBRARIES} ${CMAKE_THREAD_LIBS_INIT})
+endif()
+if(CXXKIT_ENABLE_LIB_TIME)
+    cxxkit_add_test(cxxkit_tst_datetime
+        SOURCES tst_datetime.cpp
+        INCLUDE_DIRECTORIES ${PROJECT_SOURCE_DIR}
+        LIBRARIES ${CXXKIT_TEST_LINK_LIBRARIES} ${CMAKE_THREAD_LIBS_INIT})
+endif()
+if(CXXKIT_ENABLE_LIB_TOOLS)
+    cxxkit_add_test(cxxkit_tst_clock
+        SOURCES tst_clock.cpp
+        INCLUDE_DIRECTORIES ${PROJECT_SOURCE_DIR}
+        LIBRARIES ${CXXKIT_TEST_LINK_LIBRARIES} ${CMAKE_THREAD_LIBS_INIT})
+endif()
+if(CXXKIT_ENABLE_LIB_TOOLS)
+    cxxkit_add_test(cxxkit_tst_logging
+        SOURCES tst_logging.cpp
+        INCLUDE_DIRECTORIES ${PROJECT_SOURCE_DIR}
+        LIBRARIES ${CXXKIT_TEST_LINK_LIBRARIES} ${CMAKE_THREAD_LIBS_INIT})
+endif()
+if(CXXKIT_ENABLE_LIB_TOOLS)
+    cxxkit_add_test(cxxkit_tst_assert
+        SOURCES tst_assert.cpp
+        INCLUDE_DIRECTORIES ${PROJECT_SOURCE_DIR}
+        LIBRARIES ${CXXKIT_TEST_LINK_LIBRARIES} ${CMAKE_THREAD_LIBS_INIT})
+endif()
 
-cxxkit_add_test(cxxkit_tst_once_flag
-    SOURCES tst_once_flag.cpp
-    INCLUDE_DIRECTORIES ${PROJECT_SOURCE_DIR}
-    LIBRARIES ${CXXKIT_TEST_LINK_LIBRARIES} ${CMAKE_THREAD_LIBS_INIT})
+if(CXXKIT_ENABLE_LIB_TOOLS)
+    cxxkit_add_test(cxxkit_tst_once_flag
+        SOURCES tst_once_flag.cpp
+        INCLUDE_DIRECTORIES ${PROJECT_SOURCE_DIR}
+        LIBRARIES ${CXXKIT_TEST_LINK_LIBRARIES} ${CMAKE_THREAD_LIBS_INIT})
+endif()
 
-cxxkit_add_test(cxxkit_tst_task_queue_factory
-    SOURCES tst_task_queue_factory.cpp
-    INCLUDE_DIRECTORIES ${PROJECT_SOURCE_DIR}
-    LIBRARIES ${CXXKIT_TEST_LINK_LIBRARIES} ${CMAKE_THREAD_LIBS_INIT})
+if(CXXKIT_ENABLE_LIB_THREAD)
+    cxxkit_add_test(cxxkit_tst_task_queue_factory
+        SOURCES tst_task_queue_factory.cpp
+        INCLUDE_DIRECTORIES ${PROJECT_SOURCE_DIR}
+        LIBRARIES ${CXXKIT_TEST_LINK_LIBRARIES} ${CMAKE_THREAD_LIBS_INIT})
+endif()
 
-cxxkit_add_test(cxxkit_tst_race_checker
-    SOURCES tst_race_checker.cpp
-    INCLUDE_DIRECTORIES ${PROJECT_SOURCE_DIR}
-    LIBRARIES ${CXXKIT_TEST_LINK_LIBRARIES} ${CMAKE_THREAD_LIBS_INIT})
+if(CXXKIT_ENABLE_LIB_THREAD)
+    cxxkit_add_test(cxxkit_tst_race_checker
+        SOURCES tst_race_checker.cpp
+        INCLUDE_DIRECTORIES ${PROJECT_SOURCE_DIR}
+        LIBRARIES ${CXXKIT_TEST_LINK_LIBRARIES} ${CMAKE_THREAD_LIBS_INIT})
+endif()
 
-cxxkit_add_test(cxxkit_tst_fake_clock
-    SOURCES tst_fake_clock.cpp
-    INCLUDE_DIRECTORIES ${PROJECT_SOURCE_DIR}
-    LIBRARIES ${CXXKIT_TEST_LINK_LIBRARIES} ${CMAKE_THREAD_LIBS_INIT})
+if(CXXKIT_ENABLE_LIB_TOOLS)
+    cxxkit_add_test(cxxkit_tst_fake_clock
+        SOURCES tst_fake_clock.cpp
+        INCLUDE_DIRECTORIES ${PROJECT_SOURCE_DIR}
+        LIBRARIES ${CXXKIT_TEST_LINK_LIBRARIES} ${CMAKE_THREAD_LIBS_INIT})
+endif()
 
-cxxkit_add_test(cxxkit_tst_id_registry
-    SOURCES tst_id_registry.cpp
-    INCLUDE_DIRECTORIES ${PROJECT_SOURCE_DIR}
-    LIBRARIES ${CXXKIT_TEST_LINK_LIBRARIES} ${CMAKE_THREAD_LIBS_INIT})
+if(CXXKIT_ENABLE_LIB_TOOLS)
+    cxxkit_add_test(cxxkit_tst_id_registry
+        SOURCES tst_id_registry.cpp
+        INCLUDE_DIRECTORIES ${PROJECT_SOURCE_DIR}
+        LIBRARIES ${CXXKIT_TEST_LINK_LIBRARIES} ${CMAKE_THREAD_LIBS_INIT})
+endif()
 
-cxxkit_add_test(cxxkit_tst_shared_buffer
-    SOURCES tst_shared_buffer.cpp
-    INCLUDE_DIRECTORIES ${PROJECT_SOURCE_DIR}
-    LIBRARIES ${CXXKIT_TEST_LINK_LIBRARIES} ${CMAKE_THREAD_LIBS_INIT})
+if(CXXKIT_ENABLE_LIB_TOOLS)
+    cxxkit_add_test(cxxkit_tst_shared_buffer
+        SOURCES tst_shared_buffer.cpp
+        INCLUDE_DIRECTORIES ${PROJECT_SOURCE_DIR}
+        LIBRARIES ${CXXKIT_TEST_LINK_LIBRARIES} ${CMAKE_THREAD_LIBS_INIT})
+endif()
 
-cxxkit_add_test(cxxkit_tst_string_encode
-    SOURCES tst_string_encode.cpp
-    INCLUDE_DIRECTORIES ${PROJECT_SOURCE_DIR}
-    LIBRARIES ${CXXKIT_TEST_LINK_LIBRARIES} ${CMAKE_THREAD_LIBS_INIT})
+if(CXXKIT_ENABLE_LIB_TEXT)
+    cxxkit_add_test(cxxkit_tst_string_encode
+        SOURCES tst_string_encode.cpp
+        INCLUDE_DIRECTORIES ${PROJECT_SOURCE_DIR}
+        LIBRARIES ${CXXKIT_TEST_LINK_LIBRARIES} ${CMAKE_THREAD_LIBS_INIT})
+endif()
 
-cxxkit_add_test(cxxkit_tst_base64
-    SOURCES tst_base64.cpp
-    INCLUDE_DIRECTORIES ${PROJECT_SOURCE_DIR}
-    LIBRARIES ${CXXKIT_TEST_LINK_LIBRARIES} ${CMAKE_THREAD_LIBS_INIT})
+if(CXXKIT_ENABLE_LIB_TEXT)
+    cxxkit_add_test(cxxkit_tst_base64
+        SOURCES tst_base64.cpp
+        INCLUDE_DIRECTORIES ${PROJECT_SOURCE_DIR}
+        LIBRARIES ${CXXKIT_TEST_LINK_LIBRARIES} ${CMAKE_THREAD_LIBS_INIT})
+endif()
 
-cxxkit_add_test(cxxkit_tst_status_or
-    SOURCES tst_status_or.cpp
-    INCLUDE_DIRECTORIES ${PROJECT_SOURCE_DIR}
-    LIBRARIES ${CXXKIT_TEST_LINK_LIBRARIES} ${CMAKE_THREAD_LIBS_INIT})
+if(CXXKIT_ENABLE_LIB_TOOLS)
+    cxxkit_add_test(cxxkit_tst_status_or
+        SOURCES tst_status_or.cpp
+        INCLUDE_DIRECTORIES ${PROJECT_SOURCE_DIR}
+        LIBRARIES ${CXXKIT_TEST_LINK_LIBRARIES} ${CMAKE_THREAD_LIBS_INIT})
+endif()
 
-cxxkit_add_test(cxxkit_tst_pending_task_safety_flag
-    SOURCES tst_pending_task_safety_flag.cpp
-    INCLUDE_DIRECTORIES ${PROJECT_SOURCE_DIR}
-    LIBRARIES ${CXXKIT_TEST_LINK_LIBRARIES} ${CMAKE_THREAD_LIBS_INIT})
+if(CXXKIT_ENABLE_LIB_THREAD)
+    cxxkit_add_test(cxxkit_tst_pending_task_safety_flag
+        SOURCES tst_pending_task_safety_flag.cpp
+        INCLUDE_DIRECTORIES ${PROJECT_SOURCE_DIR}
+        LIBRARIES ${CXXKIT_TEST_LINK_LIBRARIES} ${CMAKE_THREAD_LIBS_INIT})
+endif()
 
-cxxkit_add_test(cxxkit_tst_barrier
-    SOURCES tst_barrier.cpp
-    INCLUDE_DIRECTORIES ${PROJECT_SOURCE_DIR}
-    LIBRARIES ${CXXKIT_TEST_LINK_LIBRARIES} ${CMAKE_THREAD_LIBS_INIT})
+if(CXXKIT_ENABLE_LIB_THREAD)
+    cxxkit_add_test(cxxkit_tst_barrier
+        SOURCES tst_barrier.cpp
+        INCLUDE_DIRECTORIES ${PROJECT_SOURCE_DIR}
+        LIBRARIES ${CXXKIT_TEST_LINK_LIBRARIES} ${CMAKE_THREAD_LIBS_INIT})
+endif()
 
-cxxkit_add_test(cxxkit_tst_metrics
-    SOURCES tst_metrics.cpp
-    INCLUDE_DIRECTORIES ${PROJECT_SOURCE_DIR}
-    LIBRARIES ${CXXKIT_TEST_LINK_LIBRARIES} ${CMAKE_THREAD_LIBS_INIT})
+if(CXXKIT_ENABLE_LIB_TOOLS)
+    cxxkit_add_test(cxxkit_tst_metrics
+        SOURCES tst_metrics.cpp
+        INCLUDE_DIRECTORIES ${PROJECT_SOURCE_DIR}
+        LIBRARIES ${CXXKIT_TEST_LINK_LIBRARIES} ${CMAKE_THREAD_LIBS_INIT})
+endif()
 
-cxxkit_add_test(cxxkit_tst_random
-    SOURCES tst_random.cpp
-    INCLUDE_DIRECTORIES ${PROJECT_SOURCE_DIR}
-    LIBRARIES ${CXXKIT_TEST_LINK_LIBRARIES} ${CMAKE_THREAD_LIBS_INIT})
+if(CXXKIT_ENABLE_LIB_TOOLS)
+    cxxkit_add_test(cxxkit_tst_random
+        SOURCES tst_random.cpp
+        INCLUDE_DIRECTORIES ${PROJECT_SOURCE_DIR}
+        LIBRARIES ${CXXKIT_TEST_LINK_LIBRARIES} ${CMAKE_THREAD_LIBS_INIT})
+endif()
 
-cxxkit_add_test(cxxkit_tst_running_statistics
-    SOURCES tst_running_statistics.cpp
-    INCLUDE_DIRECTORIES ${PROJECT_SOURCE_DIR}
-    LIBRARIES ${CXXKIT_TEST_LINK_LIBRARIES} ${CMAKE_THREAD_LIBS_INIT})
+if(CXXKIT_ENABLE_LIB_NUMERICS)
+    cxxkit_add_test(cxxkit_tst_running_statistics
+        SOURCES tst_running_statistics.cpp
+        INCLUDE_DIRECTORIES ${PROJECT_SOURCE_DIR}
+        LIBRARIES ${CXXKIT_TEST_LINK_LIBRARIES} ${CMAKE_THREAD_LIBS_INIT})
+endif()
 
-cxxkit_add_test(cxxkit_tst_sequence_number
-    SOURCES tst_sequence_number.cpp
-    INCLUDE_DIRECTORIES ${PROJECT_SOURCE_DIR}
-    LIBRARIES ${CXXKIT_TEST_LINK_LIBRARIES} ${CMAKE_THREAD_LIBS_INIT})
+if(CXXKIT_ENABLE_LIB_NUMERICS)
+    cxxkit_add_test(cxxkit_tst_sequence_number
+        SOURCES tst_sequence_number.cpp
+        INCLUDE_DIRECTORIES ${PROJECT_SOURCE_DIR}
+        LIBRARIES ${CXXKIT_TEST_LINK_LIBRARIES} ${CMAKE_THREAD_LIBS_INIT})
+endif()
 
-cxxkit_add_test(cxxkit_tst_percentile_filter
-    SOURCES tst_percentile_filter.cpp
-    INCLUDE_DIRECTORIES ${PROJECT_SOURCE_DIR}
-    LIBRARIES ${CXXKIT_TEST_LINK_LIBRARIES} ${CMAKE_THREAD_LIBS_INIT})
+if(CXXKIT_ENABLE_LIB_NUMERICS)
+    cxxkit_add_test(cxxkit_tst_percentile_filter
+        SOURCES tst_percentile_filter.cpp
+        INCLUDE_DIRECTORIES ${PROJECT_SOURCE_DIR}
+        LIBRARIES ${CXXKIT_TEST_LINK_LIBRARIES} ${CMAKE_THREAD_LIBS_INIT})
+endif()
 
-cxxkit_add_test(cxxkit_tst_exp_filter
-    SOURCES tst_exp_filter.cpp
-    INCLUDE_DIRECTORIES ${PROJECT_SOURCE_DIR}
-    LIBRARIES ${CXXKIT_TEST_LINK_LIBRARIES} ${CMAKE_THREAD_LIBS_INIT})
+if(CXXKIT_ENABLE_LIB_NUMERICS)
+    cxxkit_add_test(cxxkit_tst_exp_filter
+        SOURCES tst_exp_filter.cpp
+        INCLUDE_DIRECTORIES ${PROJECT_SOURCE_DIR}
+        LIBRARIES ${CXXKIT_TEST_LINK_LIBRARIES} ${CMAKE_THREAD_LIBS_INIT})
+endif()
 
-cxxkit_add_test(cxxkit_tst_byte_order
-    SOURCES tst_byte_order.cpp
-    INCLUDE_DIRECTORIES ${PROJECT_SOURCE_DIR}
-    LIBRARIES ${CXXKIT_TEST_LINK_LIBRARIES} ${CMAKE_THREAD_LIBS_INIT})
+if(CXXKIT_ENABLE_LIB_NUMERICS)
+    cxxkit_add_test(cxxkit_tst_byte_order
+        SOURCES tst_byte_order.cpp
+        INCLUDE_DIRECTORIES ${PROJECT_SOURCE_DIR}
+        LIBRARIES ${CXXKIT_TEST_LINK_LIBRARIES} ${CMAKE_THREAD_LIBS_INIT})
+endif()
 
 if(CXXKIT_ENABLE_LIB_CRASH)
     # Standalone crash fixture: installs the handler and raises SIGSEGV in its own process.
@@ -382,35 +522,47 @@ if(CXXKIT_ENABLE_LIB_CRASH)
     endif()
 endif()
 
-cxxkit_add_test(cxxkit_tst_str_split
-    SOURCES tst_str_split.cpp
-    INCLUDE_DIRECTORIES ${PROJECT_SOURCE_DIR}
-    LIBRARIES ${CXXKIT_TEST_LINK_LIBRARIES} ${CMAKE_THREAD_LIBS_INIT})
+if(CXXKIT_ENABLE_LIB_TEXT)
+    cxxkit_add_test(cxxkit_tst_str_split
+        SOURCES tst_str_split.cpp
+        INCLUDE_DIRECTORIES ${PROJECT_SOURCE_DIR}
+        LIBRARIES ${CXXKIT_TEST_LINK_LIBRARIES} ${CMAKE_THREAD_LIBS_INIT})
+endif()
 
-cxxkit_add_test(cxxkit_tst_signals
-    SOURCES tst_signals.cpp
-    INCLUDE_DIRECTORIES ${PROJECT_SOURCE_DIR}
-    LIBRARIES ${CXXKIT_TEST_LINK_LIBRARIES} ${CMAKE_THREAD_LIBS_INIT})
+if(CXXKIT_ENABLE_LIB_KERNEL)
+    cxxkit_add_test(cxxkit_tst_signals
+        SOURCES tst_signals.cpp
+        INCLUDE_DIRECTORIES ${PROJECT_SOURCE_DIR}
+        LIBRARIES ${CXXKIT_TEST_LINK_LIBRARIES} ${CMAKE_THREAD_LIBS_INIT})
+endif()
 
-cxxkit_add_test(cxxkit_tst_kernel_event
-    SOURCES tst_kernel_event.cpp
-    INCLUDE_DIRECTORIES ${PROJECT_SOURCE_DIR}
-    LIBRARIES ${CXXKIT_TEST_LINK_LIBRARIES})
+if(CXXKIT_ENABLE_LIB_KERNEL)
+    cxxkit_add_test(cxxkit_tst_kernel_event
+        SOURCES tst_kernel_event.cpp
+        INCLUDE_DIRECTORIES ${PROJECT_SOURCE_DIR}
+        LIBRARIES ${CXXKIT_TEST_LINK_LIBRARIES})
+endif()
 
-cxxkit_add_test(cxxkit_tst_crc32
-    SOURCES tst_crc32.cpp
-    INCLUDE_DIRECTORIES ${PROJECT_SOURCE_DIR}
-    LIBRARIES ${CXXKIT_TEST_LINK_LIBRARIES} ${CMAKE_THREAD_LIBS_INIT})
+if(CXXKIT_ENABLE_LIB_TEXT)
+    cxxkit_add_test(cxxkit_tst_crc32
+        SOURCES tst_crc32.cpp
+        INCLUDE_DIRECTORIES ${PROJECT_SOURCE_DIR}
+        LIBRARIES ${CXXKIT_TEST_LINK_LIBRARIES} ${CMAKE_THREAD_LIBS_INIT})
+endif()
 
-cxxkit_add_test(cxxkit_tst_event_loop
-    SOURCES tst_event_loop.cpp
-    INCLUDE_DIRECTORIES ${PROJECT_SOURCE_DIR} ${PROJECT_SOURCE_DIR}/tests
-    LIBRARIES ${CXXKIT_TEST_LINK_LIBRARIES} ${CMAKE_THREAD_LIBS_INIT})
+if(CXXKIT_ENABLE_LIB_KERNEL)
+    cxxkit_add_test(cxxkit_tst_event_loop
+        SOURCES tst_event_loop.cpp
+        INCLUDE_DIRECTORIES ${PROJECT_SOURCE_DIR} ${PROJECT_SOURCE_DIR}/tests
+        LIBRARIES ${CXXKIT_TEST_LINK_LIBRARIES} ${CMAKE_THREAD_LIBS_INIT})
+endif()
 
-cxxkit_add_test(cxxkit_tst_kernel_event_loop_ext
-    SOURCES tst_kernel_event_loop_ext.cpp
-    INCLUDE_DIRECTORIES ${PROJECT_SOURCE_DIR} ${PROJECT_SOURCE_DIR}/tests
-    LIBRARIES ${CXXKIT_TEST_LINK_LIBRARIES} ${CMAKE_THREAD_LIBS_INIT})
+if(CXXKIT_ENABLE_LIB_KERNEL)
+    cxxkit_add_test(cxxkit_tst_kernel_event_loop_ext
+        SOURCES tst_kernel_event_loop_ext.cpp
+        INCLUDE_DIRECTORIES ${PROJECT_SOURCE_DIR} ${PROJECT_SOURCE_DIR}/tests
+        LIBRARIES ${CXXKIT_TEST_LINK_LIBRARIES} ${CMAKE_THREAD_LIBS_INIT})
+endif()
 
 if(CXXKIT_ENABLE_LIB_IMGUI)
     cxxkit_add_test(cxxkit_tst_imgui

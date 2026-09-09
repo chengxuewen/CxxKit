@@ -23,83 +23,117 @@
 
 cmake_minimum_required(VERSION ${CXXKIT_MIN_NEW_POLICY_CMAKE_VERSION}...${CXXKIT_MAX_NEW_POLICY_CMAKE_VERSION})
 
-set(CXXKIT_EXAMPLE_LINK_LIBRARIES
-    cxxkit::base cxxkit::tools cxxkit::text)
+# Conditional aggregate (Momus F3): base unconditional; core libs appended per switch.
+set(CXXKIT_EXAMPLE_LINK_LIBRARIES cxxkit::base)
+if(CXXKIT_ENABLE_LIB_TOOLS)
+    list(APPEND CXXKIT_EXAMPLE_LINK_LIBRARIES cxxkit::tools)
+endif()
+if(CXXKIT_ENABLE_LIB_TEXT)
+    list(APPEND CXXKIT_EXAMPLE_LINK_LIBRARIES cxxkit::text)
+endif()
 
-cxxkit_add_executable(cxxkit_exp_core_version
-    SOURCES exp_core_version.cpp
-    LIBRARIES ${CXXKIT_EXAMPLE_LINK_LIBRARIES}
-    INCLUDE_DIRECTORIES ${PROJECT_SOURCE_DIR}
-    FOLDER "CxxKit/examples")
-cxxkit_add_executable(cxxkit_exp_logging
-    SOURCES exp_logging.cpp
-    LIBRARIES ${CXXKIT_EXAMPLE_LINK_LIBRARIES}
-    INCLUDE_DIRECTORIES ${PROJECT_SOURCE_DIR}
-    FOLDER "CxxKit/examples")
-cxxkit_add_executable(cxxkit_exp_units
-    SOURCES exp_units.cpp
-    LIBRARIES ${CXXKIT_EXAMPLE_LINK_LIBRARIES} cxxkit::units cxxkit::time
-    INCLUDE_DIRECTORIES ${PROJECT_SOURCE_DIR}
-    FOLDER "CxxKit/examples")
-cxxkit_add_executable(cxxkit_exp_text
-    SOURCES exp_text.cpp
-    LIBRARIES ${CXXKIT_EXAMPLE_LINK_LIBRARIES}
-    INCLUDE_DIRECTORIES ${PROJECT_SOURCE_DIR}
-    FOLDER "CxxKit/examples")
-cxxkit_add_executable(cxxkit_exp_base
-    SOURCES exp_base.cpp
-    LIBRARIES ${CXXKIT_EXAMPLE_LINK_LIBRARIES}
-    INCLUDE_DIRECTORIES ${PROJECT_SOURCE_DIR}
-    FOLDER "CxxKit/examples")
-cxxkit_add_executable(cxxkit_exp_time
-    SOURCES exp_time.cpp
-    LIBRARIES ${CXXKIT_EXAMPLE_LINK_LIBRARIES} cxxkit::time
-    INCLUDE_DIRECTORIES ${PROJECT_SOURCE_DIR}
-    FOLDER "CxxKit/examples")
-cxxkit_add_executable(cxxkit_exp_patterns
-    SOURCES exp_patterns.cpp
-    LIBRARIES ${CXXKIT_EXAMPLE_LINK_LIBRARIES} cxxkit::patterns
-    INCLUDE_DIRECTORIES ${PROJECT_SOURCE_DIR}
-    FOLDER "CxxKit/examples")
-cxxkit_add_executable(cxxkit_exp_memory
-    SOURCES exp_memory.cpp
-    LIBRARIES ${CXXKIT_EXAMPLE_LINK_LIBRARIES} cxxkit::memory
-    INCLUDE_DIRECTORIES ${PROJECT_SOURCE_DIR}
-    FOLDER "CxxKit/examples")
-cxxkit_add_executable(cxxkit_exp_functional
-    SOURCES exp_functional.cpp
-    LIBRARIES ${CXXKIT_EXAMPLE_LINK_LIBRARIES} cxxkit::functional
-    INCLUDE_DIRECTORIES ${PROJECT_SOURCE_DIR}
-    FOLDER "CxxKit/examples")
+if(CXXKIT_ENABLE_LIB_TOOLS)
+    cxxkit_add_executable(cxxkit_exp_core_version
+        SOURCES exp_core_version.cpp
+        LIBRARIES ${CXXKIT_EXAMPLE_LINK_LIBRARIES}
+        INCLUDE_DIRECTORIES ${PROJECT_SOURCE_DIR}
+        FOLDER "CxxKit/examples")
+endif()
+if(CXXKIT_ENABLE_LIB_TOOLS AND CXXKIT_ENABLE_LIB_TEXT)
+    cxxkit_add_executable(cxxkit_exp_logging
+        SOURCES exp_logging.cpp
+        LIBRARIES ${CXXKIT_EXAMPLE_LINK_LIBRARIES}
+        INCLUDE_DIRECTORIES ${PROJECT_SOURCE_DIR}
+        FOLDER "CxxKit/examples")
+endif()
+if(CXXKIT_ENABLE_LIB_UNITS AND CXXKIT_ENABLE_LIB_TIME)
+    cxxkit_add_executable(cxxkit_exp_units
+        SOURCES exp_units.cpp
+        LIBRARIES ${CXXKIT_EXAMPLE_LINK_LIBRARIES} cxxkit::units cxxkit::time
+        INCLUDE_DIRECTORIES ${PROJECT_SOURCE_DIR}
+        FOLDER "CxxKit/examples")
+endif()
+if(CXXKIT_ENABLE_LIB_TEXT)
+    cxxkit_add_executable(cxxkit_exp_text
+        SOURCES exp_text.cpp
+        LIBRARIES ${CXXKIT_EXAMPLE_LINK_LIBRARIES}
+        INCLUDE_DIRECTORIES ${PROJECT_SOURCE_DIR}
+        FOLDER "CxxKit/examples")
+endif()
+if(CXXKIT_ENABLE_LIB_TOOLS)
+    cxxkit_add_executable(cxxkit_exp_base
+        SOURCES exp_base.cpp
+        LIBRARIES ${CXXKIT_EXAMPLE_LINK_LIBRARIES}
+        INCLUDE_DIRECTORIES ${PROJECT_SOURCE_DIR}
+        FOLDER "CxxKit/examples")
+endif()
+if(CXXKIT_ENABLE_LIB_TIME)
+    cxxkit_add_executable(cxxkit_exp_time
+        SOURCES exp_time.cpp
+        LIBRARIES ${CXXKIT_EXAMPLE_LINK_LIBRARIES} cxxkit::time
+        INCLUDE_DIRECTORIES ${PROJECT_SOURCE_DIR}
+        FOLDER "CxxKit/examples")
+endif()
+if(CXXKIT_ENABLE_LIB_PATTERNS)
+    cxxkit_add_executable(cxxkit_exp_patterns
+        SOURCES exp_patterns.cpp
+        LIBRARIES ${CXXKIT_EXAMPLE_LINK_LIBRARIES} cxxkit::patterns
+        INCLUDE_DIRECTORIES ${PROJECT_SOURCE_DIR}
+        FOLDER "CxxKit/examples")
+endif()
+if(CXXKIT_ENABLE_LIB_MEMORY)
+    cxxkit_add_executable(cxxkit_exp_memory
+        SOURCES exp_memory.cpp
+        LIBRARIES ${CXXKIT_EXAMPLE_LINK_LIBRARIES} cxxkit::memory
+        INCLUDE_DIRECTORIES ${PROJECT_SOURCE_DIR}
+        FOLDER "CxxKit/examples")
+endif()
+if(CXXKIT_ENABLE_LIB_FUNCTIONAL)
+    cxxkit_add_executable(cxxkit_exp_functional
+        SOURCES exp_functional.cpp
+        LIBRARIES ${CXXKIT_EXAMPLE_LINK_LIBRARIES} cxxkit::functional
+        INCLUDE_DIRECTORIES ${PROJECT_SOURCE_DIR}
+        FOLDER "CxxKit/examples")
+endif()
 
-cxxkit_add_executable(cxxkit_exp_containers
-    SOURCES exp_containers.cpp
-    LIBRARIES ${CXXKIT_EXAMPLE_LINK_LIBRARIES} cxxkit::containers
-    INCLUDE_DIRECTORIES ${PROJECT_SOURCE_DIR}
-    FOLDER "CxxKit/examples")
+if(CXXKIT_ENABLE_LIB_CONTAINERS)
+    cxxkit_add_executable(cxxkit_exp_containers
+        SOURCES exp_containers.cpp
+        LIBRARIES ${CXXKIT_EXAMPLE_LINK_LIBRARIES} cxxkit::containers
+        INCLUDE_DIRECTORIES ${PROJECT_SOURCE_DIR}
+        FOLDER "CxxKit/examples")
+endif()
 
 
-cxxkit_add_executable(cxxkit_exp_thread
-    SOURCES exp_thread.cpp
-    LIBRARIES ${CXXKIT_EXAMPLE_LINK_LIBRARIES} cxxkit::thread
-    INCLUDE_DIRECTORIES ${PROJECT_SOURCE_DIR}
-    FOLDER "CxxKit/examples")
+if(CXXKIT_ENABLE_LIB_THREAD)
+    cxxkit_add_executable(cxxkit_exp_thread
+        SOURCES exp_thread.cpp
+        LIBRARIES ${CXXKIT_EXAMPLE_LINK_LIBRARIES} cxxkit::thread
+        INCLUDE_DIRECTORIES ${PROJECT_SOURCE_DIR}
+        FOLDER "CxxKit/examples")
+endif()
 
-cxxkit_add_executable(cxxkit_exp_numerics
-    SOURCES exp_numerics.cpp
-    LIBRARIES ${CXXKIT_EXAMPLE_LINK_LIBRARIES} cxxkit::numerics
-    INCLUDE_DIRECTORIES ${PROJECT_SOURCE_DIR}
-    FOLDER "CxxKit/examples")
-cxxkit_add_executable(cxxkit_exp_media
-    SOURCES exp_media.cpp
-    LIBRARIES ${CXXKIT_EXAMPLE_LINK_LIBRARIES} cxxkit::media
-    INCLUDE_DIRECTORIES ${PROJECT_SOURCE_DIR}
-    FOLDER "CxxKit/examples")
-cxxkit_add_executable(cxxkit_exp_kernel
-    SOURCES exp_kernel.cpp
-    LIBRARIES ${CXXKIT_EXAMPLE_LINK_LIBRARIES} cxxkit::kernel
-    INCLUDE_DIRECTORIES ${PROJECT_SOURCE_DIR}
-    FOLDER "CxxKit/examples")
+if(CXXKIT_ENABLE_LIB_NUMERICS)
+    cxxkit_add_executable(cxxkit_exp_numerics
+        SOURCES exp_numerics.cpp
+        LIBRARIES ${CXXKIT_EXAMPLE_LINK_LIBRARIES} cxxkit::numerics
+        INCLUDE_DIRECTORIES ${PROJECT_SOURCE_DIR}
+        FOLDER "CxxKit/examples")
+endif()
+if(CXXKIT_ENABLE_LIB_MEDIA)
+    cxxkit_add_executable(cxxkit_exp_media
+        SOURCES exp_media.cpp
+        LIBRARIES ${CXXKIT_EXAMPLE_LINK_LIBRARIES} cxxkit::media
+        INCLUDE_DIRECTORIES ${PROJECT_SOURCE_DIR}
+        FOLDER "CxxKit/examples")
+endif()
+if(CXXKIT_ENABLE_LIB_KERNEL)
+    cxxkit_add_executable(cxxkit_exp_kernel
+        SOURCES exp_kernel.cpp
+        LIBRARIES ${CXXKIT_EXAMPLE_LINK_LIBRARIES} cxxkit::kernel
+        INCLUDE_DIRECTORIES ${PROJECT_SOURCE_DIR}
+        FOLDER "CxxKit/examples")
+endif()
 if(CXXKIT_ENABLE_LIB_NETWORK)
     cxxkit_add_executable(cxxkit_exp_network_version
         SOURCES exp_network_version.cpp
