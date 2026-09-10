@@ -30,6 +30,7 @@
 using cxxkit::FakeDispatcher;
 
 #    include <algorithm>
+#    include <atomic>
 #    include <memory>
 #    include <thread>
 #    include <vector>
@@ -778,6 +779,123 @@ TEST(Object, delete_later_uses_affinity_loop_when_present)
     EXPECT_TRUE(loop.process_events(cxxkit::EventLoop::ProcessFlag::kAllEvents)); // drains the DeferredDelete
     EXPECT_EQ(Counter::alive, 0);
     // cleanup: victim deleted via the queue
+}
+
+// ---- final-review fixes (I1 / I3 / M4) ----
+
+namespace
+{
+// I1 probe: destructor sets an atomic flag — the delete dispatches on the exec thread
+// while the posting thread polls it (a plain bool would be a data race).
+class CrossThreadVictim : public cxxkit::Object
+{
+public:
+    ~CrossThreadVictim() override { deleted.store(true); }
+    static std::atomic<bool> deleted;
+};
+std::atomic<bool> CrossThreadVictim::deleted{false};
+} // namespace
+
+// I1: cross-thread delete_later liveness. Thread A runs exec(); this thread posts the
+// deferred delete for an object affined to A's loop. The discriminative nail is the wake
+// counter: between the baseline capture and exit(), ONLY delete_later's wake_up can move
+// it (without I1 the counter stays at the baseline -> RED). The bounded yield-wait proves
+// thread A actually dispatched the DeferredDeleteEvent.
+TEST(Object, delete_later_wakes_affinity_loop_across_threads)
+{
+    FakeDispatcher *dispatcher = new FakeDispatcher;
+    cxxkit::EventLoop loop((std::unique_ptr<cxxkit::AbstractEventDispatcher>(dispatcher)));
+    CrossThreadVictim::deleted.store(false);
+    CrossThreadVictim *victim = new CrossThreadVictim;
+    victim->move_to_thread(&loop); // bind affinity while the loop is idle (static phase)
+
+    const int wake_baseline = dispatcher->mWakeUpCount.load();
+    std::thread runner(
+        [&loop]()
+        {
+            EXPECT_EQ(loop.exec(), 0); // A: FakeDispatcher never blocks — exec spins rounds
+        });
+
+    victim->delete_later(); // B (this thread): enqueue on the affinity loop + wake (I1)
+    // Discriminative nail — must be read before exit(): exit() wakes too.
+    EXPECT_GT(dispatcher->mWakeUpCount.load(), wake_baseline);
+
+    // Wait (bounded) for A to dispatch the delete, then stop the loop.
+    for (int i = 0; i < 2000000 && !CrossThreadVictim::deleted.load(); ++i)
+    {
+        std::this_thread::yield();
+    }
+    loop.exit(0);
+    runner.join();
+    EXPECT_TRUE(CrossThreadVictim::deleted.load()); // deletion completed on thread A
+}
+
+// I3 RED->GREEN: mixed-affinity subtree — the child's pending entry lives on the CHILD's
+// own old loop (Z), not the root's source loop. Pre-fix, migration drained only the root's
+// source, stranding the entry on Z: Z dispatches after the migration (wrong-loop delivery)
+// and W stays empty -> the first EXPECT_FALSE/EXPECT_TRUE pair below fails (RED).
+TEST(Object, move_to_thread_migrates_from_per_object_old_loops)
+{
+    FakeDispatcher *dz = new FakeDispatcher;
+    FakeDispatcher *dw = new FakeDispatcher;
+    cxxkit::EventLoop loopZ((std::unique_ptr<cxxkit::AbstractEventDispatcher>(dz)));
+    cxxkit::EventLoop loopW((std::unique_ptr<cxxkit::AbstractEventDispatcher>(dw)));
+    RecordingObject parent; // null affinity (created outside exec)
+    RecordingObject *child = new RecordingObject(&parent);
+    child->move_to_thread(&loopZ); // child affinity Z — mixed subtree
+
+    cxxkit::Event *pending = new cxxkit::Event(cxxkit::Event::Type::kUser);
+    pending->accept();
+    cxxkit::Object::post_event(child, pending); // routed to the child's affinity loop (Z)
+
+    parent.move_to_thread(&loopW); // subtree -> W; the child's entry must follow Z -> W
+
+    EXPECT_EQ(child->thread(), &loopW);
+    EXPECT_FALSE(loopZ.process_events(cxxkit::EventLoop::ProcessFlag::kAllEvents)); // Z drained dry
+    EXPECT_TRUE(loopW.process_events(cxxkit::EventLoop::ProcessFlag::kAllEvents));  // delivered on W
+    ASSERT_EQ(child->events.size(), 1u);
+    EXPECT_EQ(child->events[0], cxxkit::Event::Type::kUser);
+}
+
+// M4: migration notification hook — each migrated object receives exactly one kThreadChange
+// through its own event() (direct call, not filterable). N objects -> N notifications.
+TEST(Object, move_to_thread_notifies_each_migrated_object)
+{
+    class ThreadChangeRecorder : public cxxkit::Object
+    {
+    public:
+        explicit ThreadChangeRecorder(cxxkit::Object *parent = nullptr)
+            : Object(parent)
+        {
+        }
+        int thread_change_count{0};
+        bool event(cxxkit::Event *e) override
+        {
+            if (e->type() == cxxkit::Event::Type::kThreadChange)
+            {
+                ++thread_change_count;
+            }
+            return Object::event(e);
+        }
+    };
+    FakeDispatcher *d = new FakeDispatcher;
+    cxxkit::EventLoop loop((std::unique_ptr<cxxkit::AbstractEventDispatcher>(d)));
+    ThreadChangeRecorder root;
+    ThreadChangeRecorder *child1 = new ThreadChangeRecorder(&root);
+    ThreadChangeRecorder *child2 = new ThreadChangeRecorder(child1); // 3-object chain
+
+    root.move_to_thread(&loop); // one notification per migrated object
+    EXPECT_EQ(root.thread_change_count, 1);
+    EXPECT_EQ(child1->thread_change_count, 1);
+    EXPECT_EQ(child2->thread_change_count, 1);
+
+    root.move_to_thread(&loop); // same-loop no-op fires nothing further
+    EXPECT_EQ(root.thread_change_count, 1);
+
+    root.move_to_thread(nullptr); // detach is a real migration — notifies again
+    EXPECT_EQ(root.thread_change_count, 2);
+    EXPECT_EQ(child1->thread_change_count, 2);
+    EXPECT_EQ(child2->thread_change_count, 2);
 }
 
 #endif // CXXKIT_FEATURE_ENABLE_KERNEL

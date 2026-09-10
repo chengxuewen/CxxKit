@@ -48,7 +48,9 @@ public:
 
     const Children &children() const;
 
-    /** @brief Returns the loop this object is affined to (null = no affinity). @since 0.2 */
+    /** @brief Returns the loop this object is affined to (null = no affinity).
+     *  Lifetime contract: the affinity loop must outlive objects bound to it — purge /
+     *  delete_later / post_event dereference it (dangling loop = UAF). @since 0.2 */
     EventLoop *thread() const;
 
     /**
@@ -56,11 +58,14 @@ public:
      *
      * Guards: same-loop is a no-op; source loop running or target loop running is fatal
      * (CXXKIT_CHECK). Null target detaches affinity (pending events are dropped and
-     * deleted). Pending queued events for the subtree migrate with it; timers do NOT
-     * migrate.
+     * deleted). Pending queued events migrate per object from its OWN old loop (I3:
+     * mixed-affinity subtrees — a child may sit on a different loop than the root);
+     * timers do NOT migrate.
      * @note Caller contract (Momus F5): no concurrent post_event to subtree objects
      *       during the call — affinity metadata is unsynchronized by design (static
      *       migration is a setup-phase operation).
+     * @note Lifetime contract: the affinity loop must outlive objects bound to it
+     *       (dangling-loop dereference in purge/delete_later/post_event otherwise).
      * @since 0.2
      */
     void move_to_thread(EventLoop *target);
@@ -69,16 +74,24 @@ public:
     static bool send_event(Object *receiver, Event *event);
 
     /**
-     * @brief 异步投递：将 @p event 入队到当前线程 EventLoop，下一次排空时派发给 @p receiver。
+     * @brief Asynchronous delivery: routes @p event to the receiver's AFFINITY loop
+     *        (receiver->thread()); dispatched on that loop's next drain.
      *
-     * 所有权转移：队列持有 event，派发（send_event 内部逻辑 → filter 链生效）后 delete；
-     * 未派发条目由 ~Object purge（remove_pending_events）或 ~EventLoop 排空 delete。
-     * fatal：receiver/event 为空；kDeferredDelete（owner 语义仅 delete_later 可投）；当前线程无运行中环。
+     * Ownership transfers to the queue: the event is deleted after dispatch (send_event
+     * internals — the filter chain applies); undelivered entries are deleted by the
+     * ~Object purge (remove_pending_events) or the ~EventLoop drain. Cross-thread posting
+     * is legal: the enqueue wakes the target loop (thread-safe dispatcher contract).
+     * Fatal (CXXKIT_CHECK): receiver/event null; kDeferredDelete (owner semantics — only
+     * delete_later may enqueue it); receiver has no thread affinity (construct it inside
+     * a loop's exec or move_to_thread it first).
      * @since 0.2
      */
     static void post_event(Object *receiver, Event *event);
 
-    /** @brief 头插 filter（后装先过滤，Qt 同款）。契约：filter 须比 watched 长寿或自行 remove。 */
+    /** @brief Front-inserts @p filter (newest filters first, Qt-style); reinstalling an
+     *  installed filter moves it to the front. Bidirectional registry auto-cleanup (T3):
+     *  destruction of EITHER the filter or the watched object detaches the pair — no
+     *  lifetime-ordering contract. */
     void install_event_filter(Object *filter);
 
     /** @brief 线性查找移除；无此 filter 为 no-op。 */
@@ -100,17 +113,20 @@ protected:
 
 public:
     /**
-     * @brief 请求在当前线程 EventLoop 下一次排空时删除 this（Qt deleteLater 语义）。
+     * @brief Requests deletion of this on an EventLoop's next drain (Qt deleteLater).
      *
-     * 内部通道：Event 队列投递 DeferredDeleteEvent（Momus F1 直推 enqueue_event 绕过
-     * post_event 的 kDeferredDelete 守卫）；派发 = send_event（filter 链生效）→ event()
-     * kDeferredDelete 分支 delete this。
-     *
-     * 仅在当前线程存在**运行中**（exec 内）的 EventLoop 时合法；否则（含环已构造但未 exec）= fatal。
-     * T3 限制①解除：父与子可同时 delete_later——父先派发时其 ~Object purge 在锁内从队列
-     * 本体移除子的未派发条目，级联 delete 子后子条目已不存在，无二次 delete。
-     * 已知限制：②~EventLoop 析构排空期间闭包内再 post（如级联 delete_later）投到将死环新队列静默丢失，
-     * 且排空时 current 已不指向自身——闭包内 delete_later 会 fatal。文档化限制。
+     * Loop selection: affinity-first (thread()) — CROSS-THREAD LEGAL: the affinity loop
+     * may be exec'ing on another thread; the enqueue wakes it so a blocked drain
+     * re-checks its queues. Without affinity, falls back to EventLoop::current() on the
+     * calling thread; both absent is fatal (CXXKIT_CHECK).
+     * Channel: DeferredDeleteEvent pushed via enqueue_event (bypassing post_event's
+     * kDeferredDelete guard — owner semantics); dispatch = send_event (filter chain
+     * applies) -> event() kDeferredDelete branch deletes this.
+     * Parent and child may delete_later together: the parent's ~Object purge removes the
+     * child's undelivered entries from the queue body under the lock before the cascade —
+     * no double delete (T3).
+     * Known limitation: re-posting into a draining ~EventLoop (cascade delete_later) is
+     * silently lost / fatal (documented, D33/D34).
      * @since 0.2
      */
     void delete_later();

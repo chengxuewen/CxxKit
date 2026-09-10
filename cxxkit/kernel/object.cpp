@@ -126,6 +126,10 @@ void Object::delete_later()
     // the post_event guard stays (user-side DeferredDelete posting forbidden).
     // Dispatch path: Event queue pop → send_event (filter chain applies) → event() kDeferredDelete branch deletes this.
     EventLoop::enqueue_event(loop, this, new DeferredDeleteEvent); // R6: only Object constructs it
+    // I1: symmetric with post_event — if the affinity loop execs on another thread and its
+    // dispatcher blocks in a wait, this wake is the liveness signal; a same-thread wake is
+    // harmless (idempotent doorbell).
+    loop->wake_up();
 }
 
 void Object::post_event(Object *receiver, Event *event)
@@ -196,10 +200,13 @@ void Object::move_to_thread(EventLoop *target)
     CXXKIT_CHECK((source == nullptr) || (!source->is_running())) << "move_to_thread: source loop is running";
     CXXKIT_CHECK((target == nullptr) || (!target->is_running())) << "move_to_thread: target loop is running";
 
-    // Subtree pre-order walk: collect all migrated objects (self first), then relink
-    // affinity + notify each.
+    // Subtree pre-order walk: collect all migrated objects (self first) together with each
+    // object's OWN pre-migration affinity (I3: mixed-affinity subtree — a child may sit on
+    // a different loop than the root), then relink affinity + notify each.
     std::vector<Object *> moved;
+    std::vector<EventLoop *> oldLoops;
     moved.push_back(this);
+    oldLoops.push_back(source);
     std::deque<Object *> pending;
     pending.push_back(this);
     while (!pending.empty())
@@ -210,6 +217,7 @@ void Object::move_to_thread(EventLoop *target)
         for (Children::const_iterator it = children.begin(); it != children.end(); ++it)
         {
             moved.push_back(*it);
+            oldLoops.push_back((*it)->d_func()->mThread); // captured BEFORE the rewrite below
             pending.push_back(*it);
         }
     }
@@ -231,14 +239,21 @@ void Object::move_to_thread(EventLoop *target)
         Migrator::migrate(moved[i], target);
     }
 
-    // Migrate pending queue entries per receiver: drain the source queue first, then push
-    // into the target — the two locks are never held simultaneously (no lock-order need).
+    // Migrate pending queue entries per receiver: drain each object's OWN old loop (I3:
+    // mixed-affinity subtree — a receiver's entries live on the loop IT was affined to, not
+    // necessarily the root's source), then push into the target — the two locks are never
+    // held simultaneously (no lock-order need).
     for (size_t i = 0; i < moved.size(); ++i)
     {
-        std::deque<EventEntry> entries;
-        if (source != nullptr)
+        EventLoop *oldLoop = oldLoops[i];
+        if (oldLoop == target)
         {
-            entries = source->d_func()->take_events_for(moved[i]);
+            continue; // entries already sit on the target queue — keep them in place
+        }
+        std::deque<EventEntry> entries;
+        if (oldLoop != nullptr)
+        {
+            entries = oldLoop->d_func()->take_events_for(moved[i]);
         }
         if (target != nullptr)
         {
