@@ -388,10 +388,12 @@ public:
     {
         CXXKIT_UNUSED(watched);
         order.push_back(mTag);
+        ++count;
         return false; // 全放行只记录顺序
     }
     char mTag;
     static std::vector<char> order;
+    int count{0};
 };
 std::vector<char> Interceptor::order;
 } // namespace
@@ -410,6 +412,7 @@ TEST(Object, filter_chain_is_lifo)
     EXPECT_EQ(Interceptor::order[0], 'b'); // 后装先过滤
     EXPECT_EQ(Interceptor::order[1], 'a');
 }
+
 
 // ---- post_event / Event 队列（异步路径，T2） ----
 
@@ -430,6 +433,41 @@ public:
 };
 int DeletedEvent::alive = 0;
 } // namespace
+
+TEST(Object, remove_event_filter_stops_interception)
+{
+    Interceptor::order.clear();
+    Interceptor a('a');
+    Interceptor b('b');
+    RecordingObject watched;
+    watched.install_event_filter(&a);
+    watched.install_event_filter(&b);
+
+    // 初始态：两 filter 都活跃（LIFO 顺序 b→a）
+    DeletedEvent e1(cxxkit::Event::Type::kUser);
+    cxxkit::Object::send_event(&watched, &e1);
+    ASSERT_EQ(Interceptor::order.size(), 2u);
+    EXPECT_EQ(Interceptor::order[0], 'b');
+    EXPECT_EQ(Interceptor::order[1], 'a');
+
+    // remove a → 仅 b 拦截
+    watched.remove_event_filter(&a);
+    a.count = 0;
+    b.count = 0;
+    DeletedEvent e2(cxxkit::Event::Type::kUser);
+    cxxkit::Object::send_event(&watched, &e2);
+    EXPECT_EQ(a.count, 0); // a 已移除，不被调用
+    EXPECT_EQ(b.count, 1); // b 仍活跃
+
+    // 重复 remove（no-op 契约）→ 仍仅 b
+    watched.remove_event_filter(&a);
+    b.count = 0;
+    DeletedEvent e3(cxxkit::Event::Type::kUser);
+    cxxkit::Object::send_event(&watched, &e3);
+    EXPECT_EQ(a.count, 0);
+    EXPECT_EQ(b.count, 1);
+}
+
 
 TEST(Object, post_event_delivers_on_process_events)
 {

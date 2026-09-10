@@ -226,6 +226,7 @@ sanitizer（ASAN/LSAN/UBSan）与 coverage 用**独立 build 目录**（build-as
 - **purge 契约（写入 event_loop.hpp doxygen）**：purge 必须与 pop_event_entry 锁内互斥——派发期间的穿插级联析构从本体移除未派发条目，非快照缓存；null 环容忍（无环线程无 pending = 防御性 no-op）
 - **已知限制（filter 拦截 DeferredDelete）**：filter 返 true 拦下 DeferredDeleteEvent = receiver 永生（队列 delete event 后无重投，Qt 同语义）；Phase 3 可选加固：DeferredDeleteEvent ctor 收敛 friend（禁用户构造即禁拦截）
 - **filter 生命周期弱化契约**（spec §3.5/§7-1）：mFilters 存裸 Object\*，不反查 watched 链（反向注册表 YAGNI）——契约 = **filter 必须比 watched 活得长或自行 remove**（比 Qt 弱，Phase 3 备忘）；filter 内不得 install/remove 自身所在链（Qt 同款约束）；DeferredDelete 事件过 filter 链（R2 语义一致）
+- **已知限制（delete_later receiver 契约）**：receiver 不得是当前 exec/process_events 栈上的 EventLoop 自身（派发栈自毁窗口，Qt 同款雷区）；receiver 必须堆分配（栈对象 delete this = UB，Qt 同款契约）
 - **双队列顺序语义**：每轮 process_events 内 post 队列先、Event 队列后；两队列间无全局序、跨轮 FIFO 不保证（Qt 同款：posted events 与 posted metacalls 无跨类全局序）；Event 段内重入入队条目同轮即派发（锁内逐条 pop 循环跑到空）
 - **已知限制（Phase 3 备忘）**：跨线程 post_event/send_event = fatal（moveToThread 时重审）；无事件压缩（Qt compress 是显式 API，YAGNI）、无多优先级、无 sendPostedEvents 按接收者过滤；~Object 清 pending 仅当前线程环
 - **提交链全貌**：T1 `e32e06e`（send_event+filter 链+DeferredDeleteEvent）/ T2 `25eb7f3`（post_event+mEventQueue+锁内 pop 派发+enqueue/purge 静态）/ T3 `6c47712`+`06f93fc`（delete_later 迁移+~Object purge 接线+send_event 摘守卫+D34 provenance 修正）；全部用例进 tst_object.cpp（17 用例，81 套件不变）
