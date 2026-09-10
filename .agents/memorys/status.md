@@ -288,6 +288,6 @@ cxxkit 是 OpenCTK（an open cpp toolkit）的成功重构版本 —— 精简�
 - [x] **T2 post_event + mEventQueue**（`25eb7f3`）：EventEntry{mReceiver,mEvent} 裸指针队列（R1）+ enqueue/purge 静态（F3 形态，绕 CXXKIT_D 无 this 陷阱）+ process_events 双排空整合——Event 段**锁内逐条 pop + 锁外派发**（Momus F2 修订，非快照），post 先 Event 后，两队列都空才落 dispatcher；~EventLoop 排空扩展（剩余 Event delete 不派发）
 - [x] **T3 delete_later 迁移 + ~Object purge**（`6c47712`+`06f93fc`）：delete_later 改推 DeferredDeleteEvent 入 Event 队列（enqueue 直推，F1 修订）+ ~Object 步骤序 destroying → purge_pending → 级联 → 摘链（父子同投限制解除）+ send_event 摘 kDeferredDelete 守卫（审查裁定唯一正确解：守卫挡 T2 自己的派发路径必然矛盾，kDeferredDelete 到 send_event 的唯一合法路径就是队列派发本身）+ D34 provenance 修正（06f93fc）
 - [x] **D34 决策记录**：R1-R4 全录 + 双守卫纪律（post_event 禁投保留、send_event 死守卫摘除）+ spec §4.2 不变量修正（purge 与 pop 锁内互斥、派发在锁外）+ filter 弱化契约 + 已知限制（跨线程 fatal/无压缩/无多优先级）
-- [x] **测试**：tst_object 12→17 用例（send 直达/filter 拦截与 LIFO/post 派发顺序/DeferredDelete 正名/父子同投正名），**81 套件不变全绿**；ASAN 定向零诊断（父子同投 RED 期 UAF 已闭合）
+- [x] **测试**：tst_object 7→19 用例（send 直达/filter 拦截与 LIFO/post 派发顺序/DeferredDelete 正名/父子同投正名），**81 套件不变全绿**；ASAN 定向零诊断（父子同投 RED 期 UAF 已闭合）
 - 裁定/教训全录：decisions.md D34 + pitfalls.md PIT-44（手工 g++ 探针悬崖）
 - 备忘：Phase 3 线程亲和（moveToThread + 跨线程投递重审）/ filter 反向清理注册表 / DeferredDeleteEvent friend 收敛——需求触发再取
