@@ -269,4 +269,78 @@ TEST(Object, set_parent_rejects_descendant_cycle)
     EXPECT_DEATH(a.set_parent(&c), ""); // 空匹配器仓内惯例
 }
 
+// ---- send_event / filter 链（同步路径） ----
+
+TEST(Object, send_event_delivers_and_returns_accepted)
+{
+    RecordingObject obj;
+    cxxkit::Event event(cxxkit::Event::Type::kUser); // kUser 走 custom_event，RecordingObject 未覆写
+    event.accept();
+    EXPECT_TRUE(cxxkit::Object::send_event(&obj, &event));
+}
+
+TEST(Object, send_event_returns_false_when_ignored)
+{
+    RecordingObject obj;
+    cxxkit::Event event(cxxkit::Event::Type::kUser);
+    event.ignore();
+    EXPECT_FALSE(cxxkit::Object::send_event(&obj, &event));
+}
+
+TEST(Object, event_filter_can_intercept)
+{
+    class Interceptor : public cxxkit::Object
+    {
+    public:
+        bool event_filter(cxxkit::Object *watched, cxxkit::Event *event) override
+        {
+            CXXKIT_UNUSED(watched);
+            return event->type() == cxxkit::Event::Type::kUser; // 拦 kUser
+        }
+    };
+    Interceptor filter;
+    RecordingObject watched;
+    watched.install_event_filter(&filter);
+
+    cxxkit::Event user(cxxkit::Event::Type::kUser);
+    EXPECT_FALSE(cxxkit::Object::send_event(&watched, &user)); // 被拦截 = false
+    EXPECT_TRUE(watched.events.empty());                       // 未送达
+}
+
+namespace
+{
+class Interceptor : public cxxkit::Object
+{
+public:
+    explicit Interceptor(char tag)
+        : mTag(tag)
+    {
+    }
+    bool event_filter(cxxkit::Object *watched, cxxkit::Event *event) override
+    {
+        CXXKIT_UNUSED(watched);
+        order.push_back(mTag);
+        return false; // 全放行只记录顺序
+    }
+    char mTag;
+    static std::vector<char> order;
+};
+std::vector<char> Interceptor::order;
+} // namespace
+
+TEST(Object, filter_chain_is_lifo)
+{
+    Interceptor::order.clear();
+    Interceptor a('a');
+    Interceptor b('b');
+    RecordingObject watched;
+    watched.install_event_filter(&a); // 头插
+    watched.install_event_filter(&b); // 头插 → 后装先过滤
+    cxxkit::Event event(cxxkit::Event::Type::kUser);
+    cxxkit::Object::send_event(&watched, &event);
+    ASSERT_EQ(Interceptor::order.size(), 2u);
+    EXPECT_EQ(Interceptor::order[0], 'b'); // 后装先过滤
+    EXPECT_EQ(Interceptor::order[1], 'a');
+}
+
 #endif // CXXKIT_FEATURE_ENABLE_KERNEL

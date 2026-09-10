@@ -77,6 +77,11 @@ ChildEvent::~ChildEvent()
 {
 }
 
+DeferredDeleteEvent::DeferredDeleteEvent()
+    : Event(Type::kDeferredDelete)
+{
+}
+
 CXXKIT_END_NAMESPACE
 
 #endif // #if CXXKIT_FEATURE_ENABLE_KERNEL

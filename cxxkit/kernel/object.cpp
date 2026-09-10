@@ -152,8 +152,10 @@ bool Object::event(Event *event)
         }
         case Event::Type::kDeferredDelete:
         {
-            // DeleteInEventHandler(this);
-            break;
+            // DeleteInEventHandler 正名化（Qt 同款）；仅 Event 队列派发路径会到达（T3 起
+            // 由 delete_later 迁移到 Event 队列），send_event 用户侧直发已被 CHECK 拒绝
+            delete this;
+            return true;
         }
         case Event::Type::kThreadChange:
         {
@@ -169,6 +171,39 @@ bool Object::event(Event *event)
             return false;
     }
     return true;
+}
+
+bool Object::send_event(Object *receiver, Event *event)
+{
+    CXXKIT_CHECK(receiver != nullptr && event != nullptr) << "send_event requires receiver/event";
+    CXXKIT_CHECK(event->type() != Event::Type::kDeferredDelete)
+        << "send_event: DeferredDelete is deliverable only via the event queue (owner semantics)";
+    ObjectPrivate *priv = receiver->d_func();
+    // 头插序遍历：mFilters.back() 最先（后装先过滤）
+    std::vector<Object *> &filters = priv->mFilters;
+    for (size_t i = filters.size(); i > 0; --i)
+    {
+        if (filters[i - 1]->event_filter(receiver, event))
+        {
+            return false; // 拦截
+        }
+    }
+    receiver->event(event);
+    return event->is_accepted();
+}
+
+void Object::install_event_filter(Object *filter)
+{
+    CXXKIT_CHECK(filter != nullptr) << "install_event_filter requires a filter";
+    CXXKIT_CHECK(filter != this) << "install_event_filter: self-filtering is not allowed";
+    this->d_func()->mFilters.push_back(filter);
+}
+
+void Object::remove_event_filter(Object *filter)
+{
+    CXXKIT_D(Object);
+    std::vector<Object *> &filters = d->mFilters;
+    filters.erase(std::remove(filters.begin(), filters.end(), filter), filters.end());
 }
 
 bool Object::event_filter(Object *watched, Event *event)

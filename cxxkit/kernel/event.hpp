@@ -108,6 +108,14 @@ protected:
     Object *mChild{nullptr};
 };
 
+
+/** @brief 延迟删除事件：仅 Event 队列派发路径投递，receiver->event() 内 delete this。 */
+class CXXKIT_KERNEL_API DeferredDeleteEvent : public Event
+{
+public:
+    DeferredDeleteEvent();
+};
+
 CXXKIT_END_NAMESPACE
 
 #endif // #if CXXKIT_FEATURE_ENABLE_KERNEL

@@ -27,6 +27,7 @@
 #include <cxxkit/kernel/object.hpp>
 
 #include <list>
+#include <vector>
 
 #if CXXKIT_FEATURE_ENABLE_KERNEL
 
@@ -45,6 +46,7 @@ public:
 
     Object *mParent{nullptr};
     Children mChildren;
+    std::vector<Object *> mFilters; // 头插序（back() = 最新，先过滤）
 
 protected:
     CXXKIT_DEFINE_PPTR(Object)

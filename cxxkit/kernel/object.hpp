@@ -47,6 +47,15 @@ public:
 
     const Children &children() const;
 
+    /** @brief 同步投递：filter 链前置（后装先过滤），未拦截则 receiver->event()。返回 is_accepted()；被 filter 拦截返回 false。 */
+    static bool send_event(Object *receiver, Event *event);
+
+    /** @brief 头插 filter（后装先过滤，Qt 同款）。契约：filter 须比 watched 长寿或自行 remove。 */
+    void install_event_filter(Object *filter);
+
+    /** @brief 线性查找移除；无此 filter 为 no-op。 */
+    void remove_event_filter(Object *filter);
+
     virtual bool event(Event *event);
     virtual bool event_filter(Object *watched, Event *event);
 
