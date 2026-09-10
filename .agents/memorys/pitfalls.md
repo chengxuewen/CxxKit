@@ -289,3 +289,10 @@
 - **解法**: 重演时**直接用 build 树产物**（CMake 已算好全部 -I/-D），或探针配 `-I$(pwd)/cxxkit` 绝对路径 + 显式拷贝 inc_cxxkit 生成头；探针验证只做语法级（-fsyntax-only），语义级判断交给 build 树编译
 - **验证**: `cd build && cmake --build . --target cxxkit_kernel` 为准；手工探针仅 -fsyntax-only 且必须用绝对 include 路径
 - **禁止**: 在源码树手工拼多文件 g++ 命令行做"快速验证"（相对 -I + 生成头依赖 = 高成本悬崖，4 连败实录见 D34 教训②）
+
+## PIT-45: CXXKIT_CHECK 复合条件——`<<` 流式消息被 `||` 短路吸进宏的 if 分支（2026-09-10）
+- **症状**: `CXXKIT_CHECK(source == nullptr || !source->is_running()) << "msg"` 形态下 fatal 不触发、执行继续——按住关逻辑写法直觉，复合条件"看起来对"，行为却错位（move_to_thread 静态守卫实测）
+- **根因**: CHECK 宏展开为裸 `if (!(condition))` 且**无 else/大括号包尾**——复合条件不加整体括号时，宏展开的语句归属按运算符优先级错位：`||` 短路使流式 `<< "msg"` 在部分求值路径下落入宏 if 的分支体而非续接语句，fatal 静默失效。**真实陷阱是把 `<<` 误写进宏实参侧的归属歧义**；复合条件本身经宏展开语法上是正确的（审查更正：非"宏语义损坏"，是裸 if 无包裹导致的语句归属错位）
+- **解法**: 复合条件**整体加括号** `CXXKIT_CHECK((a == nullptr) || (!a->is_running()))`——括号使 condition 作为单一宏实参、展开后作为裸 if 的完整控制式；单条件无歧义可不加
+- **验证**: `grep -n "CXXKIT_CHECK((" cxxkit/kernel/object.cpp` 非空（复合处全括号形态）；带复合条件的 CHECK 用例（运行中环 move → fatal）进 tst_object
+- **禁止**: 复合条件不加整体括号直接传给 `CXXKIT_CHECK(...)`；在 CHECK 宏实参内写含顶层 `||`/`&&` 的裸表达式后还续接流式 `<<`

@@ -240,3 +240,40 @@ sanitizer（ASAN/LSAN/UBSan）与 coverage 用**独立 build 目录**（build-as
 - ④ **dtor 置位的实例标志在 delete this 后不可读**（UAF）——死亡证明用 static flag（`RecordingObject::s_last_recording_dtor_seen`），对象改堆分配（栈对象被 delete this 双重析构 = bad-free）；`victim = nullptr` 防测试尾部二次析构
 
 **验证**：RED 双证据（迁移观测：filter.types.size()==0 断言失败；父子同投：SIGSEGV UAF exit 139）→ GREEN 后主树 **81/81 ctest 全绿**（106.3s）+ **build-asan 定向 tst_object 全套件 + delete_later 过滤组零诊断**（lsan.supp 下 exit=0）+ clang-format 四文件 0 违规 + C++14/octk 残留 grep 双零
+
+## D35: Phase 3 线程亲和落地——thread()/move_to_thread/跨线程投递（2026-09-10，T1-T3 SDD 流水线）
+
+**背景**：D33 备忘的 Phase 3（moveToThread + 跨线程投递重审）+ D34 弱化契约（filter 必须比 watched 长寿）与 DeferredDeleteEvent friend 收敛两个遗留项；spec 2026-09-10-thread-affinity-design.md，plan docs/superpowers/plans/2026-09-10-thread-affinity-plan.md（Momus F1-F5 全修订后执行）。
+
+**六项用户裁定全录**（spec §2）：
+- **R1 范围 = 方案 B**：线程亲和主线 + 卫生项搭车——卫生项中 3 个与线程模型耦合（filter 反向注册表/双 install 去重/DeferredDelete friend），先做必返工
+- **R2 跨线程投递 = 目标环路由**（Qt 同构）：post_event(receiver, e) 从 receiver->thread() 查所属环，投目标环队列 + wake_up 目标环；投递者位置无关
+- **R3 moveToThread = 静态迁移**：仅 source/target 两环都非运行态（is_running fatal ×2）；运行中环间迁移会重开 Phase 2 已闭合的 purge/pop 竞态窗口；同环 no-op（Qt 同款宽容）
+- **R4 filter 反向清理注册表**：`ObjectPrivate::mWatching`（挂在 filter 侧"我在过滤谁"）——~filter 时自动从所有 watched 摘除，解除 D34 弱化契约
+- **R5 filter 双 install 去重**：remove-then-insert（Qt 同款）——重装 = 移到最新位（单次过滤）
+- **R6 DeferredDeleteEvent ctor 收敛 `friend class Object`**：用户无法构造 → 禁直发语义获得语言级封锁（Qt QDeferredDeleteEvent 同款）；post_event 的 kDeferredDelete 守卫随之变为用户侧不可达（纯内部误用防御，保留）
+
+**核心语义演进**：
+- **delete_later 语义演进（D33 exec-only → 亲和优先 current 回退，正式演进）**：`thread()` 非空 → enqueue 亲和环（哪怕别的线程在跑——投过去由目标环执行）；null → current() 回退 → null fatal。D33 三态测试保留改造（环外构造亲和 null → 回退分支不回归）；**Momus F4d 测试形态教训：FakeDispatcher exec 前必投 exit 闭包**（FakeDispatcher 默认排空、自身永不 exit，exec 无 exit 闭包 = 永久自旋，实测 60s+ timeout）
+- **创建即亲和**：`Object(ObjectPrivate*)` 委托目标 ctor 内 `mThread = EventLoop::current()`——exec 闭包内构造 = 绑定该环；环外构造 = null（current 仅 exec 期间非空，D33 exec-only 的直接推论）。**Momus F3：EventLoop ctor 私有替换后必须补设**——`mDPtr.reset(new EventLoopPrivate(this))` 销毁旧 ObjectPrivate 时带走 mThread，reset 后补 `d_func()->mThread = EventLoop::current()`（否则嵌套环构造的 EventLoop 亲和丢失）
+- **队列条目随迁**：move 时子树 pending EventEntry 从 source 迁 target——`take_events_for(receiver)` 锁内摘出；**逐 receiver 先排空 source 再入 target，两锁不同时持有——spec §4-3 的 lock_two_loops/地址序加锁简化为顺序操作**（静态守卫下两环未运行、单线程调用 move，无并发派发者）；target null 时 delete 事件防泄漏
+- **ThreadChangeEvent 直调 event() 不经 send_event**：非可过滤事件（Qt 同款），迁移调用栈内同步派发；**不新建事件类**（YAGNI，裸 `Event(kThreadChange)`）——**Momus F6 备案**：plan 裁定"event() 直调"与 spec §4.4 "send_event 直发"表述不一致，以 plan 为准，spec 措辞在本条更正
+- **wake_up thread-safe 契约升级**：AbstractEventDispatcher::wake_up doxygen 升"must be thread-safe"（跨线程 post 后 wake 目标环）；uv_async_send/QMetaObject::invokeMethod 天然满足；FakeDispatcher 补 mutex（测试基建）
+
+**Momus 修订实录**（plan 执行前/中修正）：
+- **F2 filter 双向自摘**：~Object 在 purge 之后、级联之前双向清理——filter 亡 → 遍历 `mWatching` 逐个摘除自身；watched 亡 → 遍历 `mFilters` 逐个 `remove_event_filter`。**brief 原方向笔误（`d->mFilters.back()->remove_event_filter(this)` 方向反了）实测挂起**：该调用只动 filter 侧的表、永不收缩 `this->mFilters`，while 循环每轮零消耗不终止；正确形态 `this->remove_event_filter(d->mFilters.back())`（this 作 receiver，每轮两侧各消一项）。remove_event_filter 内部双向摘除保证任一方向 while 每轮恰好消一项，终态空集
+- **F4 随迁测试移 T2**：队列随迁的 enqueue 依赖 T2 亲和路由，测试从 T1 迁 T2
+- **F5 调用方契约备案**：move_to_thread 迁移期间禁止对子树并发 post_event（亲和元数据不同步窗口）——静态迁移 = 初始化期操作的本职约束；动态迁移需求出现时重审
+- **F-M1（T3 review）**：~Object 双 purge 对去重（edit 安全事故残片，同环二次 purge 是 no-op 行为无影响，删）
+
+**已知限制**（spec §7 全录）：
+1. 动态迁移（运行中环间）不支持——静态守卫 fatal；Phase 4+ 需求触发（需队列条目失效标记机制）
+2. 迁移不带走定时器（环级资源）；signal 连接不迁（连接是对象级，与线程无关）
+3. Application 单例仍注释态——线程亲和无需 qApp（环指针直查）；QThread::current 概念不引入
+4. 无亲和对象 post_event 仍 fatal——指引构造于环内或 move_to_thread
+5. post_event 的 kDeferredDelete 守卫 R6 后用户侧不可达（纯内部误用防御）
+6. 跨线程 filter 生命周期仍循 D33 单线程语义（无新守卫——T3 报告 concern 备案）
+
+**提交链**：T1 `6852e10`（thread()/move_to_thread 静态迁移/创建即绑定/队列随迁原语）/ T2 `947e587`（post_event 目标环路由 + delete_later 演进 + wake_up 契约 + ctor friend）/ T3 `3fb9398`（filter 反向注册表 + install 去重——D34 弱化契约解除）/ review 修复 `0152ca0`（~Object 双 purge 去重）。tst_object 20→29 用例（+9：thread 查询/创建即亲和/静态守卫 fatal/子树递归迁移/队列随迁/跨线程 post/反向清理/去重/F4d 亲和 delete_later——含既有用例 F1 改造 3 处补 move_to_thread + 1 重命名正名）。
+
+**验证**：主树 **81/81 套件全绿**；tst_object 29/29（含 ASAN 定向零诊断——destroyed_filter 悬垂 vtable 用例 plain build 走运、ASAN 才是真探测器）；check.sh 全链见本任务（T4）报告。

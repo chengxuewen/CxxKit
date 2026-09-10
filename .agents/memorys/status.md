@@ -291,3 +291,16 @@ cxxkit 是 OpenCTK（an open cpp toolkit）的成功重构版本 —— 精简�
 - [x] **测试**：tst_object 7→19 用例（send 直达/filter 拦截与 LIFO/post 派发顺序/DeferredDelete 正名/父子同投正名），**81 套件不变全绿**；ASAN 定向零诊断（父子同投 RED 期 UAF 已闭合）
 - 裁定/教训全录：decisions.md D34 + pitfalls.md PIT-44（手工 g++ 探针悬崖）
 - 备忘：Phase 3 线程亲和（moveToThread + 跨线程投递重审）/ filter 反向清理注册表 / DeferredDeleteEvent friend 收敛——需求触发再取
+
+### 2026-09-10 Phase 3 线程亲和落地（D35，T1-T3 SDD 流水线，6852e10..0152ca0）
+
+- [x] **T1 亲和元数据 + move_to_thread**（`6852e10`）：`ObjectPrivate::mThread` + `thread()` 查询 / `Object(ObjectPrivate*)` 委托目标 ctor 内创建即亲和（exec 内构造绑环，环外 null）/ move_to_thread 静态守卫（is_running fatal ×2、同环 no-op、null target 脱离）/ 子树 BFS 先序迁移 + ThreadChangeEvent 直调 event()（非可过滤，不新建事件类）/ 队列条目随迁（take_events_for 逐 receiver 先排空 source 再入 target，无嵌套锁）
+- [x] **T2 跨线程投递路由**（`947e587`）：post_event 从 current() 语义改目标环路由（receiver->thread() 非空投亲和环 + wake_up，null fatal）/ **delete_later 语义演进**（D33 exec-only → 亲和优先 current 回退，三态测试改造保留不回归）/ wake_up 契约升级 thread-safe（FakeDispatcher 补 mutex）/ DeferredDeleteEvent ctor friend class Object（R6，禁直发语言级封锁）
+- [x] **T3 filter 反向注册表 + 去重**（`3fb9398`）：mWatching 反向表（filter 亡自动从 watched 摘除，D34 弱化契约解除）/ install 先 remove-then-insert 去重（重装移最新位）/ ~Object 双向自摘（**brief 方向笔误实测挂起修正**——remove_event_filter 以 this 作 receiver 每轮两侧各消一项）
+- [x] **Momus 修订全落**：F3（EventLoop ctor mDPtr.reset 后补设 mThread）/ F4（随迁测试移 T2）/ F4d（FakeDispatcher exec 前必投 exit 闭包）/ F5（迁移期禁并发 post 备案）/ F6（event() 直调裁定为准，spec §4.4 措辞 D35 更正）/ F-M1（~Object 双 purge 去重 `0152ca0`）
+- [x] **测试**：tst_object 20→29 用例（thread 查询/创建即亲和/静态守卫/子树迁移/队列随迁/跨线程 post/反向清理/去重/亲和 delete_later；3 既有用例补 move_to_thread 改造）；**81 套件全绿**；ASAN 定向零诊断
+- [x] **coverage**：全口径 82.2%（50 files 3625/4411，BuildCoverage 重建后实测）；object.cpp 91.07% / event_loop.cpp 92.11% / event.cpp 100%
+- [x] **PIT-45**：CXXKIT_CHECK 复合条件 `<<` 流式消息归属歧义——复合条件必须整体括号
+- 裁定/演进全录：decisions.md D35（R1-R6 + delete_later 正式演进 + 双向自摘正确方向）
+- 已知限制：动态迁移 fatal/定时器不迁/无亲和 post fatal/Application 注释态/kDeferredDelete 守卫用户侧不可达/跨线程 filter 生命周期单线程语义
+- 备忘：Phase 4 动态迁移（队列条目失效标记）需求触发再取
