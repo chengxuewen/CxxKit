@@ -219,11 +219,12 @@ sanitizer（ASAN/LSAN/UBSan）与 coverage 用**独立 build 目录**（build-as
 - **send_event 的 kDeferredDelete 守卫顺势摘除**（实现期发现）：process_events 队列派发复用 send_event 内部逻辑（filter 链生效），守卫会让派发路径自杀；kDeferredDelete 到达 send_event 的唯一合法路径就是队列派发本身，用户侧直发已被 post_event 守卫拒绝——send_event 守卫实为死代码且与迁移自相矛盾，摘除 + 注释钉住理由。配套修正既有 RED 测试形态：不用 EXPECT_DEATH 而用 ObserverFilter 观测 + 堆对象死亡证明（见教训④）
 - **~Object 步骤序**：destroying → **EventLoop::purge_pending(this)** → 级联 → 摘链。父析构在锁内从 Event 队列**本体**移除子的未派发条目（含 DeferredDeleteEvent），pop 到即不存在——限制①解除
 - **purge 契约（写入 event_loop.hpp doxygen）**：purge 必须与 pop_event_entry 锁内互斥——派发期间的穿插级联析构从本体移除未派发条目，非快照缓存；null 环容忍（无环线程无 pending = 防御性 no-op）
+- **已知限制（filter 拦截 DeferredDelete）**：filter 返 true 拦下 DeferredDeleteEvent = receiver 永生（队列 delete event 后无重投，Qt 同语义）；Phase 3 可选加固：DeferredDeleteEvent ctor 收敛 friend（禁用户构造即禁拦截）
 
 **spec §4.2 不变量修订（T4 消费）**：原文"~Object 与派发不并发"在单线程级联下即为假（父条目派发中 → 级联析构 → 子/孙 purge 穿插）——真实不变量 = **purge 与 pop 锁内互斥、派发在锁外**；派发中条目已被 pop 出队（局部变量持有），purge 只动队列本体，两者操作集不相交。已落 spec 2026-09-09-event-delivery-design.md §4.2
 
 **教训**（本次实测四条）：
-- ① **`delete this` 后返回即断言函数收尾**：event() 的 kDeferredDelete 分支 delete this 后原为 `break` 落到 switch 尾 `return true`（读 mAccept = UAF）；Qt deleteLater 语义是收到即亡——改 `delete this; return true;`（ASAN 实证）
+- ① **`delete this` 后必须立即 return、禁止触碰成员/base 子对象**（Event 类分支通则）：event() 的 kDeferredDelete 分支即此形态（`delete this; return true;`——T1 e32e06e 前瞻写法即已正确落地，非本任务所改）；T3 的真实贡献 = **激活**该路径（delete_later 迁移使死代码变热代码）并验证其在热路径下正确。RED 期 SIGSEGV 的真实根因 = purge 缺失时子条目派发读已亡 receiver（send_event → receiver->d_func()），非 mAccept UAF——教训记录曾被误归因（审查 MEDIUM-1 修正）
 - ② **最小化手工 g++ 探针的成本悬崖**：源码增量编译 4 个 C++11 失败（g++ 10 对 -I 相对路径吞半，成因未查），拷贝 inc_cxxkit + 绝对路径 / I . 修复——重演时直接用 build 树产物或配 `-I$(pwd)/cxxkit` 绝对路径
 - ③ **edit 工具 pos 单行 + 多行 lines = 插入不替换**再现 2 次（TEST 重复定义 + dtor 插错行），多行块必须 pos+end 范围替换（既有规则，但要全程警惕非仅开头）
 - ④ **dtor 置位的实例标志在 delete this 后不可读**（UAF）——死亡证明用 static flag（`RecordingObject::s_last_recording_dtor_seen`），对象改堆分配（栈对象被 delete this 双重析构 = bad-free）；`victim = nullptr` 防测试尾部二次析构
