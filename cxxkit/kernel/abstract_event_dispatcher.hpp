@@ -64,7 +64,11 @@ public:
     virtual bool process_events(EventLoop::ProcessFlags flags) = 0;
 
     /**
-     * @brief Kick the loop thread out of a blocking process_events. Thread-safe; may coalesce (I4).
+     * @brief Kick the loop thread out of a blocking process_events. May coalesce (I4).
+     *
+     *  @note Thread-safe: implementations must be callable from any thread — post_event routes
+     *        cross-thread and relies on this (uv_async_send /
+     *        QMetaObject::invokeMethod(QueuedConnection) satisfy this).
      */
     virtual void wake_up() = 0;
 

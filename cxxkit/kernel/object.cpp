@@ -78,10 +78,13 @@ Object::~Object()
 {
     CXXKIT_D(Object);
     this->destroying(); // 预销毁锚点：派生成员仍存活、children 未级联（析构期派发只到 Object 层）
-    // T3：清 pending（含 DeferredDeleteEvent）——父子同投限制解除的根基。父析构触发的本调用在锁内
-    // 从 Event 队列本体移除子的未派发条目，pop 到即不存在（与 pop_event_entry 锁内互斥）。
-    // 无环线程 = no-op（purge 静态内部 null 容忍）；本体遍历，非快照缓存。
-    EventLoop::purge_pending(this);
+    // T3/T2: clear pending entries (incl. DeferredDeleteEvent) — the foundation of the parent-child
+    // same-queue delete_later contract. A purge triggered by a parent dtor during dispatch removes the
+    // child's undelivered entries from the queue body under the lock (mutually exclusive with
+    // pop_event_entry), so a popped entry can no longer exist — no dangling window.
+    // T2 double purge: affinity loop + caller-thread current() residual (same-loop second purge is a harmless no-op).
+    EventLoop::purge_pending(d->mThread, this);
+    EventLoop::purge_pending(EventLoop::current(), this);
     // 级联析构：子 dtor 会通过 set_parent(nullptr)/detach 自摘链，所以 while(!empty) 安全。
     while (!d->mChildren.empty())
     {
@@ -99,21 +102,31 @@ void Object::destroying()
 
 void Object::delete_later()
 {
-    EventLoop *loop = EventLoop::current();
-    CXXKIT_CHECK(loop != nullptr) << "Object::delete_later: no running EventLoop on this thread";
-    // Momus F1：直推 enqueue_event 绕过 post_event 的 kDeferredDelete 守卫——唯一合法生产者
-    // 恰好被唯一通道拒绝会自相矛盾；post_event 守卫照旧（用户侧禁投 DeferredDelete）。
-    // 派发路径：Event 队列 pop → send_event（filter 链生效）→ event() kDeferredDelete 分支 delete this。
-    EventLoop::enqueue_event(this, new DeferredDeleteEvent);
+    EventLoop *loop = this->d_func()->mThread; // affinity-first (D35 evolution)
+    if (loop == nullptr)
+    {
+        loop = EventLoop::current(); // legacy fallback for affinity-less objects
+    }
+    CXXKIT_CHECK(loop != nullptr) << "Object::delete_later: no affinity and no running EventLoop on this thread";
+    // Momus F1: push straight through enqueue_event, bypassing post_event's kDeferredDelete guard —
+    // the sole legitimate producer rejected by its only channel would be self-contradictory;
+    // the post_event guard stays (user-side DeferredDelete posting forbidden).
+    // Dispatch path: Event queue pop → send_event (filter chain applies) → event() kDeferredDelete branch deletes this.
+    EventLoop::enqueue_event(loop, this, new DeferredDeleteEvent); // R6: only Object constructs it
 }
 
 void Object::post_event(Object *receiver, Event *event)
 {
     CXXKIT_CHECK(receiver != nullptr && event != nullptr) << "post_event requires receiver/event";
-    // DeferredDelete 拒绝先于 current 检查：owner 语义（DeleteInEventHandler）不可绕过
+    // DeferredDelete rejection precedes the affinity check: owner semantics (DeleteInEventHandler)
+    // must not be bypassable
     CXXKIT_CHECK(event->type() != Event::Type::kDeferredDelete)
         << "post_event: use delete_later() for deferred delete (owner semantics)";
-    EventLoop::enqueue_event(receiver, event); // friend 通道：null current = fatal（exec-only 契约）
+    EventLoop *loop = receiver->d_func()->mThread; // target-affinity routing (T2/D35): the receiver's loop
+    CXXKIT_CHECK(loop != nullptr)
+        << "post_event: receiver has no thread affinity — create it inside a loop's exec or move_to_thread";
+    EventLoop::enqueue_event(loop, receiver, event);
+    loop->wake_up(); // cross-thread wake (thread-safe dispatcher contract)
 }
 
 Object *Object::parent() const

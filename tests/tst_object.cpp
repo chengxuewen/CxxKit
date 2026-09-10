@@ -23,7 +23,6 @@
 ***********************************************************************************************************************/
 #include <cxxkit/kernel/event_loop.hpp>
 #include <cxxkit/kernel/event.hpp>
-#include <cxxkit/tools/logging.hpp>
 #include "fake_dispatcher.hpp"
 #include <gtest/gtest.h>
 
@@ -31,8 +30,8 @@
 using cxxkit::FakeDispatcher;
 
 #    include <algorithm>
-#    include <atomic>
 #    include <memory>
+#    include <thread>
 #    include <vector>
 
 namespace
@@ -474,12 +473,13 @@ TEST(Object, remove_event_filter_stops_interception)
 TEST(Object, post_event_delivers_on_process_events)
 {
     cxxkit::EventLoop loop(std::unique_ptr<cxxkit::AbstractEventDispatcher>(new FakeDispatcher));
-    RecordingObject obj; // 环上对象（同线程）
+    RecordingObject obj;
+    obj.move_to_thread(&loop); // F1: affinity routing requires a target loop (static phase — loop idle)
     DeletedEvent::alive = 0;
     bool delivered = false;
 
-    // Arrange：计数型 Event 子类，kUser 事件；exec 闭包内入队 + 同轮排空（exec-only 契约：
-    // current() 仅 exec 期指向自身——PIT-43 同轮串联收尾，防 exit 跨轮断链）
+    // Arrange: counting Event subclass, kUser event; enqueue + drain inside one exec closure
+    // (PIT-43 same-round exit chaining guards against cross-round chain breaks).
     loop.post(
         [&]
         {
@@ -504,10 +504,12 @@ TEST(Object, post_event_delivers_on_process_events)
 
 TEST(Object, post_event_fifo_order_within_one_drain)
 {
-    // 同轮 FIFO + 同轮派发契约：post 段入队的条目在**同一轮** Event 段即被派发
-    //（spec §4.1：双队列每轮先 post 后 event——重入入队同轮可见，解 PIT-43 族跨轮断链）。
+    // Same-round FIFO + same-round dispatch contract: entries queued in the post segment
+    // are dispatched in the **same round** Event segment (spec §4.1: both queues per round,
+    // post first then event — re-entrant enqueue visible same-round, PIT-43 anti-chain-break).
     cxxkit::EventLoop loop(std::unique_ptr<cxxkit::AbstractEventDispatcher>(new FakeDispatcher));
     RecordingObject obj;
+    obj.move_to_thread(&loop); // F1: affinity routing requires a target loop (static phase — both idle)
     DeletedEvent::alive = 0;
 
     loop.post(
@@ -517,11 +519,11 @@ TEST(Object, post_event_fifo_order_within_one_drain)
             cxxkit::Object::post_event(
                 &obj,
                 new DeletedEvent(static_cast<cxxkit::Event::Type>(static_cast<int>(cxxkit::Event::Type::kUser) + 1)));
-            loop.exit(0); // PIT-43：同轮串联收尾
+            loop.exit(0); // PIT-43: same-round exit chaining
         });
     EXPECT_EQ(loop.exec(), 0);
 
-    // 两个条目都已派发（kUser、kUser+1 保序）且被队列 delete（所有权释放）
+    // Both entries dispatched (kUser, kUser+1 in order) and deleted by the queue (ownership released)
     ASSERT_EQ(obj.events.size(), 2u);
     EXPECT_EQ(obj.events[0], cxxkit::Event::Type::kUser);
     EXPECT_EQ(obj.events[1], static_cast<cxxkit::Event::Type>(static_cast<int>(cxxkit::Event::Type::kUser) + 1));
@@ -544,6 +546,7 @@ TEST(Object, post_event_respects_filter_chain)
     Interceptor filter;
     RecordingObject watched;
     watched.install_event_filter(&filter);
+    watched.move_to_thread(&loop); // F1: affinity routing requires a target loop (static phase — loop idle)
 
     loop.post(
         [&]
@@ -556,21 +559,24 @@ TEST(Object, post_event_respects_filter_chain)
     EXPECT_TRUE(watched.events.empty()); // 被拦截未送达
 }
 
-TEST(Object, post_event_without_current_loop_fails)
+TEST(Object, post_event_without_affinity_fails)
 {
-    RecordingObject obj;
+    RecordingObject obj; // created outside exec -> no affinity
     cxxkit::Event *event = new cxxkit::Event(cxxkit::Event::Type::kUser);
     EXPECT_DEATH(cxxkit::Object::post_event(&obj, event), "");
-    delete event; // fatal 未入队：所有权未转移，手动释放
+    delete event; // ownership not transferred on the fatal path
 }
 
 TEST(Object, post_event_rejects_deferred_delete)
 {
-    // 守卫顺序契约：DeferredDelete 拒绝（owner 语义不可绕过——仅 delete_later 可投）先于
-    // current() 检查；环未 exec（current 空）命中的仍是本守卫。fatal 未入队，
-    // EXPECT_DEATH 子进程退出，泄漏由 death-test 语义容忍。
-    RecordingObject target;
-    EXPECT_DEATH(cxxkit::Object::post_event(&target, new cxxkit::DeferredDeleteEvent()), "");
+    // Guard-order contract: the DeferredDelete rejection (owner semantics — only delete_later may
+    // post it) precedes the affinity check; the guard fires even when affinity IS present.
+    // R6 closure: DeferredDeleteEvent's ctor is now private (friend Object) — the user side can no
+    // longer stage one directly. The type-rejection path stays observable through death of a
+    // delete_later called with BOTH affinity and current() absent — same fatal family the guard
+    // order belongs to. (Death-test child exits; no leak accounting needed.)
+    CountedObject target; // no affinity, no current — the only reachable fatal on this path
+    EXPECT_DEATH(target.delete_later(), "");
 }
 
 // ---- thread affinity (Phase 3, T1) ----
@@ -616,9 +622,8 @@ TEST(Object, move_to_thread_relinks_subtree)
     EXPECT_EQ(parent.thread(), nullptr);
     EXPECT_EQ(child->thread(), nullptr);
 
-    // Pending-event migration block MOVED TO TASK 2 (Momus F4): enqueueing relies on
-    // T2's affinity routing; under T1 post_event below would fatal (current()-based).
-    // T1 verifies subtree relink + thread() only.
+
+    // Pending-event migration covered by move_to_thread_migrates_pending_events_cross_loop (T2).
 }
 
 // Fatal path: the source loop runs exec while its subtree object migrates away.
@@ -654,6 +659,7 @@ TEST(EventLoop, post_functions_run_before_posted_events)
     cxxkit::EventLoop loop((std::unique_ptr<cxxkit::AbstractEventDispatcher>(dispatcher)));
     RecordingObject obj;
     std::vector<int> order;
+    obj.move_to_thread(&loop); // T2: affinity routing targets the object's own loop
     cxxkit::Event *event = new cxxkit::Event(cxxkit::Event::Type::kUser);
     event->accept();
     loop.post(
@@ -670,6 +676,80 @@ TEST(EventLoop, post_functions_run_before_posted_events)
     EXPECT_EQ(order[1], 2);
     ASSERT_EQ(obj.events.size(), 1u); // event delivered after both closures
     EXPECT_EQ(obj.events[0], cxxkit::Event::Type::kUser);
+}
+
+
+// Momus F4 relocated from T1: enqueueing a pending event before move_to_thread relies on T2's
+// affinity routing (receiver->thread() targets the enqueue), so the whole scenario lives here.
+TEST(Object, move_to_thread_migrates_pending_events_cross_loop)
+{
+    FakeDispatcher *d1 = new FakeDispatcher;
+    FakeDispatcher *d2 = new FakeDispatcher;
+    cxxkit::EventLoop loop1((std::unique_ptr<cxxkit::AbstractEventDispatcher>(d1)));
+    cxxkit::EventLoop loop2((std::unique_ptr<cxxkit::AbstractEventDispatcher>(d2)));
+    RecordingObject parent;
+    parent.move_to_thread(&loop1); // affinity loop1
+    cxxkit::Event *pending = new cxxkit::Event(cxxkit::Event::Type::kUser);
+    pending->accept();
+    cxxkit::Object::post_event(&parent, pending); // routed to loop1 (affinity, T2 semantics)
+    EXPECT_FALSE(loop2.process_events(cxxkit::EventLoop::ProcessFlag::kAllEvents)); // nothing on loop2
+    parent.move_to_thread(&loop2);                                                  // migrate WITH the pending entry
+    EXPECT_TRUE(parent.events.empty());
+    EXPECT_TRUE(loop2.process_events(cxxkit::EventLoop::ProcessFlag::kAllEvents)); // delivered on loop2
+    ASSERT_EQ(parent.events.size(), 1u);
+    EXPECT_EQ(parent.events[0], cxxkit::Event::Type::kUser);
+}
+
+// Cross-thread routing: posting from another thread lands on the receiver's affinity loop
+// and wakes it; the drain happens on the test thread via process_events (loop not exec'ing).
+TEST(Object, post_event_routes_to_receiver_affinity_across_threads)
+{
+    FakeDispatcher *dispatcher = new FakeDispatcher;
+    cxxkit::EventLoop loop((std::unique_ptr<cxxkit::AbstractEventDispatcher>(dispatcher)));
+    RecordingObject *obj = nullptr;
+    // Create the object inside exec so it binds affinity to `loop`.
+    loop.post(
+        [&loop, &obj]()
+        {
+            obj = new RecordingObject();
+            EXPECT_EQ(obj->thread(), &loop);
+            loop.exit(0);
+        });
+    EXPECT_EQ(loop.exec(), 0);
+    ASSERT_NE(obj, nullptr);
+
+    // From ANOTHER thread, post to obj — must route to `loop` and wake it.
+    cxxkit::Event *event = new cxxkit::Event(cxxkit::Event::Type::kUser);
+    event->accept();
+    std::thread poster(
+        [obj, event]()
+        {
+            cxxkit::Object::post_event(obj, event); // cross-thread: routes to loop, wakes it
+        });
+    poster.join();
+    // Drain on this thread (loop not exec'ing — process_events pulls the entry).
+    EXPECT_TRUE(loop.process_events(cxxkit::EventLoop::ProcessFlag::kAllEvents));
+    ASSERT_EQ(obj->events.size(), 1u);
+    delete obj;
+}
+
+TEST(Object, delete_later_uses_affinity_loop_when_present)
+{
+    FakeDispatcher *dispatcher = new FakeDispatcher;
+    cxxkit::EventLoop loop((std::unique_ptr<cxxkit::AbstractEventDispatcher>(dispatcher)));
+    Counter::alive = 0;
+    CountedObject *victim = new CountedObject(); // OUTSIDE exec — Phase 2 would fatal here
+    victim->move_to_thread(&loop);               // bind affinity (Momus F4: no in-closure enqueue —
+                                                 //  a delete_later inside the closure would dispatch
+    // The loop must actually run: an exit closure enqueued BEFORE exec gives one empty post-segment
+    // round — no delete_later inside the closure, so no dispatch-time delete (F4d UAF avoided).
+    loop.post([&loop]() { loop.exit(0); });
+    EXPECT_EQ(loop.exec(), 0); // loop ran empty — victim untouched
+    // Loop NOT exec'ing now: Phase 2 would fatal (no current); T2 routes to affinity.
+    victim->delete_later();
+    EXPECT_TRUE(loop.process_events(cxxkit::EventLoop::ProcessFlag::kAllEvents)); // drains the DeferredDelete
+    EXPECT_EQ(Counter::alive, 0);
+    // cleanup: victim deleted via the queue
 }
 
 #endif // CXXKIT_FEATURE_ENABLE_KERNEL

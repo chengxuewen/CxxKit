@@ -140,17 +140,25 @@ private:
     // kernel 内部协作：Object::post_event 入队 + ~Object 清 pending（Momus F3：仅此一个 friend）
     friend class Object;
 
-    /** @brief 唯一入队通道：current() 取环（null = fatal），锁内 push {receiver, event}。 */
-    static void enqueue_event(Object *receiver, Event *event);
+    /** @brief The single enqueue channel: the caller passes the target loop (null = fatal);
+     *  pushes {receiver, event} under the lock.
+     *  T2: explicit loop parameter — post_event routes by receiver->thread() affinity,
+     *  decoupled from the calling thread. */
+    static void enqueue_event(EventLoop *loop, Object *receiver, Event *event);
 
     /**
      * @brief ~Object 清 pending 通道：锁内 remove+delete 匹配 receiver 的条目（含 DeferredDeleteEvent）。
      *
-     * 契约（D34）：purge 必须与 pop_event_entry 锁内互斥——单线程级联析构可穿插在派发期（父
-     * 派发中 delete 子 → 子/孙 purge），purge 走**队列本体**移除未派发条目而非缓存快照，pop 到
-     * 即不存在，无悬垂窗口；派发本身在锁外执行。null 环容忍：无环线程无 pending = 防御性 no-op。
+     * Contract (D34): purge must be mutually exclusive with pop_event_entry under the lock —
+     * single-threaded cascade destruction can interleave during dispatch (parent dispatch deletes
+     * child → child/grandchild purge), so purge removes undelivered entries from the **queue body**
+     * (never a cached snapshot); a popped entry can no longer exist — no dangling window; dispatch
+     * itself runs outside the lock. Null-loop tolerance: no loop means no pending entries =
+     * defensive no-op.
+     * T2: explicit loop parameter — ~Object double-purges the affinity loop + the current() residual
+     * (a same-loop second purge is a harmless no-op).
      */
-    static void purge_pending(Object *receiver);
+    static void purge_pending(EventLoop *loop, Object *receiver);
 };
 
 CXXKIT_END_NAMESPACE

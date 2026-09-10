@@ -326,12 +326,10 @@ AbstractEventDispatcher &EventLoop::dispatcher()
     return *d->mDispatcher;
 }
 
-void EventLoop::enqueue_event(Object *receiver, Event *event)
+void EventLoop::enqueue_event(EventLoop *loop, Object *receiver, Event *event)
 {
-    // 静态函数无 this（Momus F3）：current() 取环 → 经对象指针 loop->d_func() 访问私有
-    EventLoop *loop = EventLoop::current();
-    CXXKIT_CHECK(loop != nullptr) << "enqueue_event: no running EventLoop";
-    EventLoopPrivate *d = loop->d_func();
+    CXXKIT_CHECK(loop != nullptr) << "enqueue_event: null loop";
+    EventLoopPrivate *d = loop->d_func(); // static: caller passes the explicit loop (T2 affinity routing)
     std::lock_guard<std::mutex> lock(d->mEventMutex);
     EventEntry entry;
     entry.mReceiver = receiver;
@@ -339,14 +337,13 @@ void EventLoop::enqueue_event(Object *receiver, Event *event)
     d->mEventQueue.push_back(entry);
 }
 
-void EventLoop::purge_pending(Object *receiver)
+void EventLoop::purge_pending(EventLoop *loop, Object *receiver)
 {
-    EventLoop *loop = EventLoop::current();
     if (loop == nullptr)
     {
-        return; // null 容忍（无环线程无 pending——防御性 no-op）
+        return; // null tolerated: no loop means no pending entries (defensive no-op)
     }
-    loop->d_func()->remove_pending_events(receiver); // EventLoopPrivate 成员，锁内 remove+delete
+    loop->d_func()->remove_pending_events(receiver); // EventLoopPrivate member; remove+delete under the lock
 }
 
 CXXKIT_END_NAMESPACE

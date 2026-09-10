@@ -113,6 +113,9 @@ protected:
 class CXXKIT_KERNEL_API DeferredDeleteEvent : public Event
 {
 public:
+    // No public constructor — only Object::delete_later() creates this event (R6: language-level lockdown).
+private:
+    friend class Object;
     DeferredDeleteEvent();
 };
 
