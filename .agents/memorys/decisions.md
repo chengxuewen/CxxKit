@@ -209,3 +209,23 @@ sanitizer（ASAN/LSAN/UBSan）与 coverage 用**独立 build 目录**（build-as
 **Phase 2/3 备忘**（需求触发再取）：事件投递（postEvent/ChildEvent 异步化）、线程亲和（moveToThread/亲和断言）——Object 树当前为单线程语义，跨线程 set_parent/delete_later 未定义
 
 **验证**：主树 81/81（79 基线 + tst_object + tst_weak_ptr）；check.sh 全链见 task-4-report
+
+## D34: delete_later 迁移 Event 队列 + ~Object purge 接线——父子同投限制解除（2026-09-10，T3 SDD）
+
+**背景**：D33 留下三个已知限制，其中"父与子不可同时 delete_later"（队列 [delete 父, delete 子] 时父级联已直接 delete 子，残留闭包再 delete = 二次 delete UAF）是纯实现缺口，Qt 靠 ~QObject 清 pending DeferredDelete 天然无此限制。
+
+**架构**（plan docs/superpowers/plans/2026-09-09-event-delivery-plan.md T3，含 Momus F1/F3 修订）：
+- **delete_later 迁移 = Momus F1 修订形态**：`EventLoop::enqueue_event(this, new DeferredDeleteEvent)` **直推**，绕过 post_event 的 kDeferredDelete 守卫——"唯一合法生产者被唯一通道拒绝"自相矛盾，裁定直推；delete_later 自身保留 current() null fatal（D33 文案），post_event 守卫照旧（用户侧禁投 DeferredDelete 的 API 纪律不变）
+- **send_event 的 kDeferredDelete 守卫顺势摘除**（实现期发现）：process_events 队列派发复用 send_event 内部逻辑（filter 链生效），守卫会让派发路径自杀；kDeferredDelete 到达 send_event 的唯一合法路径就是队列派发本身，用户侧直发已被 post_event 守卫拒绝——send_event 守卫实为死代码且与迁移自相矛盾，摘除 + 注释钉住理由。配套修正既有 RED 测试形态：不用 EXPECT_DEATH 而用 ObserverFilter 观测 + 堆对象死亡证明（见教训④）
+- **~Object 步骤序**：destroying → **EventLoop::purge_pending(this)** → 级联 → 摘链。父析构在锁内从 Event 队列**本体**移除子的未派发条目（含 DeferredDeleteEvent），pop 到即不存在——限制①解除
+- **purge 契约（写入 event_loop.hpp doxygen）**：purge 必须与 pop_event_entry 锁内互斥——派发期间的穿插级联析构从本体移除未派发条目，非快照缓存；null 环容忍（无环线程无 pending = 防御性 no-op）
+
+**spec §4.2 不变量修订（T4 消费）**：原文"~Object 与派发不并发"在单线程级联下即为假（父条目派发中 → 级联析构 → 子/孙 purge 穿插）——真实不变量 = **purge 与 pop 锁内互斥、派发在锁外**；派发中条目已被 pop 出队（局部变量持有），purge 只动队列本体，两者操作集不相交。已落 spec 2026-09-09-event-delivery-design.md §4.2
+
+**教训**（本次实测四条）：
+- ① **`delete this` 后返回即断言函数收尾**：event() 的 kDeferredDelete 分支 delete this 后原为 `break` 落到 switch 尾 `return true`（读 mAccept = UAF）；Qt deleteLater 语义是收到即亡——改 `delete this; return true;`（ASAN 实证）
+- ② **最小化手工 g++ 探针的成本悬崖**：源码增量编译 4 个 C++11 失败（g++ 10 对 -I 相对路径吞半，成因未查），拷贝 inc_cxxkit + 绝对路径 / I . 修复——重演时直接用 build 树产物或配 `-I$(pwd)/cxxkit` 绝对路径
+- ③ **edit 工具 pos 单行 + 多行 lines = 插入不替换**再现 2 次（TEST 重复定义 + dtor 插错行），多行块必须 pos+end 范围替换（既有规则，但要全程警惕非仅开头）
+- ④ **dtor 置位的实例标志在 delete this 后不可读**（UAF）——死亡证明用 static flag（`RecordingObject::s_last_recording_dtor_seen`），对象改堆分配（栈对象被 delete this 双重析构 = bad-free）；`victim = nullptr` 防测试尾部二次析构
+
+**验证**：RED 双证据（迁移观测：filter.types.size()==0 断言失败；父子同投：SIGSEGV UAF exit 139）→ GREEN 后主树 **81/81 ctest 全绿**（106.3s）+ **build-asan 定向 tst_object 全套件 + delete_later 过滤组零诊断**（lsan.supp 下 exit=0）+ clang-format 四文件 0 违规 + C++14/octk 残留 grep 双零

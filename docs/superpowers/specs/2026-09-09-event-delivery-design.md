@@ -137,7 +137,7 @@ void Object::delete_later()
 ## 4. 语义裁定细节（写入 D34）
 
 1. **双队列顺序**：post 队列先于 Event 队列（每轮 process_events 内）。跨轮 FIFO 不保证（两队列间无全局序——Qt 同款：posted events 与 posted metacalls 无跨类全局序）。
-2. **EventEntry 所有权链**：push 后队列拥有 Event*；take_event_queue 取出后局部 deque 拥有；派发后 delete。任何路径不得 double-delete：~Object 清理只动队列内条目，派发中条目已在局部 deque（锁已释放），~Object 与派发不并发（单线程环 + exec-only 纪律）。
+2. **EventEntry 所有权链**：push 后队列拥有 Event*；take_event_queue 取出后局部 deque 拥有；派发后 delete。任何路径不得 double-delete：~Object 清理只动队列内条目；派发形态 = 锁内逐条 pop + 锁外派发（Qt 忠实，非快照）。**D34 修正不变量**：原表述“~Object 与派发不并发”在单线程级联析构下即为假（父条目派发中 → 级联析构 → 子/孙 purge）——真实不变量 = **purge 与 pop 锁内互斥、派发在锁外**：派发期间的穿插级联析构从队列本体移除未派发条目，pop 到即不存在，无快照悬垂窗口。
 3. **嵌套 process_events**：允许（Qt 同款）——内层排空时拿走的条目外层不可见（swap 快照），无重入问题。
 4. **send_event 的返回值**：`e->is_accepted()`（Event::accept/ignore 已有）。filter 拦截返回 false（Qt：被过滤 = 未送达）。
 5. **post_event 频率**：无合并/压缩（Qt postEvent 也不合并——compress 是显式 API，YAGNI）。

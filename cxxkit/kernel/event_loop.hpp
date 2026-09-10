@@ -143,7 +143,13 @@ private:
     /** @brief 唯一入队通道：current() 取环（null = fatal），锁内 push {receiver, event}。 */
     static void enqueue_event(Object *receiver, Event *event);
 
-    /** @brief ~Object 清 pending 通道：锁内 remove+delete 匹配条目；null 环容忍（无 pending = no-op）。 */
+    /**
+     * @brief ~Object 清 pending 通道：锁内 remove+delete 匹配 receiver 的条目（含 DeferredDeleteEvent）。
+     *
+     * 契约（D34）：purge 必须与 pop_event_entry 锁内互斥——单线程级联析构可穿插在派发期（父
+     * 派发中 delete 子 → 子/孙 purge），purge 走**队列本体**移除未派发条目而非缓存快照，pop 到
+     * 即不存在，无悬垂窗口；派发本身在锁外执行。null 环容忍：无环线程无 pending = 防御性 no-op。
+     */
     static void purge_pending(Object *receiver);
 };
 

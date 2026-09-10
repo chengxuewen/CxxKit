@@ -44,6 +44,7 @@ public:
     }
     std::vector<cxxkit::Event::Type> events;
     std::vector<cxxkit::Object *> children_seen;
+    bool is_deleted{false}; // T3：delete-later 死亡标志（dtor 置位；事后验证走静态 s_last_recording_dtor_seen）
 
 protected:
     void child_event(cxxkit::ChildEvent *event) override
@@ -54,6 +55,28 @@ protected:
     void custom_event(cxxkit::Event *event) override
     {
         events.push_back(event->type()); // T2：记录 kUser 等用户事件（队列异步路径）
+    }
+
+public:
+    ~RecordingObject() override
+    {
+        is_deleted = true;
+        s_last_recording_dtor_seen = true;
+    }
+    static bool s_last_recording_dtor_seen; // T3：死亡证明事后读取（dtor 后 this 已亡，实例标志不可再读）
+};
+bool RecordingObject::s_last_recording_dtor_seen = false;
+
+// T3：只观测不拦截的 filter（记录类型序列，始终放行）
+class ObserverFilter : public cxxkit::Object
+{
+public:
+    std::vector<cxxkit::Event::Type> types;
+    bool event_filter(cxxkit::Object *watched, cxxkit::Event *event) override
+    {
+        CXXKIT_UNUSED(watched);
+        types.push_back(event->type());
+        return false;
     }
 };
 } // namespace
@@ -263,6 +286,48 @@ TEST(Object, delete_later_before_exec_fails)
     EXPECT_EQ(Counter::alive, 1); // fatal 未实际删除 victim
 }
 
+// T3 迁移观测：delete_later 走 Event 队列（DeferredDeleteEvent），filter 链看到 kDeferredDelete——
+// 老形态（post 闭包内 delete this）filter 永不见此事件类型。送达即死亡：event() 分支 delete this
+TEST(Object, delete_later_uses_deferred_delete_event)
+{
+    cxxkit::EventLoop loop(std::unique_ptr<cxxkit::AbstractEventDispatcher>(new FakeDispatcher));
+    RecordingObject::s_last_recording_dtor_seen = false;
+    RecordingObject *victim = new RecordingObject;
+    ObserverFilter filter;
+    victim->install_event_filter(&filter);
+    loop.post(
+        [&loop, &victim, &filter]
+        {
+            victim->delete_later();
+            EXPECT_TRUE(filter.types.empty()); // 入队后未派发：filter 未观测
+            EXPECT_FALSE(victim->is_deleted);  // 仅入队，未同步删——实际删除走 event() 分支
+            loop.exit(0);
+        });
+    EXPECT_EQ(loop.exec(), 0);
+    ASSERT_EQ(filter.types.size(), 1u); // Event 队列派发路径经过 filter 链
+    EXPECT_EQ(filter.types[0], cxxkit::Event::Type::kDeferredDelete);
+    EXPECT_TRUE(RecordingObject::s_last_recording_dtor_seen); // 死亡证明：event() kDeferredDelete 分支已删 receiver
+    victim = nullptr;                                         // 已亡：防测试尾部二次析构（所有权已被 delete this 收走）
+}
+
+// T3 限制①解除正名：父与子同时 delete_later——exec 一轮双亡无二删（老形态 = 二次 delete UAF）
+// RED 证据：无 ~Object purge 时此用例 UAF 崩（T2 遗留窗口闭合证明）
+TEST(Object, delete_later_parent_and_child_no_double_delete)
+{
+    cxxkit::EventLoop loop(std::unique_ptr<cxxkit::AbstractEventDispatcher>(new FakeDispatcher));
+    Counter::alive = 0;
+    CountedObject *parent = new CountedObject;
+    CountedObject *child = new CountedObject(parent);
+    loop.post(
+        [parent, child, &loop]
+        {
+            parent->delete_later(); // 父子同投——D33 时代 = double delete
+            child->delete_later();
+            loop.post([&loop]() { loop.exit(0); });
+        });
+    EXPECT_EQ(loop.exec(), 0);
+    EXPECT_EQ(Counter::alive, 0); // 双亡无二删——ASAN 树兜底
+}
 
 TEST(Object, set_parent_rejects_descendant_cycle)
 {

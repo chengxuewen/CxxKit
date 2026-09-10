@@ -84,11 +84,15 @@ public:
     /**
      * @brief 请求在当前线程 EventLoop 下一次排空时删除 this（Qt deleteLater 语义）。
      *
+     * 内部通道：Event 队列投递 DeferredDeleteEvent（Momus F1 直推 enqueue_event 绕过
+     * post_event 的 kDeferredDelete 守卫）；派发 = send_event（filter 链生效）→ event()
+     * kDeferredDelete 分支 delete this。
+     *
      * 仅在当前线程存在**运行中**（exec 内）的 EventLoop 时合法；否则（含环已构造但未 exec）= fatal。
-     * 已知限制：①父与子不可同时 delete_later——队列 [delete 父, delete 子] 时父级联已直接 delete 子，
-     * 残留闭包再 delete = 二次 delete（Qt 靠 ~QObject 清 pending DeferredDelete，本版不做）；
-     * ②~EventLoop 析构排空期间闭包内再 post（如级联 delete_later）投到将死环新队列静默丢失，
-     * 且排空时 current 已不指向自身——闭包内 delete_later 会 fatal。均文档化限制。
+     * T3 限制①解除：父与子可同时 delete_later——父先派发时其 ~Object purge 在锁内从队列
+     * 本体移除子的未派发条目，级联 delete 子后子条目已不存在，无二次 delete。
+     * 已知限制：②~EventLoop 析构排空期间闭包内再 post（如级联 delete_later）投到将死环新队列静默丢失，
+     * 且排空时 current 已不指向自身——闭包内 delete_later 会 fatal。文档化限制。
      * @since 0.2
      */
     void delete_later();

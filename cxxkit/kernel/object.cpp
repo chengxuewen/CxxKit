@@ -70,6 +70,10 @@ Object::~Object()
 {
     CXXKIT_D(Object);
     this->destroying(); // 预销毁锚点：派生成员仍存活、children 未级联（析构期派发只到 Object 层）
+    // T3：清 pending（含 DeferredDeleteEvent）——父子同投限制解除的根基。父析构触发的本调用在锁内
+    // 从 Event 队列本体移除子的未派发条目，pop 到即不存在（与 pop_event_entry 锁内互斥）。
+    // 无环线程 = no-op（purge 静态内部 null 容忍）；本体遍历，非快照缓存。
+    EventLoop::purge_pending(this);
     // 级联析构：子 dtor 会通过 set_parent(nullptr)/detach 自摘链，所以 while(!empty) 安全。
     while (!d->mChildren.empty())
     {
@@ -89,7 +93,10 @@ void Object::delete_later()
 {
     EventLoop *loop = EventLoop::current();
     CXXKIT_CHECK(loop != nullptr) << "Object::delete_later: no running EventLoop on this thread";
-    loop->post([this]() { delete this; });
+    // Momus F1：直推 enqueue_event 绕过 post_event 的 kDeferredDelete 守卫——唯一合法生产者
+    // 恰好被唯一通道拒绝会自相矛盾；post_event 守卫照旧（用户侧禁投 DeferredDelete）。
+    // 派发路径：Event 队列 pop → send_event（filter 链生效）→ event() kDeferredDelete 分支 delete this。
+    EventLoop::enqueue_event(this, new DeferredDeleteEvent);
 }
 
 void Object::post_event(Object *receiver, Event *event)
@@ -163,8 +170,10 @@ bool Object::event(Event *event)
         }
         case Event::Type::kDeferredDelete:
         {
-            // DeleteInEventHandler 正名化（Qt 同款）；仅 Event 队列派发路径会到达（T3 起
-            // 由 delete_later 迁移到 Event 队列），send_event 用户侧直发已被 CHECK 拒绝
+            // DeleteInEventHandler 正名化（Qt 同款）；仅 Event 队列派发路径会到达（delete_later
+            // 迁移到 Event 队列），用户侧直发被 post_event 守卫拒绝。T3：delete this 后立即返回 true——
+            // this 已死，禁止触碰成员/base 子对象；process_events 尾部 delete entry.mEvent 合法
+            //（事件对象独立于 receiver）。
             delete this;
             return true;
         }
@@ -187,8 +196,8 @@ bool Object::event(Event *event)
 bool Object::send_event(Object *receiver, Event *event)
 {
     CXXKIT_CHECK(receiver != nullptr && event != nullptr) << "send_event requires receiver/event";
-    CXXKIT_CHECK(event->type() != Event::Type::kDeferredDelete)
-        << "send_event: DeferredDelete is deliverable only via the event queue (owner semantics)";
+    // kDeferredDelete 不拒：队列派发复用 send_event 内部逻辑（filter 链生效，T3），用户侧直发
+    // 该类型由 post_event 守卫拒绝（唯一合法生产者是 delete_later 走的 enqueue_event 通道）。
     ObjectPrivate *priv = receiver->d_func();
     // 头插序遍历：mFilters.back() 最先（后装先过滤）
     std::vector<Object *> &filters = priv->mFilters;
