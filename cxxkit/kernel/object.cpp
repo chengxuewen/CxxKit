@@ -24,10 +24,14 @@
 
 #include <cxxkit/kernel/detail/object_p.hpp>
 
+#include <cxxkit/kernel/detail/event_loop_p.hpp>
 #include <cxxkit/kernel/event_loop.hpp>
 #include <cxxkit/tools/checks.hpp>
 
 #include <algorithm>
+#include <deque>
+#include <mutex>
+#include <vector>
 
 #if CXXKIT_FEATURE_ENABLE_KERNEL
 
@@ -64,6 +68,10 @@ Object::Object(Object *parent)
 Object::Object(ObjectPrivate *d)
     : mDPtr(d)
 {
+    // Creation affinity: an object belongs to the loop running exec on the constructing
+    // thread (spec §4-1). Outside exec current() is null -> no affinity. Both public ctors
+    // funnel through this delegation target.
+    this->d_func()->mThread = EventLoop::current();
 }
 
 Object::~Object()
@@ -144,6 +152,89 @@ void Object::set_parent(Object *parent)
         parent->event(&added);
     }
 }
+EventLoop *Object::thread() const
+{
+    CXXKIT_D(const Object);
+    return d->mThread;
+}
+
+void Object::move_to_thread(EventLoop *target)
+{
+    CXXKIT_D(Object);
+    EventLoop *source = d->mThread;
+    if (source == target)
+    {
+        return; // same-loop no-op (Qt-tolerant shape)
+    }
+    CXXKIT_CHECK((source == nullptr) || (!source->is_running())) << "move_to_thread: source loop is running";
+    CXXKIT_CHECK((target == nullptr) || (!target->is_running())) << "move_to_thread: target loop is running";
+
+    // Subtree pre-order walk: collect all migrated objects (self first), then relink
+    // affinity + notify each.
+    std::vector<Object *> moved;
+    moved.push_back(this);
+    std::deque<Object *> pending;
+    pending.push_back(this);
+    while (!pending.empty())
+    {
+        Object *current = pending.front();
+        pending.pop_front();
+        const Children &children = current->children();
+        for (Children::const_iterator it = children.begin(); it != children.end(); ++it)
+        {
+            moved.push_back(*it);
+            pending.push_back(*it);
+        }
+    }
+    // Per-object migrate step (member scope so protected d_func() is accessible):
+    // relink affinity, then notify via a plain kThreadChange event. Direct event() call —
+    // the filter chain is NOT applied (Qt-faithful: QEvent::ThreadChange goes straight to
+    // the handler, it is not a filterable event).
+    struct Migrator
+    {
+        static void migrate(Object *obj, EventLoop *targetLoop)
+        {
+            obj->d_func()->mThread = targetLoop;
+            Event change(Event::Type::kThreadChange);
+            obj->event(&change);
+        }
+    };
+    for (size_t i = 0; i < moved.size(); ++i)
+    {
+        Migrator::migrate(moved[i], target);
+    }
+
+    // Migrate pending queue entries per receiver: drain the source queue first, then push
+    // into the target — the two locks are never held simultaneously (no lock-order need).
+    for (size_t i = 0; i < moved.size(); ++i)
+    {
+        std::deque<EventEntry> entries;
+        if (source != nullptr)
+        {
+            entries = source->d_func()->take_events_for(moved[i]);
+        }
+        if (target != nullptr)
+        {
+            EventLoopPrivate *targetPriv = target->d_func();
+            std::lock_guard<std::mutex> lock(targetPriv->mEventMutex);
+            while (!entries.empty())
+            {
+                targetPriv->mEventQueue.push_back(entries.front());
+                entries.pop_front();
+            }
+        }
+        else
+        {
+            // Detached affinity: delivering on no loop is impossible — delete to avoid a leak
+            // (matches the ~Object purge spirit).
+            while (!entries.empty())
+            {
+                delete entries.front().mEvent;
+                entries.pop_front();
+            }
+        }
+    }
+}
 
 const Object::Children &Object::children() const
 {
@@ -179,7 +270,8 @@ bool Object::event(Event *event)
         }
         case Event::Type::kThreadChange:
         {
-            CXXKIT_D(Object);
+            // Migration notification: affinity already updated by move_to_thread.
+            // Deliberate no-op hook — derived classes may override event() to react.
             break;
         }
         default:

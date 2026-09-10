@@ -58,6 +58,10 @@ EventLoop::EventLoop(std::unique_ptr<AbstractEventDispatcher> dispatcher, Object
     // The Object(parent) ctor installed a plain ObjectPrivate in mDPtr; replace it with the
     // EventLoopPrivate this class actually uses (virtual dtor keeps the unique_ptr delete safe).
     mDPtr.reset(new EventLoopPrivate(this));
+    // Momus F3: the Object(parent) ctor bound mThread to the plain ObjectPrivate that was
+    // just replaced — rebind on the real private or a nested-loop construction loses its
+    // inherited affinity.
+    d_func()->mThread = EventLoop::current();
     CXXKIT_D(EventLoop);
     d->mDispatcher = std::move(dispatcher);
 }

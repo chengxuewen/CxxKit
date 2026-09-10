@@ -33,6 +33,8 @@
 
 CXXKIT_BEGIN_NAMESPACE
 
+class EventLoop;
+
 class ObjectPrivate
 {
 public:
@@ -46,7 +48,8 @@ public:
 
     Object *mParent{nullptr};
     Children mChildren;
-    std::vector<Object *> mFilters; // 头插序（back() = 最新，先过滤）
+    std::vector<Object *> mFilters; // head-insert order (back() = newest, filtered first)
+    EventLoop *mThread{nullptr};    // affinity: loop owning this object (null = detached)
 
 protected:
     CXXKIT_DEFINE_PPTR(Object)

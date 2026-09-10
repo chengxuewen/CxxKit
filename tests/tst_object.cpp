@@ -23,6 +23,7 @@
 ***********************************************************************************************************************/
 #include <cxxkit/kernel/event_loop.hpp>
 #include <cxxkit/kernel/event.hpp>
+#include <cxxkit/tools/logging.hpp>
 #include "fake_dispatcher.hpp"
 #include <gtest/gtest.h>
 
@@ -30,6 +31,7 @@
 using cxxkit::FakeDispatcher;
 
 #    include <algorithm>
+#    include <atomic>
 #    include <memory>
 #    include <vector>
 
@@ -569,6 +571,105 @@ TEST(Object, post_event_rejects_deferred_delete)
     // EXPECT_DEATH 子进程退出，泄漏由 death-test 语义容忍。
     RecordingObject target;
     EXPECT_DEATH(cxxkit::Object::post_event(&target, new cxxkit::DeferredDeleteEvent()), "");
+}
+
+// ---- thread affinity (Phase 3, T1) ----
+
+TEST(Object, thread_binds_to_creation_loop)
+{
+    FakeDispatcher *dispatcher = new FakeDispatcher;
+    cxxkit::EventLoop loop((std::unique_ptr<cxxkit::AbstractEventDispatcher>(dispatcher)));
+    RecordingObject outside; // constructed outside exec -> current() null -> thread() == nullptr
+    EXPECT_EQ(outside.thread(), nullptr);
+    loop.post(
+        [&loop]
+        {
+            RecordingObject inside; // constructed inside exec -> current() == &loop
+            EXPECT_EQ(inside.thread(), &loop);
+            loop.exit(0);
+        });
+    EXPECT_EQ(loop.exec(), 0);
+}
+
+TEST(Object, move_to_thread_relinks_subtree)
+{
+    FakeDispatcher *d1 = new FakeDispatcher;
+    FakeDispatcher *d2 = new FakeDispatcher;
+    cxxkit::EventLoop loop1((std::unique_ptr<cxxkit::AbstractEventDispatcher>(d1)));
+    cxxkit::EventLoop loop2((std::unique_ptr<cxxkit::AbstractEventDispatcher>(d2)));
+    // Two loops, neither running. Objects created outside exec (thread() == null).
+    RecordingObject parent;
+    RecordingObject *child = new RecordingObject(&parent);
+    EXPECT_EQ(parent.thread(), nullptr);
+
+    // Migrate to loop2 (source affinity is null — allowed).
+    parent.move_to_thread(&loop2);
+    EXPECT_EQ(parent.thread(), &loop2);
+    EXPECT_EQ(child->thread(), &loop2); // subtree migrated
+
+    // Same-loop migration is a no-op.
+    parent.move_to_thread(&loop2);
+    EXPECT_EQ(parent.thread(), &loop2);
+
+    // Detach (null target) is allowed.
+    parent.move_to_thread(nullptr);
+    EXPECT_EQ(parent.thread(), nullptr);
+    EXPECT_EQ(child->thread(), nullptr);
+
+    // Pending-event migration block MOVED TO TASK 2 (Momus F4): enqueueing relies on
+    // T2's affinity routing; under T1 post_event below would fatal (current()-based).
+    // T1 verifies subtree relink + thread() only.
+}
+
+// Fatal path: the source loop runs exec while its subtree object migrates away.
+// EXPECT_DEATH (empty matcher, repo convention) observes the logging-owned fatal abort.
+TEST(ObjectDeathTest, move_to_thread_fails_when_source_loop_running)
+{
+    // NOTE: loop2 must be declared BEFORE loop1. The death statement (loop1.exec()) runs
+    // only in the death-test child; the parent's loop1 still holds the posted closure and
+    // drains it in ~EventLoop. With loop2 declared first, loop1 is destroyed first, so the
+    // parent's drained closure sees a still-alive loop2 (reverse declaration order would
+    // dangle loop2 — is_running() on a destroyed loop SEGVs at d_func()==null).
+    FakeDispatcher *d2 = new FakeDispatcher;
+    cxxkit::EventLoop loop2((std::unique_ptr<cxxkit::AbstractEventDispatcher>(d2)));
+    FakeDispatcher *dispatcher = new FakeDispatcher;
+    cxxkit::EventLoop loop1((std::unique_ptr<cxxkit::AbstractEventDispatcher>(dispatcher)));
+    RecordingObject obj;
+    obj.move_to_thread(&loop1);
+    loop1.post(
+        [&loop1, &loop2]
+        {
+            RecordingObject victim;        // created inside exec -> affinity loop1
+            victim.move_to_thread(&loop2); // source (loop1) IS running -> fatal
+            loop1.exit(0);                 // never reached
+        });
+    EXPECT_DEATH(loop1.exec(), "");
+}
+
+// Double-queue order hitchhiker: the post segment fully drains (1 then 2) before the
+// Event segment dispatches — the event enqueued inside the first closure lands after both.
+TEST(EventLoop, post_functions_run_before_posted_events)
+{
+    FakeDispatcher *dispatcher = new FakeDispatcher;
+    cxxkit::EventLoop loop((std::unique_ptr<cxxkit::AbstractEventDispatcher>(dispatcher)));
+    RecordingObject obj;
+    std::vector<int> order;
+    cxxkit::Event *event = new cxxkit::Event(cxxkit::Event::Type::kUser);
+    event->accept();
+    loop.post(
+        [&order, &obj, event]
+        {
+            cxxkit::Object::post_event(&obj, event); // event queued AFTER this closure runs
+            order.push_back(1);                      // closure body first
+        });
+    loop.post([&order]() { order.push_back(2); }); // second closure
+    loop.post([&loop]() { loop.exit(0); });
+    EXPECT_EQ(loop.exec(), 0);
+    ASSERT_EQ(order.size(), 2u);
+    EXPECT_EQ(order[0], 1);
+    EXPECT_EQ(order[1], 2);
+    ASSERT_EQ(obj.events.size(), 1u); // event delivered after both closures
+    EXPECT_EQ(obj.events[0], cxxkit::Event::Type::kUser);
 }
 
 #endif // CXXKIT_FEATURE_ENABLE_KERNEL

@@ -98,6 +98,33 @@ public:
         return entries;
     }
 
+    /** @brief Locks the queue and extracts all entries whose receiver == @p receiver.
+     *
+     *  Migration primitive: taken entries move with the migrated object; the remaining
+     *  queue order is preserved (swap-back under the same lock).
+     */
+    std::deque<EventEntry> take_events_for(Object *receiver)
+    {
+        std::lock_guard<std::mutex> lock(mEventMutex);
+        std::deque<EventEntry> taken;
+        std::deque<EventEntry> remaining;
+        while (!mEventQueue.empty())
+        {
+            EventEntry entry = mEventQueue.front();
+            mEventQueue.pop_front();
+            if (entry.mReceiver == receiver)
+            {
+                taken.push_back(entry);
+            }
+            else
+            {
+                remaining.push_back(entry);
+            }
+        }
+        mEventQueue.swap(remaining);
+        return taken;
+    }
+
     /**
      * @brief ~Object 清理入口：锁内 remove+delete 匹配 receiver 的条目（含 DeferredDeleteEvent）。
      *

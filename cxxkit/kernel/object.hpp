@@ -33,6 +33,7 @@
 CXXKIT_BEGIN_NAMESPACE
 
 class ObjectPrivate;
+class EventLoop;
 class Object
 {
 public:
@@ -46,6 +47,23 @@ public:
     void set_parent(Object *parent);
 
     const Children &children() const;
+
+    /** @brief Returns the loop this object is affined to (null = no affinity). @since 0.2 */
+    EventLoop *thread() const;
+
+    /**
+     * @brief Static migration: moves this object and its whole subtree to @p target.
+     *
+     * Guards: same-loop is a no-op; source loop running or target loop running is fatal
+     * (CXXKIT_CHECK). Null target detaches affinity (pending events are dropped and
+     * deleted). Pending queued events for the subtree migrate with it; timers do NOT
+     * migrate.
+     * @note Caller contract (Momus F5): no concurrent post_event to subtree objects
+     *       during the call — affinity metadata is unsynchronized by design (static
+     *       migration is a setup-phase operation).
+     * @since 0.2
+     */
+    void move_to_thread(EventLoop *target);
 
     /** @brief 同步投递：filter 链前置（后装先过滤），未拦截则 receiver->event()。返回 is_accepted()；被 filter 拦截返回 false。 */
     static bool send_event(Object *receiver, Event *event);
