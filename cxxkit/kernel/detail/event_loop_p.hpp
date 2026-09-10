@@ -39,6 +39,19 @@
 
 CXXKIT_BEGIN_NAMESPACE
 
+/**
+ * @brief Queued event entry: receiver + owned event (post_event path).
+ *
+ * Ownership contract: the queue owns @c mEvent — dispatched entries are deleted after
+ * send_event, undelivered entries are deleted by ~Object purge (remove_pending_events)
+ * or the ~EventLoop drain (take_event_queue).
+ */
+struct EventEntry
+{
+    Object *mReceiver{nullptr};
+    Event *mEvent{nullptr};
+};
+
 class EventLoopPrivate : public ObjectPrivate
 {
     CXXKIT_DECLARE_PUBLIC(EventLoop)
@@ -71,9 +84,69 @@ public:
         return tasks;
     }
 
+    /**
+     * @brief Moves out and returns all pending events (lock held only for the swap).
+     *
+     * Consumed only by ~EventLoop drain: snapshot delete of the events never touches
+     * receivers, so the cascade-free shape stays safe.
+     */
+    std::deque<EventEntry> take_event_queue()
+    {
+        std::lock_guard<std::mutex> lock(mEventMutex);
+        std::deque<EventEntry> entries;
+        entries.swap(mEventQueue);
+        return entries;
+    }
+
+    /**
+     * @brief ~Object 清理入口：锁内 remove+delete 匹配 receiver 的条目（含 DeferredDeleteEvent）。
+     *
+     * 与 pop_event_entry 锁内互斥——派发期级联析构触发的 purge 从队列本体移除未派发条目，
+     * pop 到即不存在，无悬垂窗口（Qt 忠实形态，Momus F2）。
+     */
+    void remove_pending_events(Object *receiver)
+    {
+        std::lock_guard<std::mutex> lock(mEventMutex);
+        for (std::deque<EventEntry>::iterator it = mEventQueue.begin(); it != mEventQueue.end();)
+        {
+            if (it->mReceiver == receiver)
+            {
+                delete it->mEvent;
+                it = mEventQueue.erase(it);
+            }
+            else
+            {
+                ++it;
+            }
+        }
+    }
+
+    /**
+     * @brief Takes the head entry (lock held); empty queue returns the {nullptr, nullptr} sentinel.
+     *
+     * Lock-pop + dispatch-outside-the-lock (Qt-faithful): re-entrant purge during dispatch
+     * mutates the queue body under the mutex, never a local snapshot.
+     */
+    EventEntry pop_event_entry()
+    {
+        std::lock_guard<std::mutex> lock(mEventMutex);
+        if (mEventQueue.empty())
+        {
+            EventEntry sentinel;
+            sentinel.mReceiver = nullptr;
+            sentinel.mEvent = nullptr;
+            return sentinel;
+        }
+        EventEntry entry = mEventQueue.front();
+        mEventQueue.pop_front();
+        return entry;
+    }
+
     std::unique_ptr<AbstractEventDispatcher> mDispatcher;
     std::mutex mPostMutex;
     std::deque<std::function<void()>> mPostQueue;
+    std::mutex mEventMutex;
+    std::deque<EventEntry> mEventQueue;
     std::atomic<int> mNextTimerId{0};
     bool mInExec{false};
     std::atomic<bool> mExit{true};

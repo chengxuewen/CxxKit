@@ -50,6 +50,16 @@ public:
     /** @brief 同步投递：filter 链前置（后装先过滤），未拦截则 receiver->event()。返回 is_accepted()；被 filter 拦截返回 false。 */
     static bool send_event(Object *receiver, Event *event);
 
+    /**
+     * @brief 异步投递：将 @p event 入队到当前线程 EventLoop，下一次排空时派发给 @p receiver。
+     *
+     * 所有权转移：队列持有 event，派发（send_event 内部逻辑 → filter 链生效）后 delete；
+     * 未派发条目由 ~Object purge（remove_pending_events）或 ~EventLoop 排空 delete。
+     * fatal：receiver/event 为空；kDeferredDelete（owner 语义仅 delete_later 可投）；当前线程无运行中环。
+     * @since 0.2
+     */
+    static void post_event(Object *receiver, Event *event);
+
     /** @brief 头插 filter（后装先过滤，Qt 同款）。契约：filter 须比 watched 长寿或自行 remove。 */
     void install_event_filter(Object *filter);
 

@@ -21,7 +21,6 @@
 ** IN THE SOFTWARE.
 **
 ***********************************************************************************************************************/
-#include <cxxkit/kernel/object.hpp>
 #include <cxxkit/kernel/event_loop.hpp>
 #include <cxxkit/kernel/event.hpp>
 #include "fake_dispatcher.hpp"
@@ -51,6 +50,10 @@ protected:
     {
         events.push_back(event->type());
         children_seen.push_back(event->child());
+    }
+    void custom_event(cxxkit::Event *event) override
+    {
+        events.push_back(event->type()); // T2：记录 kUser 等用户事件（队列异步路径）
     }
 };
 } // namespace
@@ -341,6 +344,128 @@ TEST(Object, filter_chain_is_lifo)
     ASSERT_EQ(Interceptor::order.size(), 2u);
     EXPECT_EQ(Interceptor::order[0], 'b'); // 后装先过滤
     EXPECT_EQ(Interceptor::order[1], 'a');
+}
+
+// ---- post_event / Event 队列（异步路径，T2） ----
+
+namespace
+{
+// 计数型 Event 子类（dtor 计数）：验证队列释放所有权——派发后必删 / ~EventLoop 排空必删。
+// 用静态计数而非实例成员：事件派发后即被队列 delete，实例成员从此不可访问。
+class DeletedEvent : public cxxkit::Event
+{
+public:
+    explicit DeletedEvent(cxxkit::Event::Type type)
+        : Event(type)
+    {
+        ++alive;
+    }
+    ~DeletedEvent() override { --alive; }
+    static int alive;
+};
+int DeletedEvent::alive = 0;
+} // namespace
+
+TEST(Object, post_event_delivers_on_process_events)
+{
+    cxxkit::EventLoop loop(std::unique_ptr<cxxkit::AbstractEventDispatcher>(new FakeDispatcher));
+    RecordingObject obj; // 环上对象（同线程）
+    DeletedEvent::alive = 0;
+    bool delivered = false;
+
+    // Arrange：计数型 Event 子类，kUser 事件；exec 闭包内入队 + 同轮排空（exec-only 契约：
+    // current() 仅 exec 期指向自身——PIT-43 同轮串联收尾，防 exit 跨轮断链）
+    loop.post(
+        [&]
+        {
+            DeletedEvent *event = new DeletedEvent(cxxkit::Event::Type::kUser);
+            event->accept();
+            EXPECT_TRUE(obj.events.empty());         // 入队后未排空：不可见（AAA Arrange）
+            cxxkit::Object::post_event(&obj, event); // 所有权转移给队列
+            EXPECT_EQ(DeletedEvent::alive, 1);       // 队列持有所有权
+
+            // Act：排空——post 队列空，Event 队列派发 → filter 链 → custom_event 记录 → delete event
+            delivered = loop.process_events(cxxkit::EventLoop::ProcessFlag::kAllEvents);
+            loop.exit(0);
+        });
+    EXPECT_EQ(loop.exec(), 0);
+
+    // Assert：kUser 送达（RecordingObject::custom_event 记录）且事件已被队列 delete（所有权释放）
+    EXPECT_TRUE(delivered);
+    ASSERT_EQ(obj.events.size(), 1u);
+    EXPECT_EQ(obj.events[0], cxxkit::Event::Type::kUser);
+    EXPECT_EQ(DeletedEvent::alive, 0);
+}
+
+TEST(Object, post_event_fifo_order_within_one_drain)
+{
+    // 同轮 FIFO + 同轮派发契约：post 段入队的条目在**同一轮** Event 段即被派发
+    //（spec §4.1：双队列每轮先 post 后 event——重入入队同轮可见，解 PIT-43 族跨轮断链）。
+    cxxkit::EventLoop loop(std::unique_ptr<cxxkit::AbstractEventDispatcher>(new FakeDispatcher));
+    RecordingObject obj;
+    DeletedEvent::alive = 0;
+
+    loop.post(
+        [&]
+        {
+            cxxkit::Object::post_event(&obj, new DeletedEvent(cxxkit::Event::Type::kUser));
+            cxxkit::Object::post_event(
+                &obj,
+                new DeletedEvent(static_cast<cxxkit::Event::Type>(static_cast<int>(cxxkit::Event::Type::kUser) + 1)));
+            loop.exit(0); // PIT-43：同轮串联收尾
+        });
+    EXPECT_EQ(loop.exec(), 0);
+
+    // 两个条目都已派发（kUser、kUser+1 保序）且被队列 delete（所有权释放）
+    ASSERT_EQ(obj.events.size(), 2u);
+    EXPECT_EQ(obj.events[0], cxxkit::Event::Type::kUser);
+    EXPECT_EQ(obj.events[1], static_cast<cxxkit::Event::Type>(static_cast<int>(cxxkit::Event::Type::kUser) + 1));
+    EXPECT_EQ(DeletedEvent::alive, 0);
+}
+
+TEST(Object, post_event_respects_filter_chain)
+{
+    // 队列派发路径走 send_event 内部逻辑：filter 拦截后不送 receiver->event()，但事件仍被 delete
+    cxxkit::EventLoop loop(std::unique_ptr<cxxkit::AbstractEventDispatcher>(new FakeDispatcher));
+    class Interceptor : public cxxkit::Object
+    {
+    public:
+        bool event_filter(cxxkit::Object *watched, cxxkit::Event *event) override
+        {
+            CXXKIT_UNUSED(watched);
+            return event->type() == cxxkit::Event::Type::kUser; // 拦 kUser
+        }
+    };
+    Interceptor filter;
+    RecordingObject watched;
+    watched.install_event_filter(&filter);
+
+    loop.post(
+        [&]
+        {
+            cxxkit::Object::post_event(&watched, new cxxkit::Event(cxxkit::Event::Type::kUser));
+            EXPECT_TRUE(loop.process_events(cxxkit::EventLoop::ProcessFlag::kAllEvents)); // 有事件处理 = true
+            loop.exit(0);
+        });
+    EXPECT_EQ(loop.exec(), 0);
+    EXPECT_TRUE(watched.events.empty()); // 被拦截未送达
+}
+
+TEST(Object, post_event_without_current_loop_fails)
+{
+    RecordingObject obj;
+    cxxkit::Event *event = new cxxkit::Event(cxxkit::Event::Type::kUser);
+    EXPECT_DEATH(cxxkit::Object::post_event(&obj, event), "");
+    delete event; // fatal 未入队：所有权未转移，手动释放
+}
+
+TEST(Object, post_event_rejects_deferred_delete)
+{
+    // 守卫顺序契约：DeferredDelete 拒绝（owner 语义不可绕过——仅 delete_later 可投）先于
+    // current() 检查；环未 exec（current 空）命中的仍是本守卫。fatal 未入队，
+    // EXPECT_DEATH 子进程退出，泄漏由 death-test 语义容忍。
+    RecordingObject target;
+    EXPECT_DEATH(cxxkit::Object::post_event(&target, new cxxkit::DeferredDeleteEvent()), "");
 }
 
 #endif // CXXKIT_FEATURE_ENABLE_KERNEL

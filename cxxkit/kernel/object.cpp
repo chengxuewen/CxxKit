@@ -27,6 +27,8 @@
 #include <cxxkit/kernel/event_loop.hpp>
 #include <cxxkit/tools/checks.hpp>
 
+#include <algorithm>
+
 #if CXXKIT_FEATURE_ENABLE_KERNEL
 
 CXXKIT_BEGIN_NAMESPACE
@@ -88,6 +90,15 @@ void Object::delete_later()
     EventLoop *loop = EventLoop::current();
     CXXKIT_CHECK(loop != nullptr) << "Object::delete_later: no running EventLoop on this thread";
     loop->post([this]() { delete this; });
+}
+
+void Object::post_event(Object *receiver, Event *event)
+{
+    CXXKIT_CHECK(receiver != nullptr && event != nullptr) << "post_event requires receiver/event";
+    // DeferredDelete 拒绝先于 current 检查：owner 语义（DeleteInEventHandler）不可绕过
+    CXXKIT_CHECK(event->type() != Event::Type::kDeferredDelete)
+        << "post_event: use delete_later() for deferred delete (owner semantics)";
+    EventLoop::enqueue_event(receiver, event); // friend 通道：null current = fatal（exec-only 契约）
 }
 
 Object *Object::parent() const

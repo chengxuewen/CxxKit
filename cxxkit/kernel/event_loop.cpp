@@ -80,6 +80,12 @@ EventLoop::~EventLoop()
             fn();
         }
     }
+    // Event 队列排空：剩余 Event 一律 delete 不派发（环已死）；快照 delete 不触 receiver，安全
+    std::deque<EventEntry> entries = d->take_event_queue();
+    for (size_t i = 0; i < entries.size(); ++i)
+    {
+        delete entries[i].mEvent;
+    }
 }
 
 bool EventLoop::is_running() const
@@ -141,20 +147,46 @@ void EventLoop::stop_timer(int timer_id)
 bool EventLoop::process_events(ProcessFlags flags)
 {
     CXXKIT_D(EventLoop);
-    // Drain posted tasks first: swap the whole queue under the lock, run the callbacks outside
-    // it — re-entrant post() from a callback enqueues instead of deadlocking (S10/I4).
+    // Drain posted tasks first: swap-under-lock, run outside the lock (S10/I4). Then the event
+    // queue: pop-under-lock + dispatch outside it (Momus F2).
+    bool had_post = false;
+    bool had_event = false;
+
+    // 排空一：posted tasks —— swap-under-lock、锁外执行；re-entrant post() 入队不互锁（S10/I4）。
     std::deque<std::function<void()>> tasks = d->take_post_queue();
-    if (!tasks.empty())
+    while (!tasks.empty())
     {
-        while (!tasks.empty())
+        std::function<void()> fn = tasks.front();
+        tasks.pop_front();
+        if (fn)
         {
-            std::function<void()> fn = tasks.front();
-            tasks.pop_front();
-            if (fn)
-            {
-                fn();
-            }
+            fn();
         }
+        had_post = true;
+    }
+
+    // 排空二：Event 队列 —— 锁内逐条 pop + 锁外派发（Qt 忠实形态，Momus F2）：派发期间级联析构
+    // 触发的 purge_pending 在锁内从队列本体删掉未派发条目，pop 到即不存在，无快照悬垂窗口。
+    // 派发 = send_event 内部逻辑（filter 链生效）后队列 delete event（所有权释放；receiver
+    // null = 已失效条目，仅删）。
+    for (;;)
+    {
+        EventEntry entry = d->pop_event_entry();
+        if (entry.mEvent == nullptr)
+        {
+            break; // 空队列哨兵
+        }
+        if (entry.mReceiver != nullptr)
+        {
+            Object::send_event(entry.mReceiver, entry.mEvent);
+        }
+        delete entry.mEvent;
+        had_event = true;
+    }
+
+    // 两队列任一非空 = true；都空才落 dispatcher（原三路 return 等价语义）
+    if (had_post || had_event)
+    {
         return true;
     }
     return d->mDispatcher->process_events(flags);
@@ -288,6 +320,29 @@ AbstractEventDispatcher &EventLoop::dispatcher()
 {
     CXXKIT_D(EventLoop);
     return *d->mDispatcher;
+}
+
+void EventLoop::enqueue_event(Object *receiver, Event *event)
+{
+    // 静态函数无 this（Momus F3）：current() 取环 → 经对象指针 loop->d_func() 访问私有
+    EventLoop *loop = EventLoop::current();
+    CXXKIT_CHECK(loop != nullptr) << "enqueue_event: no running EventLoop";
+    EventLoopPrivate *d = loop->d_func();
+    std::lock_guard<std::mutex> lock(d->mEventMutex);
+    EventEntry entry;
+    entry.mReceiver = receiver;
+    entry.mEvent = event;
+    d->mEventQueue.push_back(entry);
+}
+
+void EventLoop::purge_pending(Object *receiver)
+{
+    EventLoop *loop = EventLoop::current();
+    if (loop == nullptr)
+    {
+        return; // null 容忍（无环线程无 pending——防御性 no-op）
+    }
+    loop->d_func()->remove_pending_events(receiver); // EventLoopPrivate 成员，锁内 remove+delete
 }
 
 CXXKIT_END_NAMESPACE

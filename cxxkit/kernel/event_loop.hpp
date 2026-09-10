@@ -136,6 +136,15 @@ public:
 private:
     CXXKIT_DECLARE_PRIVATE(EventLoop)
     CXXKIT_DISABLE_COPY_MOVE(EventLoop)
+
+    // kernel 内部协作：Object::post_event 入队 + ~Object 清 pending（Momus F3：仅此一个 friend）
+    friend class Object;
+
+    /** @brief 唯一入队通道：current() 取环（null = fatal），锁内 push {receiver, event}。 */
+    static void enqueue_event(Object *receiver, Event *event);
+
+    /** @brief ~Object 清 pending 通道：锁内 remove+delete 匹配条目；null 环容忍（无 pending = no-op）。 */
+    static void purge_pending(Object *receiver);
 };
 
 CXXKIT_END_NAMESPACE
