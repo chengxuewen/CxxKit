@@ -282,3 +282,10 @@
 - **解法**: exit 与依赖其前置效果的投递必须**同一闭包串联**（或保证二者同轮：exit 闭包内先做完依赖效果再置位）；测试侧用 post(exit) 收尾而非先 post 后 exit
 - **验证**: tst_object/tst_kernel_event_loop 相关用例：delete_later + post(exit) 同投时对象析构计数必须归零；`grep -n "PIT-43" .agents/memorys/pitfalls.md` 非空
 - **禁止**: 把 exit 当独立任务先投、依赖效果的闭包后投（跨轮断链）；在 exit 之后还期望"再来一轮"的任何投递语义
+
+## PIT-44: 最小化手工 g++ 探针的成本悬崖——-I 相对路径吞半 (2026-09-10)
+- **症状**: T3 RED 期用手工 g++ 编译 4 个 C++11 探针源文件验证 send_event 形态，g++ 10 全部失败；换 build 树产物或绝对路径立过
+- **根因**: g++ 10 对 `-I` 相对路径的搜索行为吞半（成因未查透）；手工拼探针命令行的隐式 include 闭包（inc_cxxkit 生成头 + 传递依赖）远超直觉，每次失败都烧一轮调试
+- **解法**: 重演时**直接用 build 树产物**（CMake 已算好全部 -I/-D），或探针配 `-I$(pwd)/cxxkit` 绝对路径 + 显式拷贝 inc_cxxkit 生成头；探针验证只做语法级（-fsyntax-only），语义级判断交给 build 树编译
+- **验证**: `cd build && cmake --build . --target cxxkit_kernel` 为准；手工探针仅 -fsyntax-only 且必须用绝对 include 路径
+- **禁止**: 在源码树手工拼多文件 g++ 命令行做"快速验证"（相对 -I + 生成头依赖 = 高成本悬崖，4 连败实录见 D34 教训②）

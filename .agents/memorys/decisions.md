@@ -214,12 +214,21 @@ sanitizer（ASAN/LSAN/UBSan）与 coverage 用**独立 build 目录**（build-as
 
 **背景**：D33 留下三个已知限制，其中"父与子不可同时 delete_later"（队列 [delete 父, delete 子] 时父级联已直接 delete 子，残留闭包再 delete = 二次 delete UAF）是纯实现缺口，Qt 靠 ~QObject 清 pending DeferredDelete 天然无此限制。
 
+**四项用户裁定全录**（spec 2026-09-09-event-delivery-design.md §2）：
+- **R1 队列收裸 Event\***（Qt 同款），所有权转移给队列——支持 DeferredDelete 正名化与 removePostedEvents；接收方亡由 ~Object 清队列兜底
+- **R2 DeferredDelete 迁移到 Event 队列**（function 队列版删除）——解父子同投限制；真事件路径可被 filter 链观察（Qt 同款）
+- **R3 filter 链本期做**——团队分析 P1 项（~40 行），非投机泛化
+- **R4 双队列并存**：mPostQueue(function) 不动 + 新 mEventQueue(EventEntry)——post 热路径已验证（79+2 套件 + uv/tcp 全走），改造风险高，独立演进
 **架构**（plan docs/superpowers/plans/2026-09-09-event-delivery-plan.md T3，含 Momus F1/F3 修订）：
 - **delete_later 迁移 = Momus F1 修订形态**：`EventLoop::enqueue_event(this, new DeferredDeleteEvent)` **直推**，绕过 post_event 的 kDeferredDelete 守卫——"唯一合法生产者被唯一通道拒绝"自相矛盾，裁定直推；delete_later 自身保留 current() null fatal（D33 文案），post_event 守卫照旧（用户侧禁投 DeferredDelete 的 API 纪律不变）
 - **send_event 的 kDeferredDelete 守卫顺势摘除**（实现期发现）：process_events 队列派发复用 send_event 内部逻辑（filter 链生效），守卫会让派发路径自杀；kDeferredDelete 到达 send_event 的唯一合法路径就是队列派发本身，用户侧直发已被 post_event 守卫拒绝——send_event 守卫实为死代码且与迁移自相矛盾，摘除 + 注释钉住理由。配套修正既有 RED 测试形态：不用 EXPECT_DEATH 而用 ObserverFilter 观测 + 堆对象死亡证明（见教训④）
 - **~Object 步骤序**：destroying → **EventLoop::purge_pending(this)** → 级联 → 摘链。父析构在锁内从 Event 队列**本体**移除子的未派发条目（含 DeferredDeleteEvent），pop 到即不存在——限制①解除
 - **purge 契约（写入 event_loop.hpp doxygen）**：purge 必须与 pop_event_entry 锁内互斥——派发期间的穿插级联析构从本体移除未派发条目，非快照缓存；null 环容忍（无环线程无 pending = 防御性 no-op）
 - **已知限制（filter 拦截 DeferredDelete）**：filter 返 true 拦下 DeferredDeleteEvent = receiver 永生（队列 delete event 后无重投，Qt 同语义）；Phase 3 可选加固：DeferredDeleteEvent ctor 收敛 friend（禁用户构造即禁拦截）
+- **filter 生命周期弱化契约**（spec §3.5/§7-1）：mFilters 存裸 Object\*，不反查 watched 链（反向注册表 YAGNI）——契约 = **filter 必须比 watched 活得长或自行 remove**（比 Qt 弱，Phase 3 备忘）；filter 内不得 install/remove 自身所在链（Qt 同款约束）；DeferredDelete 事件过 filter 链（R2 语义一致）
+- **双队列顺序语义**：每轮 process_events 内 post 队列先、Event 队列后；两队列间无全局序、跨轮 FIFO 不保证（Qt 同款：posted events 与 posted metacalls 无跨类全局序）；Event 段内重入入队条目同轮即派发（锁内逐条 pop 循环跑到空）
+- **已知限制（Phase 3 备忘）**：跨线程 post_event/send_event = fatal（moveToThread 时重审）；无事件压缩（Qt compress 是显式 API，YAGNI）、无多优先级、无 sendPostedEvents 按接收者过滤；~Object 清 pending 仅当前线程环
+- **提交链全貌**：T1 `e32e06e`（send_event+filter 链+DeferredDeleteEvent）/ T2 `25eb7f3`（post_event+mEventQueue+锁内 pop 派发+enqueue/purge 静态）/ T3 `6c47712`+`06f93fc`（delete_later 迁移+~Object purge 接线+send_event 摘守卫+D34 provenance 修正）；全部用例进 tst_object.cpp（17 用例，81 套件不变）
 
 **spec §4.2 不变量修订（T4 消费）**：原文"~Object 与派发不并发"在单线程级联下即为假（父条目派发中 → 级联析构 → 子/孙 purge 穿插）——真实不变量 = **purge 与 pop 锁内互斥、派发在锁外**；派发中条目已被 pop 出队（局部变量持有），purge 只动队列本体，两者操作集不相交。已落 spec 2026-09-09-event-delivery-design.md §4.2
 
