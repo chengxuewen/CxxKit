@@ -295,7 +295,7 @@ cxxkit 是 OpenCTK（an open cpp toolkit）的成功重构版本 —— 精简�
 ### 2026-09-10 Phase 3 线程亲和落地（D35，T1-T3 SDD 流水线，6852e10..0152ca0）
 
 - [x] **T1 亲和元数据 + move_to_thread**（`6852e10`）：`ObjectPrivate::mThread` + `thread()` 查询 / `Object(ObjectPrivate*)` 委托目标 ctor 内创建即亲和（exec 内构造绑环，环外 null）/ move_to_thread 静态守卫（is_running fatal ×2、同环 no-op、null target 脱离）/ 子树 BFS 先序迁移 + ThreadChangeEvent 直调 event()（非可过滤，不新建事件类）/ 队列条目随迁（take_events_for 逐 receiver 先排空 source 再入 target，无嵌套锁）
-- [x] **T2 跨线程投递路由**（`947e587`）：post_event 从 current() 语义改目标环路由（receiver->thread() 非空投亲和环 + wake_up，null fatal）/ **delete_later 语义演进**（D33 exec-only → 亲和优先 current 回退，三态测试改造保留不回归）/ wake_up 契约升级 thread-safe（FakeDispatcher 补 mutex）/ DeferredDeleteEvent ctor friend class Object（R6，禁直发语言级封锁）
+- [x] **T2 跨线程投递路由**（`947e587`）：post_event 从 current() 语义改目标环路由（receiver->thread() 非空投亲和环 + wake_up，null fatal）/ **delete_later 语义演进**（D33 exec-only → 亲和优先 current 回退，三态测试改造保留不回归）/ wake_up 契约升级 thread-safe（M1 修正：FakeDispatcher 零改动——`mWakeUpCount` 基线已是 `std::atomic`，原文"补 mutex"失实）/ DeferredDeleteEvent ctor friend class Object（R6，禁直发语言级封锁）
 - [x] **T3 filter 反向注册表 + 去重**（`3fb9398`）：mWatching 反向表（filter 亡自动从 watched 摘除，D34 弱化契约解除）/ install 先 remove-then-insert 去重（重装移最新位）/ ~Object 双向自摘（**brief 方向笔误实测挂起修正**——remove_event_filter 以 this 作 receiver 每轮两侧各消一项）
 - [x] **Momus 修订全落**：F3（EventLoop ctor mDPtr.reset 后补设 mThread）/ F4（随迁测试移 T2）/ F4d（FakeDispatcher exec 前必投 exit 闭包）/ F5（迁移期禁并发 post 备案）/ F6（event() 直调裁定为准，spec §4.4 措辞 D35 更正）/ F-M1（~Object 双 purge 去重 `0152ca0`）
 - [x] **测试**：tst_object 20→29 用例（thread 查询/创建即亲和/静态守卫/子树迁移/队列随迁/跨线程 post/反向清理/去重/亲和 delete_later；3 既有用例补 move_to_thread 改造）；**81 套件全绿**；ASAN 定向零诊断
@@ -304,3 +304,12 @@ cxxkit 是 OpenCTK（an open cpp toolkit）的成功重构版本 —— 精简�
 - 裁定/演进全录：decisions.md D35（R1-R6 + delete_later 正式演进 + 双向自摘正确方向）
 - 已知限制：动态迁移 fatal/定时器不迁/无亲和 post fatal/Application 注释态/kDeferredDelete 守卫用户侧不可达/跨线程 filter 生命周期单线程语义
 - 备忘：Phase 4 动态迁移（队列条目失效标记）需求触发再取
+
+### 2026-09-10 终审修复波（fix wave：I1-I3 + M1/M2/M4）
+
+- [x] **I1 delete_later 跨线程 liveness**：enqueue 后补 `loop->wake_up()`（对称 post_event）；真跨线程用例 `delete_later_wakes_affinity_loop_across_threads`（线程 A exec + 本线程投递；判别钉子 = wake counter，RED 0vs0→GREEN）
+- [x] **I3 混合亲和子树随迁**：move_to_thread 随迁改逐对象捕获各自旧环（moved+oldLoops 平行数组，mThread 改写前读），逐对象用自身旧环 take_events_for，旧环==目标环跳过——修复条目搁浅旧环（wrong-loop 派发 + receiver 亡后悬垂 = 确定性 UAF）；用例 `move_to_thread_migrates_from_per_object_old_loops`（RED：Z 派发 true/W false→GREEN）
+- [x] **I2+M2 doxygen 如实化（英文重写）**：post_event/delete_later/install_event_filter 三段（亲和路由+跨线程合法+双向注册表自动清理旧契约删除）；thread()/move_to_thread 补亲和环寿命契约
+- [x] **M1 记录修正**："FakeDispatcher 补 mutex"失实——零改动，mWakeUpCount 基线已 std::atomic（decisions.md D35 + 本文件已更正）
+- [x] **M4 钩子观测**：`move_to_thread_notifies_each_migrated_object`（kThreadChange N 对象 = N 次通知；同环 no-op 零通知；detach 再通知）
+- 验证：主树 UV+QT=ON **81/81** / tst_object 29→32 用例 / ASAN 定向 32/32 零诊断 ×3 轮 / clang-format 干净

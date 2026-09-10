@@ -258,7 +258,7 @@ sanitizer（ASAN/LSAN/UBSan）与 coverage 用**独立 build 目录**（build-as
 - **创建即亲和**：`Object(ObjectPrivate*)` 委托目标 ctor 内 `mThread = EventLoop::current()`——exec 闭包内构造 = 绑定该环；环外构造 = null（current 仅 exec 期间非空，D33 exec-only 的直接推论）。**Momus F3：EventLoop ctor 私有替换后必须补设**——`mDPtr.reset(new EventLoopPrivate(this))` 销毁旧 ObjectPrivate 时带走 mThread，reset 后补 `d_func()->mThread = EventLoop::current()`（否则嵌套环构造的 EventLoop 亲和丢失）
 - **队列条目随迁**：move 时子树 pending EventEntry 从 source 迁 target——`take_events_for(receiver)` 锁内摘出；**逐 receiver 先排空 source 再入 target，两锁不同时持有——spec §4-3 的 lock_two_loops/地址序加锁简化为顺序操作**（静态守卫下两环未运行、单线程调用 move，无并发派发者）；target null 时 delete 事件防泄漏
 - **ThreadChangeEvent 直调 event() 不经 send_event**：非可过滤事件（Qt 同款），迁移调用栈内同步派发；**不新建事件类**（YAGNI，裸 `Event(kThreadChange)`）——**Momus F6 备案**：plan 裁定"event() 直调"与 spec §4.4 "send_event 直发"表述不一致，以 plan 为准，spec 措辞在本条更正
-- **wake_up thread-safe 契约升级**：AbstractEventDispatcher::wake_up doxygen 升"must be thread-safe"（跨线程 post 后 wake 目标环）；uv_async_send/QMetaObject::invokeMethod 天然满足；FakeDispatcher 补 mutex（测试基建）
+- **wake_up thread-safe 契约升级**：AbstractEventDispatcher::wake_up doxygen 升"must be thread-safe"（跨线程 post 后 wake 目标环）；uv_async_send/QMetaObject::invokeMethod 天然满足；FakeDispatcher 无需改动（M1 修正：`mWakeUpCount` 基线已是 `std::atomic<int>`，跨线程计数天然安全——原文"补 mutex"失实，T2 实际零改动）
 
 **Momus 修订实录**（plan 执行前/中修正）：
 - **F2 filter 双向自摘**：~Object 在 purge 之后、级联之前双向清理——filter 亡 → 遍历 `mWatching` 逐个摘除自身；watched 亡 → 遍历 `mFilters` 逐个 `remove_event_filter`。**brief 原方向笔误（`d->mFilters.back()->remove_event_filter(this)` 方向反了）实测挂起**：该调用只动 filter 侧的表、永不收缩 `this->mFilters`，while 循环每轮零消耗不终止；正确形态 `this->remove_event_filter(d->mFilters.back())`（this 作 receiver，每轮两侧各消一项）。remove_event_filter 内部双向摘除保证任一方向 while 每轮恰好消一项，终态空集
@@ -277,3 +277,10 @@ sanitizer（ASAN/LSAN/UBSan）与 coverage 用**独立 build 目录**（build-as
 **提交链**：T1 `6852e10`（thread()/move_to_thread 静态迁移/创建即绑定/队列随迁原语）/ T2 `947e587`（post_event 目标环路由 + delete_later 演进 + wake_up 契约 + ctor friend）/ T3 `3fb9398`（filter 反向注册表 + install 去重——D34 弱化契约解除）/ review 修复 `0152ca0`（~Object 双 purge 去重）。tst_object 20→29 用例（+9：thread 查询/创建即亲和/静态守卫 fatal/子树递归迁移/队列随迁/跨线程 post/反向清理/去重/F4d 亲和 delete_later——含既有用例 F1 改造 3 处补 move_to_thread + 1 重命名正名）。
 
 **验证**：主树 **81/81 套件全绿**；tst_object 29/29（含 ASAN 定向零诊断——destroyed_filter 悬垂 vtable 用例 plain build 走运、ASAN 才是真探测器）；check.sh 全链见本任务（T4）报告。
+
+**终审修正（2026-09-10，fix wave I1-I3/M1/M4）**：
+- **I1（补全 D35 T2 跨线程路由）**：`delete_later()` enqueue 后补 `loop->wake_up()`（对称 post_event）——亲和环阻塞在 dispatcher wait 时跨线程投递的唯一 liveness 信号；同线程 wake 幂等无害。判别用例 `delete_later_wakes_affinity_loop_across_threads`（wake counter RED 0vs0→GREEN）
+- **I3（取代上文"队列条目随迁…逐 receiver 先排空 source 再入 target"表述）**：随迁改为 **BFS walk 逐对象捕获各自旧环**（`moved`+`oldLoops` 平行数组，mThread 改写前读旧值），随迁段对每对象用其自身旧环 `take_events_for`；旧环==目标环跳过（条目原位不动，免无谓重排）；target null 时 delete。修复混合亲和子树（child 在 Z、parent 迁 W）条目搁浅 Z = wrong-loop 派发 + receiver 亡后 Z 队列悬垂 = 确定性 UAF。用例 `move_to_thread_migrates_from_per_object_old_loops`（RED：Z 派发 true/W false→GREEN）
+- **I2+M2（doxygen 如实化，英文重写）**：post_event（亲和环路由+跨线程合法+wake）/ delete_later（亲和优先跨线程合法+current 回退+双缺 fatal）/ install_event_filter（删"filter 须比 watched 长寿"旧契约——T3 双向自摘已解除）；thread()/move_to_thread 补亲和环寿命契约（dangling-loop = UAF）
+- **M4**：补 `move_to_thread_notifies_each_migrated_object`（派生覆写 event() 计 kThreadChange：N 对象迁移 = N 次通知；同环 no-op 零通知；detach 再通知）
+- **验证**：主树 UV+QT=ON **81/81** / tst_object 32/32 / ASAN 定向 32/32 零诊断 ×3 轮
