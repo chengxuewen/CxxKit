@@ -85,8 +85,6 @@ Object::~Object()
     // T2 double purge: affinity loop + caller-thread current() residual (same-loop second purge is a harmless no-op).
     EventLoop::purge_pending(d->mThread, this);
     EventLoop::purge_pending(EventLoop::current(), this);
-    EventLoop::purge_pending(d->mThread, this);
-    EventLoop::purge_pending(EventLoop::current(), this);
     // Bidirectional filter self-detach (Momus F2): (a) I die as a FILTER — remove myself from
     // every watched object's chain; (b) I die as a WATCHED — detach my installed filters so a
     // surviving filter's later teardown never dereferences me (UAF without this).
