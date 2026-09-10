@@ -469,6 +469,36 @@ TEST(Object, remove_event_filter_stops_interception)
     EXPECT_EQ(b.count, 1);
 }
 
+TEST(Object, destroyed_filter_is_auto_removed_from_watched)
+{
+    Interceptor::order.clear(); // isolate from prior filter tests' residue
+    RecordingObject watched;
+    {
+        Interceptor filter('x'); // records into Interceptor::order
+        watched.install_event_filter(&filter);
+    } // filter dies here — reverse registry auto-detaches it (D34 weak contract lifted)
+    cxxkit::Event event(cxxkit::Event::Type::kUser);
+    event.accept();
+    EXPECT_TRUE(cxxkit::Object::send_event(&watched, &event)); // no dangling call, delivered
+    EXPECT_EQ(Interceptor::order.size(), 0u);                  // dead filter never invoked
+}
+
+TEST(Object, reinstalled_filter_moves_to_front)
+{
+    Interceptor a('a');
+    Interceptor b('b');
+    RecordingObject watched;
+    watched.install_event_filter(&a);
+    watched.install_event_filter(&b); // front: b
+    watched.install_event_filter(&a); // reinstall a — moves to front (R5 dedup)
+    Interceptor::order.clear();
+    cxxkit::Event event(cxxkit::Event::Type::kUser);
+    cxxkit::Object::send_event(&watched, &event);
+    ASSERT_EQ(Interceptor::order.size(), 2u);
+    EXPECT_EQ(Interceptor::order[0], 'a'); // reinstalled a fires FIRST now
+    EXPECT_EQ(Interceptor::order[1], 'b');
+}
+
 
 TEST(Object, post_event_delivers_on_process_events)
 {
@@ -567,14 +597,12 @@ TEST(Object, post_event_without_affinity_fails)
     delete event; // ownership not transferred on the fatal path
 }
 
-TEST(Object, post_event_rejects_deferred_delete)
+TEST(Object, delete_later_fails_without_affinity_and_current)
 {
-    // Guard-order contract: the DeferredDelete rejection (owner semantics — only delete_later may
-    // post it) precedes the affinity check; the guard fires even when affinity IS present.
-    // R6 closure: DeferredDeleteEvent's ctor is now private (friend Object) — the user side can no
-    // longer stage one directly. The type-rejection path stays observable through death of a
-    // delete_later called with BOTH affinity and current() absent — same fatal family the guard
-    // order belongs to. (Death-test child exits; no leak accounting needed.)
+    // Owner semantics: only delete_later may enqueue a DeferredDeleteEvent (R6 — its ctor is
+    // private, friend Object), so post_event's type guard is unreachable from user code. What
+    // this test actually pins is delete_later's dual-absence fatal: no affinity and no running
+    // EventLoop on the calling thread. (Death-test child exits; no leak accounting needed.)
     CountedObject target; // no affinity, no current — the only reachable fatal on this path
     EXPECT_DEATH(target.delete_later(), "");
 }

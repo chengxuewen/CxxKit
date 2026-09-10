@@ -85,6 +85,21 @@ Object::~Object()
     // T2 double purge: affinity loop + caller-thread current() residual (same-loop second purge is a harmless no-op).
     EventLoop::purge_pending(d->mThread, this);
     EventLoop::purge_pending(EventLoop::current(), this);
+    EventLoop::purge_pending(d->mThread, this);
+    EventLoop::purge_pending(EventLoop::current(), this);
+    // Bidirectional filter self-detach (Momus F2): (a) I die as a FILTER — remove myself from
+    // every watched object's chain; (b) I die as a WATCHED — detach my installed filters so a
+    // surviving filter's later teardown never dereferences me (UAF without this).
+    // remove_event_filter detaches both sides per call, so each loop consumes exactly one entry
+    // per iteration — terminates with both registries empty.
+    while (!d->mWatching.empty())
+    {
+        d->mWatching.back()->remove_event_filter(this);
+    }
+    while (!d->mFilters.empty())
+    {
+        this->remove_event_filter(d->mFilters.back());
+    }
     // 级联析构：子 dtor 会通过 set_parent(nullptr)/detach 自摘链，所以 while(!empty) 安全。
     while (!d->mChildren.empty())
     {
@@ -119,7 +134,8 @@ void Object::post_event(Object *receiver, Event *event)
 {
     CXXKIT_CHECK(receiver != nullptr && event != nullptr) << "post_event requires receiver/event";
     // DeferredDelete rejection precedes the affinity check: owner semantics (DeleteInEventHandler)
-    // must not be bypassable
+    // must not be bypassable. Unreachable from user code since R6 (private ctor); kept as
+    // internal-misuse guard.
     CXXKIT_CHECK(event->type() != Event::Type::kDeferredDelete)
         << "post_event: use delete_later() for deferred delete (owner semantics)";
     EventLoop *loop = receiver->d_func()->mThread; // target-affinity routing (T2/D35): the receiver's loop
@@ -321,7 +337,9 @@ void Object::install_event_filter(Object *filter)
 {
     CXXKIT_CHECK(filter != nullptr) << "install_event_filter requires a filter";
     CXXKIT_CHECK(filter != this) << "install_event_filter: self-filtering is not allowed";
+    this->remove_event_filter(filter); // R5 dedup: reinstall moves the filter to the front (newest)
     this->d_func()->mFilters.push_back(filter);
+    filter->d_func()->mWatching.push_back(this); // reverse registry
 }
 
 void Object::remove_event_filter(Object *filter)
@@ -329,6 +347,11 @@ void Object::remove_event_filter(Object *filter)
     CXXKIT_D(Object);
     std::vector<Object *> &filters = d->mFilters;
     filters.erase(std::remove(filters.begin(), filters.end(), filter), filters.end());
+    if (filter != nullptr)
+    {
+        std::vector<Object *> &watching = filter->d_func()->mWatching;
+        watching.erase(std::remove(watching.begin(), watching.end(), this), watching.end());
+    }
 }
 
 bool Object::event_filter(Object *watched, Event *event)

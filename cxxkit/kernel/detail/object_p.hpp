@@ -48,8 +48,9 @@ public:
 
     Object *mParent{nullptr};
     Children mChildren;
-    std::vector<Object *> mFilters; // head-insert order (back() = newest, filtered first)
-    EventLoop *mThread{nullptr};    // affinity: loop owning this object (null = detached)
+    std::vector<Object *> mFilters;  // head-insert order (back() = newest, filtered first)
+    std::vector<Object *> mWatching; // reverse registry: filters installed ON other objects by me
+    EventLoop *mThread{nullptr};     // affinity: loop owning this object (null = detached)
 
 protected:
     CXXKIT_DEFINE_PPTR(Object)
