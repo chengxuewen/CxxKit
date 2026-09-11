@@ -142,7 +142,7 @@ private:
 
     /** @brief The single enqueue channel: the caller passes the target loop (null = fatal);
      *  pushes {receiver, event} under the lock.
-     *  T2: explicit loop parameter — post_event routes by receiver->thread() affinity,
+     *  T2: explicit loop parameter — post_event routes by receiver->loop() affinity,
      *  decoupled from the calling thread.
      *  C2 compression: a DeferredDeleteEvent whose receiver already has one queued is
      *  deleted instead of enqueued (scan + decision both under the lock).

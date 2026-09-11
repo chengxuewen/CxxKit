@@ -306,3 +306,26 @@ sanitizer（ASAN/LSAN/UBSan）与 coverage 用**独立 build 目录**（build-as
 **Momus/审查修订实录**：批1 复审 2 should 已修（register_event_type hint=-1 契约句 + UserData dtor-order 契约）；T4 destructor_kills 测试 ASAN UAF = **driver 拷贝 tick 触发的设计性 UB**——测试改诚实断言（注册解除 + 零派发），lambda 恒真 self==nullptr 分支清除（69e2713）。
 
 **已知限制备案**：C3 线性插入热点上限；timer TimerType 未纳入（C5 驳回）；Application 无 spontaneous 源/removePostedEvents(type) 过载；ELT 一次性 start（重启未承诺）；mActiveTimers 无锁（亲和线程 CHECK 纪律守卫）。
+
+## D37: API 词汇族换血——move_to_loop/loop()/kLoopChange + ELT 隐式转换（2026-09-11）
+
+**动因**：亲和模型真实语义 = "事件将在这个环上派发"，非"线程"。`EventLoop::current()` 是 thread_local 的**环**指针；两环可同跑一线程（嵌套 exec）；环可无线程（外部 uv_loop 自驱动）；ELT 只是宿主装饰之一。旧名 `move_to_thread(EventLoop*)` / `thread(): EventLoop*` 是一族假词（成员叫 thread 返回 loop）。四轮架构讨论收束（用户终裁方向确认）。
+
+**外部先例**（librarian 调研）：Qt `moveToThread(QThread*)` 名实相符**仅因** QThread 融合线程+循环宿主双身份；cxxkit 拆开两者后强套 Qt 词汇必名实不符。GLib 五库合并史证明"对象树+线程设施分库+对象亲和 API"是无人区组合。
+
+**新旧对照**（后续考古映射表——**历史文档中 move_to_thread/thread()/kThreadChange 即今之 move_to_loop/loop()/kLoopChange**）：
+
+| 旧名 | 新名 | 备注 |
+|---|---|---|
+| `Object::move_to_thread(EventLoop*)` | `Object::move_to_loop(EventLoop*)` | 语义不变 |
+| `Object::thread()` | `Object::loop()` | 返回"派发本对象事件的环"（null=无亲和） |
+| `Event::Type::kThreadChange` | `Event::Type::kLoopChange` | **数值 22 不变**（Qt 数值锚点），仅枚举名换 |
+| — | `EventLoopThread::operator EventLoop*()` | 新增隐式转换，`obj.move_to_loop(elt)` 直呼 |
+
+**不换血**：`ObjectPrivate::mThread` 成员名（私有实现细节，改名无 API 价值）；三处 CHECK 消息保留 thread 措辞（start_timer/kill_timer "must be called on the object's affinity thread"、delete_later "no running EventLoop on this thread"——约束的是调用**线程**，EventLoop::current() 是 thread_local，改成 loop 反而失实）；`cxxkit/qt` 的 thread() 是 Qt 自有 API（QObject::thread() 返回 QThread*）绝不可改；`EventLoopThread` 类名 / `ELT::loop()` / `Application::loop()` 方法名；`.agents/memorys` 与 `docs/superpowers` 历史叙事（D33-D36 等）保留原文。
+
+**ELT 转换符裁定（实现期修正）**：plan 原文 `operator EventLoop &()`——实测 **C++ 重载决议不执行 引用转换结果→指针形参 的 lvalue-to-rvalue + 函数形参初始化链**（`move_to_loop(elt)` 需 `EventLoop*`，`operator EventLoop&` 产物是左值，还差取址一步，隐式转换序列不允许中途插入取址符）→ `EventLoop*` 形参不匹配，编译失败实证（g++ 手工探针）。改为 `operator EventLoop *() const { return mLoop.get(); }`（指针转换一步到位）；`&`/`*` 双转换符并存无歧义（`move_to_loop(elt)` 选 `EventLoop*` 精确匹配，`EventLoop& r = elt` 选引用符），最终落 `*` 单符（YAGNI，需求触发再加引用形态）。
+
+**验证**：主树 83/83（107s）/ ASAN 83/83（108s，lsan.supp 跑法）/ clang-format 干净 / `grep move_to_thread|kThreadChange` cxxkit+tests+examples 清零 / `.thread()|->thread()` 非 qt 清零。tst_event_loop_thread +1 用例 `move_to_loop_accepts_elt_implicit_conversion`（隐式转换编译 + 亲和查询钉子）。
+
+**已知限制**：无。kLoopChange 事件语义注释校准为 "the object's dispatch loop has changed"。

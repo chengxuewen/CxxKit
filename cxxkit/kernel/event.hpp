@@ -44,7 +44,7 @@ public:
         kQuit = 1,  // quit event
         kTimer = 2, // timer event
 
-        kThreadChange = 22,   // object has changed threads
+        kLoopChange = 22,     // the object's dispatch loop has changed
         kDeferredDelete = 52, // deferred delete event
 
         kParentChange = 21,         // widget has been reparented

@@ -43,7 +43,7 @@ CXXKIT_BEGIN_NAMESPACE
  *
  * @code
  * cxxkit::EventLoopThread elt(&cxxkit::make_uv_dispatcher);
- * worker.move_to_thread(&elt.loop()); // static migration: the loop is not running yet
+ * worker.move_to_loop(elt); // static migration: the loop is not running yet
  * elt.start();
  * @endcode
  *
@@ -74,6 +74,10 @@ public:
     /** @brief The loop running on the dedicated thread (constructed in the ctor; never null).
      *  Valid for affinity binding immediately — before start(). */
     EventLoop &loop();
+
+    /** @brief Implicit conversion to the owned loop's address — enables `obj.move_to_loop(elt)`.
+     *  Lifetime: the ELT must outlive objects bound to its loop. */
+    operator EventLoop *() const { return mLoop.get(); }
 
     /** @brief Starts the worker thread (it runs loop().exec()). Double start is fatal
      *  (CXXKIT_CHECK). */

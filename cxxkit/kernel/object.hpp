@@ -79,7 +79,7 @@ public:
     /** @brief Returns the object name (empty by default). @since 0.2 */
     const std::string &object_name() const;
 
-    /** @brief Sets the object name. The name follows the object — move_to_thread does not
+    /** @brief Sets the object name. The name follows the object — move_to_loop does not
      *  affect it. @since 0.2 */
     void set_object_name(std::string name);
 
@@ -134,13 +134,12 @@ public:
         return result;
     }
 
-    /** @brief Returns the loop this object is affined to (null = no affinity).
-     *  Lifetime contract: the affinity loop must outlive objects bound to it — purge /
-     *  delete_later / post_event dereference it (dangling loop = UAF). @since 0.2 */
-    EventLoop *thread() const;
+    /** @brief Returns the loop dispatching this object's events (null = no affinity).
+     *  Lifetime: the affinity loop must outlive objects bound to it. @since 0.2 */
+    EventLoop *loop() const;
 
     /**
-     * @brief Static migration: moves this object and its whole subtree to @p target.
+     * @brief Static migration: moves this object and its whole subtree to @p target loop.
      *
      * Guards: same-loop is a no-op; source loop running or target loop running is fatal
      * (CXXKIT_CHECK). Null target detaches affinity (pending events are dropped and
@@ -154,7 +153,7 @@ public:
      *       (dangling-loop dereference in purge/delete_later/post_event otherwise).
      * @since 0.2
      */
-    void move_to_thread(EventLoop *target);
+    void move_to_loop(EventLoop *target);
 
     /** @brief Starts a timer on this object's affinity loop; every tick synchronously
      *  delivers a TimerEvent carrying the returned id to this object (the filter chain
@@ -165,8 +164,8 @@ public:
      *  so event priority and DeferredDelete compression do not apply, and the tick runs
      *  re-entrantly inside the dispatcher callback.
      *
-     *  Thread constraints: requires affinity (thread() != null, fatal otherwise) and must
-     *  be called ON the affinity thread (EventLoop::current() == thread(), fatal
+     *  Thread constraints: requires affinity (loop() != null, fatal otherwise) and must
+     *  be called ON the affinity thread (EventLoop::current() == loop(), fatal
      *  otherwise) — dispatcher timer registration is loop-thread-only (uv constraint).
      *
      *  Ids are unique and non-zero (EventLoop::start_timer contract); repeat=false fires
@@ -177,7 +176,7 @@ public:
      *  on the affinity thread. Destroying the object OFF its affinity thread — or before
      *  killing its timers — leaves the dispatcher-side timer armed so it fires into a dead
      *  object (UAF): the caller must destroy on the affinity thread or kill_timer() every
-     *  id first. Timers are NOT migrated by move_to_thread (an id stays registered on the
+     *  id first. Timers are NOT migrated by move_to_loop (an id stays registered on the
      *  loop it was started on).
      *  @return the timer id (never 0).
      *  @since 0.2 */
@@ -196,7 +195,7 @@ public:
 
     /**
      * @brief Asynchronous delivery: routes @p event to the receiver's AFFINITY loop
-     *        (receiver->thread()); dispatched on that loop's next drain.
+     *        (receiver->loop()); dispatched on that loop's next drain.
      *
      * Ownership transfers to the queue: the event is deleted after dispatch (send_event
      * internals — the filter chain applies); undelivered entries are deleted by the
@@ -204,7 +203,7 @@ public:
      * is legal: the enqueue wakes the target loop (thread-safe dispatcher contract).
      * Fatal (CXXKIT_CHECK): receiver/event null; kDeferredDelete (owner semantics — only
      * delete_later may enqueue it); receiver has no thread affinity (construct it inside
-     * a loop's exec or move_to_thread it first).
+     * a loop's exec or move_to_loop it first).
      * @param priority Dispatch priority: larger dispatches first; equal priority preserves
      *        FIFO order; default 0 matches historical behavior.
      * @since 0.2
@@ -281,7 +280,7 @@ public:
     /**
      * @brief Requests deletion of this on an EventLoop's next drain (Qt deleteLater).
      *
-     * Loop selection: affinity-first (thread()) — CROSS-THREAD LEGAL: the affinity loop
+     * Loop selection: affinity-first (loop()) — CROSS-THREAD LEGAL: the affinity loop
      * may be exec'ing on another thread; the enqueue wakes it so a blocked drain
      * re-checks its queues. Without affinity, falls back to EventLoop::current() on the
      * calling thread; both absent is fatal (CXXKIT_CHECK).

@@ -37,6 +37,7 @@
 using cxxkit::EventLoop;
 using cxxkit::EventLoopThread;
 using cxxkit::FakeDispatcher;
+using cxxkit::Object;
 
 namespace
 {
@@ -102,7 +103,7 @@ TEST(EventLoopThread, delete_later_cross_thread_deletes_on_worker)
     // Affinity binding BEFORE start (the documented usage): the static-migration
     // contract (D35) holds because the loop is not running yet.
     DeleteProbe *victim = new DeleteProbe;
-    victim->move_to_thread(&elt.loop());
+    victim->move_to_loop(elt);
 
     elt.start();
     victim->delete_later(); // cross-thread: must wake the loop and delete on the worker
@@ -112,6 +113,17 @@ TEST(EventLoopThread, delete_later_cross_thread_deletes_on_worker)
     EXPECT_NE(DeleteProbe::deleting_thread.load(), main_thread); // NOT on the main thread
 
     elt.stop();
+}
+
+TEST(EventLoopThread, move_to_loop_accepts_elt_implicit_conversion)
+{
+    // `obj.move_to_loop(elt)` compiles via EventLoopThread's implicit conversion to
+    // EventLoop& — the affinity query confirms the binding took.
+    EventLoopThread elt(&make_fake_dispatcher);
+    Object obj;
+    obj.move_to_loop(elt);
+    EXPECT_EQ(obj.loop(), &elt.loop());
+    obj.move_to_loop(nullptr); // detach
 }
 
 TEST(EventLoopThread, double_start_fails)

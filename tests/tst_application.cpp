@@ -84,7 +84,7 @@ public:
         CXXKIT_UNUSED(watched);
         CXXKIT_UNUSED(event);
         ++calls;
-        return true; // swallow user events; other types pass through (kThreadChange etc.)
+        return true; // swallow user events; other types pass through (kLoopChange etc.)
     }
 };
 
@@ -134,7 +134,7 @@ TEST(Application, notify_override_observes_posted_events)
     CountingApp app(&fake_factory);
     RecordingTarget target;
     cxxkit::EventLoop *loop = app.loop();
-    target.move_to_thread(loop);
+    target.move_to_loop(loop);
 
     loop->post(
         [&]
@@ -160,8 +160,8 @@ TEST(Application, global_filter_on_app_intercepts_any_receiver)
     RecordingTarget a;
     RecordingTarget b;
     cxxkit::EventLoop *loop = app.loop();
-    a.move_to_thread(loop);
-    b.move_to_thread(loop);
+    a.move_to_loop(loop);
+    b.move_to_loop(loop);
 
     loop->post(
         [&]
@@ -176,7 +176,7 @@ TEST(Application, global_filter_on_app_intercepts_any_receiver)
     EXPECT_EQ(global_filter.calls, 2); // one per queued kUser event
     EXPECT_TRUE(a.events.empty());
     EXPECT_TRUE(b.events.empty());
-    EXPECT_EQ(a.event_calls, 1); // only kThreadChange (direct, pre-filter-install)
+    EXPECT_EQ(a.event_calls, 1); // only kLoopChange (direct, pre-filter-install)
     EXPECT_EQ(b.event_calls, 1);
 }
 
@@ -190,7 +190,7 @@ TEST(Application, app_filter_runs_before_receiver_filter)
     RecordingTarget target;
     target.install_event_filter(&receiver_filter);
     cxxkit::EventLoop *loop = app.loop();
-    target.move_to_thread(loop);
+    target.move_to_loop(loop);
 
     loop->post(
         [&]
@@ -222,7 +222,7 @@ TEST(Application, queue_dispatch_funneled_exactly_once_per_event)
     CountingApp app(&fake_factory);
     RecordingTarget target;
     cxxkit::EventLoop *loop = app.loop();
-    target.move_to_thread(loop);
+    target.move_to_loop(loop);
 
     loop->post(
         [&]
@@ -234,8 +234,8 @@ TEST(Application, queue_dispatch_funneled_exactly_once_per_event)
     EXPECT_EQ(app.exec(), 0);
 
     EXPECT_EQ(app.notify_calls, 2);      // one funnel pass per queued event
-    ASSERT_EQ(target.event_calls, 3);    // 2 queued kUser + 1 kThreadChange (direct event()
-    EXPECT_EQ(target.events.size(), 2u); // during move_to_thread — predates the funnel)
+    ASSERT_EQ(target.event_calls, 3);    // 2 queued kUser + 1 kLoopChange (direct event()
+    EXPECT_EQ(target.events.size(), 2u); // during move_to_loop — predates the funnel)
     EXPECT_EQ(target.events[0], cxxkit::Event::Type::kUser);
     EXPECT_EQ(target.events[1], cxxkit::Event::Type::kUser);
 }

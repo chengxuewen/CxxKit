@@ -137,7 +137,7 @@ int Object::start_timer(uint64_t interval_ms, bool repeat)
     CXXKIT_D(Object);
     EventLoop *loop = d->mThread;
     CXXKIT_CHECK(loop != nullptr)
-        << "Object::start_timer: no affinity — create inside a loop's exec or move_to_thread first";
+        << "Object::start_timer: no affinity — create inside a loop's exec or move_to_loop first";
     // Dispatcher timer registration is loop-thread-only (uv constraint): the call must run
     // ON the affinity thread. Composite condition parenthesized whole (PIT-45).
     CXXKIT_CHECK((EventLoop::current() == loop))
@@ -214,7 +214,7 @@ void Object::post_event(Object *receiver, Event *event, int priority)
         << "post_event: use delete_later() for deferred delete (owner semantics)";
     EventLoop *loop = receiver->d_func()->mThread; // target-affinity routing (T2/D35): the receiver's loop
     CXXKIT_CHECK(loop != nullptr)
-        << "post_event: receiver has no thread affinity — create it inside a loop's exec or move_to_thread";
+        << "post_event: receiver has no thread affinity — create it inside a loop's exec or move_to_loop";
     EventLoop::enqueue_event(loop, receiver, event, priority);
     loop->wake_up(); // cross-thread wake (thread-safe dispatcher contract)
 }
@@ -277,13 +277,13 @@ void Object::set_parent(Object *parent)
         parent->event(&added);
     }
 }
-EventLoop *Object::thread() const
+EventLoop *Object::loop() const
 {
     CXXKIT_D(const Object);
     return d->mThread;
 }
 
-void Object::move_to_thread(EventLoop *target)
+void Object::move_to_loop(EventLoop *target)
 {
     CXXKIT_D(Object);
     EventLoop *source = d->mThread;
@@ -291,8 +291,8 @@ void Object::move_to_thread(EventLoop *target)
     {
         return; // same-loop no-op (Qt-tolerant shape)
     }
-    CXXKIT_CHECK((source == nullptr) || (!source->is_running())) << "move_to_thread: source loop is running";
-    CXXKIT_CHECK((target == nullptr) || (!target->is_running())) << "move_to_thread: target loop is running";
+    CXXKIT_CHECK((source == nullptr) || (!source->is_running())) << "move_to_loop: source loop is running";
+    CXXKIT_CHECK((target == nullptr) || (!target->is_running())) << "move_to_loop: target loop is running";
 
     // Subtree pre-order walk: collect all migrated objects (self first) together with each
     // object's OWN pre-migration affinity (I3: mixed-affinity subtree — a child may sit on
@@ -316,7 +316,7 @@ void Object::move_to_thread(EventLoop *target)
         }
     }
     // Per-object migrate step (member scope so protected d_func() is accessible):
-    // relink affinity, then notify via a plain kThreadChange event. Direct event() call —
+    // relink affinity, then notify via a plain kLoopChange event. Direct event() call —
     // the filter chain is NOT applied (Qt-faithful: QEvent::ThreadChange goes straight to
     // the handler, it is not a filterable event).
     struct Migrator
@@ -324,7 +324,7 @@ void Object::move_to_thread(EventLoop *target)
         static void migrate(Object *obj, EventLoop *targetLoop)
         {
             obj->d_func()->mThread = targetLoop;
-            Event change(Event::Type::kThreadChange);
+            Event change(Event::Type::kLoopChange);
             obj->event(&change);
         }
     };
@@ -459,9 +459,9 @@ bool Object::event(Event *event)
             delete this;
             return true;
         }
-        case Event::Type::kThreadChange:
+        case Event::Type::kLoopChange:
         {
-            // Migration notification: affinity already updated by move_to_thread.
+            // Migration notification: affinity already updated by move_to_loop.
             // Deliberate no-op hook — derived classes may override event() to react.
             break;
         }

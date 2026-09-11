@@ -19,7 +19,7 @@ Organized abseil-style: **directory = sublibrary = CMake target**, pick only wha
 | `cxxkit::units` | compiled | data_size, data_rate, frequency, time_delta, timestamp |
 | `cxxkit::time` | compiled | date_time, elapsed_timer |
 | `cxxkit::kernel` | compiled | object (name/find_child/user_data/timers/events/priority), event_loop, signals, application (notify funnel, global filters, main loop) |
-| `cxxkit::thread` | compiled | thread_pool, task_queue, event_loop_thread (own-thread EventLoop for `move_to_thread(&elt.loop())`), future, semaphore |
+| `cxxkit::thread` | compiled | thread_pool, task_queue, event_loop_thread (own-thread EventLoop for `move_to_loop(elt)`), future, semaphore |
 | `cxxkit::text` | compiled | string, base64, bit_buffer, ascii, string_builder, string_utils, str_split, crc32, format, string_view |
 | `cxxkit::tools` | compiled | logging, random, assert, clock, status, error, metrics, filesystem, optional, expected, variant |
 | `cxxkit::network` | compiled | http (cpr backend) |

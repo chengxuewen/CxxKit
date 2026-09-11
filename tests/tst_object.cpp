@@ -511,7 +511,7 @@ TEST(Object, post_event_delivers_on_process_events)
 {
     cxxkit::EventLoop loop(std::unique_ptr<cxxkit::AbstractEventDispatcher>(new FakeDispatcher));
     RecordingObject obj;
-    obj.move_to_thread(&loop); // F1: affinity routing requires a target loop (static phase — loop idle)
+    obj.move_to_loop(&loop); // F1: affinity routing requires a target loop (static phase — loop idle)
     DeletedEvent::alive = 0;
     bool delivered = false;
 
@@ -546,7 +546,7 @@ TEST(Object, post_event_fifo_order_within_one_drain)
     // post first then event — re-entrant enqueue visible same-round, PIT-43 anti-chain-break).
     cxxkit::EventLoop loop(std::unique_ptr<cxxkit::AbstractEventDispatcher>(new FakeDispatcher));
     RecordingObject obj;
-    obj.move_to_thread(&loop); // F1: affinity routing requires a target loop (static phase — both idle)
+    obj.move_to_loop(&loop); // F1: affinity routing requires a target loop (static phase — both idle)
     DeletedEvent::alive = 0;
 
     loop.post(
@@ -583,7 +583,7 @@ TEST(Object, post_event_respects_filter_chain)
     Interceptor filter;
     RecordingObject watched;
     watched.install_event_filter(&filter);
-    watched.move_to_thread(&loop); // F1: affinity routing requires a target loop (static phase — loop idle)
+    watched.move_to_loop(&loop); // F1: affinity routing requires a target loop (static phase — loop idle)
 
     loop.post(
         [&]
@@ -621,18 +621,18 @@ TEST(Object, thread_binds_to_creation_loop)
     FakeDispatcher *dispatcher = new FakeDispatcher;
     cxxkit::EventLoop loop((std::unique_ptr<cxxkit::AbstractEventDispatcher>(dispatcher)));
     RecordingObject outside; // constructed outside exec -> current() null -> thread() == nullptr
-    EXPECT_EQ(outside.thread(), nullptr);
+    EXPECT_EQ(outside.loop(), nullptr);
     loop.post(
         [&loop]
         {
             RecordingObject inside; // constructed inside exec -> current() == &loop
-            EXPECT_EQ(inside.thread(), &loop);
+            EXPECT_EQ(inside.loop(), &loop);
             loop.exit(0);
         });
     EXPECT_EQ(loop.exec(), 0);
 }
 
-TEST(Object, move_to_thread_relinks_subtree)
+TEST(Object, move_to_loop_relinks_subtree)
 {
     FakeDispatcher *d1 = new FakeDispatcher;
     FakeDispatcher *d2 = new FakeDispatcher;
@@ -641,29 +641,29 @@ TEST(Object, move_to_thread_relinks_subtree)
     // Two loops, neither running. Objects created outside exec (thread() == null).
     RecordingObject parent;
     RecordingObject *child = new RecordingObject(&parent);
-    EXPECT_EQ(parent.thread(), nullptr);
+    EXPECT_EQ(parent.loop(), nullptr);
 
     // Migrate to loop2 (source affinity is null — allowed).
-    parent.move_to_thread(&loop2);
-    EXPECT_EQ(parent.thread(), &loop2);
-    EXPECT_EQ(child->thread(), &loop2); // subtree migrated
+    parent.move_to_loop(&loop2);
+    EXPECT_EQ(parent.loop(), &loop2);
+    EXPECT_EQ(child->loop(), &loop2); // subtree migrated
 
     // Same-loop migration is a no-op.
-    parent.move_to_thread(&loop2);
-    EXPECT_EQ(parent.thread(), &loop2);
+    parent.move_to_loop(&loop2);
+    EXPECT_EQ(parent.loop(), &loop2);
 
     // Detach (null target) is allowed.
-    parent.move_to_thread(nullptr);
-    EXPECT_EQ(parent.thread(), nullptr);
-    EXPECT_EQ(child->thread(), nullptr);
+    parent.move_to_loop(nullptr);
+    EXPECT_EQ(parent.loop(), nullptr);
+    EXPECT_EQ(child->loop(), nullptr);
 
 
-    // Pending-event migration covered by move_to_thread_migrates_pending_events_cross_loop (T2).
+    // Pending-event migration covered by move_to_loop_migrates_pending_events_cross_loop (T2).
 }
 
 // Fatal path: the source loop runs exec while its subtree object migrates away.
 // EXPECT_DEATH (empty matcher, repo convention) observes the logging-owned fatal abort.
-TEST(ObjectDeathTest, move_to_thread_fails_when_source_loop_running)
+TEST(ObjectDeathTest, move_to_loop_fails_when_source_loop_running)
 {
     // NOTE: loop2 must be declared BEFORE loop1. The death statement (loop1.exec()) runs
     // only in the death-test child; the parent's loop1 still holds the posted closure and
@@ -675,13 +675,13 @@ TEST(ObjectDeathTest, move_to_thread_fails_when_source_loop_running)
     FakeDispatcher *dispatcher = new FakeDispatcher;
     cxxkit::EventLoop loop1((std::unique_ptr<cxxkit::AbstractEventDispatcher>(dispatcher)));
     RecordingObject obj;
-    obj.move_to_thread(&loop1);
+    obj.move_to_loop(&loop1);
     loop1.post(
         [&loop1, &loop2]
         {
-            RecordingObject victim;        // created inside exec -> affinity loop1
-            victim.move_to_thread(&loop2); // source (loop1) IS running -> fatal
-            loop1.exit(0);                 // never reached
+            RecordingObject victim;      // created inside exec -> affinity loop1
+            victim.move_to_loop(&loop2); // source (loop1) IS running -> fatal
+            loop1.exit(0);               // never reached
         });
     EXPECT_DEATH(loop1.exec(), "");
 }
@@ -694,7 +694,7 @@ TEST(EventLoop, post_functions_run_before_posted_events)
     cxxkit::EventLoop loop((std::unique_ptr<cxxkit::AbstractEventDispatcher>(dispatcher)));
     RecordingObject obj;
     std::vector<int> order;
-    obj.move_to_thread(&loop); // T2: affinity routing targets the object's own loop
+    obj.move_to_loop(&loop); // T2: affinity routing targets the object's own loop
     cxxkit::Event *event = new cxxkit::Event(cxxkit::Event::Type::kUser);
     event->accept();
     loop.post(
@@ -714,21 +714,21 @@ TEST(EventLoop, post_functions_run_before_posted_events)
 }
 
 
-// Momus F4 relocated from T1: enqueueing a pending event before move_to_thread relies on T2's
-// affinity routing (receiver->thread() targets the enqueue), so the whole scenario lives here.
-TEST(Object, move_to_thread_migrates_pending_events_cross_loop)
+// Momus F4 relocated from T1: enqueueing a pending event before move_to_loop relies on T2's
+// affinity routing (receiver->loop() targets the enqueue), so the whole scenario lives here.
+TEST(Object, move_to_loop_migrates_pending_events_cross_loop)
 {
     FakeDispatcher *d1 = new FakeDispatcher;
     FakeDispatcher *d2 = new FakeDispatcher;
     cxxkit::EventLoop loop1((std::unique_ptr<cxxkit::AbstractEventDispatcher>(d1)));
     cxxkit::EventLoop loop2((std::unique_ptr<cxxkit::AbstractEventDispatcher>(d2)));
     RecordingObject parent;
-    parent.move_to_thread(&loop1); // affinity loop1
+    parent.move_to_loop(&loop1); // affinity loop1
     cxxkit::Event *pending = new cxxkit::Event(cxxkit::Event::Type::kUser);
     pending->accept();
     cxxkit::Object::post_event(&parent, pending); // routed to loop1 (affinity, T2 semantics)
     EXPECT_FALSE(loop2.process_events(cxxkit::EventLoop::ProcessFlag::kAllEvents)); // nothing on loop2
-    parent.move_to_thread(&loop2);                                                  // migrate WITH the pending entry
+    parent.move_to_loop(&loop2);                                                    // migrate WITH the pending entry
     EXPECT_TRUE(parent.events.empty());
     EXPECT_TRUE(loop2.process_events(cxxkit::EventLoop::ProcessFlag::kAllEvents)); // delivered on loop2
     ASSERT_EQ(parent.events.size(), 1u);
@@ -747,7 +747,7 @@ TEST(Object, post_event_routes_to_receiver_affinity_across_threads)
         [&loop, &obj]()
         {
             obj = new RecordingObject();
-            EXPECT_EQ(obj->thread(), &loop);
+            EXPECT_EQ(obj->loop(), &loop);
             loop.exit(0);
         });
     EXPECT_EQ(loop.exec(), 0);
@@ -774,7 +774,7 @@ TEST(Object, delete_later_uses_affinity_loop_when_present)
     cxxkit::EventLoop loop((std::unique_ptr<cxxkit::AbstractEventDispatcher>(dispatcher)));
     Counter::alive = 0;
     CountedObject *victim = new CountedObject(); // OUTSIDE exec — Phase 2 would fatal here
-    victim->move_to_thread(&loop);               // bind affinity (Momus F4: no in-closure enqueue —
+    victim->move_to_loop(&loop);                 // bind affinity (Momus F4: no in-closure enqueue —
                                                  //  a delete_later inside the closure would dispatch
     // The loop must actually run: an exit closure enqueued BEFORE exec gives one empty post-segment
     // round — no delete_later inside the closure, so no dispatch-time delete (F4d UAF avoided).
@@ -813,7 +813,7 @@ TEST(Object, delete_later_wakes_affinity_loop_across_threads)
     cxxkit::EventLoop loop((std::unique_ptr<cxxkit::AbstractEventDispatcher>(dispatcher)));
     CrossThreadVictim::deleted.store(false);
     CrossThreadVictim *victim = new CrossThreadVictim;
-    victim->move_to_thread(&loop); // bind affinity while the loop is idle (static phase)
+    victim->move_to_loop(&loop); // bind affinity while the loop is idle (static phase)
 
     const int wake_baseline = dispatcher->mWakeUpCount.load();
     std::thread runner(
@@ -840,7 +840,7 @@ TEST(Object, delete_later_wakes_affinity_loop_across_threads)
 // own old loop (Z), not the root's source loop. Pre-fix, migration drained only the root's
 // source, stranding the entry on Z: Z dispatches after the migration (wrong-loop delivery)
 // and W stays empty -> the first EXPECT_FALSE/EXPECT_TRUE pair below fails (RED).
-TEST(Object, move_to_thread_migrates_from_per_object_old_loops)
+TEST(Object, move_to_loop_migrates_from_per_object_old_loops)
 {
     FakeDispatcher *dz = new FakeDispatcher;
     FakeDispatcher *dw = new FakeDispatcher;
@@ -848,24 +848,24 @@ TEST(Object, move_to_thread_migrates_from_per_object_old_loops)
     cxxkit::EventLoop loopW((std::unique_ptr<cxxkit::AbstractEventDispatcher>(dw)));
     RecordingObject parent; // null affinity (created outside exec)
     RecordingObject *child = new RecordingObject(&parent);
-    child->move_to_thread(&loopZ); // child affinity Z — mixed subtree
+    child->move_to_loop(&loopZ); // child affinity Z — mixed subtree
 
     cxxkit::Event *pending = new cxxkit::Event(cxxkit::Event::Type::kUser);
     pending->accept();
     cxxkit::Object::post_event(child, pending); // routed to the child's affinity loop (Z)
 
-    parent.move_to_thread(&loopW); // subtree -> W; the child's entry must follow Z -> W
+    parent.move_to_loop(&loopW); // subtree -> W; the child's entry must follow Z -> W
 
-    EXPECT_EQ(child->thread(), &loopW);
+    EXPECT_EQ(child->loop(), &loopW);
     EXPECT_FALSE(loopZ.process_events(cxxkit::EventLoop::ProcessFlag::kAllEvents)); // Z drained dry
     EXPECT_TRUE(loopW.process_events(cxxkit::EventLoop::ProcessFlag::kAllEvents));  // delivered on W
     ASSERT_EQ(child->events.size(), 1u);
     EXPECT_EQ(child->events[0], cxxkit::Event::Type::kUser);
 }
 
-// M4: migration notification hook — each migrated object receives exactly one kThreadChange
+// M4: migration notification hook — each migrated object receives exactly one kLoopChange
 // through its own event() (direct call, not filterable). N objects -> N notifications.
-TEST(Object, move_to_thread_notifies_each_migrated_object)
+TEST(Object, move_to_loop_notifies_each_migrated_object)
 {
     class ThreadChangeRecorder : public cxxkit::Object
     {
@@ -877,7 +877,7 @@ TEST(Object, move_to_thread_notifies_each_migrated_object)
         int thread_change_count{0};
         bool event(cxxkit::Event *e) override
         {
-            if (e->type() == cxxkit::Event::Type::kThreadChange)
+            if (e->type() == cxxkit::Event::Type::kLoopChange)
             {
                 ++thread_change_count;
             }
@@ -890,15 +890,15 @@ TEST(Object, move_to_thread_notifies_each_migrated_object)
     ThreadChangeRecorder *child1 = new ThreadChangeRecorder(&root);
     ThreadChangeRecorder *child2 = new ThreadChangeRecorder(child1); // 3-object chain
 
-    root.move_to_thread(&loop); // one notification per migrated object
+    root.move_to_loop(&loop); // one notification per migrated object
     EXPECT_EQ(root.thread_change_count, 1);
     EXPECT_EQ(child1->thread_change_count, 1);
     EXPECT_EQ(child2->thread_change_count, 1);
 
-    root.move_to_thread(&loop); // same-loop no-op fires nothing further
+    root.move_to_loop(&loop); // same-loop no-op fires nothing further
     EXPECT_EQ(root.thread_change_count, 1);
 
-    root.move_to_thread(nullptr); // detach is a real migration — notifies again
+    root.move_to_loop(nullptr); // detach is a real migration — notifies again
     EXPECT_EQ(root.thread_change_count, 2);
     EXPECT_EQ(child1->thread_change_count, 2);
     EXPECT_EQ(child2->thread_change_count, 2);
@@ -914,13 +914,13 @@ TEST(Object, object_name_set_get_roundtrip)
     EXPECT_EQ(obj.object_name(), "renamed");
 }
 
-TEST(Object, object_name_defaults_empty_and_survives_move_to_thread)
+TEST(Object, object_name_defaults_empty_and_survives_move_to_loop)
 {
     cxxkit::EventLoop loop((std::unique_ptr<cxxkit::AbstractEventDispatcher>(new FakeDispatcher)));
     RecordingObject obj;
     EXPECT_TRUE(obj.object_name().empty());
     obj.set_object_name("keeper");
-    obj.move_to_thread(&loop);
+    obj.move_to_loop(&loop);
     EXPECT_EQ(obj.object_name(), "keeper"); // name follows the object, not affinity
     EXPECT_EQ(obj.to_tree_string(), "{keeper} " + std::string(typeid(RecordingObject).name()) + "\n");
 }
@@ -1191,7 +1191,7 @@ TEST(Object, start_timer_routes_ticks_to_timer_event)
     FakeDispatcher *dispatcher = new FakeDispatcher;
     cxxkit::EventLoop loop((std::unique_ptr<cxxkit::AbstractEventDispatcher>(dispatcher)));
     TimerObject obj;
-    obj.move_to_thread(&loop);
+    obj.move_to_loop(&loop);
     int fired = 0;
     loop.post(
         [&]
@@ -1217,7 +1217,7 @@ TEST(Object, kill_timer_stops_further_ticks)
     FakeDispatcher *dispatcher = new FakeDispatcher;
     cxxkit::EventLoop loop((std::unique_ptr<cxxkit::AbstractEventDispatcher>(dispatcher)));
     TimerObject obj;
-    obj.move_to_thread(&loop);
+    obj.move_to_loop(&loop);
     loop.post(
         [&]
         {
@@ -1238,7 +1238,7 @@ TEST(Object, one_shot_timer_fires_exactly_once)
     FakeDispatcher *dispatcher = new FakeDispatcher;
     cxxkit::EventLoop loop((std::unique_ptr<cxxkit::AbstractEventDispatcher>(dispatcher)));
     TimerObject obj;
-    obj.move_to_thread(&loop);
+    obj.move_to_loop(&loop);
     loop.post(
         [&]
         {
@@ -1268,7 +1268,7 @@ TEST(Object, start_timer_off_affinity_thread_is_fatal)
     FakeDispatcher *dispatcher = new FakeDispatcher;
     cxxkit::EventLoop loop((std::unique_ptr<cxxkit::AbstractEventDispatcher>(dispatcher)));
     TimerObject obj;
-    obj.move_to_thread(&loop);
+    obj.move_to_loop(&loop);
     EXPECT_DEATH(obj.start_timer(10), ""); // current() here is null, affinity is &loop
     EXPECT_DEATH(obj.kill_timer(1), "");
 }
@@ -1287,7 +1287,7 @@ TEST(Object, destructor_kills_active_timers)
         [&]
         {
             TimerObject *obj = new TimerObject;
-            obj->move_to_thread(&loop);
+            obj->move_to_loop(&loop);
             const int id = obj->start_timer(10);     // repeating
             delete obj;                              // ~Object must stop_timer(id) — destruction on the affinity thread
             EXPECT_FALSE(dispatcher->has_timer(id)); // disarmed by ~Object
@@ -1326,8 +1326,8 @@ TEST(Object, remove_pending_events_drops_queued_without_dispatch)
     cxxkit::EventLoop loop(std::unique_ptr<cxxkit::AbstractEventDispatcher>(new FakeDispatcher));
     RecordingObject obj;
     RecordingObject other;
-    obj.move_to_thread(&loop); // post_event routes to affinity (static phase — loop idle)
-    other.move_to_thread(&loop);
+    obj.move_to_loop(&loop); // post_event routes to affinity (static phase — loop idle)
+    other.move_to_loop(&loop);
     T5Event::alive = 0;
 
     cxxkit::Object::post_event(&obj, new T5Event(cxxkit::Event::Type::kUser));
@@ -1363,7 +1363,7 @@ TEST(Object, delete_later_double_call_compresses_to_single_delete)
     cxxkit::EventLoop loop((std::unique_ptr<cxxkit::AbstractEventDispatcher>(dispatcher)));
     Counter::alive = 0;
     CountedObject *victim = new CountedObject;
-    victim->move_to_thread(&loop); // affinity while loop idle
+    victim->move_to_loop(&loop); // affinity while loop idle
     const int wake_baseline = dispatcher->mWakeUpCount.load();
 
     victim->delete_later(); // first: enqueued
@@ -1381,7 +1381,7 @@ TEST(Object, delete_later_compression_keeps_interleaved_events)
 {
     cxxkit::EventLoop loop(std::unique_ptr<cxxkit::AbstractEventDispatcher>(new FakeDispatcher));
     RecordingObject *victim = new RecordingObject;
-    victim->move_to_thread(&loop);
+    victim->move_to_loop(&loop);
     RecordingObject::s_last_recording_dtor_seen = false;
     std::vector<cxxkit::Event::Type> delivered; // side channel: survives the delete this
 
@@ -1421,7 +1421,7 @@ TEST(Object, post_event_high_priority_dispatched_first)
 {
     cxxkit::EventLoop loop(std::unique_ptr<cxxkit::AbstractEventDispatcher>(new FakeDispatcher));
     RecordingObject obj;
-    obj.move_to_thread(&loop);
+    obj.move_to_loop(&loop);
     loop.post(
         [&]
         {
@@ -1451,7 +1451,7 @@ TEST(Object, post_event_equal_priority_keeps_fifo)
 {
     cxxkit::EventLoop loop(std::unique_ptr<cxxkit::AbstractEventDispatcher>(new FakeDispatcher));
     RecordingObject obj;
-    obj.move_to_thread(&loop);
+    obj.move_to_loop(&loop);
     loop.post(
         [&]
         {
@@ -1476,7 +1476,7 @@ TEST(Object, post_event_negative_priority_dispatches_last)
 {
     cxxkit::EventLoop loop(std::unique_ptr<cxxkit::AbstractEventDispatcher>(new FakeDispatcher));
     RecordingObject obj;
-    obj.move_to_thread(&loop);
+    obj.move_to_loop(&loop);
     loop.post(
         [&]
         {
@@ -1497,20 +1497,20 @@ TEST(Object, post_event_negative_priority_dispatches_last)
 // Migration carries each entry's original priority (EventEntry.mPriority) and pushes in
 // source scan order — already priority-sorted, so concatenation preserves stability (Momus F2:
 // no re-sort on migration).
-TEST(Object, move_to_thread_preserves_pending_priority_order)
+TEST(Object, move_to_loop_preserves_pending_priority_order)
 {
     FakeDispatcher *d1 = new FakeDispatcher;
     FakeDispatcher *d2 = new FakeDispatcher;
     cxxkit::EventLoop loop1((std::unique_ptr<cxxkit::AbstractEventDispatcher>(d1)));
     cxxkit::EventLoop loop2((std::unique_ptr<cxxkit::AbstractEventDispatcher>(d2)));
     RecordingObject obj;
-    obj.move_to_thread(&loop1); // both loops idle (static phase)
+    obj.move_to_loop(&loop1); // both loops idle (static phase)
     const int base = static_cast<int>(cxxkit::Event::Type::kUser);
     cxxkit::Object::post_event(&obj, new DeletedEvent(cxxkit::Event::Type::kUser)); // p0, queued first
     cxxkit::Object::post_event(&obj,
                                new DeletedEvent(static_cast<cxxkit::Event::Type>(base + 1)),
                                10);                                                 // p10, queued ahead
-    obj.move_to_thread(&loop2);                                                     // migrate WITH the pending entries
+    obj.move_to_loop(&loop2);                                                       // migrate WITH the pending entries
     EXPECT_FALSE(loop1.process_events(cxxkit::EventLoop::ProcessFlag::kAllEvents)); // loop1 drained dry (empty = false)
     EXPECT_TRUE(loop2.process_events(cxxkit::EventLoop::ProcessFlag::kAllEvents));  // delivered on loop2
     ASSERT_EQ(obj.events.size(), 2u);
@@ -1525,7 +1525,7 @@ TEST(Object, delete_later_compression_works_across_priority_mix)
     cxxkit::EventLoop loop(std::unique_ptr<cxxkit::AbstractEventDispatcher>(new FakeDispatcher));
     Counter::alive = 0;
     CountedObject *victim = new CountedObject;
-    victim->move_to_thread(&loop);
+    victim->move_to_loop(&loop);
     victim->delete_later(); // p0 DeferredDelete queued
     cxxkit::Object::post_event(victim,
                                new DeletedEvent(cxxkit::Event::Type::kUser),

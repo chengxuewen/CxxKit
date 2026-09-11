@@ -55,7 +55,7 @@ public:
     std::vector<Object *> mWatching; // reverse registry: filters installed ON other objects by me
     EventLoop *mThread{nullptr};     // affinity: loop owning this object (null = detached)
     std::vector<int> mActiveTimers;  // A1: live timer ids (dispatcher-side armed); same-thread only
-    std::string mObjectName;         // name follows the object (not touched by move_to_thread)
+    std::string mObjectName;         // name follows the object (not touched by move_to_loop)
     std::map<const void *, std::unique_ptr<Object::UserData>> mUserData; // owned; released by member dtor
 
     /** @brief T7 funnel bridge: Application::notify (a plain member of the DERIVED Application
