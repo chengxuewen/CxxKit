@@ -366,3 +366,17 @@ sanitizer（ASAN/LSAN/UBSan）与 coverage 用**独立 build 目录**（build-as
 **验证矩阵**：门禁 grep（cxxkit/qt/ + CXXKIT_ENABLE_LIB_QT + CXXKIT_QT_API + CXXKIT_QT_ENABLED）清零；Qt 环境（configure 需 PATH 前置 qt-env/bin 供 find_package 发现——qt-env 从不在默认 PATH，D38 期 CI configure 也依赖 PATH 或 CMAKE_PREFIX_PATH 注入）主树 83/83 + ASAN 84/84（lsan.supp 跑法）零诊断 + exp_qt_embed 运行 rc=0 输出逐字节匹配基线；**无 Qt 环境**（env -i 净 PATH）fresh configure → Qt6_DIR-NOTFOUND → qt 测试/示例块静默裁剪 → 79/79 全绿（新头休眠零参与硬门禁）；BuildInstall 安装树 `include/cxxkit/kernel/qt_dispatcher.hpp` 在 + `include/cxxkit/qt/` 不存在 + Config 无 qt find_dependency；clang-format 触碰文件干净。
 
 **已知限制/备注**：安装树消费方 include 该头后自行 `find_package(Qt6)` + 链接 Qt6::Core（cxxkit 包不代劳——寄生语义本体）；根 CMakeCache 残留 `CXXKIT_ENABLE_LIB_QT:BOOL=OFF` 旧键需手工清（与 D25 INPUT_ 残留同款现象，configure 不报错）；CI workflow 的 `CXXKIT_ENABLE_LIB_QT=$QT_FLAG` configure 参数与 qt6-base-dev 安装属上游 CI 侧待同步项（本仓库 CI 在 GitHub 侧，本机无法验证，删除属后续 PR）。
+
+## D39: qt 子库解散——单头化并入 kernel（2026-09-11）
+
+**动因**：D38 后 qt 成孤儿（uv 已入 kernel，qt 仍独立 compiled 库）。用户三轮裁定收束：整库坍缩单头 `cxxkit/kernel/qt_dispatcher.hpp`（329 行实际 vs 计划 ~400）移入 kernel，kernel 构建零 Qt 参与（休眠头：不 include 零成本；include = 消费方须有 Qt 头路径 + 自链 Qt6::Core——宿主桥语义本体）。与 `default_dispatcher.hpp` 构成 kernel 两引擎入口对称位（uv 自主/Qt 寄生）。
+
+**终态**：cxxkit/qt/ 整树消亡；CXXKIT_ENABLE_LIB_QT/CXXKIT_QT_API/CXXKIT_QT_ENABLED/cxxkit::qt target/Config qt 组件条件全亡；CXXKIT_QT_LOCAL_STDCPP 根块保留（测试/示例仍需）；Qt 检测无变量案（测试/示例块内 find_package(Qt6 QUIET) + if(TARGET Qt6::Core) 守卫）；类名/工厂名不动。
+
+**Momus 四修复**：F-1 设计矛盾钉死（变量案 vs 无变量案→无变量）；F-2 application.hpp:66 注释漏站；F-3 CXXKIT_QT_ENABLED 死变量 + 门禁盲区 + STDCPP 块保留明示；F-4 include 清单补 QCoreApplication/QThread/checks.hpp/limits + 红线措辞口径（"不新增构建接线"非"无字样"——kernel/CMakeLists L30 既有注释）。
+
+**执行期修正**：NSDMI 在该单头形态不可用（C++11 值成员 + 构造参数转发限制）→ 新增私有 `resolve_context` 辅助（null→instance + CHECK），公开 ctor 保持纯初始化列表。
+
+**Qt 发现机制更正**：`/tmp/opencode/qt-env` 从未经环境变量接 find_package——配置期 PATH 前置 qt-env/bin（qmake6 qt6.conf 生效）。CI 的 `-DCXXKIT_ENABLE_LIB_QT=$QT_FLAG`/qt6-base-dev 属上游 workflow 待同步（本机不可验）。
+
+**验证矩阵**：主树（Qt 环境）83/83 / 无 Qt 环境 79/79（qt 块静默裁剪，休眠零参与实证）/ ASAN 84/84 零诊断 / exp_qt_embed rc=0 逐字节基线 / BuildInstall 新头在位旧树净 / 词汇 grep 清零 / format 干净。
