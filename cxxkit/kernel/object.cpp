@@ -144,19 +144,17 @@ int Object::start_timer(uint64_t interval_ms, bool repeat)
     // right after start_timer (Momus A1-recommended shape). The tick delivers SYNCHRONOUSLY
     // via send_event on a stack event: not queued, so ~Object purge does NOT cover in-flight
     // timer ticks — the ~Object active-timer stop is the sole dispatch gate after death.
-    EventLoop *self = loop;
     std::shared_ptr<int> id_holder(new int(0));
     const int id = loop->start_timer(
         interval_ms,
-        [this, self, id_holder]
+        [this, id_holder]
         {
             // Liveness gate: the id must still be a member of mActiveTimers. kill_timer and
-            // ~Object erase ids, so a stale driver-side tick after kill/destruction is inert
-            // (same-thread contract makes the unsynchronized read safe). Without this, a
-            // copied callback still fires into a killed/dead object — (c) semantics + UAF.
-            if (self == nullptr ||
-                std::find(d_func()->mActiveTimers.begin(), d_func()->mActiveTimers.end(), *id_holder) ==
-                    d_func()->mActiveTimers.end())
+            // ~Object erase ids, so a stale tick after kill is inert. (A driver-side COPY of
+            // this callback invoked after DESTRUCTION is out of reach — reading mActiveTimers
+            // needs a live this; destruction-safety is the ~Object stop + caller contract.)
+            std::vector<int> &timers = d_func()->mActiveTimers;
+            if (std::find(timers.begin(), timers.end(), *id_holder) == timers.end())
             {
                 return;
             }
