@@ -77,6 +77,17 @@ public:
      */
     explicit Application(DispatcherFactory factory, Object *parent = nullptr);
 
+    /**
+     * @brief Constructs the singleton with the default loop backend (Qt QCoreApplication() analog).
+     *
+     * Convenience overload: delegates to the factory ctor with make_default_dispatcher()
+     * (the built-in uv engine, D38). Fatal when CXXKIT_ENABLE_LOOP_BACKEND_UV is OFF (no
+     * backend — inject a dispatcher via the factory ctor instead). All singleton/funnel
+     * semantics are identical to the factory ctor.
+     * @since 0.2
+     */
+    explicit Application(Object *parent = nullptr);
+
     /** @brief Clears the singleton first, then destroys the main loop. Must be the LAST kernel
      *  object destroyed (Qt qApp same constraint) — see the class note. */
     ~Application() override;

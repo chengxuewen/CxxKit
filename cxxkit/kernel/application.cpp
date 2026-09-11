@@ -26,6 +26,7 @@
 #include <cxxkit/kernel/application.hpp>
 
 #include <cxxkit/kernel/abstract_event_dispatcher.hpp>
+#include <cxxkit/kernel/default_dispatcher.hpp>
 #include <cxxkit/tools/checks.hpp>
 
 #include <utility>
@@ -52,6 +53,11 @@ Application::Application(DispatcherFactory factory, Object *parent)
     // Plain member, parent = nullptr (Momus F4 pattern, EventLoopThread same): no double
     // ownership, no ChildEvent noise. Declared last in the header — outlives the Object base.
     mLoop.reset(new EventLoop(std::move(dispatcher)));
+}
+
+Application::Application(Object *parent)
+    : Application(make_default_dispatcher, parent)
+{
 }
 
 Application::~Application()

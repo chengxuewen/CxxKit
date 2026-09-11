@@ -240,4 +240,26 @@ TEST(Application, queue_dispatch_funneled_exactly_once_per_event)
     EXPECT_EQ(target.events[1], cxxkit::Event::Type::kUser);
 }
 
+// (i) ON-path default ctor: delegates to make_default_dispatcher (uv engine, D38).
+// OFF mode is fatal (no backend), so the test is guard-closed.
+#    if defined(CXXKIT_ENABLE_LOOP_BACKEND_UV)
+TEST(Application, default_ctor_uses_default_backend)
+{
+    cxxkit::Application app; // default (uv) engine
+    EXPECT_EQ(cxxkit::Application::instance(), &app);
+    EXPECT_NE(app.loop(), nullptr);
+    app.loop()->post([&app]() { app.quit(); });
+    EXPECT_EQ(app.exec(), 0);
+}
+#    endif
+
+// (j) overload resolution pin: nullptr selects the Object* overload (default engine),
+// NOT a null-factory fatal.
+TEST(Application, null_parent_selects_default_backend_overload)
+{
+    cxxkit::Application app(nullptr); // standard conversion beats std::function(nullptr_t)
+    EXPECT_EQ(cxxkit::Application::instance(), &app);
+    EXPECT_NE(app.loop(), nullptr);
+}
+
 #endif // #if CXXKIT_FEATURE_ENABLE_KERNEL
