@@ -219,6 +219,21 @@ void Object::post_event(Object *receiver, Event *event)
     loop->wake_up(); // cross-thread wake (thread-safe dispatcher contract)
 }
 
+void Object::remove_pending_events(Object *receiver)
+{
+    // Thin public wrapper over the ~Object purge machinery (purge_pending is the static,
+    // explicit-loop form): the receiver's affinity loop holds everything post_event queued;
+    // the current() sweep mirrors the ~Object double purge (covers a delete_later fallback
+    // residual on the calling thread). No affinity + no current = nothing can be queued =
+    // no-op (null-loop tolerance inside purge_pending).
+    if (receiver == nullptr)
+    {
+        return;
+    }
+    EventLoop::purge_pending(receiver->d_func()->mThread, receiver);
+    EventLoop::purge_pending(EventLoop::current(), receiver);
+}
+
 Object *Object::parent() const
 {
     CXXKIT_D(const Object);

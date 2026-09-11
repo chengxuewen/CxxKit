@@ -1297,4 +1297,121 @@ TEST(Object, destructor_kills_active_timers)
     EXPECT_EQ(fired, 0);
 }
 
+
+// ---- T5: C1 public remove_pending_events + C2 DeferredDelete compression ----
+
+namespace
+{
+// T5 probe: counting custom Event whose destruction is observable after the queue released
+// ownership (static counter — instance members are unreadable once deleted).
+class T5Event : public cxxkit::Event
+{
+public:
+    explicit T5Event(cxxkit::Event::Type type)
+        : Event(type)
+    {
+        ++alive;
+    }
+    ~T5Event() override { --alive; }
+    static int alive;
+};
+int T5Event::alive = 0;
+} // namespace
+
+// (a) C1: two queued events for obj are removed without dispatch and without leak;
+// another receiver's interleaved event is untouched and still delivered.
+TEST(Object, remove_pending_events_drops_queued_without_dispatch)
+{
+    cxxkit::EventLoop loop(std::unique_ptr<cxxkit::AbstractEventDispatcher>(new FakeDispatcher));
+    RecordingObject obj;
+    RecordingObject other;
+    obj.move_to_thread(&loop); // post_event routes to affinity (static phase — loop idle)
+    other.move_to_thread(&loop);
+    T5Event::alive = 0;
+
+    cxxkit::Object::post_event(&obj, new T5Event(cxxkit::Event::Type::kUser));
+    cxxkit::Object::post_event(
+        &obj,
+        new T5Event(static_cast<cxxkit::Event::Type>(static_cast<int>(cxxkit::Event::Type::kUser) + 1)));
+    cxxkit::Object::post_event(&other, new T5Event(cxxkit::Event::Type::kUser)); // interleaved, must survive
+    ASSERT_EQ(T5Event::alive, 3);                                                // queue owns all three
+
+    cxxkit::Object::remove_pending_events(&obj); // drops obj's two, deletes them under the lock
+    EXPECT_EQ(T5Event::alive, 1);                // obj's events deleted, other's kept
+
+    // Pump: obj sees nothing; other's event still delivered.
+    EXPECT_TRUE(loop.process_events(cxxkit::EventLoop::ProcessFlag::kAllEvents));
+    EXPECT_TRUE(obj.events.empty());
+    ASSERT_EQ(other.events.size(), 1u);
+    EXPECT_EQ(other.events[0], cxxkit::Event::Type::kUser);
+    EXPECT_EQ(T5Event::alive, 0); // dispatched event deleted by the queue (no leak)
+}
+
+// (d) C1: an affinity-less object (no current loop on this thread) — no-op, no crash.
+TEST(Object, remove_pending_events_without_affinity_is_noop)
+{
+    RecordingObject obj;                         // created outside exec, no current() — nothing can be queued for it
+    cxxkit::Object::remove_pending_events(&obj); // must not touch any loop, not crash
+    EXPECT_TRUE(obj.events.empty());
+}
+
+// (b) C2: double delete_later compresses to exactly one deletion.
+TEST(Object, delete_later_double_call_compresses_to_single_delete)
+{
+    FakeDispatcher *dispatcher = new FakeDispatcher;
+    cxxkit::EventLoop loop((std::unique_ptr<cxxkit::AbstractEventDispatcher>(dispatcher)));
+    Counter::alive = 0;
+    CountedObject *victim = new CountedObject;
+    victim->move_to_thread(&loop); // affinity while loop idle
+    const int wake_baseline = dispatcher->mWakeUpCount.load();
+
+    victim->delete_later(); // first: enqueued
+    victim->delete_later(); // second: compressed away under the lock (wake still fires)
+    EXPECT_GT(dispatcher->mWakeUpCount.load(), wake_baseline); // compression keeps the wake (I1 liveness)
+
+    EXPECT_TRUE(loop.process_events(cxxkit::EventLoop::ProcessFlag::kAllEvents));  // one drain = one delete
+    EXPECT_EQ(Counter::alive, 0);                                                  // deleted exactly once
+    EXPECT_FALSE(loop.process_events(cxxkit::EventLoop::ProcessFlag::kAllEvents)); // queue empty after drain
+}
+
+// (c) C2: compression only eats duplicates — an interleaved custom event survives and is
+// delivered alongside the single deletion.
+TEST(Object, delete_later_compression_keeps_interleaved_events)
+{
+    cxxkit::EventLoop loop(std::unique_ptr<cxxkit::AbstractEventDispatcher>(new FakeDispatcher));
+    RecordingObject *victim = new RecordingObject;
+    victim->move_to_thread(&loop);
+    RecordingObject::s_last_recording_dtor_seen = false;
+    std::vector<cxxkit::Event::Type> delivered; // side channel: survives the delete this
+
+    cxxkit::Object::post_event(victim, new T5Event(cxxkit::Event::Type::kUser)); // custom first
+    victim->delete_later();                                                      // queued
+    victim->delete_later(); // compressed — custom event between the duplicates survives
+
+    // Observer filter copies delivered types out: after the drain victim is deleted (delete this),
+    // so post-drain assertions must not touch its members (UAF — see delete_later_uses_deferred_delete_event).
+    class Copier : public cxxkit::Object
+    {
+    public:
+        std::vector<cxxkit::Event::Type> *sink;
+        bool event_filter(cxxkit::Object *watched, cxxkit::Event *event) override
+        {
+            CXXKIT_UNUSED(watched);
+            sink->push_back(event->type());
+            return false; // observe only
+        }
+    };
+    Copier copier;
+    copier.sink = &delivered;
+    victim->install_event_filter(&copier);
+
+    EXPECT_TRUE(loop.process_events(cxxkit::EventLoop::ProcessFlag::kAllEvents));
+    // kUser delivered exactly once (filter side channel), then the single DeferredDelete deleted the object.
+    ASSERT_EQ(delivered.size(), 2u); // kUser + the one DeferredDelete
+    EXPECT_EQ(delivered[0], cxxkit::Event::Type::kUser);
+    EXPECT_EQ(delivered[1], cxxkit::Event::Type::kDeferredDelete);
+    EXPECT_TRUE(RecordingObject::s_last_recording_dtor_seen); // died exactly once
+    EXPECT_EQ(T5Event::alive, 0);                             // custom event deleted after dispatch (no leak)
+}
+
 #endif // CXXKIT_FEATURE_ENABLE_KERNEL

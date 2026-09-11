@@ -331,6 +331,23 @@ void EventLoop::enqueue_event(EventLoop *loop, Object *receiver, Event *event)
     CXXKIT_CHECK(loop != nullptr) << "enqueue_event: null loop";
     EventLoopPrivate *d = loop->d_func(); // static: caller passes the explicit loop (T2 affinity routing)
     std::lock_guard<std::mutex> lock(d->mEventMutex);
+    // C2 (Momus F1) DeferredDelete compression: the scan lives here — under the lock, before
+    // push_back — so it is atomic with dispatch (no TOCTOU). The object.cpp side only calls:
+    // no unlocked scanning. Duplicate detection: if a DeferredDeleteEvent for this receiver is
+    // already queued, delete the NEW event and keep the old entry's position (Qt postEvent
+    // compression). O(n) scan on the delete_later path only. The caller's wake_up (delete_later/
+    // post_event) still fires — an idempotent, harmless doorbell.
+    if (event->type() == Event::Type::kDeferredDelete)
+    {
+        for (std::deque<EventEntry>::const_iterator it = d->mEventQueue.begin(); it != d->mEventQueue.end(); ++it)
+        {
+            if (it->mReceiver == receiver && it->mEvent->type() == Event::Type::kDeferredDelete)
+            {
+                delete event; // never enqueued — caller keeps ownership semantics (we release it)
+                return;
+            }
+        }
+    }
     EventEntry entry;
     entry.mReceiver = receiver;
     entry.mEvent = event;
