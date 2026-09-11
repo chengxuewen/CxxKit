@@ -326,7 +326,7 @@ AbstractEventDispatcher &EventLoop::dispatcher()
     return *d->mDispatcher;
 }
 
-void EventLoop::enqueue_event(EventLoop *loop, Object *receiver, Event *event)
+void EventLoop::enqueue_event(EventLoop *loop, Object *receiver, Event *event, int priority)
 {
     CXXKIT_CHECK(loop != nullptr) << "enqueue_event: null loop";
     EventLoopPrivate *d = loop->d_func(); // static: caller passes the explicit loop (T2 affinity routing)
@@ -351,7 +351,21 @@ void EventLoop::enqueue_event(EventLoop *loop, Object *receiver, Event *event)
     EventEntry entry;
     entry.mReceiver = receiver;
     entry.mEvent = event;
-    d->mEventQueue.push_back(entry);
+    entry.mPriority = priority;
+    // C3 stable sorted insert: precede the FIRST entry with a strictly smaller priority;
+    // equal priorities append after their peers (FIFO within priority). With an all-default-0
+    // queue no entry is strictly smaller than 0, so the scan falls through to end() — exact
+    // push_back, byte-identical legacy behavior.
+    std::deque<EventEntry>::iterator insert_at = d->mEventQueue.end();
+    for (std::deque<EventEntry>::iterator it = d->mEventQueue.begin(); it != d->mEventQueue.end(); ++it)
+    {
+        if (it->mPriority < priority)
+        {
+            insert_at = it;
+            break;
+        }
+    }
+    d->mEventQueue.insert(insert_at, entry);
 }
 
 void EventLoop::purge_pending(EventLoop *loop, Object *receiver)

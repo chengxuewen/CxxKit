@@ -40,7 +40,7 @@
 CXXKIT_BEGIN_NAMESPACE
 
 /**
- * @brief Queued event entry: receiver + owned event (post_event path).
+ * @brief Queued event entry: receiver + owned event + dispatch priority (post_event path).
  *
  * Ownership contract: the queue owns @c mEvent — dispatched entries are deleted after
  * send_event, undelivered entries are deleted by ~Object purge (remove_pending_events)
@@ -50,6 +50,10 @@ struct EventEntry
 {
     Object *mReceiver{nullptr};
     Event *mEvent{nullptr};
+    /** Dispatch priority (C3): larger dispatches first; equal values keep strict FIFO
+     *  (stable insert). Default 0 = historical behavior (an all-default queue inserts
+     *  at the tail exactly as before). Carried through take_events_for migration. */
+    int mPriority{0};
 };
 
 class EventLoopPrivate : public ObjectPrivate

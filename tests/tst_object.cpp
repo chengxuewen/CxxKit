@@ -1415,4 +1415,127 @@ TEST(Object, delete_later_compression_keeps_interleaved_events)
     EXPECT_EQ(T5Event::alive, 0);                             // custom event deleted after dispatch (no leak)
 }
 
+// ---- T6: C3 event priority (stable sorted insert, FIFO within priority) ----
+
+TEST(Object, post_event_high_priority_dispatched_first)
+{
+    cxxkit::EventLoop loop(std::unique_ptr<cxxkit::AbstractEventDispatcher>(new FakeDispatcher));
+    RecordingObject obj;
+    obj.move_to_thread(&loop);
+    loop.post(
+        [&]
+        {
+            // Distinct user types per entry so delivery order is observable; the p0 case omits
+            // the priority argument (default-0 compat check folded in).
+            cxxkit::Object::post_event(&obj, new DeletedEvent(cxxkit::Event::Type::kUser)); // p0 default
+            cxxkit::Object::post_event(
+                &obj,
+                new DeletedEvent(static_cast<cxxkit::Event::Type>(static_cast<int>(cxxkit::Event::Type::kUser) + 1)),
+                10);
+            cxxkit::Object::post_event(
+                &obj,
+                new DeletedEvent(static_cast<cxxkit::Event::Type>(static_cast<int>(cxxkit::Event::Type::kUser) + 2)),
+                5);
+            loop.exit(0); // PIT-43: same-round exit chaining
+        });
+    EXPECT_EQ(loop.exec(), 0);
+    ASSERT_EQ(obj.events.size(), 3u);
+    EXPECT_EQ(obj.events[0],
+              static_cast<cxxkit::Event::Type>(static_cast<int>(cxxkit::Event::Type::kUser) + 1)); // p10 first
+    EXPECT_EQ(obj.events[1],
+              static_cast<cxxkit::Event::Type>(static_cast<int>(cxxkit::Event::Type::kUser) + 2)); // p5 second
+    EXPECT_EQ(obj.events[2], cxxkit::Event::Type::kUser);                                          // p0 last
+}
+
+TEST(Object, post_event_equal_priority_keeps_fifo)
+{
+    cxxkit::EventLoop loop(std::unique_ptr<cxxkit::AbstractEventDispatcher>(new FakeDispatcher));
+    RecordingObject obj;
+    obj.move_to_thread(&loop);
+    loop.post(
+        [&]
+        {
+            const int base = static_cast<int>(cxxkit::Event::Type::kUser);
+            for (int i = 0; i < 4; ++i)
+            {
+                cxxkit::Object::post_event(&obj, new DeletedEvent(static_cast<cxxkit::Event::Type>(base + i)), 7);
+            }
+            loop.exit(0);
+        });
+    EXPECT_EQ(loop.exec(), 0);
+    ASSERT_EQ(obj.events.size(), 4u);
+    for (int i = 0; i < 4; ++i)
+    {
+        EXPECT_EQ(
+            obj.events[i],
+            static_cast<cxxkit::Event::Type>(static_cast<int>(cxxkit::Event::Type::kUser) + i)); // exact post order
+    }
+}
+
+TEST(Object, post_event_negative_priority_dispatches_last)
+{
+    cxxkit::EventLoop loop(std::unique_ptr<cxxkit::AbstractEventDispatcher>(new FakeDispatcher));
+    RecordingObject obj;
+    obj.move_to_thread(&loop);
+    loop.post(
+        [&]
+        {
+            cxxkit::Object::post_event(&obj, new DeletedEvent(cxxkit::Event::Type::kUser)); // p0 default
+            cxxkit::Object::post_event(
+                &obj,
+                new DeletedEvent(static_cast<cxxkit::Event::Type>(static_cast<int>(cxxkit::Event::Type::kUser) + 1)),
+                -5);
+            loop.exit(0);
+        });
+    EXPECT_EQ(loop.exec(), 0);
+    ASSERT_EQ(obj.events.size(), 2u);
+    EXPECT_EQ(obj.events[0], cxxkit::Event::Type::kUser);
+    EXPECT_EQ(obj.events[1],
+              static_cast<cxxkit::Event::Type>(static_cast<int>(cxxkit::Event::Type::kUser) + 1)); // -5 last
+}
+
+// Migration carries each entry's original priority (EventEntry.mPriority) and pushes in
+// source scan order — already priority-sorted, so concatenation preserves stability (Momus F2:
+// no re-sort on migration).
+TEST(Object, move_to_thread_preserves_pending_priority_order)
+{
+    FakeDispatcher *d1 = new FakeDispatcher;
+    FakeDispatcher *d2 = new FakeDispatcher;
+    cxxkit::EventLoop loop1((std::unique_ptr<cxxkit::AbstractEventDispatcher>(d1)));
+    cxxkit::EventLoop loop2((std::unique_ptr<cxxkit::AbstractEventDispatcher>(d2)));
+    RecordingObject obj;
+    obj.move_to_thread(&loop1); // both loops idle (static phase)
+    const int base = static_cast<int>(cxxkit::Event::Type::kUser);
+    cxxkit::Object::post_event(&obj, new DeletedEvent(cxxkit::Event::Type::kUser)); // p0, queued first
+    cxxkit::Object::post_event(&obj,
+                               new DeletedEvent(static_cast<cxxkit::Event::Type>(base + 1)),
+                               10);                                                 // p10, queued ahead
+    obj.move_to_thread(&loop2);                                                     // migrate WITH the pending entries
+    EXPECT_FALSE(loop1.process_events(cxxkit::EventLoop::ProcessFlag::kAllEvents)); // loop1 drained dry (empty = false)
+    EXPECT_TRUE(loop2.process_events(cxxkit::EventLoop::ProcessFlag::kAllEvents));  // delivered on loop2
+    ASSERT_EQ(obj.events.size(), 2u);
+    EXPECT_EQ(obj.events[0], static_cast<cxxkit::Event::Type>(base + 1)); // p10 first
+    EXPECT_EQ(obj.events[1], cxxkit::Event::Type::kUser);                 // p0 last — original order kept
+}
+
+// Compression × priority interplay: delete_later keeps priority 0 (default); compression scan
+// runs BEFORE the priority insert, on the raw queue — a p10 entry does not defeat dedup.
+TEST(Object, delete_later_compression_works_across_priority_mix)
+{
+    cxxkit::EventLoop loop(std::unique_ptr<cxxkit::AbstractEventDispatcher>(new FakeDispatcher));
+    Counter::alive = 0;
+    CountedObject *victim = new CountedObject;
+    victim->move_to_thread(&loop);
+    victim->delete_later(); // p0 DeferredDelete queued
+    cxxkit::Object::post_event(victim,
+                               new DeletedEvent(cxxkit::Event::Type::kUser),
+                               10); // p10 custom — inserts BEFORE the DeferredDelete
+    victim->delete_later();         // duplicate DeferredDelete — compressed away despite the p10 entry
+    EXPECT_TRUE(loop.process_events(cxxkit::EventLoop::ProcessFlag::kAllEvents));
+    EXPECT_EQ(Counter::alive, 0); // deleted exactly once
+    EXPECT_FALSE(
+        loop.process_events(cxxkit::EventLoop::ProcessFlag::kAllEvents)); // queue empty (no leak/compression miss)
+}
+
+
 #endif // CXXKIT_FEATURE_ENABLE_KERNEL

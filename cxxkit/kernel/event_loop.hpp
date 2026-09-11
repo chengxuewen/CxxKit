@@ -145,8 +145,11 @@ private:
      *  T2: explicit loop parameter — post_event routes by receiver->thread() affinity,
      *  decoupled from the calling thread.
      *  C2 compression: a DeferredDeleteEvent whose receiver already has one queued is
-     *  deleted instead of enqueued (scan + decision both under the lock). */
-    static void enqueue_event(EventLoop *loop, Object *receiver, Event *event);
+     *  deleted instead of enqueued (scan + decision both under the lock).
+     *  C3 priority: stable sorted insert AFTER the compression scan — inserted before the
+     *  first entry with a strictly smaller priority; otherwise push_back. With all-default-0
+     *  priorities this degenerates to an exact push_back (byte-identical legacy behavior). */
+    static void enqueue_event(EventLoop *loop, Object *receiver, Event *event, int priority = 0);
 
     /**
      * @brief ~Object 清 pending 通道：锁内 remove+delete 匹配 receiver 的条目（含 DeferredDeleteEvent）。

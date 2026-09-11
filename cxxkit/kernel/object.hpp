@@ -204,9 +204,11 @@ public:
      * Fatal (CXXKIT_CHECK): receiver/event null; kDeferredDelete (owner semantics — only
      * delete_later may enqueue it); receiver has no thread affinity (construct it inside
      * a loop's exec or move_to_thread it first).
+     * @param priority Dispatch priority: larger dispatches first; equal priority preserves
+     *        FIFO order; default 0 matches historical behavior.
      * @since 0.2
      */
-    static void post_event(Object *receiver, Event *event);
+    static void post_event(Object *receiver, Event *event, int priority = 0);
 
     /** @brief Removes and deletes every queued (not yet dispatched) event for @p receiver:
      *  queued events are dropped without dispatch; the receiver owns nothing afterwards.

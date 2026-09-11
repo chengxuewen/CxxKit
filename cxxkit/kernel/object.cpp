@@ -202,7 +202,7 @@ void Object::delete_later()
     loop->wake_up();
 }
 
-void Object::post_event(Object *receiver, Event *event)
+void Object::post_event(Object *receiver, Event *event, int priority)
 {
     CXXKIT_CHECK(receiver != nullptr && event != nullptr) << "post_event requires receiver/event";
     // DeferredDelete rejection precedes the affinity check: owner semantics (DeleteInEventHandler)
@@ -213,7 +213,7 @@ void Object::post_event(Object *receiver, Event *event)
     EventLoop *loop = receiver->d_func()->mThread; // target-affinity routing (T2/D35): the receiver's loop
     CXXKIT_CHECK(loop != nullptr)
         << "post_event: receiver has no thread affinity — create it inside a loop's exec or move_to_thread";
-    EventLoop::enqueue_event(loop, receiver, event);
+    EventLoop::enqueue_event(loop, receiver, event, priority);
     loop->wake_up(); // cross-thread wake (thread-safe dispatcher contract)
 }
 
