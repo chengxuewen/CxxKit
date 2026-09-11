@@ -58,6 +58,12 @@ public:
     std::string mObjectName;         // name follows the object (not touched by move_to_thread)
     std::map<const void *, std::unique_ptr<Object::UserData>> mUserData; // owned; released by member dtor
 
+    /** @brief T7 funnel bridge: Application::notify (a plain member of the DERIVED Application
+     *  class) cannot call Object's private send_event_internal directly — ObjectPrivate is the
+     *  friend. Static, stateless; forwards to Object::send_event_internal. Defined in object.cpp.
+     *  Kernel-internal (detail header), not part of the public API. */
+    static bool deliver_via_funnel(Object *app, Object *receiver, Event *event);
+
 protected:
     CXXKIT_DEFINE_PPTR(Object)
     CXXKIT_DECLARE_PUBLIC(Object)

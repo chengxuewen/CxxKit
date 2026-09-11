@@ -22,8 +22,10 @@
 **
 ***********************************************************************************************************************/
 
+#include <cxxkit/kernel/detail/application_p.hpp>
 #include <cxxkit/kernel/detail/object_p.hpp>
 
+#include <cxxkit/kernel/application.hpp>
 #include <cxxkit/kernel/detail/event_loop_p.hpp>
 #include <cxxkit/kernel/event_loop.hpp>
 #include <cxxkit/tools/checks.hpp>
@@ -231,6 +233,13 @@ void Object::remove_pending_events(Object *receiver)
     EventLoop::purge_pending(receiver->d_func()->mThread, receiver);
     EventLoop::purge_pending(EventLoop::current(), receiver);
 }
+bool ObjectPrivate::deliver_via_funnel(Object *app, Object *receiver, Event *event)
+{
+    // Friend-member bridge for Application::notify (access rationale: CXXKIT_DECLARE_PRIVATE's
+    // friend grant keeps Object::send_event_internal private).
+    return Object::send_event_internal(app, receiver, event);
+}
+
 
 Object *Object::parent() const
 {
@@ -470,8 +479,36 @@ bool Object::event(Event *event)
 bool Object::send_event(Object *receiver, Event *event)
 {
     CXXKIT_CHECK(receiver != nullptr && event != nullptr) << "send_event requires receiver/event";
-    // kDeferredDelete 不拒：队列派发复用 send_event 内部逻辑（filter 链生效，T3），用户侧直发
+    // T7 funnel (Momus F3): the single delivery gate. With a live Application every event —
+    // direct sends, queue dispatch (process_events), synchronous timer ticks — routes through
+    // notify(); without one the core path is taken, byte-identical to pre-funnel behavior.
+    Application *app = Application::instance();
+    if (app != nullptr)
+    {
+        return app->notify(receiver, event);
+    }
+    return Object::send_event_internal(nullptr, receiver, event);
+}
+
+bool Object::send_event_internal(Object *app, Object *receiver, Event *event)
+{
+    // (Momus F3 anti-recursion: NO instance check here — this is the funnel-free core.)
+    // kDeferredDelete 不拒：队列派发复用内部逻辑（filter 链生效，T3），用户侧直发
     // 该类型由 post_event 守卫拒绝（唯一合法生产者是 delete_later 走的 enqueue_event 通道）。
+    // Non-null @p app first: the Application's own filters = GLOBAL filters (newest first),
+    // then the receiver's own chain (newest first), then receiver->event() — Qt-faithful order.
+    if (app != nullptr)
+    {
+        ObjectPrivate *appPriv = app->d_func();
+        std::vector<Object *> &appFilters = appPriv->mFilters;
+        for (size_t i = appFilters.size(); i > 0; --i)
+        {
+            if (appFilters[i - 1]->event_filter(receiver, event))
+            {
+                return false; // global filter intercepted
+            }
+        }
+    }
     ObjectPrivate *priv = receiver->d_func();
     // 头插序遍历：mFilters.back() 最先（后装先过滤）
     std::vector<Object *> &filters = priv->mFilters;

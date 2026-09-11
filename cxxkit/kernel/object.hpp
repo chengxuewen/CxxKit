@@ -190,7 +190,8 @@ public:
      *  @since 0.2 */
     void kill_timer(int timer_id);
 
-    /** @brief 同步投递：filter 链前置（后装先过滤），未拦截则 receiver->event()。返回 is_accepted()；被 filter 拦截返回 false。 */
+    /** @brief 同步投递：filter 链前置（后装先过滤），未拦截则 receiver->event()。返回 is_accepted()；被 filter 拦截返回 false。
+     *  T7 漏斗：存在 Application 单例时经其 notify()（全局 filter 链 + 核心投递）；无则直达核心路径（行为与旧版逐字节一致）。 */
     static bool send_event(Object *receiver, Event *event);
 
     /**
@@ -248,6 +249,13 @@ protected:
     virtual void destroying();
 
 private:
+    /** @brief Funnel-free core delivery (T7): optional @p app filter chain (global filters)
+     *  first, then the receiver's own chain, then receiver->event(). NOT a funnel entry point
+     *  — Application::notify and Object::send_event both route here; no instance() check
+     *  inside (Momus F3 anti-recursion). @p app is the funnel owner (or null for the no-App
+     *  path). Kernel-internal, not part of the public API. */
+    static bool send_event_internal(Object *app, Object *receiver, Event *event);
+
     /** @brief Pre-order recursion shared by find_children; appends matching children
      *  to @p result. Header-only (template). */
     template <typename T>
