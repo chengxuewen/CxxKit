@@ -318,6 +318,12 @@ if(CXXKIT_ENABLE_LIB_THREAD)
         INCLUDE_DIRECTORIES ${PROJECT_SOURCE_DIR}
         LIBRARIES ${CXXKIT_TEST_LINK_LIBRARIES} ${CMAKE_THREAD_LIBS_INIT})
 endif()
+if(CXXKIT_ENABLE_LIB_THREAD AND CXXKIT_ENABLE_LIB_KERNEL)
+    cxxkit_add_test(cxxkit_tst_event_loop_thread
+        SOURCES tst_event_loop_thread.cpp
+        INCLUDE_DIRECTORIES ${PROJECT_SOURCE_DIR} ${PROJECT_SOURCE_DIR}/tests
+        LIBRARIES ${CXXKIT_TEST_LINK_LIBRARIES} ${CMAKE_THREAD_LIBS_INIT})
+endif()
 if(CXXKIT_ENABLE_LIB_TOOLS)
     cxxkit_add_test(cxxkit_tst_type_traits
         SOURCES tst_type_traits.cpp
