@@ -958,8 +958,125 @@ TEST(Object, to_tree_string_empty_name_renders_class_only)
     EXPECT_EQ(solo.to_tree_string(), "{} " + std::string(typeid(RecordingObject).name()) + "\n");
 }
 
-// T1: dump_object_tree must write exactly to_tree_string() bytes to stderr.
-// Captures fd 2 around the call (dup/dup2 + tmpfile), restores before asserting.
+// T2 find_child/find_children test doubles: two sibling derived types so type-filter
+// behavior is observable (a Node must not match a Widget query and vice versa).
+namespace
+{
+class FindNode : public cxxkit::Object
+{
+public:
+    explicit FindNode(cxxkit::Object *parent = nullptr)
+        : Object(parent)
+    {
+    }
+};
+class FindWidget : public cxxkit::Object
+{
+public:
+    explicit FindWidget(cxxkit::Object *parent = nullptr)
+        : Object(parent)
+    {
+    }
+};
+} // namespace
+
+// T2(a): direct child hit by type + find_child returns the FIRST match in pre-order.
+TEST(Object, find_child_direct_child_by_type)
+{
+    RecordingObject root;
+    FindNode *node = new FindNode(&root);
+    RecordingObject *plain = new RecordingObject(&root);
+    EXPECT_EQ(static_cast<cxxkit::Object *>(root.find_child<FindNode>()), static_cast<cxxkit::Object *>(node));
+    EXPECT_EQ(static_cast<cxxkit::Object *>(root.find_child<RecordingObject>()), static_cast<cxxkit::Object *>(plain)); // first attached child
+    EXPECT_TRUE(root.find_child<FindWidget>() == nullptr); // no Widget among children
+    CXXKIT_UNUSED(plain);
+}
+
+// T2(b): recursive pre-order DFS reaches the grandchild; the object itself is never
+// considered (search is over children only).
+TEST(Object, find_child_finds_deep_grandchild_recursively)
+{
+    RecordingObject root;
+    RecordingObject *mid = new RecordingObject(&root);
+    FindNode *grand = new FindNode(mid);
+    EXPECT_EQ(static_cast<cxxkit::Object *>(root.find_child<FindNode>()), static_cast<cxxkit::Object *>(grand)); // pre-order descent
+    EXPECT_TRUE(mid->find_child<FindWidget>() == nullptr); // deep search still respects the type filter
+    // The object itself is never a candidate even when it matches T:
+    EXPECT_TRUE(root.find_child<RecordingObject>() != nullptr); // finds mid (child), not itself
+}
+
+// T2(c): type mismatch — a plain Object sibling does not satisfy a derived-type query.
+TEST(Object, find_child_skips_type_mismatch)
+{
+    RecordingObject root;
+    new RecordingObject(&root);
+    new RecordingObject(&root);
+    EXPECT_TRUE(root.find_child<FindWidget>() == nullptr);
+    EXPECT_TRUE(root.find_child<FindNode>() == nullptr);
+}
+
+// T2(d): name filter — match requires the name when non-empty; wrong name is skipped
+// for both find_child and find_children.
+TEST(Object, find_child_name_filter)
+{
+    RecordingObject root;
+    FindNode *hit = new FindNode(&root);
+    hit->set_object_name("target");
+    FindNode *miss = new FindNode(&root);
+    miss->set_object_name("other");
+    EXPECT_EQ(static_cast<cxxkit::Object *>(root.find_child<FindNode>("target")), static_cast<cxxkit::Object *>(hit));
+    EXPECT_TRUE(root.find_child<FindNode>("missing") == nullptr);
+    std::vector<FindNode *> named = root.find_children<FindNode>("target");
+    ASSERT_EQ(named.size(), 1u);
+    EXPECT_EQ(named[0], hit);
+    EXPECT_TRUE(root.find_children<FindNode>("missing").empty());
+    // Empty name matches by type alone:
+    EXPECT_EQ(root.find_children<FindNode>().size(), 2u);
+}
+
+// T2(e): recursive=false visits only direct children — a matching grandchild is
+// invisible to the non-recursive query.
+TEST(Object, find_child_non_recursive_ignores_descendants)
+{
+    RecordingObject root;
+    new RecordingObject(&root);
+    FindNode *grand = new FindNode(new RecordingObject(&root)); // grandchild
+    EXPECT_TRUE(root.find_child<FindNode>(std::string(), false) == nullptr);
+    EXPECT_TRUE(root.find_children<FindNode>(std::string(), false).empty());
+    EXPECT_EQ(root.find_child<FindNode>(std::string(), true), grand); // recursive reaches it
+}
+
+// T2(f): empty tree — no children means nullptr / empty vector, both modes.
+TEST(Object, find_child_empty_tree_returns_null_and_empty)
+{
+    RecordingObject solo;
+    EXPECT_TRUE(solo.find_child<FindNode>() == nullptr);
+    EXPECT_TRUE(solo.find_child<FindNode>(std::string(), false) == nullptr);
+    EXPECT_TRUE(solo.find_children<FindNode>().empty());
+    EXPECT_TRUE(solo.find_children<FindNode>(std::string(), false).empty());
+}
+
+// T2(g): find_children collects multiple hits in pre-order (root's children before
+// each child's own subtree, insertion order within a level).
+TEST(Object, find_children_collects_multiple_hits_in_pre_order)
+{
+    RecordingObject root;
+    FindNode *first = new FindNode(&root);
+    new RecordingObject(&root); // pre-order gap: plain child between the two hits
+    FindNode *second = new FindNode(&root);
+    FindNode *nested = new FindNode(first); // descendant of the FIRST hit
+    std::vector<FindNode *> all = root.find_children<FindNode>();
+    ASSERT_EQ(all.size(), 3u);
+    EXPECT_EQ(all[0], first);
+    EXPECT_EQ(all[1], nested); // first's subtree before the second top-level hit
+    EXPECT_EQ(all[2], second);
+    std::vector<RecordingObject *> plains = root.find_children<RecordingObject>(std::string(), false);
+    ASSERT_EQ(plains.size(), 1u); // non-recursive: the plain gap child is the only direct match
+    // Recursive base-type query counts only genuine RecordingObject instances:
+    EXPECT_EQ(root.find_children<RecordingObject>().size(), 1u);
+}
+
+
 TEST(Object, dump_object_tree_writes_to_tree_string_to_stderr)
 {
     RecordingObject root;

@@ -30,6 +30,7 @@
 #include <map>
 #include <memory>
 #include <string>
+#include <vector>
 
 #if CXXKIT_FEATURE_ENABLE_KERNEL
 
@@ -86,6 +87,48 @@ public:
     /** @brief Debug helper: prints to_tree_string(indent) to stderr (fprintf; no logging
      *  dependency). Qt dumpObjectTree analog. @since 0.2 */
     void dump_object_tree(int indent = 0) const;
+
+    /** @brief Pre-order DFS for the first child of type @p T. A child matches when
+     *  dynamic_cast<T*> succeeds and (name is empty or equals object_name()). With
+     *  recursive=false only direct children are visited; returns nullptr when nothing
+     *  matches. Header-only (template); dynamic_cast requires a polymorphic T (Object
+     *  has a vtable). The object itself is never a candidate (children only). Not
+     *  thread-safe (Object is single-threaded by design). @since 0.2 */
+    template <typename T>
+    T *find_child(const std::string &name = std::string(), bool recursive = true) const
+    {
+        const Children &kids = this->children();
+        for (Children::const_iterator it = kids.begin(); it != kids.end(); ++it)
+        {
+            Object *child = *it;
+            T *typed = dynamic_cast<T *>(child);
+            if (typed != nullptr && (name.empty() || child->object_name() == name))
+            {
+                return typed;
+            }
+            if (recursive)
+            {
+                T *found = child->find_child<T>(name, recursive);
+                if (found != nullptr)
+                {
+                    return found;
+                }
+            }
+        }
+        return nullptr;
+    }
+
+    /** @brief Pre-order DFS collecting every child of type @p T (same match rule as
+     *  find_child); results are in visit order. With recursive=false only direct
+     *  children are visited. Header-only (template). Not thread-safe (Object is
+     *  single-threaded by design). @since 0.2 */
+    template <typename T>
+    std::vector<T *> find_children(const std::string &name = std::string(), bool recursive = true) const
+    {
+        std::vector<T *> result;
+        this->find_children_internal<T>(name, recursive, result);
+        return result;
+    }
 
     /** @brief Returns the loop this object is affined to (null = no affinity).
      *  Lifetime contract: the affinity loop must outlive objects bound to it — purge /
@@ -149,6 +192,28 @@ protected:
      * @since 0.2
      */
     virtual void destroying();
+
+private:
+    /** @brief Pre-order recursion shared by find_children; appends matching children
+     *  to @p result. Header-only (template). */
+    template <typename T>
+    void find_children_internal(const std::string &name, bool recursive, std::vector<T *> &result) const
+    {
+        const Children &kids = this->children();
+        for (Children::const_iterator it = kids.begin(); it != kids.end(); ++it)
+        {
+            Object *child = *it;
+            T *typed = dynamic_cast<T *>(child);
+            if (typed != nullptr && (name.empty() || child->object_name() == name))
+            {
+                result.push_back(typed);
+            }
+            if (recursive)
+            {
+                child->find_children_internal<T>(name, recursive, result);
+            }
+        }
+    }
 
 public:
     /**
