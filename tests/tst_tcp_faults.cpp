@@ -7,11 +7,11 @@
 ** License: MIT License
 **
 ***********************************************************************************************************************/
-#include <cxxkit/uv/dispatcher_factory.hpp>
-#include <cxxkit/uv/tcp_server.hpp>
-#include <cxxkit/uv/tcp_socket.hpp>
-
+#include <cxxkit/kernel/default_dispatcher.hpp>
 #include <cxxkit/kernel/event_loop.hpp>
+
+#include <cxxkit/network/tcp_server.hpp>
+#include <cxxkit/network/tcp_socket.hpp>
 
 #include <gtest/gtest.h>
 #if GTEST_HAS_DEATH_TEST
@@ -29,7 +29,7 @@ class TcpFaultTest : public ::testing::Test
 protected:
     void SetUp() override
     {
-        mLoop = std::unique_ptr<cxxkit::EventLoop>(new cxxkit::EventLoop(cxxkit::make_uv_dispatcher()));
+        mLoop = std::unique_ptr<cxxkit::EventLoop>(new cxxkit::EventLoop(cxxkit::make_default_dispatcher()));
     }
 
     std::unique_ptr<cxxkit::EventLoop> mLoop;

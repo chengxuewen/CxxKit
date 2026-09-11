@@ -24,9 +24,9 @@
 
 #include <cxxkit/base/global.hpp>
 
+#include <cxxkit/kernel/default_dispatcher.hpp>
 #include <cxxkit/kernel/event_loop.hpp>
-#include <cxxkit/uv/dispatcher_factory.hpp>
-#include <cxxkit/uv/uv_event_dispatcher.hpp>
+#include <cxxkit/kernel/uv/detail/uv_event_dispatcher.hpp>
 
 #include <cxxkit/thread/semaphore.hpp>
 
@@ -50,7 +50,7 @@ namespace
 
 using cxxkit::AbstractEventDispatcher;
 using cxxkit::EventLoop;
-using cxxkit::make_uv_dispatcher;
+using cxxkit::make_default_dispatcher;
 
 // Real-libuv engine tests (D11). The EventLoop shell drains its post queue at process_events entry; the uv
 // engine contributes uv_run rounds, timers and the wake doorbell. All waiting is event-driven (P3): semaphores
@@ -59,7 +59,7 @@ using cxxkit::make_uv_dispatcher;
 // 1. post() from a worker thread; exec() on the loop thread drains and returns (cross-thread wake path).
 TEST(UvEventDispatcherTest, PostCrossThreadDrains)
 {
-    EventLoop loop(make_uv_dispatcher());
+    EventLoop loop(make_default_dispatcher());
     cxxkit::Semaphore posted;
     std::atomic<bool> ran(false);
 
@@ -85,7 +85,7 @@ TEST(UvEventDispatcherTest, PostCrossThreadDrains)
 // wait: exec blocks in UV_RUN_ONCE until the timer callback exits the loop.
 TEST(UvEventDispatcherTest, TimerFiresWithLowerBound)
 {
-    EventLoop loop(make_uv_dispatcher());
+    EventLoop loop(make_default_dispatcher());
     std::chrono::steady_clock::time_point start = std::chrono::steady_clock::now();
 
     loop.start_timer(
@@ -105,7 +105,7 @@ TEST(UvEventDispatcherTest, TimerFiresWithLowerBound)
 // repeat=interval (R-B2-4) — the wrapper stops the timer before running fn, the re-arm never fires again.
 TEST(UvEventDispatcherTest, TimerOneShotViaShell)
 {
-    EventLoop loop(make_uv_dispatcher());
+    EventLoop loop(make_default_dispatcher());
     std::atomic<int> fires(0);
 
     loop.start_timer(
@@ -124,7 +124,7 @@ TEST(UvEventDispatcherTest, TimerOneShotViaShell)
 // 4. Callback stop/restart legality (I3): inside a timer callback, stop self and start a new timer.
 TEST(UvEventDispatcherTest, CallbackStopRestart)
 {
-    EventLoop loop(make_uv_dispatcher());
+    EventLoop loop(make_default_dispatcher());
     std::atomic<int> firstFires(0);
 
     int firstId = loop.start_timer(10,
@@ -141,7 +141,7 @@ TEST(UvEventDispatcherTest, CallbackStopRestart)
 // 5. Wake-up storm (I4): N threads x M posts — all coalesced doorbells still drain the whole queue.
 TEST(UvEventDispatcherTest, WakeUpStormNThreadsMTasks)
 {
-    EventLoop loop(make_uv_dispatcher());
+    EventLoop loop(make_default_dispatcher());
     const int kThreads = 4;
     const int kPerThread = 25;
     const int kTotal = kThreads * kPerThread;
@@ -199,7 +199,7 @@ TEST(UvEventDispatcherTest, WakeUpStormNThreadsMTasks)
 #    if GTEST_HAS_DEATH_TEST && !defined(CXXKIT_ANDROID)
 TEST(UvEventDispatcherDeathTest, NestedProcessEventsAsserts)
 {
-    EventLoop loop(make_uv_dispatcher());
+    EventLoop loop(make_default_dispatcher());
     loop.start_timer(
         10,
         [&]
@@ -220,7 +220,7 @@ TEST(UvEventDispatcherTest, DestructorCleansUpHandles)
 {
     std::atomic<int> neverRun(0);
     {
-        EventLoop loop(make_uv_dispatcher());
+        EventLoop loop(make_default_dispatcher());
         loop.start_timer(1000, [&neverRun] { ++neverRun; });     // never fires
         loop.post([&neverRun] { ++neverRun; });                  // never drained
         loop.process_events(EventLoop::ProcessFlag::kAllEvents); // NOWAIT round: queue not empty → drains the post
@@ -232,7 +232,7 @@ TEST(UvEventDispatcherTest, DestructorCleansUpHandles)
 // return false in ~100ms against a real blocking driver, not hang or overshoot wildly.
 TEST(UvEventDispatcherTest, ProcessEventsTimeoutWithRealDriver)
 {
-    EventLoop loop(make_uv_dispatcher());
+    EventLoop loop(make_default_dispatcher());
     std::chrono::steady_clock::time_point start = std::chrono::steady_clock::now();
 
     const bool processed = loop.process_events(EventLoop::ProcessFlag::kAllEvents, 100);
@@ -251,7 +251,7 @@ using SocketMask = AbstractEventDispatcher::SocketEventMask;
 // 9. Write into a socketpair: the readable notification fires on the peer fd.
 TEST(UvEventDispatcherTest, RegisterPollFiresOnReadable)
 {
-    std::unique_ptr<AbstractEventDispatcher> dispatcher = make_uv_dispatcher();
+    std::unique_ptr<AbstractEventDispatcher> dispatcher = make_default_dispatcher();
     cxxkit::UvEventDispatcher *uv = static_cast<cxxkit::UvEventDispatcher *>(dispatcher.get());
     EventLoop loop(std::move(dispatcher));
     int fds[2];
@@ -285,7 +285,7 @@ TEST(UvEventDispatcherTest, RegisterPollFiresOnReadable)
 // duplex registration fires with both bits on a readable-with-writable-buffer fd.
 TEST(UvEventDispatcherTest, PollInterestMaskRespected)
 {
-    std::unique_ptr<AbstractEventDispatcher> dispatcher = make_uv_dispatcher();
+    std::unique_ptr<AbstractEventDispatcher> dispatcher = make_default_dispatcher();
     cxxkit::UvEventDispatcher *uv = static_cast<cxxkit::UvEventDispatcher *>(dispatcher.get());
     EventLoop loop(std::move(dispatcher));
     int fds[2];
@@ -338,7 +338,7 @@ TEST(UvEventDispatcherTest, PollInterestMaskRespected)
 // 11. Unregister stops delivery: a written byte after unregister produces no callback (fd still open).
 TEST(UvEventDispatcherTest, PollUnregisterStopsDelivery)
 {
-    std::unique_ptr<AbstractEventDispatcher> dispatcher = make_uv_dispatcher();
+    std::unique_ptr<AbstractEventDispatcher> dispatcher = make_default_dispatcher();
     cxxkit::UvEventDispatcher *uv = static_cast<cxxkit::UvEventDispatcher *>(dispatcher.get());
     EventLoop loop(std::move(dispatcher));
     int fds[2];
@@ -368,7 +368,7 @@ TEST(UvEventDispatcherTest, PollUnregisterStopsDelivery)
 // style per-transition re-arm. Write-only then Read-only on the same fd: only read readiness delivers.
 TEST(UvEventDispatcherTest, PollReregisterSameFdUpdates)
 {
-    std::unique_ptr<AbstractEventDispatcher> dispatcher = make_uv_dispatcher();
+    std::unique_ptr<AbstractEventDispatcher> dispatcher = make_default_dispatcher();
     cxxkit::UvEventDispatcher *uv = static_cast<cxxkit::UvEventDispatcher *>(dispatcher.get());
     EventLoop loop(std::move(dispatcher));
     int fds[2];
@@ -405,7 +405,7 @@ TEST(UvEventDispatcherTest, PollReregisterSameFdUpdates)
 // engine copies the std::function before invoking, so the callback runs to completion.
 TEST(UvEventDispatcherTest, PollUnregisterInsideCallback)
 {
-    std::unique_ptr<AbstractEventDispatcher> dispatcher = make_uv_dispatcher();
+    std::unique_ptr<AbstractEventDispatcher> dispatcher = make_default_dispatcher();
     cxxkit::UvEventDispatcher *uv = static_cast<cxxkit::UvEventDispatcher *>(dispatcher.get());
     EventLoop loop(std::move(dispatcher));
     int fds[2];
@@ -444,7 +444,7 @@ TEST(UvEventDispatcherTest, DestructorCleansUpActivePolls)
     ASSERT_EQ(0, ::socketpair(AF_UNIX, SOCK_STREAM, 0, fds));
     int hits = 0;
     {
-        std::unique_ptr<AbstractEventDispatcher> dispatcher = make_uv_dispatcher();
+        std::unique_ptr<AbstractEventDispatcher> dispatcher = make_default_dispatcher();
         cxxkit::UvEventDispatcher *uv = static_cast<cxxkit::UvEventDispatcher *>(dispatcher.get());
         EventLoop loop(std::move(dispatcher));
         uv->register_socket_notifier(fds[0], SocketMask::kRead, [&](SocketMask) { ++hits; });

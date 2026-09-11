@@ -596,23 +596,26 @@ if(CXXKIT_ENABLE_LIB_IMGUI)
         LIBRARIES ${CXXKIT_TEST_LINK_LIBRARIES} cxxkit::imgui ${CMAKE_THREAD_LIBS_INIT})
 endif()
 
-if(CXXKIT_ENABLE_LIB_UV)
-    cxxkit_add_test(cxxkit_tst_uv_event_dispatcher
+if(CXXKIT_ENABLE_LOOP_BACKEND_UV)
+    cxxkit_add_test(cxxkit_tst_kernel_uv_dispatcher
         SOURCES tst_uv_event_dispatcher.cpp
         INCLUDE_DIRECTORIES ${PROJECT_SOURCE_DIR}
-        LIBRARIES ${CXXKIT_TEST_LINK_LIBRARIES} cxxkit::uv ${CMAKE_THREAD_LIBS_INIT})
+        LIBRARIES ${CXXKIT_TEST_LINK_LIBRARIES} cxxkit::kernel ${CMAKE_THREAD_LIBS_INIT})
+endif()
+
+if(CXXKIT_ENABLE_LIB_NETWORK AND CXXKIT_ENABLE_LOOP_BACKEND_UV)
     cxxkit_add_test(cxxkit_tst_tcp_socket
         SOURCES tst_tcp_socket.cpp
         INCLUDE_DIRECTORIES ${PROJECT_SOURCE_DIR}
-        LIBRARIES ${CXXKIT_TEST_LINK_LIBRARIES} cxxkit::uv ${CMAKE_THREAD_LIBS_INIT})
+        LIBRARIES ${CXXKIT_TEST_LINK_LIBRARIES} cxxkit::network ${CMAKE_THREAD_LIBS_INIT})
     cxxkit_add_test(cxxkit_tst_tcp_server
         SOURCES tst_tcp_server.cpp
         INCLUDE_DIRECTORIES ${PROJECT_SOURCE_DIR}
-        LIBRARIES ${CXXKIT_TEST_LINK_LIBRARIES} cxxkit::uv ${CMAKE_THREAD_LIBS_INIT})
+        LIBRARIES ${CXXKIT_TEST_LINK_LIBRARIES} cxxkit::network ${CMAKE_THREAD_LIBS_INIT})
     cxxkit_add_test(cxxkit_tst_tcp_faults
         SOURCES tst_tcp_faults.cpp
         INCLUDE_DIRECTORIES ${PROJECT_SOURCE_DIR}
-        LIBRARIES ${CXXKIT_TEST_LINK_LIBRARIES} cxxkit::uv ${CMAKE_THREAD_LIBS_INIT})
+        LIBRARIES ${CXXKIT_TEST_LINK_LIBRARIES} cxxkit::network ${CMAKE_THREAD_LIBS_INIT})
 endif()
 
 if(CXXKIT_ENABLE_LIB_QT)

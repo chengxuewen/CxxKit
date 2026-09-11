@@ -21,8 +21,8 @@ Library: CxxKit
 **
 ***********************************************************************************************************************/
 
-#include <cxxkit/uv/detail/tcp_socket_p.hpp>
-#include <cxxkit/uv/tcp_socket.hpp>
+#include <cxxkit/network/detail/tcp_socket_p.hpp>
+#include <cxxkit/network/tcp_socket.hpp>
 
 #include <cxxkit/tools/checks.hpp>
 
@@ -37,7 +37,7 @@ TcpSocketPrivate::TcpSocketPrivate(TcpSocket *p, EventLoop &loop)
     , mLoop(loop)
 {
     // The loop's dispatcher is an UvEventDispatcher in this sublibrary's world (static_cast is the
-    // inject-once contract: EventLoop owns it exclusively and cxxkit::uv made it).
+    // inject-once contract: EventLoop owns it exclusively and cxxkit::network made it).
     mDispatcher = static_cast<UvEventDispatcher *>(&loop.dispatcher());
     mLoopThreadId = std::this_thread::get_id(); // construction is loop-thread only; pin the check id
 }
@@ -427,7 +427,10 @@ void TcpSocketPrivate::on_closed(uv_handle_t *handle)
     TcpSocketPrivate *d = static_cast<TcpSocketPrivate *>(handle->data);
     d->mHandle = nullptr;
     d->mState = State::kClosed;
-    delete handle;
+    // The allocation is uv_tcp_t (248B); the callback parameter type is uv_handle_t (96B). Deleting
+    // through the base-typed pointer is a new-delete-type-mismatch (ASAN) — cast back to the real
+    // allocation type (both client handles and adopted/fd handles are new uv_tcp_t).
+    delete reinterpret_cast<uv_tcp_t *>(handle);
 }
 
 CXXKIT_END_NAMESPACE

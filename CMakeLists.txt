@@ -228,7 +228,7 @@ cxxkit_option(CXXKIT_ENABLE_LIB_MEDIA "Enable this to build media lib" ON
     DEPENDS "CXXKIT_ENABLE_LIB_BASE AND CXXKIT_ENABLE_LIB_THREAD AND CXXKIT_ENABLE_LIB_TOOLS"
     OR_CONDITION CXXKIT_BUILD_ALL)
 cxxkit_option(CXXKIT_ENABLE_LIB_NETWORK "Enable this to build enable network lib" OFF
-    DEPENDS "CXXKIT_ENABLE_LIB_BASE AND CXXKIT_ENABLE_LIB_TEXT AND CXXKIT_ENABLE_LIB_THREAD AND CXXKIT_ENABLE_LIB_MEMORY AND CXXKIT_ENABLE_LIB_TOOLS"
+    DEPENDS "CXXKIT_ENABLE_LIB_BASE AND CXXKIT_ENABLE_LIB_TEXT AND CXXKIT_ENABLE_LIB_THREAD AND CXXKIT_ENABLE_LIB_MEMORY AND CXXKIT_ENABLE_LIB_TOOLS AND CXXKIT_ENABLE_LIB_KERNEL"
     OR_CONDITION CXXKIT_BUILD_ALL)
 cxxkit_option(CXXKIT_ENABLE_LIB_TRACY "Enable this to build enable Tracy profiler lib" OFF
     OR_CONDITION CXXKIT_BUILD_ALL)
@@ -237,9 +237,8 @@ cxxkit_option(CXXKIT_ENABLE_LIB_CRASH "Enable this to build enable crash lib" OF
     OR_CONDITION CXXKIT_BUILD_ALL)
 cxxkit_option(CXXKIT_ENABLE_LIB_IMGUI "Enable this to build enable imgui lib" OFF
     DEPENDS "CXXKIT_ENABLE_LIB_BASE AND CXXKIT_ENABLE_LIB_TOOLS" OR_CONDITION CXXKIT_BUILD_ALL)
-cxxkit_option(CXXKIT_ENABLE_LIB_UV "Enable this to build enable uv (libuv event loop) lib" OFF
-    DEPENDS "CXXKIT_ENABLE_LIB_BASE AND CXXKIT_ENABLE_LIB_KERNEL AND CXXKIT_ENABLE_LIB_TOOLS"
-    OR_CONDITION CXXKIT_BUILD_ALL)
+cxxkit_option(CXXKIT_ENABLE_LOOP_BACKEND_UV "Enable the default loop backend (vendored libuv engine inside kernel)" ON
+    DEPENDS "CXXKIT_ENABLE_LIB_BASE AND CXXKIT_ENABLE_LIB_TOOLS" OR_CONDITION CXXKIT_BUILD_ALL)
 # Local machine (g++ 10.5) only: qt consumers link the conda libstdc++ explicitly so
 # libQt6Core's GLIBCXX_3.4.30+ symbols resolve. CI (gcc>=11, system Qt) never sees this
 # (EXISTS guard = no-op). Defined at top level so examples/tests scopes inherit it. PIT-39.
@@ -309,7 +308,6 @@ add_subdirectory(cxxkit/profiling)
 cxxkit_add_subdirectory(cxxkit/network CXXKIT_ENABLE_LIB_NETWORK)
 cxxkit_add_subdirectory(cxxkit/crash CXXKIT_ENABLE_LIB_CRASH)
 cxxkit_add_subdirectory(cxxkit/imgui CXXKIT_ENABLE_LIB_IMGUI)
-cxxkit_add_subdirectory(cxxkit/uv CXXKIT_ENABLE_LIB_UV)
 cxxkit_add_subdirectory(cxxkit/qt CXXKIT_ENABLE_LIB_QT)
 cxxkit_add_subdirectory(tests CXXKIT_BUILD_TESTS)
 cxxkit_add_subdirectory(examples CXXKIT_BUILD_EXAMPLES)
@@ -390,10 +388,12 @@ if(CXXKIT_BUILD_INSTALL)
     if(CXXKIT_ENABLE_LIB_CRASH)
         list(APPEND CXXKIT_VENDORED_FIND_DEPS "unofficial-breakpad" "Backward")
     endif()
-    if(CXXKIT_ENABLE_LIB_UV)
+    if(CXXKIT_ENABLE_LOOP_BACKEND_UV OR CXXKIT_ENABLE_LIB_NETWORK)
         list(APPEND CXXKIT_VENDORED_FIND_DEPS "libuv")
     endif()
     set(CXXKIT_QT_ENABLED ${CXXKIT_ENABLE_LIB_QT})
+    set(CXXKIT_LOOP_BACKEND_UV ${CXXKIT_ENABLE_LOOP_BACKEND_UV})
+    set(CXXKIT_NETWORK ${CXXKIT_ENABLE_LIB_NETWORK})
     configure_package_config_file(
         "${CXXKIT_CMAKE_DIR}/CxxKitConfig.cmake.in"
         "${CMAKE_CURRENT_BINARY_DIR}/cxxkitConfig.cmake"

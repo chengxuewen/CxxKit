@@ -21,11 +21,11 @@ Library: CxxKit
 **
 ***********************************************************************************************************************/
 
-#include <cxxkit/uv/detail/tcp_server_p.hpp>
-#include <cxxkit/uv/tcp_server.hpp>
+#include <cxxkit/network/detail/tcp_server_p.hpp>
+#include <cxxkit/network/tcp_server.hpp>
 
 #include <cxxkit/tools/checks.hpp>
-#include <cxxkit/uv/tcp_socket.hpp>
+#include <cxxkit/network/tcp_socket.hpp>
 
 #include <arpa/inet.h>
 #include <netinet/in.h>
@@ -205,7 +205,9 @@ void TcpServerPrivate::on_closed(uv_handle_t *handle)
     TcpServerPrivate *d = static_cast<TcpServerPrivate *>(handle->data);
     d->mHandle = nullptr;
     d->mListening = false;
-    delete handle;
+    // The allocation is uv_tcp_t; the callback parameter type is uv_handle_t — deleting through the
+    // base-typed pointer is a new-delete-type-mismatch (ASAN). Cast back to the allocation type.
+    delete reinterpret_cast<uv_tcp_t *>(handle);
 }
 
 CXXKIT_END_NAMESPACE

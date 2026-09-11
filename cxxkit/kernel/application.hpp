@@ -63,7 +63,7 @@ class ApplicationPrivate;
 class CXXKIT_KERNEL_API Application : public Object
 {
 public:
-    /** @brief Creates the main loop's dispatcher (the make_uv_dispatcher / make_qt_dispatcher shape,
+    /** @brief Creates the main loop's dispatcher (the make_default_dispatcher / make_qt_dispatcher shape,
      *  mirrored from EventLoopThread). */
     typedef std::function<std::unique_ptr<AbstractEventDispatcher>()> DispatcherFactory;
 

@@ -72,13 +72,17 @@ endforeach()
 # libuv stub (B2, closes B1 C-1): libuv's own Config (find_dependency above) provides
 # libuv::uv_a WITH its transitive link libs (pthread;dl;rt) — delegate to it when present;
 # fall back to the raw static lib for consumers that skip the find_dependency chain.
-if(NOT TARGET CxxKitWrapLibuv::WrapLibuv)
-    add_library(CxxKitWrapLibuv::WrapLibuv INTERFACE IMPORTED)
-endif()
-if(TARGET libuv::uv_a)
-    set_property(TARGET CxxKitWrapLibuv::WrapLibuv PROPERTY INTERFACE_LINK_LIBRARIES libuv::uv_a)
-elseif(EXISTS "${PACKAGE_PREFIX_DIR}/lib/libuv.a")
-    set_property(TARGET CxxKitWrapLibuv::WrapLibuv PROPERTY INTERFACE_LINK_LIBRARIES "${PACKAGE_PREFIX_DIR}/lib/libuv.a")
+# Gated (D38): libuv ships only when the default loop backend is ON or network is ON
+# (kernel engine / TcpSocket+TcpServer carriers).
+if(CXXKIT_LOOP_BACKEND_UV OR CXXKIT_NETWORK)
+    if(NOT TARGET CxxKitWrapLibuv::WrapLibuv)
+        add_library(CxxKitWrapLibuv::WrapLibuv INTERFACE IMPORTED)
+    endif()
+    if(TARGET libuv::uv_a)
+        set_property(TARGET CxxKitWrapLibuv::WrapLibuv PROPERTY INTERFACE_LINK_LIBRARIES libuv::uv_a)
+    elseif(EXISTS "${PACKAGE_PREFIX_DIR}/lib/libuv.a")
+        set_property(TARGET CxxKitWrapLibuv::WrapLibuv PROPERTY INTERFACE_LINK_LIBRARIES "${PACKAGE_PREFIX_DIR}/lib/libuv.a")
+    endif()
 endif()
 
 include("${CMAKE_CURRENT_LIST_DIR}/cxxkitTargets.cmake")

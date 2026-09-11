@@ -24,7 +24,7 @@
 
 #pragma once
 
-#include <cxxkit/uv/uv_global.hpp>
+#include <cxxkit/network/network_global.hpp>
 
 #include <cxxkit/kernel/event_loop.hpp>
 
@@ -44,7 +44,7 @@ CXXKIT_BEGIN_NAMESPACE
 class TcpSocketPrivate;
 
 /**
- * @brief TCP stream over a @c cxxkit::uv event loop — memcached-style state machine (phase-2 core IO).
+ * @brief TCP stream over a @c cxxkit network event loop — memcached-style state machine.
  *
  * Wraps one @c uv_tcp_t directly (Node tcp_wrap pattern): the uv callbacks trampoline back into this
  * class via @c handle->data, drive a state machine, and re-arm interest on every transition. The
@@ -72,7 +72,7 @@ class TcpSocketPrivate;
  * if needed and pumps the loop until the close callback has run, so no uv state outlives the object
  * (ASAN-clean).
  */
-class CXXKIT_UV_API TcpSocket
+class CXXKIT_NETWORK_API TcpSocket
 {
 public:
     /**

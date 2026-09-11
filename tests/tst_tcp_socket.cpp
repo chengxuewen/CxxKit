@@ -25,8 +25,8 @@
 #include <cxxkit/base/global.hpp>
 
 #include <cxxkit/kernel/event_loop.hpp>
-#include <cxxkit/uv/dispatcher_factory.hpp>
-#include <cxxkit/uv/tcp_socket.hpp>
+#include <cxxkit/kernel/default_dispatcher.hpp>
+#include <cxxkit/network/tcp_socket.hpp>
 
 #include <sys/socket.h>
 #include <unistd.h>
@@ -47,7 +47,7 @@ namespace
 
 using cxxkit::EventLoop;
 using cxxkit::TcpSocket;
-using cxxkit::make_uv_dispatcher;
+using cxxkit::make_default_dispatcher;
 
 // R-T2-1: both ends of a socketpair adopted into the SAME loop as two TcpSockets (uv_tcp_open) — the
 // test rig needs no listener, no T3 TcpServer, no addresses. The main test thread is the loop thread.
@@ -81,7 +81,7 @@ struct SocketPair
 // 1. Round trip: A writes, B's read_start delivers the same bytes (echo back for full-duplex proof).
 TEST(TcpSocketTest, ConnectEchoRoundTrip)
 {
-    EventLoop loop(make_uv_dispatcher());
+    EventLoop loop(make_default_dispatcher());
     SocketPair pair(loop);
 
     std::string received;
@@ -122,7 +122,7 @@ TEST(TcpSocketTest, ConnectEchoRoundTrip)
 // 2. Backpressure (lws): writes issued while one is in flight queue FIFO; completions arrive in order.
 TEST(TcpSocketTest, WriteBackpressureQueueing)
 {
-    EventLoop loop(make_uv_dispatcher());
+    EventLoop loop(make_default_dispatcher());
     SocketPair pair(loop);
 
     std::vector<int> completed;
@@ -154,7 +154,7 @@ TEST(TcpSocketTest, WriteBackpressureQueueing)
 // 3. read_stop disarms the read interest: bytes written after read_stop deliver nothing.
 TEST(TcpSocketTest, ReadStopRespectsMask)
 {
-    EventLoop loop(make_uv_dispatcher());
+    EventLoop loop(make_default_dispatcher());
     SocketPair pair(loop);
 
     int hits = 0;
@@ -181,7 +181,7 @@ TEST(TcpSocketTest, ReadStopRespectsMask)
 // 4. I3: close() from inside an on_data callback must not crash — the socket tears itself down safely.
 TEST(TcpSocketTest, CloseInsideCallback)
 {
-    EventLoop loop(make_uv_dispatcher());
+    EventLoop loop(make_default_dispatcher());
     SocketPair pair(loop);
 
     bool closed_inside = false;
@@ -208,7 +208,7 @@ TEST(TcpSocketTest, CloseInsideCallback)
 // 5. I6: destructor with an in-flight transfer must pump the loop clean — no uv state survives (ASAN watch).
 TEST(TcpSocketTest, DestructorMidTransfer)
 {
-    EventLoop loop(make_uv_dispatcher());
+    EventLoop loop(make_default_dispatcher());
     {
         SocketPair pair(loop);
         int reads = 0;
@@ -226,7 +226,7 @@ TEST(TcpSocketTest, DestructorMidTransfer)
 // 6. Error path: peer closes -> on_data(nullptr, nread<=0) terminal event, socket auto-closes.
 TEST(TcpSocketTest, ErrorPathRemoteClose)
 {
-    EventLoop loop(make_uv_dispatcher());
+    EventLoop loop(make_default_dispatcher());
     SocketPair pair(loop);
 
     bool eof_seen = false;
@@ -260,7 +260,7 @@ TEST(TcpSocketTest, ErrorPathRemoteClose)
 // 7. F8-②: close() is idempotent; pending queued writes complete with false; second close is a no-op.
 TEST(TcpSocketTest, CloseTwiceIdempotent)
 {
-    EventLoop loop(make_uv_dispatcher());
+    EventLoop loop(make_default_dispatcher());
     SocketPair pair(loop);
 
     std::vector<bool> results;
@@ -294,7 +294,7 @@ TEST(TcpSocketDeathTest, CrossThreadWriteRejected)
     // through spdlog's own FD, not the gtest-captured stdout.
     EXPECT_EXIT(
         {
-            EventLoop loop(make_uv_dispatcher());
+            EventLoop loop(make_default_dispatcher());
             SocketPair pair(loop);
             std::thread offloop(
                 [&]

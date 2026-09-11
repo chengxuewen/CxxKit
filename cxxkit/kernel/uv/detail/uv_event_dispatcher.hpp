@@ -24,7 +24,7 @@
 
 #pragma once
 
-#include <cxxkit/uv/uv_global.hpp>
+#include <cxxkit/kernel/kernel_global.hpp>
 
 #include <cxxkit/kernel/abstract_event_dispatcher.hpp>
 
@@ -39,7 +39,7 @@ CXXKIT_BEGIN_NAMESPACE
 class UvEventDispatcherPrivate;
 
 /**
- * @brief Event-loop driver on vendored libuv (opt-in @c cxxkit::uv sublibrary).
+ * @brief Default event-loop driver on vendored libuv (kernel-private engine, @c cxxkit/kernel/uv/detail/).
  *
  * Implements the five @ref AbstractEventDispatcher operations over a private @c uv_loop_t:
  * - @c process_events runs one @c uv_run round (blocking @c UV_RUN_ONCE when @c kWaitForMoreEvents is set,
@@ -64,7 +64,7 @@ class UvEventDispatcherPrivate;
  * closes every handle, runs the loop to drain close callbacks, and closes the loop — no uv handle or callback
  * data survives it.
  */
-class CXXKIT_UV_API UvEventDispatcher : public AbstractEventDispatcher
+class CXXKIT_KERNEL_API UvEventDispatcher : public AbstractEventDispatcher
 {
 public:
     /**

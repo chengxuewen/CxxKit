@@ -97,6 +97,19 @@ TEST_F(EventLoopExtTest, ZeroShotPostEquivalence)
     EXPECT_EQ(2, order[1]);
     EXPECT_EQ(3, order[2]);
 }
+
+// 4. Default ctor: drives the default loop dispatcher (D38). ON mode only — when the backend
+// switch is OFF the construction is fatal by contract (no engine), which is not testable here.
+#    if defined(CXXKIT_ENABLE_LOOP_BACKEND_UV)
+TEST(EventLoopDefaultCtorTest, DefaultCtorRunsOnDefaultBackend)
+{
+    EventLoop loop; // default dispatcher engine (libuv)
+    bool ran = false;
+    loop.post([&ran] { ran = true; });
+    EXPECT_TRUE(loop.process_events(EventLoop::ProcessFlag::kAllEvents));
+    EXPECT_TRUE(ran);
+}
+#    endif
 } // namespace
 
 #endif // #if CXXKIT_FEATURE_ENABLE_KERNEL

@@ -240,11 +240,16 @@ TEST_F(EventLoopTest, ConnectQueuedArgsCopiedNotReferenced)
     EXPECT_EQ(1, delivered);
 }
 
-// 11. null dispatcher is a fatal construction error.
-TEST(EventLoopDeathTest, NullDispatcherChecks)
+// 11. D38: nullptr now selects the default-backend overload (EventLoop(Object*) -> make_default_dispatcher()).
+// The old null-dispatcher fatality is gone by design; the fatal moved into make_default_dispatcher()
+// and only fires when CXXKIT_ENABLE_LOOP_BACKEND_UV is OFF — so this test is ON-mode only.
+#    if defined(CXXKIT_ENABLE_LOOP_BACKEND_UV)
+TEST(EventLoop, NullDispatcherTakesDefaultBackend)
 {
-    EXPECT_DEATH(EventLoop loop(nullptr), "");
+    EventLoop loop(nullptr); // default (uv) engine wired in
+    loop.wake_up();          // live-engine probe: dispatcher() is functional
 }
+#    endif
 } // namespace
 
 #endif // #if CXXKIT_FEATURE_ENABLE_KERNEL

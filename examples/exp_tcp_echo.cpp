@@ -23,15 +23,16 @@
 ***********************************************************************************************************************/
 
 /// @file exp_tcp_echo.cpp
-/// @brief Deterministic TcpServer + TcpSocket loopback echo demo (rc=0, needs CXXKIT_ENABLE_LIB_UV=ON).
+/// @brief Deterministic TcpServer + TcpSocket loopback echo demo (rc=0, needs CXXKIT_ENABLE_LIB_NETWORK=ON).
 ///
 /// Determinism contract (R-T3-3): the OS-assigned port number is runtime-random, so it goes to
 /// stderr as a side channel — stdout carries only the fixed success line "tcp echo roundtrip ok".
 
+#include <cxxkit/kernel/default_dispatcher.hpp>
 #include <cxxkit/kernel/event_loop.hpp>
-#include <cxxkit/uv/dispatcher_factory.hpp>
-#include <cxxkit/uv/tcp_server.hpp>
-#include <cxxkit/uv/tcp_socket.hpp>
+
+#include <cxxkit/network/tcp_server.hpp>
+#include <cxxkit/network/tcp_socket.hpp>
 
 #include <cstdio>
 #include <memory>
@@ -39,7 +40,7 @@
 
 int main()
 {
-    cxxkit::EventLoop loop(cxxkit::make_uv_dispatcher());
+    cxxkit::EventLoop loop(cxxkit::make_default_dispatcher());
     cxxkit::TcpServer server(loop);
 
     std::string received;

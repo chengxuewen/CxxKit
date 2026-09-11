@@ -24,24 +24,50 @@
 
 #pragma once
 
-#include <cxxkit/uv/uv_event_dispatcher.hpp>
+#include <cxxkit/network/tcp_server.hpp>
+
+#include <cxxkit/base/macros.hpp>
+#include <cxxkit/kernel/uv/detail/uv_event_dispatcher.hpp>
+
+#include <cxxkit/3rdparty/libuv/uv.h>
+
+#include <cstdint>
+#include <functional>
+#include <thread>
 
 #if CXXKIT_FEATURE_ENABLE_KERNEL
 
-#    include <memory>
-
 CXXKIT_BEGIN_NAMESPACE
 
-/**
- * @brief Creates an @ref UvEventDispatcher as its @ref AbstractEventDispatcher interface.
- *
- * Flat cxxkit factory name (D12): @c make_uv_dispatcher, not @c make_default — kernel depends on no driver
- * sublibrary; consumers opt in by linking @c cxxkit::uv and injecting the result into
- * @c EventLoop(std::unique_ptr<AbstractEventDispatcher>).
- *
- * The calling thread becomes the dispatcher's loop thread.
- */
-CXXKIT_UV_API std::unique_ptr<AbstractEventDispatcher> make_uv_dispatcher();
+/** @brief Private implementation of @ref TcpServer (CXXKIT_DEFINE_DPTR pimpl partner, flat namespace). */
+class TcpServerPrivate
+{
+    CXXKIT_DISABLE_COPY_MOVE(TcpServerPrivate)
+
+public:
+    explicit TcpServerPrivate(TcpServer *p, EventLoop &loop);
+    ~TcpServerPrivate();
+
+    /** @brief uv connection_cb trampoline: (server, status); accept-drains the backlog. */
+    static void on_connection_cb(uv_stream_t *server, int status);
+    /** @brief Server handle close callback: frees the heap cell, flags kClosed. */
+    static void on_closed(uv_handle_t *handle);
+    /** @brief Close callback for discarded bare client cells (accept-fail / no consumer). */
+    static void on_discard_closed(uv_handle_t *handle);
+
+    /** @brief I1 fatal: every public entry is loop-thread only. */
+    void check_loop_thread(const char *api) const;
+
+    TcpServer *mP{nullptr};
+    EventLoop &mLoop;
+    UvEventDispatcher *mDispatcher{nullptr};
+    uv_tcp_t *mHandle{nullptr};  /// heap cell; freed in on_closed
+    bool mCloseRequested{false}; /// F8-② idempotence latch for the server handle
+    bool mListening{false};
+    uint16_t mBoundPort{0};
+    std::function<void(std::unique_ptr<TcpSocket>)> mOnConnection;
+    std::thread::id mLoopThreadId;
+};
 
 CXXKIT_END_NAMESPACE
 

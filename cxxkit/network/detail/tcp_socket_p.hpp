@@ -24,10 +24,10 @@
 
 #pragma once
 
-#include <cxxkit/uv/tcp_socket.hpp>
+#include <cxxkit/network/tcp_socket.hpp>
 
 #include <cxxkit/base/macros.hpp>
-#include <cxxkit/uv/uv_event_dispatcher.hpp>
+#include <cxxkit/kernel/uv/detail/uv_event_dispatcher.hpp>
 
 #include <cxxkit/3rdparty/libuv/uv.h>
 

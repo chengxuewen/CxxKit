@@ -23,6 +23,9 @@
 ***********************************************************************************************************************/
 
 #include <cxxkit/kernel/detail/event_loop_p.hpp>
+#include <cxxkit/kernel/default_dispatcher.hpp>
+#include <cxxkit/tools/checks.hpp>
+#include <cxxkit/tools/logging.hpp>
 #include <cxxkit/tools/checks.hpp>
 #include <cxxkit/tools/logging.hpp>
 
@@ -48,6 +51,11 @@ EventLoopPrivate::EventLoopPrivate(EventLoop *p)
 }
 
 EventLoopPrivate::~EventLoopPrivate()
+{
+}
+
+EventLoop::EventLoop(Object *parent)
+    : EventLoop(make_default_dispatcher(), parent)
 {
 }
 

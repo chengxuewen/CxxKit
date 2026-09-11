@@ -62,6 +62,15 @@ public:
      * a fatal error — there is no valid dispatcher-less state.
      */
     explicit EventLoop(std::unique_ptr<AbstractEventDispatcher> dispatcher, Object *parent = nullptr);
+
+    /**
+     * @brief Creates an EventLoop driven by the default loop dispatcher (@since 0.2).
+     *
+     * Convenience overload — the QtCore model: @c cxxkit::EventLoop loop; runs out of the box on the
+     * kernel's built-in engine. Equivalent to constructing with @ref make_default_dispatcher(); fatal
+     * if @c CXXKIT_ENABLE_LOOP_BACKEND_UV is OFF and no engine was built in.
+     */
+    explicit EventLoop(Object *parent = nullptr);
     ~EventLoop() override;
 
     /**
@@ -125,7 +134,7 @@ public:
      * @brief Returns the loop's injected dispatcher (phase-2 IO consumers).
      *
      * The dispatcher is owned exclusively by the loop and is never null (construction contract).
-     * Phase-2 IO classes (TcpSocket/TcpServer over cxxkit::uv) reach the engine through this accessor
+     * Phase-2 IO classes (TcpSocket/TcpServer over cxxkit::network) reach the engine through this accessor
      * instead of each carrying their own engine reference. The dispatcher's own threading contract
      * applies — engine registrations are loop-thread only.
      */

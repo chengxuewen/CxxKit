@@ -68,7 +68,7 @@ if(NOT EXISTS "${CxxKitWrapLibuv_STAMP_FILE_PATH}")
         -DLIBUV_BUILD_SHARED=OFF
         -DLIBUV_BUILD_TESTS=OFF
         -DLIBUV_BUILD_BENCH=OFF
-        # PIC is mandatory: this static lib gets linked into libcxxkit_uv.so in the shared
+        # PIC is mandatory: this static lib gets linked into libcxxkit_kernel.so / libcxxkit_network.so in the shared
         # build (check.sh 5/8) — without it the link dies on R_X86_64_PC32 relocations.
         -DCMAKE_POSITION_INDEPENDENT_CODE=ON
         ${CxxKitWrapLibuv_SOURCE_DIR}

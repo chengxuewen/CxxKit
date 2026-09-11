@@ -24,7 +24,7 @@
 
 #pragma once
 
-#include <cxxkit/uv/uv_event_dispatcher.hpp>
+#include <cxxkit/kernel/uv/detail/uv_event_dispatcher.hpp>
 
 #include <cxxkit/base/macros.hpp>
 

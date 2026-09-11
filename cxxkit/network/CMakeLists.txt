@@ -8,8 +8,8 @@
 #
 # Permission is hereby granted, free of charge, to any person obtaining a copy of this software and associated
 # documentation files (the "Software"), to deal in the Software without restriction, including without limitation
-# the rights to use, copy, modify, merge, publish, distribute, sublicense, and/or sell copies of the Software, and
-# to permit persons to whom the Software is furnished to do so, subject to the following conditions:
+# the rights to use, copy, modify, merge, publish, distribute, sublicense, and/or sell copies of the Software,
+# and to permit persons to whom the Software is furnished to do so, subject to the following conditions:
 #
 # The above copyright notice and this permission notice shall be included in all copies or substantial portions
 # of the Software.
@@ -26,18 +26,20 @@ cmake_minimum_required(VERSION ${CXXKIT_MIN_NEW_POLICY_CMAKE_VERSION}...${CXXKIT
 cxxkit_configure_library_begin(CxxKitNetwork)
 
 cxxkit_find_package(Libcpr PROVIDED_TARGETS CxxKitWrapLibcpr::WrapLibcpr)
+# libuv is unconditional here (D38): TcpSocket/TcpServer live in network now and drive uv_tcp_t directly,
+# regardless of the kernel's default-backend switch.
+cxxkit_find_package(Libuv PROVIDED_TARGETS CxxKitWrapLibuv::WrapLibuv)
 
 cxxkit_add_library(cxxkit_network
-    SOURCES http.cpp
-    PUBLIC_LIBRARIES cxxkit::base cxxkit::text cxxkit::thread cxxkit::memory cxxkit::tools CxxKitWrapLibcpr::WrapLibcpr
+    SOURCES http.cpp tcp_socket.cpp tcp_server.cpp
+    PUBLIC_LIBRARIES cxxkit::base cxxkit::text cxxkit::thread cxxkit::memory cxxkit::tools cxxkit::kernel CxxKitWrapLibcpr::WrapLibcpr CxxKitWrapLibuv::WrapLibuv
     EXPORT_NAME network
     FOLDER "CxxKit/libs")
 cxxkit_install_public_wrap_headers(cxxkit_network
     WRAPS
     CxxKitWrapLibcpr::WrapLibcpr|cpr
     CxxKitWrapLibcurl::WrapLibcurl|curl
-    CxxKitWrapMbedTLS::WrapMbedTLS|mbedtls
-)
+    CxxKitWrapMbedTLS::WrapMbedTLS|mbedtls)
 
 cxxkit_generate_pkg_config(cxxkit_network network)
 cxxkit_configure_library_end(CxxKitNetwork)

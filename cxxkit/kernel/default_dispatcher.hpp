@@ -24,50 +24,30 @@
 
 #pragma once
 
-#include <cxxkit/uv/tcp_server.hpp>
+#include <cxxkit/kernel/kernel_global.hpp>
 
-#include <cxxkit/base/macros.hpp>
-#include <cxxkit/uv/uv_event_dispatcher.hpp>
+#include <cxxkit/kernel/abstract_event_dispatcher.hpp>
 
-#include <cxxkit/3rdparty/libuv/uv.h>
-
-#include <cstdint>
-#include <functional>
-#include <thread>
+#include <memory>
 
 #if CXXKIT_FEATURE_ENABLE_KERNEL
 
 CXXKIT_BEGIN_NAMESPACE
 
-/** @brief Private implementation of @ref TcpServer (CXXKIT_DEFINE_DPTR pimpl partner, flat namespace). */
-class TcpServerPrivate
-{
-    CXXKIT_DISABLE_COPY_MOVE(TcpServerPrivate)
-
-public:
-    explicit TcpServerPrivate(TcpServer *p, EventLoop &loop);
-    ~TcpServerPrivate();
-
-    /** @brief uv connection_cb trampoline: (server, status); accept-drains the backlog. */
-    static void on_connection_cb(uv_stream_t *server, int status);
-    /** @brief Server handle close callback: frees the heap cell, flags kClosed. */
-    static void on_closed(uv_handle_t *handle);
-    /** @brief Close callback for discarded bare client cells (accept-fail / no consumer). */
-    static void on_discard_closed(uv_handle_t *handle);
-
-    /** @brief I1 fatal: every public entry is loop-thread only. */
-    void check_loop_thread(const char *api) const;
-
-    TcpServer *mP{nullptr};
-    EventLoop &mLoop;
-    UvEventDispatcher *mDispatcher{nullptr};
-    uv_tcp_t *mHandle{nullptr};  /// heap cell; freed in on_closed
-    bool mCloseRequested{false}; /// F8-② idempotence latch for the server handle
-    bool mListening{false};
-    uint16_t mBoundPort{0};
-    std::function<void(std::unique_ptr<TcpSocket>)> mOnConnection;
-    std::thread::id mLoopThreadId;
-};
+/**
+ * @brief Creates the default event-loop dispatcher (the engine behind @c EventLoop's default constructor).
+ *
+ * QtCore model (D38): the kernel carries a default loop engine (vendored libuv) but exposes no engine
+ * vocabulary in its public API — the concrete @c UvEventDispatcher type stays private in
+ * @c cxxkit/kernel/uv/detail/. Built when @c CXXKIT_ENABLE_LOOP_BACKEND_UV is ON (the default).
+ *
+ * With the backend switch OFF this is fatal by design: inject a dispatcher explicitly via
+ * @c EventLoop(std::unique_ptr<AbstractEventDispatcher>) or enable the backend.
+ *
+ * The calling thread becomes the dispatcher's loop thread.
+ * @since 0.2
+ */
+CXXKIT_KERNEL_API std::unique_ptr<AbstractEventDispatcher> make_default_dispatcher();
 
 CXXKIT_END_NAMESPACE
 

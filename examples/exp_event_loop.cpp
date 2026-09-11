@@ -23,17 +23,18 @@
 ***********************************************************************************************************************/
 
 /// @file exp_event_loop.cpp
-/// @brief Deterministic 3-tick uv event-loop timer demo (rc=0, needs CXXKIT_ENABLE_LIB_UV=ON).
+/// @brief Deterministic 3-tick event-loop timer demo (rc=0, needs the default loop backend, ON by default).
 
+#include <cxxkit/kernel/default_dispatcher.hpp>
+#include <cxxkit/kernel/default_dispatcher.hpp>
 #include <cxxkit/kernel/event_loop.hpp>
-#include <cxxkit/uv/dispatcher_factory.hpp>
 
 #include <cstdio>
 #include <memory>
 
 int main()
 {
-    cxxkit::EventLoop loop(cxxkit::make_uv_dispatcher());
+    cxxkit::EventLoop loop(cxxkit::make_default_dispatcher());
 
     int ticks = 0;
     loop.start_timer(

@@ -22,18 +22,26 @@
 **
 ***********************************************************************************************************************/
 
-#include <cxxkit/uv/dispatcher_factory.hpp>
-#include <cxxkit/uv/uv_event_dispatcher.hpp>
+#include <cxxkit/kernel/default_dispatcher.hpp>
 
 #if CXXKIT_FEATURE_ENABLE_KERNEL
 
-#    include <memory>
+#    if CXXKIT_ENABLE_LOOP_BACKEND_UV
+#        include <cxxkit/kernel/uv/detail/uv_event_dispatcher.hpp>
+#    endif
+
+#    include <cxxkit/tools/checks.hpp>
 
 CXXKIT_BEGIN_NAMESPACE
 
-std::unique_ptr<AbstractEventDispatcher> make_uv_dispatcher()
+std::unique_ptr<AbstractEventDispatcher> make_default_dispatcher()
 {
+#    if CXXKIT_ENABLE_LOOP_BACKEND_UV
     return std::unique_ptr<AbstractEventDispatcher>(new UvEventDispatcher());
+#    else
+    CXXKIT_CHECK(!"no default loop backend — enable CXXKIT_ENABLE_LOOP_BACKEND_UV or inject a dispatcher");
+    return std::unique_ptr<AbstractEventDispatcher>();
+#    endif
 }
 
 CXXKIT_END_NAMESPACE

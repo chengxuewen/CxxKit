@@ -25,9 +25,9 @@
 #include <cxxkit/base/global.hpp>
 
 #include <cxxkit/kernel/event_loop.hpp>
-#include <cxxkit/uv/dispatcher_factory.hpp>
-#include <cxxkit/uv/tcp_server.hpp>
-#include <cxxkit/uv/tcp_socket.hpp>
+#include <cxxkit/kernel/default_dispatcher.hpp>
+#include <cxxkit/network/tcp_server.hpp>
+#include <cxxkit/network/tcp_socket.hpp>
 
 #include <gtest/gtest.h>
 
@@ -44,7 +44,7 @@ namespace
 using cxxkit::EventLoop;
 using cxxkit::TcpServer;
 using cxxkit::TcpSocket;
-using cxxkit::make_uv_dispatcher;
+using cxxkit::make_default_dispatcher;
 
 // T3: real listener + real TCP connect over 127.0.0.1. Port discovery is race-free (R-T3-2):
 // listen on port 0, read the OS-assigned port back via TcpServer::bound_port() (uv_tcp_getsockname),
@@ -53,7 +53,7 @@ using cxxkit::make_uv_dispatcher;
 // 1. Full loop: listen -> TcpSocket connect -> write -> server echo -> client receives the same bytes.
 TEST(TcpServerTest, ListenAcceptEcho)
 {
-    EventLoop loop(make_uv_dispatcher());
+    EventLoop loop(make_default_dispatcher());
     TcpServer server(loop);
     std::unique_ptr<TcpSocket> server_side; // keeps the accepted socket alive across the test
     server.on_connection(
@@ -112,7 +112,7 @@ TEST(TcpServerTest, ListenAcceptEcho)
 // 2. Two simultaneous connections stay independent: each client gets its own echo, both complete.
 TEST(TcpServerTest, AcceptDuringActiveConnections)
 {
-    EventLoop loop(make_uv_dispatcher());
+    EventLoop loop(make_default_dispatcher());
     TcpServer server(loop);
     std::vector<std::unique_ptr<TcpSocket>> server_sides; // accepted sockets outlive the callbacks
     server.on_connection(
@@ -178,7 +178,7 @@ TEST(TcpServerTest, AcceptDuringActiveConnections)
 // socket keeps working (echo still flows) and tears itself down cleanly afterwards.
 TEST(TcpServerTest, ServerDestructorWithLiveConnections)
 {
-    EventLoop loop(make_uv_dispatcher());
+    EventLoop loop(make_default_dispatcher());
     std::unique_ptr<TcpSocket> accepted; // outlives the server below
     std::unique_ptr<TcpSocket> client;   // ditto — only the SERVER dies inside the block (peer
                                          // EOF would auto-close the accepted end otherwise)

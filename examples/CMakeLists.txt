@@ -219,19 +219,22 @@ if(CXXKIT_ENABLE_LIB_IMGUI)
     set_property(TARGET cxxkit_exp_imgui_markdown PROPERTY CXX_STANDARD 14)
 endif()
 
-if(CXXKIT_ENABLE_LIB_UV)
+if(CXXKIT_ENABLE_LOOP_BACKEND_UV)
     cxxkit_add_executable(cxxkit_exp_event_loop
         SOURCES exp_event_loop.cpp
         LIBRARIES ${CXXKIT_EXAMPLE_LINK_LIBRARIES}
         INCLUDE_DIRECTORIES ${PROJECT_SOURCE_DIR}
         FOLDER "CxxKit/examples")
-    target_link_libraries(cxxkit_exp_event_loop PRIVATE cxxkit::uv cxxkit::kernel)
+    target_link_libraries(cxxkit_exp_event_loop PRIVATE cxxkit::kernel)
+endif()
+
+if(CXXKIT_ENABLE_LIB_NETWORK AND CXXKIT_ENABLE_LOOP_BACKEND_UV)
     cxxkit_add_executable(cxxkit_exp_tcp_echo
         SOURCES exp_tcp_echo.cpp
         LIBRARIES ${CXXKIT_EXAMPLE_LINK_LIBRARIES}
         INCLUDE_DIRECTORIES ${PROJECT_SOURCE_DIR}
         FOLDER "CxxKit/examples")
-    target_link_libraries(cxxkit_exp_tcp_echo PRIVATE cxxkit::uv cxxkit::kernel)
+    target_link_libraries(cxxkit_exp_tcp_echo PRIVATE cxxkit::kernel cxxkit::network)
 endif()
 
 if(CXXKIT_ENABLE_LIB_QT)

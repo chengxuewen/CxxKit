@@ -41,7 +41,7 @@ using cxxkit::Object;
 
 namespace
 {
-// Factory shaped exactly like cxxkit::make_uv_dispatcher: returns a fresh
+// Factory shaped exactly like cxxkit::make_default_dispatcher: returns a fresh
 // heap dispatcher as unique_ptr<AbstractEventDispatcher>.
 std::unique_ptr<cxxkit::AbstractEventDispatcher> make_fake_dispatcher()
 {
@@ -78,7 +78,7 @@ bool wait_until(const std::atomic<bool> &flag)
 TEST(EventLoopThread, start_stop_roundtrip_runs_posted_task)
 {
     // Capture-by-value dispatcher with a function-pointer-compatible adapter kept OUT of
-    // the ctor call: DispatcherFactory is a plain function pointer (make_uv_dispatcher
+    // the ctor call: DispatcherFactory is a plain function pointer (make_default_dispatcher
     // convention) — test uses the named factory instead.
     EventLoopThread elt(&make_fake_dispatcher);
 

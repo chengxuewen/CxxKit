@@ -24,10 +24,10 @@
 
 #pragma once
 
-#include <cxxkit/uv/uv_global.hpp>
+#include <cxxkit/network/network_global.hpp>
 
 #include <cxxkit/kernel/event_loop.hpp>
-#include <cxxkit/uv/tcp_socket.hpp>
+#include <cxxkit/network/tcp_socket.hpp>
 
 #include <cstdint>
 #include <functional>
@@ -40,7 +40,7 @@ CXXKIT_BEGIN_NAMESPACE
 class TcpServerPrivate;
 
 /**
- * @brief TCP listener over a @c cxxkit::uv event loop — accepts connections into TcpSocket
+ * @brief TCP listener over a @c cxxkit::network event loop — accepts connections into TcpSocket
  *        instances (phase-2 core IO, F10).
  *
  * Wraps one @c uv_tcp_t server handle (Node pipe/tcp server pattern): @c uv_tcp_bind +
@@ -61,7 +61,7 @@ class TcpServerPrivate;
  * Lifecycle (I6): the destructor closes the server handle (idempotent close, F8-② shape) and
  * pumps the loop until the close callback has run, so no uv state outlives the object.
  */
-class CXXKIT_UV_API TcpServer
+class CXXKIT_NETWORK_API TcpServer
 {
 public:
     /**
