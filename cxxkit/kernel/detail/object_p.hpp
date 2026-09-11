@@ -27,6 +27,9 @@
 #include <cxxkit/kernel/object.hpp>
 
 #include <list>
+#include <map>
+#include <memory>
+#include <string>
 #include <vector>
 
 #if CXXKIT_FEATURE_ENABLE_KERNEL
@@ -51,6 +54,8 @@ public:
     std::vector<Object *> mFilters;  // head-insert order (back() = newest, filtered first)
     std::vector<Object *> mWatching; // reverse registry: filters installed ON other objects by me
     EventLoop *mThread{nullptr};     // affinity: loop owning this object (null = detached)
+    std::string mObjectName;         // name follows the object (not touched by move_to_thread)
+    std::map<const void *, std::unique_ptr<Object::UserData>> mUserData; // owned; released by member dtor
 
 protected:
     CXXKIT_DEFINE_PPTR(Object)

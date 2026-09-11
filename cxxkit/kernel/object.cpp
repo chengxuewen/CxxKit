@@ -29,8 +29,11 @@
 #include <cxxkit/tools/checks.hpp>
 
 #include <algorithm>
+#include <cstdio>
 #include <deque>
 #include <mutex>
+#include <string>
+#include <typeinfo>
 #include <vector>
 
 #if CXXKIT_FEATURE_ENABLE_KERNEL
@@ -55,6 +58,8 @@ void ObjectPrivate::detach_child(Object *child)
 {
     mChildren.remove(child);
 }
+
+Object::UserData::~UserData() = default;
 
 Object::Object(Object *parent)
     : Object(new ObjectPrivate(this))
@@ -283,6 +288,61 @@ const Object::Children &Object::children() const
     CXXKIT_D(const Object);
     return d->mChildren;
 }
+
+void Object::set_user_data(const void *key, std::unique_ptr<UserData> data)
+{
+    CXXKIT_D(Object);
+    CXXKIT_CHECK(key != nullptr) << "Object::set_user_data: null key";
+    if (data == nullptr)
+    {
+        d->mUserData.erase(key); // destroys the attached instance if present, no-op if absent
+        return;
+    }
+    d->mUserData[key] = std::move(data); // same key: old instance destroyed by assignment
+}
+
+Object::UserData *Object::user_data(const void *key) const
+{
+    CXXKIT_D(const Object);
+    CXXKIT_CHECK(key != nullptr) << "Object::user_data: null key";
+    std::map<const void *, std::unique_ptr<UserData>>::const_iterator it = d->mUserData.find(key);
+    return (it != d->mUserData.end()) ? it->second.get() : nullptr;
+}
+
+const std::string &Object::object_name() const
+{
+    CXXKIT_D(const Object);
+    return d->mObjectName;
+}
+
+void Object::set_object_name(std::string name)
+{
+    CXXKIT_D(Object);
+    d->mObjectName = std::move(name);
+}
+
+std::string Object::to_tree_string(int indent) const
+{
+    std::string line(indent * 2, ' ');
+    line += '{';
+    line += this->object_name();
+    line += "} ";
+    line += typeid(*this).name();
+    line += '\n';
+    const Children &children = this->children();
+    for (Children::const_iterator it = children.begin(); it != children.end(); ++it)
+    {
+        line += (*it)->to_tree_string(indent + 1);
+    }
+    return line;
+}
+
+void Object::dump_object_tree(int indent) const
+{
+    const std::string tree = this->to_tree_string(indent);
+    std::fprintf(stderr, "%s", tree.c_str());
+}
+
 
 bool Object::event(Event *event)
 {

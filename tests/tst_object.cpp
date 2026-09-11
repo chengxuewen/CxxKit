@@ -31,9 +31,14 @@ using cxxkit::FakeDispatcher;
 
 #    include <algorithm>
 #    include <atomic>
+#    include <cstdio>
 #    include <memory>
+#    include <string>
 #    include <thread>
+#    include <typeinfo>
 #    include <vector>
+
+#    include <unistd.h> // dup/dup2/close for stderr capture
 
 namespace
 {
@@ -896,6 +901,152 @@ TEST(Object, move_to_thread_notifies_each_migrated_object)
     EXPECT_EQ(root.thread_change_count, 2);
     EXPECT_EQ(child1->thread_change_count, 2);
     EXPECT_EQ(child2->thread_change_count, 2);
+}
+
+TEST(Object, object_name_set_get_roundtrip)
+{
+    RecordingObject obj;
+    EXPECT_EQ(obj.object_name(), std::string());
+    obj.set_object_name("recorder");
+    EXPECT_EQ(obj.object_name(), "recorder");
+    obj.set_object_name("renamed");
+    EXPECT_EQ(obj.object_name(), "renamed");
+}
+
+TEST(Object, object_name_defaults_empty_and_survives_move_to_thread)
+{
+    cxxkit::EventLoop loop((std::unique_ptr<cxxkit::AbstractEventDispatcher>(new FakeDispatcher)));
+    RecordingObject obj;
+    EXPECT_TRUE(obj.object_name().empty());
+    obj.set_object_name("keeper");
+    obj.move_to_thread(&loop);
+    EXPECT_EQ(obj.object_name(), "keeper"); // name follows the object, not affinity
+    EXPECT_EQ(obj.to_tree_string(), "{keeper} " + std::string(typeid(RecordingObject).name()) + "\n");
+}
+
+TEST(Object, to_tree_string_exact_layout)
+{
+    RecordingObject root;
+    root.set_object_name("root");
+    RecordingObject *child = new RecordingObject(&root);
+    child->set_object_name("child");
+    RecordingObject *grand = new RecordingObject(child);
+    grand->set_object_name("grand");
+    const std::string child_type = typeid(RecordingObject).name();
+    EXPECT_EQ(root.to_tree_string(),
+              "{root} " + child_type +
+                  "\n"
+                  "  {child} " +
+                  child_type +
+                  "\n"
+                  "    {grand} " +
+                  child_type + "\n");
+    // indent parameter shifts every line by indent*2 spaces
+    EXPECT_EQ(root.to_tree_string(2),
+              "    {root} " + child_type +
+                  "\n"
+                  "      {child} " +
+                  child_type +
+                  "\n"
+                  "        {grand} " +
+                  child_type + "\n");
+}
+
+TEST(Object, to_tree_string_empty_name_renders_class_only)
+{
+    RecordingObject solo;
+    EXPECT_EQ(solo.to_tree_string(), "{} " + std::string(typeid(RecordingObject).name()) + "\n");
+}
+
+// T1: dump_object_tree must write exactly to_tree_string() bytes to stderr.
+// Captures fd 2 around the call (dup/dup2 + tmpfile), restores before asserting.
+TEST(Object, dump_object_tree_writes_to_tree_string_to_stderr)
+{
+    RecordingObject root;
+    root.set_object_name("r");
+    RecordingObject *child = new RecordingObject(&root);
+    child->set_object_name("c");
+    const std::string expected = root.to_tree_string();
+    std::FILE *saved = std::tmpfile();
+    ASSERT_NE(saved, nullptr);
+    std::fflush(stderr);
+    const int saved_fd = dup(fileno(stderr));
+    ASSERT_EQ(dup2(fileno(saved), fileno(stderr)), 2); // dup2 returns the new fd (2 = stderr)
+    root.dump_object_tree();
+    std::fflush(stderr);
+    ASSERT_EQ(dup2(saved_fd, fileno(stderr)), 2); // restore before asserting
+    close(saved_fd);
+    rewind(saved);
+    char buffer[4096] = {0};
+    const size_t of = fread(buffer, 1, sizeof(buffer) - 1, saved);
+    fclose(saved);
+    EXPECT_EQ(std::string(buffer, of), expected);
+}
+
+namespace
+{
+// Counting UserData derivative: ctor/dtor bump a global atomic so tests can observe
+// instances owned by Object (leak = counter stays high, double-own = negative).
+class CountingData : public cxxkit::Object::UserData
+{
+public:
+    static std::atomic<int> s_alive;
+    CountingData() { ++s_alive; }
+    ~CountingData() override { --s_alive; }
+};
+std::atomic<int> CountingData::s_alive{0};
+} // namespace
+
+TEST(Object, user_data_roundtrip_returns_same_pointer)
+{
+    RecordingObject obj;
+    cxxkit::Object::UserData *raw = new CountingData;
+    obj.set_user_data("k", std::unique_ptr<cxxkit::Object::UserData>(raw));
+    EXPECT_EQ(obj.user_data("k"), raw);
+    EXPECT_TRUE(CountingData::s_alive.load() >= 1); // construction counted
+    obj.set_user_data("k", nullptr);                // null data removes and destroys
+    EXPECT_EQ(CountingData::s_alive.load(), 0);
+}
+
+TEST(Object, user_data_same_key_replaces_and_destroys_old)
+{
+    RecordingObject obj;
+    cxxkit::Object::UserData *first = new CountingData;
+    cxxkit::Object::UserData *second = new CountingData;
+    obj.set_user_data("k", std::unique_ptr<cxxkit::Object::UserData>(first));
+    obj.set_user_data("k", std::unique_ptr<cxxkit::Object::UserData>(second));
+    EXPECT_EQ(obj.user_data("k"), second);
+    EXPECT_EQ(CountingData::s_alive.load(), 1); // old instance destroyed by replacement
+    obj.set_user_data("k", nullptr);
+    EXPECT_EQ(CountingData::s_alive.load(), 0);
+}
+
+TEST(Object, user_data_absent_key_returns_null)
+{
+    RecordingObject obj;
+    EXPECT_TRUE(obj.user_data("never-set") == nullptr);
+    // Removing an absent key is a no-op (no crash, no entries created):
+    obj.set_user_data("never-set", nullptr);
+    EXPECT_TRUE(obj.user_data("never-set") == nullptr);
+}
+
+TEST(Object, destructor_releases_remaining_user_data)
+{
+    const int baseline = CountingData::s_alive.load();
+    {
+        RecordingObject obj;
+        obj.set_user_data("a", std::unique_ptr<cxxkit::Object::UserData>(new CountingData));
+        obj.set_user_data("b", std::unique_ptr<cxxkit::Object::UserData>(new CountingData));
+        EXPECT_EQ(CountingData::s_alive.load(), baseline + 2);
+    } // ~Object releases all attached data (member destruction)
+    EXPECT_EQ(CountingData::s_alive.load(), baseline);
+}
+
+TEST(Object, user_data_null_key_is_fatal)
+{
+    RecordingObject obj;
+    EXPECT_DEATH(obj.user_data(nullptr), "");
+    EXPECT_DEATH(obj.set_user_data(nullptr, std::unique_ptr<cxxkit::Object::UserData>(new CountingData)), "");
 }
 
 #endif // CXXKIT_FEATURE_ENABLE_KERNEL

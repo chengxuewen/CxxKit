@@ -27,6 +27,9 @@
 #include <cxxkit/kernel/event.hpp>
 
 #include <list>
+#include <map>
+#include <memory>
+#include <string>
 
 #if CXXKIT_FEATURE_ENABLE_KERNEL
 
@@ -47,6 +50,42 @@ public:
     void set_parent(Object *parent);
 
     const Children &children() const;
+
+    /** @brief Base for type-keyed attached data (Chromium SupportsUserData shape).
+     *  Derive and attach via set_user_data(); Object owns and destroys instances.
+     *  Not thread-safe (Object is single-threaded by design, D33). @since 0.2 */
+    class UserData
+    {
+    public:
+        virtual ~UserData();
+    };
+
+    /** @brief Attaches @p data under @p key, taking ownership. A null key is fatal
+     *  (CXXKIT_CHECK). Attaching under an existing key destroys the old instance;
+     *  a null @p data removes (and destroys) any entry under @p key — no-op if absent.
+     *  Not thread-safe (Object is single-threaded by design). @since 0.2 */
+    void set_user_data(const void *key, std::unique_ptr<UserData> data);
+
+    /** @brief Returns the data attached under @p key, or nullptr when absent. A null
+     *  key is fatal (CXXKIT_CHECK). Not thread-safe (Object is single-threaded by
+     *  design). @since 0.2 */
+    UserData *user_data(const void *key) const;
+
+    /** @brief Returns the object name (empty by default). @since 0.2 */
+    const std::string &object_name() const;
+
+    /** @brief Sets the object name. The name follows the object — move_to_thread does not
+     *  affect it. @since 0.2 */
+    void set_object_name(std::string name);
+
+    /** @brief Renders this object and its subtree as a deterministic multi-line string:
+     *  each line is indent*2 spaces + "{name} {typeid(*this).name()}" + newline; children
+     *  recurse with indent+1. @since 0.2 */
+    std::string to_tree_string(int indent = 0) const;
+
+    /** @brief Debug helper: prints to_tree_string(indent) to stderr (fprintf; no logging
+     *  dependency). Qt dumpObjectTree analog. @since 0.2 */
+    void dump_object_tree(int indent = 0) const;
 
     /** @brief Returns the loop this object is affined to (null = no affinity).
      *  Lifetime contract: the affinity loop must outlive objects bound to it — purge /
