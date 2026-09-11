@@ -54,6 +54,9 @@ public:
 
     /** @brief Base for type-keyed attached data (Chromium SupportsUserData shape).
      *  Derive and attach via set_user_data(); Object owns and destroys instances.
+     *  Destruction order: in ~Object the child cascade runs BEFORE user data is
+     *  released — a UserData destructor must not access the owning object or any
+     *  of its children.
      *  Not thread-safe (Object is single-threaded by design, D33). @since 0.2 */
     class UserData
     {
