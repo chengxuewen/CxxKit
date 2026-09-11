@@ -26,6 +26,7 @@
 
 #include <cxxkit/kernel/event.hpp>
 
+#include <cstdint>
 #include <list>
 #include <map>
 #include <memory>
@@ -155,6 +156,40 @@ public:
      */
     void move_to_thread(EventLoop *target);
 
+    /** @brief Starts a timer on this object's affinity loop; every tick synchronously
+     *  delivers a TimerEvent carrying the returned id to this object (the filter chain
+     *  applies).
+     *
+     *  Dispatch semantics (intentional Qt difference): the event is dispatched
+     *  SYNCHRONOUSLY from the loop's timer callback via send_event — it is NOT queued,
+     *  so event priority and DeferredDelete compression do not apply, and the tick runs
+     *  re-entrantly inside the dispatcher callback.
+     *
+     *  Thread constraints: requires affinity (thread() != null, fatal otherwise) and must
+     *  be called ON the affinity thread (EventLoop::current() == thread(), fatal
+     *  otherwise) — dispatcher timer registration is loop-thread-only (uv constraint).
+     *
+     *  Ids are unique and non-zero (EventLoop::start_timer contract); repeat=false fires
+     *  exactly once. A zero-interval one-shot takes the posted fast path (ghost id —
+     *  kill_timer on it stays a safe no-op).
+     *
+     *  Lifetime contract (A1): active timers are stopped by ~Object when destruction runs
+     *  on the affinity thread. Destroying the object OFF its affinity thread — or before
+     *  killing its timers — leaves the dispatcher-side timer armed so it fires into a dead
+     *  object (UAF): the caller must destroy on the affinity thread or kill_timer() every
+     *  id first. Timers are NOT migrated by move_to_thread (an id stays registered on the
+     *  loop it was started on).
+     *  @return the timer id (never 0).
+     *  @since 0.2 */
+    int start_timer(uint64_t interval_ms, bool repeat = true);
+
+    /** @brief Cancels a timer started by start_timer(). Same thread constraints as
+     *  start_timer (affinity + affinity-thread, both fatal when violated). Unknown or
+     *  already-stopped ids are a no-op (delegates to EventLoop::stop_timer, documented
+     *  no-op for ghost/unknown ids). The id must not be used afterwards.
+     *  @since 0.2 */
+    void kill_timer(int timer_id);
+
     /** @brief 同步投递：filter 链前置（后装先过滤），未拦截则 receiver->event()。返回 is_accepted()；被 filter 拦截返回 false。 */
     static bool send_event(Object *receiver, Event *event);
 
@@ -172,6 +207,20 @@ public:
      * @since 0.2
      */
     static void post_event(Object *receiver, Event *event);
+
+    /** @brief Removes and deletes every queued (not yet dispatched) event for @p receiver:
+     *  queued events are dropped without dispatch; the receiver owns nothing afterwards.
+     *
+     *  Sweeps the receiver's affinity loop queue (post_event routes there) and, mirroring the
+     *  ~Object purge, also the calling thread's current() loop (covers a delete_later
+     *  current()-fallback residual; a same-loop second sweep is a harmless no-op). A receiver
+     *  with no affinity and no current loop cannot have queued entries — no-op.
+     *  Call only when no event can be concurrently posted (typically before deletion or from
+     *  the receiver's own thread); the receiver pointer must stay valid for the duration of
+     *  the call. The scan+erase runs under the target loop's event mutex — atomic with
+     *  respect to enqueue and dispatch.
+     *  @since 0.2 */
+    static void remove_pending_events(Object *receiver);
 
     /** @brief Front-inserts @p filter (newest filters first, Qt-style); reinstalling an
      *  installed filter moves it to the front. Bidirectional registry auto-cleanup (T3):
@@ -231,7 +280,10 @@ public:
      * applies) -> event() kDeferredDelete branch deletes this.
      * Parent and child may delete_later together: the parent's ~Object purge removes the
      * child's undelivered entries from the queue body under the lock before the cascade —
-     * no double delete (T3).
+     *     no double delete (T3).
+     *     Compression (Momus F1): repeated delete_later() calls collapse to the FIRST queued
+     *     DeferredDeleteEvent — duplicates are detected and deleted under the queue lock at
+     *     enqueue time and never dispatched, so the object is deleted exactly once.
      * Known limitation: re-posting into a draining ~EventLoop (cascade delete_later) is
      * silently lost / fatal (documented, D33/D34).
      * @since 0.2

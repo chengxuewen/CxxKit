@@ -32,6 +32,7 @@ using cxxkit::FakeDispatcher;
 #    include <algorithm>
 #    include <atomic>
 #    include <cstdio>
+#    include <functional>
 #    include <memory>
 #    include <string>
 #    include <thread>
@@ -1166,6 +1167,134 @@ TEST(Object, user_data_null_key_is_fatal)
     RecordingObject obj;
     EXPECT_DEATH(obj.user_data(nullptr), "");
     EXPECT_DEATH(obj.set_user_data(nullptr, std::unique_ptr<cxxkit::Object::UserData>(new CountingData)), "");
+}
+
+// ---- object-level timer (T4/B4) ----
+// Pattern: FakeDispatcher records start_timer/stop_timer and lets the test play the engine —
+// grab the registered callback via take_timer_fn(id) and invoke it to simulate a tick.
+
+// Test double: records timer_event deliveries by id.
+namespace
+{
+class TimerObject : public cxxkit::Object
+{
+public:
+    std::vector<int> ticks;
+
+protected:
+    void timer_event(cxxkit::TimerEvent *event) override { ticks.push_back(event->timer_id()); }
+};
+} // namespace
+
+TEST(Object, start_timer_routes_ticks_to_timer_event)
+{
+    FakeDispatcher *dispatcher = new FakeDispatcher;
+    cxxkit::EventLoop loop((std::unique_ptr<cxxkit::AbstractEventDispatcher>(dispatcher)));
+    TimerObject obj;
+    obj.move_to_thread(&loop);
+    int fired = 0;
+    loop.post(
+        [&]
+        {
+            const int id = obj.start_timer(10); // repeating
+            EXPECT_NE(id, 0);
+            EXPECT_TRUE(dispatcher->has_timer(id)); // armed on the dispatcher (affinity loop)
+            std::function<void()> tick = dispatcher->take_timer_fn(id);
+            ASSERT_TRUE(tick != nullptr);
+            tick(); // simulate the engine firing: tick -> TimerEvent(id) -> timer_event
+            EXPECT_EQ(obj.ticks.size(), 1u);
+            EXPECT_EQ(obj.ticks.back(), id); // (b) correct timer_id
+            ++fired;
+            loop.exit(0);
+        });
+    EXPECT_EQ(loop.exec(), 0);
+    EXPECT_EQ(fired, 1);
+    EXPECT_TRUE(obj.ticks.size() == 1u && obj.ticks.back() == obj.ticks.front());
+}
+
+TEST(Object, kill_timer_stops_further_ticks)
+{
+    FakeDispatcher *dispatcher = new FakeDispatcher;
+    cxxkit::EventLoop loop((std::unique_ptr<cxxkit::AbstractEventDispatcher>(dispatcher)));
+    TimerObject obj;
+    obj.move_to_thread(&loop);
+    loop.post(
+        [&]
+        {
+            const int id = obj.start_timer(10);
+            std::function<void()> tick = dispatcher->take_timer_fn(id);
+            tick();
+            obj.kill_timer(id);
+            EXPECT_FALSE(dispatcher->has_timer(id)); // (c) disarmed on the dispatcher
+            tick();                          // ghost fire AFTER kill: the tick callback still runs but must be inert
+            EXPECT_EQ(obj.ticks.size(), 1u); // no further delivery
+            loop.exit(0);
+        });
+    EXPECT_EQ(loop.exec(), 0);
+}
+
+TEST(Object, one_shot_timer_fires_exactly_once)
+{
+    FakeDispatcher *dispatcher = new FakeDispatcher;
+    cxxkit::EventLoop loop((std::unique_ptr<cxxkit::AbstractEventDispatcher>(dispatcher)));
+    TimerObject obj;
+    obj.move_to_thread(&loop);
+    loop.post(
+        [&]
+        {
+            const int id = obj.start_timer(10, false); // (d) repeat=false
+            std::function<void()> tick = dispatcher->take_timer_fn(id);
+            ASSERT_TRUE(tick != nullptr);
+            tick();
+            EXPECT_EQ(obj.ticks.size(), 1u);
+            // repeat=false: the EventLoop shell wraps "stop_timer(id) first, then fn" — the
+            // registration is disarmed on the FIRST tick (exactly-once contract).
+            EXPECT_FALSE(dispatcher->has_timer(id));
+            loop.exit(0);
+        });
+    EXPECT_EQ(loop.exec(), 0);
+}
+
+TEST(ObjectDeathTest, start_timer_requires_affinity_and_affinity_thread)
+{
+    // (e) no affinity -> fatal (same gate as post_event).
+    TimerObject outside;
+    EXPECT_DEATH(outside.start_timer(10), "");
+    EXPECT_DEATH(outside.kill_timer(1), "");
+}
+
+TEST(Object, start_timer_off_affinity_thread_is_fatal)
+{
+    FakeDispatcher *dispatcher = new FakeDispatcher;
+    cxxkit::EventLoop loop((std::unique_ptr<cxxkit::AbstractEventDispatcher>(dispatcher)));
+    TimerObject obj;
+    obj.move_to_thread(&loop);
+    EXPECT_DEATH(obj.start_timer(10), ""); // current() here is null, affinity is &loop
+    EXPECT_DEATH(obj.kill_timer(1), "");
+}
+
+TEST(Object, destructor_kills_active_timers)
+{
+    // (f) ~Object on the affinity thread stops live timers: post-destruction ghost ticks are
+    // inert and ASAN-clean (the UAF gate).
+    FakeDispatcher *dispatcher = new FakeDispatcher;
+    cxxkit::EventLoop loop((std::unique_ptr<cxxkit::AbstractEventDispatcher>(dispatcher)));
+    int fired = 0;
+    loop.post(
+        [&]
+        {
+            TimerObject *obj = new TimerObject;
+            obj->move_to_thread(&loop);
+            const int id = obj->start_timer(10); // repeating
+            std::function<void()> tick = dispatcher->take_timer_fn(id);
+            delete obj;                              // ~Object must stop_timer(id) — destruction on the affinity thread
+            EXPECT_FALSE(dispatcher->has_timer(id)); // disarmed by ~Object
+            tick();                                  // late engine tick after death: must not touch the dead object
+            EXPECT_EQ(fired, 0);
+            loop.exit(0);
+        });
+    EXPECT_EQ(loop.exec(), 0);
+    EXPECT_EQ(fired, 0);
 }
 
 #endif // CXXKIT_FEATURE_ENABLE_KERNEL

@@ -27,6 +27,9 @@
 #include <cxxkit/kernel/detail/event_loop_p.hpp>
 #include <cxxkit/kernel/event_loop.hpp>
 #include <cxxkit/tools/checks.hpp>
+#include <functional>
+#include <memory>
+#include <utility>
 
 #include <algorithm>
 #include <cstdio>
@@ -82,6 +85,19 @@ Object::Object(ObjectPrivate *d)
 Object::~Object()
 {
     CXXKIT_D(Object);
+    // A1 (Momus): stop every live timer FIRST — armed dispatcher-side ticks must never fire
+    // into a destroyed object (UAF). Best-effort and affinity-thread-only: uv timer stop is
+    // not thread-safe, so off-thread destruction leaves them armed (documented caller
+    // contract, object.hpp).
+    if ((d->mThread != nullptr) && (EventLoop::current() == d->mThread))
+    {
+        EventLoop *loop = d->mThread;
+        while (!d->mActiveTimers.empty())
+        {
+            loop->stop_timer(d->mActiveTimers.back());
+            d->mActiveTimers.pop_back();
+        }
+    }
     this->destroying(); // 预销毁锚点：派生成员仍存活、children 未级联（析构期派发只到 Object 层）
     // T3/T2: clear pending entries (incl. DeferredDeleteEvent) — the foundation of the parent-child
     // same-queue delete_later contract. A purge triggered by a parent dtor during dispatch removes the
@@ -112,6 +128,57 @@ Object::~Object()
     {
         d->mParent->d_func()->detach_child(this);
     }
+}
+
+int Object::start_timer(uint64_t interval_ms, bool repeat)
+{
+    CXXKIT_D(Object);
+    EventLoop *loop = d->mThread;
+    CXXKIT_CHECK(loop != nullptr)
+        << "Object::start_timer: no affinity — create inside a loop's exec or move_to_thread first";
+    // Dispatcher timer registration is loop-thread-only (uv constraint): the call must run
+    // ON the affinity thread. Composite condition parenthesized whole (PIT-45).
+    CXXKIT_CHECK((EventLoop::current() == loop))
+        << "Object::start_timer: must be called on the object's affinity thread";
+    // The id exists only after the call returns — the callback holds a shared holder written
+    // right after start_timer (Momus A1-recommended shape). The tick delivers SYNCHRONOUSLY
+    // via send_event on a stack event: not queued, so ~Object purge does NOT cover in-flight
+    // timer ticks — the ~Object active-timer stop is the sole dispatch gate after death.
+    EventLoop *self = loop;
+    std::shared_ptr<int> id_holder(new int(0));
+    const int id = loop->start_timer(
+        interval_ms,
+        [this, self, id_holder]
+        {
+            // Liveness gate: the id must still be a member of mActiveTimers. kill_timer and
+            // ~Object erase ids, so a stale driver-side tick after kill/destruction is inert
+            // (same-thread contract makes the unsynchronized read safe). Without this, a
+            // copied callback still fires into a killed/dead object — (c) semantics + UAF.
+            if (self == nullptr ||
+                std::find(d_func()->mActiveTimers.begin(), d_func()->mActiveTimers.end(), *id_holder) ==
+                    d_func()->mActiveTimers.end())
+            {
+                return;
+            }
+            TimerEvent tick(*id_holder);
+            Object::send_event(this, &tick);
+        },
+        repeat);
+    *id_holder = id;
+    d->mActiveTimers.push_back(id);
+    return id;
+}
+
+void Object::kill_timer(int timer_id)
+{
+    CXXKIT_D(Object);
+    EventLoop *loop = d->mThread;
+    CXXKIT_CHECK(loop != nullptr) << "Object::kill_timer: no affinity";
+    CXXKIT_CHECK((EventLoop::current() == loop))
+        << "Object::kill_timer: must be called on the object's affinity thread";
+    std::vector<int> &timers = d->mActiveTimers;
+    timers.erase(std::remove(timers.begin(), timers.end(), timer_id), timers.end());
+    loop->stop_timer(timer_id); // no-op for unknown/ghost ids (EventLoop contract)
 }
 
 void Object::destroying()
