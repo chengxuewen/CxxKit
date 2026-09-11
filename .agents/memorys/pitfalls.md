@@ -310,3 +310,17 @@
 - **解法**: 与 check.sh 步骤 4 一致：`LSAN_OPTIONS="suppressions=$(pwd)/scripts/lsan.supp" ctest --test-dir build-asan`
 - **验证**: 同命令 83/83 全绿
 - **禁止**: 手工跑 ASAN 树用 ASAN_OPTIONS=suppressions=<相对路径>；诊断"全量挂单跑绿"先查环境变量路径解析
+
+## PIT-48: CMake option 开关与预处理器之间的断层——`#if SWITCH` 恒假（2026-09-11）
+- **症状**: D38 后 `make_default_dispatcher()` 在 ON 态仍走 fatal 分支；UvEventDispatcher 符号存在但 `#if CXXKIT_ENABLE_LOOP_BACKEND_UV` 不成立
+- **根因**: `cxxkit_option()` 只建 CMake 变量；core_config.hpp 不承载模块开关，也没人 `target_compile_definitions`——CMake 世界与预处理世界无桥
+- **解法**: 开关需进源码时显式接线：`target_compile_definitions(<target> PUBLIC <SWITCH>=1)`（PUBLIC 让测试/下游同见）；或在 ConfigureHelpers 的 core_config 生成器里集中登记
+- **验证**: `grep -rn "target_compile_definitions.*LOOP_BACKEND" cxxkit/kernel/CMakeLists.txt` 非空；OFF 态构建 default 走 fatal 分支（行为对表）
+- **禁止**: 假定 CMake option 自动可见于 `#if`；新增开关带条件编译时不写接线就提交
+
+## PIT-49: uv close 回调按基类指针 delete——new-delete-type-mismatch（2026-09-11）
+- **症状**: ASAN 报 `new-delete-type-mismatch`：new 分配 248B（uv_tcp_t），delete 按 96B（uv_handle_t）；D31 落地时未暴露
+- **根因**: `on_closed(uv_handle_t *handle)` 的形参静态类型是 uv_handle_t（96B），而分配是 uv_tcp_t（248B）——`delete handle` 按静态类型算大小；D31 期 ASAN 未跑 tcp 三件全量（或跑时被误归"既有良性"）
+- **解法**: close 回调内按真实分配类型释放：`delete reinterpret_cast<uv_tcp_t*>(handle)`（socket/server 双侧）
+- **验证**: `build-asan` 全量 LSAN_OPTIONS=suppressions=$(pwd)/scripts/lsan.supp 83/83 零诊断
+- **禁止**: 在 uv 回调（形参恒为 uv_handle_t*/uv_req_t* 基类）里直接 `delete` 形参指针——必须先 cast 回分配类型

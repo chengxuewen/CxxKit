@@ -322,3 +322,11 @@ cxxkit 是 OpenCTK（an open cpp toolkit）的成功重构版本 —— 精简�
 - [x] **团队审查链**：Momus 拦 3 硬伤（qt 误伤指令/unique_ptr 忘解引用/CHECK 防误改）+ 实现者拦第 4 处（operator EventLoop&() 隐式转换链不通，g++ 探针实证→指针符）
 - [x] **测试 81→83 套件**：+tst_application(8)/tst_event_loop_thread；tst_object 32→68 用例；主树/ASAN 各 83/83；D36 期 ASAN 曾暴露 T4 测试设计性 UAF（driver 拷贝回调捕获死 this，PIT-46）——测试诚实化修复（69e2713）
 - 已知架构结论（讨论沉淀，不再重开）：ELT 留 thread（其实现主体是线程状态机，且 thread→kernel 依赖方向合法）；thread 不并入 kernel（tools↔kernel 循环 + D32 粒度损失 + abseil 粒度哲学）；无 AbstractThread 接口（单实现 YAGNI）；ReferenceCounter 下沉 base 为可选独立清理项（未做）
+
+### 2026-09-11 uv 库解散（D38：引擎入 kernel 默认后端 + TCP 迁 network）
+
+- [x] **QtCore 模式落地**（撤销"kernel 零三方依赖"论断）：UvEventDispatcher 私有化进 `cxxkit/kernel/uv/detail/`（不安装/不暴露）；`make_default_dispatcher()` + `EventLoop(Object*)` 默认 ctor = `EventLoop loop;` 开箱即跑；TcpSocket/TcpServer 迁 network；`CXXKIT_ENABLE_LOOP_BACKEND_UV`（默认 ON）替 `CXXKIT_ENABLE_LIB_UV`；make_uv_dispatcher 删除
+- [x] **计划链**：团队调研（QtCore ldd 实证 glib/ICU/pcre2/zlib）→ 用户四轮裁定（合并/命名/归属）→ Momus APPROVE-WITH-FIXES 三修复（install EXCLUDE/NETWORK 状态洞/注释站点）→ 执行 + controller 手工收尾（子代理超时）
+- [x] **PIT-48**（CMake 开关↔预处理器断层：target_compile_definitions 接线）+ **PIT-49**（uv 回调基类指针 delete mismatch——D31 埋雷 ASAN 全量炸出后根治）
+- 验证：ON+NETWORK=ON 82/82 / OFF 78/78 / OFF+NETWORK=ON 78/78 / ASAN 83/83 零诊断 / uv 词汇 grep 清零 / format 干净
+- 备忘：INPUT_ 老缓存无 WARNING 提示（可选未做）；ELT/T7 工厂 typedef 双形态统一、ReferenceCounter 下沉 base 仍为 parked 小项

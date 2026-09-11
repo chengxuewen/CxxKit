@@ -329,3 +329,24 @@ sanitizer（ASAN/LSAN/UBSan）与 coverage 用**独立 build 目录**（build-as
 **验证**：主树 83/83（107s）/ ASAN 83/83（108s，lsan.supp 跑法）/ clang-format 干净 / `grep move_to_thread|kThreadChange` cxxkit+tests+examples 清零 / `.thread()|->thread()` 非 qt 清零。tst_event_loop_thread +1 用例 `move_to_loop_accepts_elt_implicit_conversion`（隐式转换编译 + 亲和查询钉子）。
 
 **已知限制**：无。kLoopChange 事件语义注释校准为 "the object's dispatch loop has changed"。
+
+## D38: uv 库解散——引擎并入 kernel 作默认后端 + TCP 迁 network（2026-09-11）
+
+**动因**：QtCore 模式实证（本机 `ldd libQt6Core.so`：直链 glib/ICU/pcre2/zlib——Core 携带三方引擎但公开面零引擎词汇）。旧"kernel 零三方依赖"论断撤销：kernel 允许携带引擎，条件是不暴露、可换、开关可控。开箱体验断裂（裸 EventLoop 无引擎不可跑）由此根治。
+
+**终版结构**：`cxxkit/kernel/uv/detail/`（UvEventDispatcher 私有化：不安装/不进 doc/CXXKIT_KERNEL_API）+ `make_default_dispatcher()`（kernel 唯一引擎入口，OFF 态 fatal 提示启用开关）+ `EventLoop(Object*)` 默认 ctor（`EventLoop loop;` 开箱即跑）+ TcpSocket/TcpServer 迁 network（CXXKIT_NETWORK_API）+ 开关改名 `CXXKIT_ENABLE_LOOP_BACKEND_UV`（默认 ON，对齐 D37 loop 词汇族；LIB 删除因不再指子库）+ `make_uv_dispatcher()` 删除。
+
+**Momus 三修复**（计划审核拦截）：
+- F-1：git mv 实为 9 文件非 6（两 detail p.hpp 必随迁）+ kernel 递归 install 必须加 `PATTERN "uv/detail" EXCLUDE`（否则私有引擎头漏进安装树且无 grep 门禁可抓）
+- F-2 状态洞：tcp 直用 uv API——network 无论后端开关都需 libuv；install 块/Config stub 条件 = `LOOP_BACKEND_UV OR NETWORK`；tcp 测试守卫 = `NETWORK AND LOOP_BACKEND_UV`（否则组合态编译过运行即 fatal）
+- F-3：make_uv_dispatcher 的 5 处 doc 注释站点（ELT/qt 头/测试）在 include 口径外，门禁必触发——并入迁移清单
+
+**执行期追加修复（子代理超时后 controller 手工收尾）**：
+- 开关宏未进预处理器：`#if CXXKIT_ENABLE_LOOP_BACKEND_UV` 恒假致默认工厂 fatal——`target_compile_definitions(cxxkit_kernel PUBLIC CXXKIT_ENABLE_LOOP_BACKEND_UV=1)` 接线（**CMake 开关 → 预处理器的显式通道必须立 user story**，core_config.hpp 不承载模块开关）
+- 引擎头初版在 `kernel/uv/` 根——递归 install 会暴露（F-1 应验），移 `uv/detail/` 归位
+- 两个 ON-gated 测试补 `#if defined()` 守卫（OFF 态 fatal 是契约非 bug）
+- **根治 D31 埋雷**：tcp `on_closed(uv_handle_t*)` 按 96B 基类指针 delete 248B `uv_tcp_t` 分配 = new-delete-type-mismatch（ASAN 全量炸出）——`delete reinterpret_cast<uv_tcp_t*>(handle)` 修复（socket/server 双侧）
+
+**验证矩阵**：主树 ON+NETWORK=ON 82/82 / OFF 78/78（tcp 正确裁剪）/ OFF+NETWORK=ON 78/78（F-2 洞闭合）/ ASAN 83/83 零诊断（mismatch 修复后）/ uv 词汇 grep 清零 / format 干净。
+
+**已知限制**：INPUT_ 老缓存残留无 WARNING 提示（可选项未做）；exp_tcp_echo 需 NETWORK=ON 态运行验证（守卫已挂）。
