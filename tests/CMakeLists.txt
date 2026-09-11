@@ -618,14 +618,17 @@ if(CXXKIT_ENABLE_LIB_NETWORK AND CXXKIT_ENABLE_LOOP_BACKEND_UV)
         LIBRARIES ${CXXKIT_TEST_LINK_LIBRARIES} cxxkit::network ${CMAKE_THREAD_LIBS_INIT})
 endif()
 
-if(CXXKIT_ENABLE_LIB_QT)
-    cxxkit_add_test(cxxkit_tst_qt_event_dispatcher
-        SOURCES tst_qt_event_dispatcher.cpp
+# Qt host-bridge dispatcher test (D39): registered only when Qt6 is auto-detected in this environment —
+# no dedicated build switch (find_package is quiet; Qt-less trees silently prune this block).
+find_package(Qt6 QUIET COMPONENTS Core)
+if(TARGET Qt6::Core)
+    cxxkit_add_test(cxxkit_tst_kernel_qt_dispatcher
+        SOURCES tst_kernel_qt_dispatcher.cpp
         INCLUDE_DIRECTORIES ${PROJECT_SOURCE_DIR}
-        LIBRARIES ${CXXKIT_TEST_LINK_LIBRARIES} cxxkit::qt ${CMAKE_THREAD_LIBS_INIT})
-    # Qt6 headers require C++17 (M9): the test target follows the cxxkit_qt library standard.
-    set_property(TARGET cxxkit_tst_qt_event_dispatcher PROPERTY CXX_STANDARD 17)
+        LIBRARIES ${CXXKIT_TEST_LINK_LIBRARIES} Qt6::Core cxxkit::kernel ${CMAKE_THREAD_LIBS_INIT})
+    # Qt6 headers require C++17 (M9 precedent): the test target keeps the old cxxkit_qt standard.
+    set_property(TARGET cxxkit_tst_kernel_qt_dispatcher PROPERTY CXX_STANDARD 17)
     # Local machine (g++ 10.5): resolve libQt6Core's GLIBCXX_3.4.30+ against the conda libstdc++
-    # (variable defined in cxxkit/qt/CMakeLists.txt; empty on CI — EXISTS guard). See PIT-39.
-    target_link_libraries(cxxkit_tst_qt_event_dispatcher PRIVATE ${CXXKIT_QT_LOCAL_STDCPP})
+    # (top-level variable; empty on CI — EXISTS guard). See PIT-39.
+    target_link_libraries(cxxkit_tst_kernel_qt_dispatcher PRIVATE ${CXXKIT_QT_LOCAL_STDCPP})
 endif()

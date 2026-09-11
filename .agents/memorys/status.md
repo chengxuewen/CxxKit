@@ -330,3 +330,12 @@ cxxkit 是 OpenCTK（an open cpp toolkit）的成功重构版本 —— 精简�
 - [x] **PIT-48**（CMake 开关↔预处理器断层：target_compile_definitions 接线）+ **PIT-49**（uv 回调基类指针 delete mismatch——D31 埋雷 ASAN 全量炸出后根治）
 - 验证：ON+NETWORK=ON 82/82 / OFF 78/78 / OFF+NETWORK=ON 78/78 / ASAN 83/83 零诊断 / uv 词汇 grep 清零 / format 干净
 - 备忘：INPUT_ 老缓存无 WARNING 提示（可选未做）；ELT/T7 工厂 typedef 双形态统一、ReferenceCounter 下沉 base 仍为 parked 小项
+
+### 2026-09-11 qt 库解散（D39：单头化并入 kernel，Qt host bridge header-only）
+
+- [x] **单头落地**：`cxxkit/kernel/qt_dispatcher.hpp`（~330 行）= qt_event_dispatcher.{hpp,cpp} + detail/_p.hpp 三合一；Private 值成员 `mD` 直访（pimpl/DPTR 宏全删）；QtCore 真 include（契约注释：include 本头 = 消费方须有 Qt 头路径 + 链 Qt6::Core；kernel 自身零 Qt 构建依赖）；11 方法全 inline；CXXKIT_QT_API/qt_global.hpp 消亡；类名/工厂名不动
+- [x] **CMake 面**：根 CMakeLists 删 ENABLE_LIB_QT option + cxxkit/qt subdirectory + CXXKIT_QT_ENABLED 死变量；CXXKIT_QT_LOCAL_STDCPP 块保留（tests/examples 链接面）；CxxKitConfig.cmake.in 删 qt 组件 find_dependency 分支；kernel CMakeLists 零改动（红线：零 Qt 构建接线）
+- [x] **测试/示例**：tst_kernel_qt_dispatcher（git mv 改名，块内 find_package(Qt6 QUIET) + if(TARGET Qt6::Core) 无变量守卫，C++17 保留）；exp_qt_embed 同款守卫 + 链 Qt6::Core + cxxkit::kernel
+- [x] **文档/记忆**：README 库表 qt 行删 + kernel 行补 "Qt host-bridge dispatcher (header-only, opt-in by include)" + gates 句去 qt + Examples 表改 "needs Qt6 (auto-detected)"；docs/qt-embed-smoke.md 路径/开关措辞同步；decisions.md D39
+- 验证：门禁 grep 清零 / Qt 环境（PATH 前置 qt-env/bin configure）主树 83/83 + ASAN 84/84（lsan.supp）零诊断 + exp rc=0 逐字节基线 / 无 Qt 净环境 fresh 树 79/79（qt 块静默裁剪，新头休眠零参与）/ BuildInstall 新头在旧树无 / format 干净
+- 备注：根 CMakeCache 残留旧 ENABLE_LIB_QT 键手工清（D25 同款）；GitHub CI workflow 的 QT_FLAG/qt6-base-dev 属上游侧待同步（本机不可验）

@@ -37,8 +37,9 @@ CXXKIT_BEGIN_NAMESPACE
  * @brief Runs an owned @ref EventLoop on a dedicated @ref PlatformThread (composition, Qt
  * QEventLoopThread analog).
  *
- * The dispatcher is created by @p factory (the @c make_default_dispatcher / @c make_qt_dispatcher
- * convention — a plain function pointer) at construction time, so the loop exists and can
+ * The dispatcher is created by @p factory (the @c make_default_dispatcher convention — a plain
+ * function pointer; host bridges like the header-only @c make_qt_dispatcher also fit) at
+ * construction time, so the loop exists and can
  * accept affinity binding BEFORE start() is called:
  *
  * @code
@@ -58,7 +59,8 @@ class EventLoopThreadPrivate;
 class CXXKIT_THREAD_API EventLoopThread final : public Object
 {
 public:
-    /** @brief Creates the loop's dispatcher (the make_default_dispatcher / make_qt_dispatcher shape). */
+    /** @brief Creates the loop's dispatcher (the make_default_dispatcher shape; host bridges
+     *  inject their own factory, e.g. the header-only make_qt_dispatcher). */
     typedef std::unique_ptr<AbstractEventDispatcher> (*DispatcherFactory)();
 
     /**

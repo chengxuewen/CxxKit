@@ -350,3 +350,19 @@ sanitizer（ASAN/LSAN/UBSan）与 coverage 用**独立 build 目录**（build-as
 **验证矩阵**：主树 ON+NETWORK=ON 82/82 / OFF 78/78（tcp 正确裁剪）/ OFF+NETWORK=ON 78/78（F-2 洞闭合）/ ASAN 83/83 零诊断（mismatch 修复后）/ uv 词汇 grep 清零 / format 干净。
 
 **已知限制**：INPUT_ 老缓存残留无 WARNING 提示（可选项未做）；exp_tcp_echo 需 NETWORK=ON 态运行验证（守卫已挂）。
+
+## D39: qt 库解散——单头化并入 kernel（cxxkit/kernel/qt_dispatcher.hpp，2026-09-11）
+
+**动因**：D38 后 qt 子库成孤儿（uv 引擎已入 kernel，qt 仍是独立 compiled 库 + 独立开关 + 导出宏）。用户终裁：**整个库坍缩为单头 `cxxkit/kernel/qt_dispatcher.hpp`**（~330 行）。定位语义：kernel 两个并列引擎入口——`default_dispatcher.hpp`（uv，自主场景）与 `qt_dispatcher.hpp`（Qt，寄生场景，消费方自带 Qt）。休眠语义：不 include = 零成本零参与；include = 需要 Qt 头路径 + 消费方链接 Qt6::Core。
+
+**单头形态**（M1-M4）：qt_event_dispatcher.{hpp,cpp} + detail/qt_event_dispatcher_p.hpp 三文件拼接；**Private 改值成员 `QtEventDispatcherPrivate mD`**（单头内完整类型可见），全部 `CXXKIT_D/d->` 重写为 `mD.` 直访，CXXKIT_DECLARE_PRIVATE/DEFINE_DPTR 删除；Qt 前向声明区删除（QPointer<QObject>/QTimer* 成员需完整类型 → **QtCore 真 include**：QCoreApplication/QMetaObject/QObject/QPointer/QThread/QTimer）；11 个方法全 inline（公共 9 + Private 2），`make_qt_dispatcher` 改 `inline`；`CXXKIT_QT_API` 全剥 + qt_global.hpp 不迁（header-only 无导出面）；类名/工厂名不动（D37/D38 刚稳定词汇面）。Private ctor 简化（去 unused `p` 参数）；context 解析（null→QCoreApplication::instance + CHECK）收进 `QtEventDispatcherPrivate::resolve_context` 静态助手——公共 ctor 保持纯成员初始化列表（C++11 无 in-class NSDMI 陷阱的等价形态）。
+
+**无变量案**（Momus Fix-1）：不做新 CMake 变量；测试/示例块直接 `find_package(Qt6 QUIET COMPONENTS Core)` + `if(TARGET Qt6::Core)` 条件注册——环境有 Qt 自动跑，无则静默裁剪。测试改名 `cxxkit_tst_kernel_qt_dispatcher`（源文件 git mv tst_kernel_qt_dispatcher.cpp），LIBRARIES = TEST_LINK_LIBRARIES + Qt6::Core + cxxkit::kernel + QT_LOCAL_STDCPP + THREAD_LIBS；`CXX_STANDARD 17` 保留。
+
+**Momus 四修复**：①无变量案（上段）②application.hpp:66 注释站点同 ELT 一起清 ③根 CMakeLists L396 `set(CXXKIT_QT_ENABLED ...)` 死变量删 + L245-249 `CXXKIT_QT_LOCAL_STDCPP` 块保留（tests/examples 仍需；tests L629 过时注释同步修）④include 归并（QCoreApplication/QThread/<limits>/<cxxkit/tools/checks.hpp> 进头）+ 测试 C++17 保留。
+
+**kernel 零 Qt 红线**：kernel CMakeLists **零改动**（递归 install PATTERN "*.hpp" 自带新头；无 find_package/link/option Qt 接线）。头文件顶部契约注释明示："Including this header REQUIRES Qt headers on the include path and linking Qt6::Core in the consuming target — the kernel itself has zero Qt build-time dependency (dormant unless included)."
+
+**验证矩阵**：门禁 grep（cxxkit/qt/ + CXXKIT_ENABLE_LIB_QT + CXXKIT_QT_API + CXXKIT_QT_ENABLED）清零；Qt 环境（configure 需 PATH 前置 qt-env/bin 供 find_package 发现——qt-env 从不在默认 PATH，D38 期 CI configure 也依赖 PATH 或 CMAKE_PREFIX_PATH 注入）主树 83/83 + ASAN 84/84（lsan.supp 跑法）零诊断 + exp_qt_embed 运行 rc=0 输出逐字节匹配基线；**无 Qt 环境**（env -i 净 PATH）fresh configure → Qt6_DIR-NOTFOUND → qt 测试/示例块静默裁剪 → 79/79 全绿（新头休眠零参与硬门禁）；BuildInstall 安装树 `include/cxxkit/kernel/qt_dispatcher.hpp` 在 + `include/cxxkit/qt/` 不存在 + Config 无 qt find_dependency；clang-format 触碰文件干净。
+
+**已知限制/备注**：安装树消费方 include 该头后自行 `find_package(Qt6)` + 链接 Qt6::Core（cxxkit 包不代劳——寄生语义本体）；根 CMakeCache 残留 `CXXKIT_ENABLE_LIB_QT:BOOL=OFF` 旧键需手工清（与 D25 INPUT_ 残留同款现象，configure 不报错）；CI workflow 的 `CXXKIT_ENABLE_LIB_QT=$QT_FLAG` configure 参数与 qt6-base-dev 安装属上游 CI 侧待同步项（本仓库 CI 在 GitHub 侧，本机无法验证，删除属后续 PR）。

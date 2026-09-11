@@ -246,9 +246,6 @@ set(CXXKIT_QT_LOCAL_STDCPP "")
 if(EXISTS "/tmp/opencode/qt-env/.pixi/envs/default/lib/libstdc++.so.6")
     set(CXXKIT_QT_LOCAL_STDCPP "/tmp/opencode/qt-env/.pixi/envs/default/lib/libstdc++.so.6" "/tmp/opencode/qt-env/.pixi/envs/default/lib/libgcc_s.so.1")
 endif()
-cxxkit_option(CXXKIT_ENABLE_LIB_QT "Enable this to build enable qt (Qt event loop bridge) lib" OFF
-    DEPENDS "CXXKIT_ENABLE_LIB_BASE AND CXXKIT_ENABLE_LIB_KERNEL AND CXXKIT_ENABLE_LIB_TOOLS"
-    OR_CONDITION CXXKIT_BUILD_ALL)
 
 #-----------------------------------------------------------------------------------------------------------------------
 # Sanitizers (ASAN/LSAN/UBSan) - applied at top-level scope so add_compile_options/add_link_options
@@ -308,7 +305,6 @@ add_subdirectory(cxxkit/profiling)
 cxxkit_add_subdirectory(cxxkit/network CXXKIT_ENABLE_LIB_NETWORK)
 cxxkit_add_subdirectory(cxxkit/crash CXXKIT_ENABLE_LIB_CRASH)
 cxxkit_add_subdirectory(cxxkit/imgui CXXKIT_ENABLE_LIB_IMGUI)
-cxxkit_add_subdirectory(cxxkit/qt CXXKIT_ENABLE_LIB_QT)
 cxxkit_add_subdirectory(tests CXXKIT_BUILD_TESTS)
 cxxkit_add_subdirectory(examples CXXKIT_BUILD_EXAMPLES)
 
@@ -391,7 +387,6 @@ if(CXXKIT_BUILD_INSTALL)
     if(CXXKIT_ENABLE_LOOP_BACKEND_UV OR CXXKIT_ENABLE_LIB_NETWORK)
         list(APPEND CXXKIT_VENDORED_FIND_DEPS "libuv")
     endif()
-    set(CXXKIT_QT_ENABLED ${CXXKIT_ENABLE_LIB_QT})
     set(CXXKIT_LOOP_BACKEND_UV ${CXXKIT_ENABLE_LOOP_BACKEND_UV})
     set(CXXKIT_NETWORK ${CXXKIT_ENABLE_LIB_NETWORK})
     configure_package_config_file(

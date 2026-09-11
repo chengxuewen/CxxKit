@@ -24,11 +24,11 @@
 
 /// @file exp_qt_embed.cpp
 /// @brief End-to-end Qt embed walkthrough: cxxkit EventLoop driven by a host Qt loop (needs
-///        CXXKIT_ENABLE_LIB_QT=ON). No GUI — QCoreApplication only; runtime gate is docs/qt-embed-smoke.md.
+///        auto-detected Qt6). No GUI — QCoreApplication only; runtime gate is docs/qt-embed-smoke.md.
 
 #include <cxxkit/kernel/connect_queued.hpp>
 #include <cxxkit/kernel/event_loop.hpp>
-#include <cxxkit/qt/qt_event_dispatcher.hpp>
+#include <cxxkit/kernel/qt_dispatcher.hpp>
 
 #include <QtCore/QCoreApplication>
 #include <QtCore/QObject>

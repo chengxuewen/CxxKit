@@ -22,7 +22,7 @@
 **
 ***********************************************************************************************************************/
 
-#include <cxxkit/qt/qt_event_dispatcher.hpp>
+#include <cxxkit/kernel/qt_dispatcher.hpp>
 
 #include <cxxkit/kernel/event_loop.hpp>
 
@@ -54,7 +54,7 @@ using cxxkit::QtEventDispatcher;
 TEST(QtEventDispatcherTest, DefaultContextIsAppInstance)
 {
     int argc = 1;
-    char arg0[] = "tst_qt_event_dispatcher";
+    char arg0[] = "tst_kernel_qt_dispatcher";
     char *argv[] = {arg0, nullptr};
     QCoreApplication app(argc, argv);
 
@@ -67,7 +67,7 @@ TEST(QtEventDispatcherTest, DefaultContextIsAppInstance)
 TEST(QtEventDispatcherTest, PostDrainsViaBridgeTimer)
 {
     int argc = 1;
-    char arg0[] = "tst_qt_event_dispatcher";
+    char arg0[] = "tst_kernel_qt_dispatcher";
     char *argv[] = {arg0, nullptr};
     QCoreApplication app(argc, argv);
 
@@ -100,7 +100,7 @@ TEST(QtEventDispatcherTest, PostDrainsViaBridgeTimer)
 TEST(QtEventDispatcherTest, TimerThreeTicksThenStop)
 {
     int argc = 1;
-    char arg0[] = "tst_qt_event_dispatcher";
+    char arg0[] = "tst_kernel_qt_dispatcher";
     char *argv[] = {arg0, nullptr};
     QCoreApplication app(argc, argv);
 
@@ -131,7 +131,7 @@ TEST(QtEventDispatcherTest, TimerThreeTicksThenStop)
 TEST(QtEventDispatcherTest, WakeAndPostStormCoalesceAndDrain)
 {
     int argc = 1;
-    char arg0[] = "tst_qt_event_dispatcher";
+    char arg0[] = "tst_kernel_qt_dispatcher";
     char *argv[] = {arg0, nullptr};
     QCoreApplication app(argc, argv);
 
@@ -157,7 +157,7 @@ TEST(QtEventDispatcherTest, WakeAndPostStormCoalesceAndDrain)
 TEST(QtEventDispatcherTest, NestedProcessEventsPermitted)
 {
     int argc = 1;
-    char arg0[] = "tst_qt_event_dispatcher";
+    char arg0[] = "tst_kernel_qt_dispatcher";
     char *argv[] = {arg0, nullptr};
     QCoreApplication app(argc, argv);
 
@@ -187,7 +187,7 @@ TEST(QtEventDispatcherTest, NestedProcessEventsPermitted)
 TEST(QtEventDispatcherTest, DispatcherBeforeContextAndLateWakeDropped)
 {
     int argc = 1;
-    char arg0[] = "tst_qt_event_dispatcher";
+    char arg0[] = "tst_kernel_qt_dispatcher";
     char *argv[] = {arg0, nullptr};
     QCoreApplication app(argc, argv);
 
@@ -224,7 +224,7 @@ TEST(QtEventDispatcherTest, DispatcherBeforeContextAndLateWakeDropped)
 TEST(QtEventDispatcherTest, InterruptIsNonFatalNoOp)
 {
     int argc = 1;
-    char arg0[] = "tst_qt_event_dispatcher";
+    char arg0[] = "tst_kernel_qt_dispatcher";
     char *argv[] = {arg0, nullptr};
     QCoreApplication app(argc, argv);
 

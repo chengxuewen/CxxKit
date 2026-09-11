@@ -18,7 +18,7 @@ Organized abseil-style: **directory = sublibrary = CMake target**, pick only wha
 | `cxxkit::memory` | compiled | aligned_malloc, shared_memory, zero_memory, smart pointers |
 | `cxxkit::units` | compiled | data_size, data_rate, frequency, time_delta, timestamp |
 | `cxxkit::time` | compiled | date_time, elapsed_timer |
-| `cxxkit::kernel` | compiled | object (name/find_child/user_data/timers/events/priority), event_loop, signals, application (notify funnel, global filters, main loop) |
+| `cxxkit::kernel` | compiled | object (name/find_child/user_data/timers/events/priority), event_loop, signals, application (notify funnel, global filters, main loop), Qt host-bridge dispatcher (header-only, opt-in by include) |
 | `cxxkit::thread` | compiled | thread_pool, task_queue, event_loop_thread (own-thread EventLoop for `move_to_loop(elt)`), future, semaphore |
 | `cxxkit::text` | compiled | string, base64, bit_buffer, ascii, string_builder, string_utils, str_split, crc32, format, string_view |
 | `cxxkit::tools` | compiled | logging, random, assert, clock, status, error, metrics, filesystem, optional, expected, variant |
@@ -26,7 +26,6 @@ Organized abseil-style: **directory = sublibrary = CMake target**, pick only wha
 | `cxxkit::crash` | compiled | crash handler, minidump (breakpad), stack trace (backward-cpp) — opt-in `CXXKIT_ENABLE_LIB_CRASH` |
 | `cxxkit::imgui` | compiled | headless ImGui context (`ImGuiHost`) over host-injected `PlatformBackend`/`RendererBackend` — opt-in `CXXKIT_ENABLE_LIB_IMGUI` |
 | `cxxkit::uv` | compiled | event loop dispatcher (socket notifier: `register/unregister_socket_notifier` uv_poll backend) + TcpSocket/TcpServer (memcached-style state machines) over vendored libuv — opt-in `CXXKIT_ENABLE_LIB_UV` |
-| `cxxkit::qt` | compiled | event-loop bridge onto a host Qt event loop (`QtEventDispatcher`) — opt-in `CXXKIT_ENABLE_LIB_QT` (CMake-only consumption, no .pc) |
 
 ## Quick start
 
@@ -43,7 +42,7 @@ Options: `-DCXXKIT_BUILD_TESTS=OFF`, `-DCXXKIT_ENABLE_LIB_NETWORK=ON`, `-DCXXKIT
 Sanitizer / coverage（`scripts/check.sh` 步骤 4/7 与 7/7 会自动接入，若对应 build 目录存在）:
 `-DCXXKIT_BUILD_SANITIZERS=ON`（用 -B build-asan 生成）、`-DCXXKIT_BUILD_COVERAGE=ON`（用 -B build-cov 生成，`coverage` target 产出 `build-cov/coverage/summary.txt`）。
 
-**On-demand sublibraries**: each core sublibrary has a `-DCXXKIT_ENABLE_LIB_<SUB>=ON/OFF` switch (text, containers, functional, numerics, patterns, units, memory, kernel, thread, media) plus the opt-in gates network/crash/imgui/uv/qt/tracy. `base`, `tools`, `time` and `profiling` are always built (dependency-graph root / symbol hub / time↔tools cycle). Dependencies are clamped, not auto-enabled: requesting a sublibrary whose dependency is OFF emits a WARNING and stays OFF.
+**On-demand sublibraries**: each core sublibrary has a `-DCXXKIT_ENABLE_LIB_<SUB>=ON/OFF` switch (text, containers, functional, numerics, patterns, units, memory, kernel, thread, media) plus the opt-in gates network/crash/imgui/uv/tracy. `base`, `tools`, `time` and `profiling` are always built (dependency-graph root / symbol hub / time↔tools cycle). Dependencies are clamped, not auto-enabled: requesting a sublibrary whose dependency is OFF emits a WARNING and stays OFF.
 
 Minimal build (header-only core only):
 
@@ -136,7 +135,7 @@ Build them with the main build (`cmake --build build`); binaries land in `build/
 | `exp_imgui` | imgui | SDL3+GL3 windowed core; plus `examples/imgui/` family: headless, plot, plot3d, gizmo, file_dialog, markdown, nodes |
 | `exp_event_loop` | uv | deterministic 3-tick timer loop, rc=0 (needs `CXXKIT_ENABLE_LIB_UV=ON`) |
 | `exp_tcp_echo` | uv | TcpServer+TcpSocket loopback echo over an ephemeral port, fixed stdout, rc=0 (needs `CXXKIT_ENABLE_LIB_UV=ON`) |
-| `exp_qt_embed` | qt | cxxkit EventLoop embedded in a host Qt loop: bridge QTimer pump, queued signal delivery, rc=0 (needs `CXXKIT_ENABLE_LIB_QT=ON`; runtime gate `docs/qt-embed-smoke.md`) |
+| `exp_qt_embed` | kernel | cxxkit EventLoop embedded in a host Qt loop: bridge QTimer pump, queued signal delivery, rc=0 (needs Qt6 — auto-detected; runtime gate `docs/qt-embed-smoke.md`) |
 
 All examples print deterministic output except where a value is genuinely runtime-dependent (timers, clocks — annotated in-line). No example performs a real network request or a deliberate crash.
 
