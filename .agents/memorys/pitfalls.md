@@ -296,3 +296,17 @@
 - **解法**: 复合条件**整体加括号** `CXXKIT_CHECK((a == nullptr) || (!a->is_running()))`——括号使 condition 作为单一宏实参、展开后作为裸 if 的完整控制式；单条件无歧义可不加
 - **验证**: `grep -n "CXXKIT_CHECK((" cxxkit/kernel/object.cpp` 非空（复合处全括号形态）；带复合条件的 CHECK 用例（运行中环 move → fatal）进 tst_object
 - **禁止**: 复合条件不加整体括号直接传给 `CXXKIT_CHECK(...)`；在 CHECK 宏实参内写含顶层 `||`/`&&` 的裸表达式后还续接流式 `<<`
+
+## PIT-46: driver 拷贝的回调捕获死 this——门控救不了死后调用（2026-09-11）
+- **症状**: T4 `destructor_kills_active_timers` 在 ASAN 下 use-after-free——delete obj 后调用 `take_timer_fn` 拷贝出的 tick，lambda 捕获的 this 已死
+- **根因**: lambda 内任何成员访问（含 liveness gate 读 mActiveTimers）都需要活的 this——对象已死则 gate 本身就是 UAF；拷贝回调的"死后惰性化"只能在对象活着的每个 tick 内做成员资格检查，死后调用无解
+- **解法**: 测试断言诚实化——死后验证 dispatcher 注册已解除（has_timer false）+ 零派发计数，不 fire 拷贝；lambda 内恒真的 `self == nullptr` 分支清除（this 捕获不可能 null）
+- **验证**: `build-asan` 全量 LSAN_OPTIONS=suppressions=$(pwd)/scripts/lsan.supp 83/83 零诊断
+- **禁止**: 测试中 fire 捕获了已析构对象指针的回调拷贝来"验证不死"；给死后调用路径加成员门控（gate 需要先解引用死者）
+
+## PIT-47: ASAN_OPTIONS/LSAN_OPTIONS 混用——suppressions 相对路径在 ctest cwd 下失效（2026-09-11）
+- **症状**: ASAN 全量 82 套件 0.00-0.01s 全挂"failed to read suppressions file"，单跑全绿
+- **根因**: 抑制文件要给 LSAN_OPTIONS（leak 检测）而非 ASAN_OPTIONS；且相对路径 `scripts/lsan.supp` 在 ctest 逐测试改变 cwd（build-asan/tests/）后解析失败
+- **解法**: 与 check.sh 步骤 4 一致：`LSAN_OPTIONS="suppressions=$(pwd)/scripts/lsan.supp" ctest --test-dir build-asan`
+- **验证**: 同命令 83/83 全绿
+- **禁止**: 手工跑 ASAN 树用 ASAN_OPTIONS=suppressions=<相对路径>；诊断"全量挂单跑绿"先查环境变量路径解析

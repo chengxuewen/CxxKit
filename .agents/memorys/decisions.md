@@ -284,3 +284,25 @@ sanitizer（ASAN/LSAN/UBSan）与 coverage 用**独立 build 目录**（build-as
 - **I2+M2（doxygen 如实化，英文重写）**：post_event（亲和环路由+跨线程合法+wake）/ delete_later（亲和优先跨线程合法+current 回退+双缺 fatal）/ install_event_filter（删"filter 须比 watched 长寿"旧契约——T3 双向自摘已解除）；thread()/move_to_thread 补亲和环寿命契约（dangling-loop = UAF）
 - **M4**：补 `move_to_thread_notifies_each_migrated_object`（派生覆写 event() 计 kThreadChange：N 对象迁移 = N 次通知；同环 no-op 零通知；detach 再通知）
 - **验证**：主树 UV+QT=ON **81/81** / tst_object 32/32 / ASAN 定向 32/32 零诊断 ×3 轮
+
+## D36: Object 能力面补全——Qt/UE 差距分析 + B/C 组移植 + ELT/Application 复活（2026-09-11，T0-T9 SDD 流水线）
+
+**来源**：Qt 6.11 / UE 5.x / 零码生成框架三路团队调研差距矩阵（会话 2026-09-11）。结论：Object 树/事件/亲和核心已达标（WeakPtr 选型被 UE FWeakObjectPtr 同构佐证）；缺口在 runtime API 面。Qt 反射族（moc/QMetaObject/QProperty）与 UE 全引擎耦合件（UHT/GC/CDO/复制/SoftPtr/FText）全拒。
+
+**用户裁定 R1-R5**：B 组六件（register_event_type/object_name+dump/find_child/user_data/对象级 timer）+ C 组四件（remove_pending_events 公有化/DeferredDelete 压缩/事件优先级/Application 复活）+ ELT 组合式复活 + user_data Object 拥有 + Application Qt 式完整。
+
+**关键裁定与形态**：
+- **register_event_type plan-over-Qt**：hint 出界返 -1（Qt 实际是回退自动分配）——仅 hint==-1 哨兵走 auto；plan 裁定为 -1，实现遵 plan
+- **事件优先级稳定插入**：有序插入住 enqueue_event 单点（与 C2 压缩同函数同锁路径，压缩扫描在前）；全默认 0 恒退化 push_back（82 套件零改动门禁的数学保证）；迁移按扫描序 push_back 禁重排（Momus F2）；O(n) 线性插入备案上限（热点时升级优先级桶）
+- **DeferredDelete 压缩**：扫描住 enqueue_event 锁内 push_back 前（Momus F1，TOCTOU 防护）；object.cpp 侧零扫描；wake 保留幂等
+- **Application notify 漏斗**：send_event 体迁入 private `send_event_internal(app, receiver, event)`（app 参数区分全局 filter 段）；**访问桥 = ObjectPrivate::deliver_via_funnel**（CXXKIT_DECLARE_PRIVATE friend 链）——friend 派生类不能直呼基类私有成员（最小复现实证），Application 经桥零新增 public 面；event_loop.cpp 零改动（队列派发调 send_event 自动过漏斗）；notify 覆写内调 send_event 同 receiver = 用户级递归（Qt 同责，doxygen 声明）
+- **对象级 timer 同步直发**：tick 经 send_event 栈上 TimerEvent 同步派发（非 Qt 队列形态——不过优先级/压缩，语义差异成文）；**tick 回调按 mActiveTimers 成员资格门控**（kill 后 stale tick 惰性化）；A1 生命周期双轨：~Object 亲和线程 best-effort kill + "析构须亲和线程或先 kill_timer"调用方契约（dispatcher 侧 repeating 注册不被队列 purge 覆盖）
+- **user_data 析构序契约**：~Object 先级联删 children 后释放 mUserData——UserData 析构禁止访问 owner 或子代（doxygen 声明）
+- **ELT 组合式**：EventLoopThread 落 thread 模块，构造期持 EventLoop（裸成员 parent=nullptr）；`move_to_thread(&elt.loop())` 组合用法保 move_to_thread(EventLoop*) 签名（kernel→thread 依赖环禁止）；std::function 工厂（T8 实际用函数指针 typedef——两种形态库内并存，Converter 统一待办）
+- **C1 remove_pending_events 落 Object 静态**（plan 原文 EventLoop 静态，任务书以 Qt 形态裁定 Object::remove_pending_events(receiver)——薄封装复用 purge 机制）
+
+**测试基线**：81 → **83 套件**（+tst_application 8 例；tst_object 32→68 用例）；主树/ASAN 各 83/83；tst_object 新增全为计划钉子（并发注册唯一性/priority 顺序钉子/压缩 wake counter/漏斗 once-per-event）。
+
+**Momus/审查修订实录**：批1 复审 2 should 已修（register_event_type hint=-1 契约句 + UserData dtor-order 契约）；T4 destructor_kills 测试 ASAN UAF = **driver 拷贝 tick 触发的设计性 UB**——测试改诚实断言（注册解除 + 零派发），lambda 恒真 self==nullptr 分支清除（69e2713）。
+
+**已知限制备案**：C3 线性插入热点上限；timer TimerType 未纳入（C5 驳回）；Application 无 spontaneous 源/removePostedEvents(type) 过载；ELT 一次性 start（重启未承诺）；mActiveTimers 无锁（亲和线程 CHECK 纪律守卫）。
