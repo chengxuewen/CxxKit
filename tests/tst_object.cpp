@@ -987,7 +987,8 @@ TEST(Object, find_child_direct_child_by_type)
     FindNode *node = new FindNode(&root);
     RecordingObject *plain = new RecordingObject(&root);
     EXPECT_EQ(static_cast<cxxkit::Object *>(root.find_child<FindNode>()), static_cast<cxxkit::Object *>(node));
-    EXPECT_EQ(static_cast<cxxkit::Object *>(root.find_child<RecordingObject>()), static_cast<cxxkit::Object *>(plain)); // first attached child
+    EXPECT_EQ(static_cast<cxxkit::Object *>(root.find_child<RecordingObject>()),
+              static_cast<cxxkit::Object *>(plain));       // first attached child
     EXPECT_TRUE(root.find_child<FindWidget>() == nullptr); // no Widget among children
     CXXKIT_UNUSED(plain);
 }
@@ -999,7 +1000,8 @@ TEST(Object, find_child_finds_deep_grandchild_recursively)
     RecordingObject root;
     RecordingObject *mid = new RecordingObject(&root);
     FindNode *grand = new FindNode(mid);
-    EXPECT_EQ(static_cast<cxxkit::Object *>(root.find_child<FindNode>()), static_cast<cxxkit::Object *>(grand)); // pre-order descent
+    EXPECT_EQ(static_cast<cxxkit::Object *>(root.find_child<FindNode>()),
+              static_cast<cxxkit::Object *>(grand));       // pre-order descent
     EXPECT_TRUE(mid->find_child<FindWidget>() == nullptr); // deep search still respects the type filter
     // The object itself is never a candidate even when it matches T:
     EXPECT_TRUE(root.find_child<RecordingObject>() != nullptr); // finds mid (child), not itself
