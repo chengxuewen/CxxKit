@@ -313,3 +313,12 @@ cxxkit 是 OpenCTK（an open cpp toolkit）的成功重构版本 —— 精简�
 - [x] **M1 记录修正**："FakeDispatcher 补 mutex"失实——零改动，mWakeUpCount 基线已 std::atomic（decisions.md D35 + 本文件已更正）
 - [x] **M4 钩子观测**：`move_to_thread_notifies_each_migrated_object`（kThreadChange N 对象 = N 次通知；同环 no-op 零通知；detach 再通知）
 - 验证：主树 UV+QT=ON **81/81** / tst_object 29→32 用例 / ASAN 定向 32/32 零诊断 ×3 轮 / clang-format 干净
+
+### 2026-09-11 Object 能力面补全 + API 词汇族换血（D36 + D37）
+
+- [x] **差距分析（三路团队调研）**：Qt 6.11 / UE 5.x / 零码生成框架。结论：Object 树/事件/亲和核心已达标（WeakPtr 被 UE FWeakObjectPtr 佐证）；缺口在 runtime API 面。Qt 反射族与 UE 引擎耦合件全拒
+- [x] **D36 十任务落地**（8cc4947..d72b7b9，12 提交）：register_event_type（plan-over-Qt：hint 出界返 -1）/ object_name+dump_object_tree / find_child/find_children / user_data（Object 拥有 + dtor 序契约）/ 对象级 timer（tick 按 mActiveTimers 成员资格门控 + A1 生命周期双轨）/ remove_pending_events 公有化 + DeferredDelete 压缩（锁内防 TOCTOU）/ 事件优先级（稳定插入，全 0 退化=旧行为逐字节等价）/ Application 复活（notify 漏斗经 ObjectPrivate::deliver_via_funnel 桥 + 全局 filter + 主环）/ ELT 复活（组合式）
+- [x] **D37 API 换血**（acc21da 计划 + 300ea57 执行）：move_to_thread→move_to_loop / thread()→loop() / kThreadChange→kLoopChange（值 22 不变）+ ELT `operator EventLoop*()` 隐式转换——`worker.move_to_loop(elt)` 一步到位；动因=亲和语义是环非线程（四轮架构讨论收束）；qt 子库 thread() 是 Qt 自有 API 未动；三处 CHECK 保留 thread 措辞
+- [x] **团队审查链**：Momus 拦 3 硬伤（qt 误伤指令/unique_ptr 忘解引用/CHECK 防误改）+ 实现者拦第 4 处（operator EventLoop&() 隐式转换链不通，g++ 探针实证→指针符）
+- [x] **测试 81→83 套件**：+tst_application(8)/tst_event_loop_thread；tst_object 32→68 用例；主树/ASAN 各 83/83；D36 期 ASAN 曾暴露 T4 测试设计性 UAF（driver 拷贝回调捕获死 this，PIT-46）——测试诚实化修复（69e2713）
+- 已知架构结论（讨论沉淀，不再重开）：ELT 留 thread（其实现主体是线程状态机，且 thread→kernel 依赖方向合法）；thread 不并入 kernel（tools↔kernel 循环 + D32 粒度损失 + abseil 粒度哲学）；无 AbstractThread 接口（单实现 YAGNI）；ReferenceCounter 下沉 base 为可选独立清理项（未做）
