@@ -24,6 +24,9 @@
 
 #include <cxxkit/kernel/event.hpp>
 
+#include <mutex>
+#include <set>
+
 #if CXXKIT_FEATURE_ENABLE_KERNEL
 
 CXXKIT_BEGIN_NAMESPACE
@@ -80,6 +83,38 @@ ChildEvent::~ChildEvent()
 DeferredDeleteEvent::DeferredDeleteEvent()
     : Event(Type::kDeferredDelete)
 {
+}
+
+int Event::register_event_type(int hint)
+{
+    static std::mutex sMutex;
+    static std::set<int> sClaimed;
+    static int sNext = static_cast<int>(Event::Type::kUser);
+
+    std::lock_guard<std::mutex> lock(sMutex);
+    const int kUser = static_cast<int>(Event::Type::kUser);
+    const int kMax = static_cast<int>(Event::Type::kMax);
+
+    if (hint == -1)
+    {
+        // Auto path: claim the next free id in [kUser, kMax].
+        while (sNext <= kMax)
+        {
+            const int id = sNext++;
+            if (sClaimed.insert(id).second)
+            {
+                return id;
+            }
+        }
+        return -1; // id space exhausted
+    }
+
+    // Hint path: claim exactly hint; out-of-range or already-claimed hint is rejected.
+    if (hint >= kUser && hint <= kMax && sClaimed.insert(hint).second)
+    {
+        return hint;
+    }
+    return -1;
 }
 
 CXXKIT_END_NAMESPACE

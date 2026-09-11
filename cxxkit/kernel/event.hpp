@@ -72,6 +72,17 @@ public:
     inline void accept() { mAccept = true; }
     inline void ignore() { mAccept = false; }
 
+    /** @brief Registers a custom event type id for application-defined events.
+     **
+     ** Returns a new unique event type id in the [kUser, kMax] range. When @p hint lies inside
+     ** [kUser, kMax] and has not been claimed yet, the hint itself is returned; a claimed or
+     ** out-of-range hint yields -1. Returns -1 once the id space is exhausted. Thread-safe;
+     ** intended to be called at initialization time, not on hot paths.
+     ** @since 0.2
+     */
+    static int register_event_type(int hint = -1);
+
+
 private:
     ushort mType{0};
     ushort mPosted:1;
