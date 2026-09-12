@@ -23,17 +23,15 @@
 ***********************************************************************************************************************/
 
 // exp_imgui_markdown: single-header markdown rendering — headings, lists, links, code.
-// Requires a display + a GL 3+ context to run; headless machines exit with rc=1 at SDL_Init.
+// The application owns the SDL lifecycle and the frame loop; the lambda is pure per-frame UI.
+// Requires a display + a GL 3+ context to run; headless machines get rc=1 from exec().
 // imgui_markdown is header-only: the include contract is <imgui.h> BEFORE <imgui_markdown.h>;
 // both arrive through cxxkit::imgui_markdown's INTERFACE include tree (D6 namespaced paths).
 #include <cstdio>
 
 #include <cxxkit/3rdparty/imgui/imgui.h>
 #include <cxxkit/3rdparty/imgui_markdown/imgui_markdown.h>
-#include <cxxkit/imgui/context.hpp>
-#include <cxxkit/imgui/sdl3/sdl3_backend.hpp>
-
-#include "sdl_host.hpp"
+#include <cxxkit/imgui/sdl3/sdl_application.hpp>
 
 // Clicked-link sink: imgui_markdown calls it when a [link](url) is clicked (terminal print —
 // an example has no browser to open). Registered via MarkdownConfig.linkCallback below.
@@ -44,23 +42,7 @@ static void markdown_link_callback(ImGui::MarkdownLinkCallbackData data)
 
 int main()
 {
-    // ---- SDL lifecycle block: the EXAMPLE is the host and owns every SDL call ----
-    imgui_example::SdlHost host_sdl;
-    if (!host_sdl.init("cxxkit exp_imgui_markdown", 1280, 720))
-    {
-        return 1;
-    }
-
-    // ---- cxxkit imgui block: UI code below is identical to what any other backend would run ----
-    cxxkit::Sdl3PlatformBackend platform;
-    cxxkit::Sdl3RendererBackend renderer;
-    cxxkit::ImGuiHost host(platform, renderer);
-    if (!host.init())
-    {
-        printf("imgui host init failed: %s\n", SDL_GetError());
-        host_sdl.shutdown();
-        return 1;
-    }
+    cxxkit::SdlImGuiApplication app("cxxkit exp_imgui_markdown", 1280, 720);
 
     // Fixed demo document: H1/H2, bold+italic, list, code, link — everything defaultMarkdownFormatCallback styles.
     // static so the linkCallback can outlive this frame's stack (upstream demo uses file/static scope too).
@@ -78,31 +60,13 @@ Click a link — it prints here:
     static ImGui::MarkdownConfig markdown_config;
     markdown_config.linkCallback = &markdown_link_callback;
 
-    bool quit = false;
-    while (!quit)
-    {
-        SDL_Event event;
-        while (SDL_PollEvent(&event))
+    const int rc = app.exec(
+        []() -> bool
         {
-            if (event.type == SDL_EVENT_QUIT || event.type == SDL_EVENT_WINDOW_CLOSE_REQUESTED)
-            {
-                quit = true;
-            }
-            else if (event.type == SDL_EVENT_KEY_DOWN && event.key.scancode == SDL_SCANCODE_ESCAPE)
-            {
-                quit = true;
-            }
-        }
-        host.begin_frame();
-        ImGui::Begin("Markdown");
-        ImGui::Markdown(markdown_text, strlen(markdown_text), markdown_config);
-        ImGui::End();
-        host.end_frame();
-        SDL_GL_SwapWindow(host_sdl.window);
-    }
-
-    // ---- teardown: cxxkit side first (renderer + platform shutdown inside), then host SDL ----
-    host.shutdown();
-    host_sdl.shutdown();
-    return 0;
+            ImGui::Begin("Markdown");
+            ImGui::Markdown(markdown_text, strlen(markdown_text), markdown_config);
+            ImGui::End();
+            return false;
+        });
+    return rc;
 }

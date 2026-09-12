@@ -33,7 +33,10 @@ namespace cxxkit
 /***********************************************************************************************************************
    SDL3 + OpenGL3 backend: binds upstream imgui_impl_sdl3/imgui_impl_opengl3 to the cxxkit backend contract.
    The HOST owns SDL: it must have called SDL_Init(SDL_INIT_VIDEO) and created an SDL_GLWindow with a current GL
-   context before init(); cxxkit never calls SDL_Init/SDL_Quit and never creates windows or contexts.
+   context before init(); these backends never call SDL_Init/SDL_Quit and never create windows or contexts.
+   (The SDL3 application object in this directory — SdlImGuiApplication — is the sanctioned exception:
+   as an explicit opt-in host it owns the full SDL lifecycle. Kernel + imgui core (ImGuiHost and these
+   backend contracts) still never touch SDL lifecycle state. D29 amendment, D40.)
 ***********************************************************************************************************************/
 class CXXKIT_IMGUI_API Sdl3PlatformBackend : public PlatformBackend
 {

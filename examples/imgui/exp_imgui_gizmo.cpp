@@ -23,17 +23,17 @@
 ***********************************************************************************************************************/
 
 // exp_imgui_gizmo: ImGuizmo transform manipulator over a hand-built view/projection pair.
-// Requires a display + a GL 3+ context to run; headless machines exit with rc=1 at SDL_Init.
+// The application owns the SDL lifecycle and the frame loop; the lambda is pure per-frame UI.
+// Requires a display + a GL 3+ context to run; headless machines get rc=1 from exec().
 #include <cmath>
 #include <cstdio>
 
-#include <cxxkit/imgui/context.hpp>
-#include <cxxkit/imgui/sdl3/sdl3_backend.hpp>
+#include <SDL3/SDL.h> // example remains a host-side SDL consumer for window metrics
+
+#include <cxxkit/imgui/sdl3/sdl_application.hpp>
 // ImGuizmo.h does NOT include imgui.h itself (upstream contract, same as markdown):
 // imgui headers must come first or ImDrawList etc. are undeclared.
 #include <cxxkit/3rdparty/imguizmo/ImGuizmo.h>
-
-#include "sdl_host.hpp"
 
 // All matrices below are float[16] in COLUMN-MAJOR order (OpenGL convention): the element at
 // (row r, column c) lives at m[c * 4 + r], so the translation vector occupies m[12], m[13], m[14].
@@ -88,22 +88,7 @@ static void make_lookat(const float eye[3], const float target[3], const float u
 
 int main()
 {
-    // ---- SDL lifecycle block: the EXAMPLE is the host and owns every SDL call ----
-    imgui_example::SdlHost host_sdl;
-    if (!host_sdl.init("cxxkit exp_imgui_gizmo", 1280, 720))
-    {
-        return 1;
-    }
-
-    cxxkit::Sdl3PlatformBackend platform;
-    cxxkit::Sdl3RendererBackend renderer;
-    cxxkit::ImGuiHost host(platform, renderer);
-    if (!host.init())
-    {
-        printf("imgui host init failed: %s\n", SDL_GetError());
-        host_sdl.shutdown();
-        return 1;
-    }
+    cxxkit::SdlImGuiApplication app("cxxkit exp_imgui_gizmo", 1280, 720);
 
     // Object transform the gizmo edits — identity + a translation in front of the camera.
     static float matrix[16];
@@ -121,62 +106,44 @@ int main()
     float projection[16];
 
     ImGuizmo::OPERATION operation = ImGuizmo::TRANSLATE;
-    bool quit = false;
-    while (!quit)
-    {
-        SDL_Event event;
-        while (SDL_PollEvent(&event))
+    const int rc = app.exec(
+        [&]() -> bool
         {
-            if (event.type == SDL_EVENT_QUIT || event.type == SDL_EVENT_WINDOW_CLOSE_REQUESTED)
+            ImGuizmo::BeginFrame(); // upstream contract: right after ImGui_XXXX_NewFrame()
+
+            int width = 0;
+            int height = 0;
+            SDL_GetWindowSize(app.window(), &width, &height);
+            make_perspective(1.0472f /* 60 degrees */,
+                             float(width) / float(height > 0 ? height : 1),
+                             0.1f,
+                             100.0f,
+                             projection);
+
+            ImGui::Begin("Gizmo");
+            ImGui::Text("translation: %.2f, %.2f, %.2f", matrix[12], matrix[13], matrix[14]);
+            if (ImGui::Button("translate"))
             {
-                quit = true;
+                operation = ImGuizmo::TRANSLATE;
             }
-            else if (event.type == SDL_EVENT_KEY_DOWN && event.key.scancode == SDL_SCANCODE_ESCAPE)
+            ImGui::SameLine();
+            if (ImGui::Button("rotate"))
             {
-                quit = true;
+                operation = ImGuizmo::ROTATE;
             }
-        }
-        host.begin_frame();     // backend drains + feeds events, ImGui::NewFrame()
-        ImGuizmo::BeginFrame(); // upstream contract: right after ImGui_XXXX_NewFrame()
-
-        int width = 0;
-        int height = 0;
-        SDL_GetWindowSize(host_sdl.window, &width, &height);
-        make_perspective(1.0472f /* 60 degrees */,
-                         float(width) / float(height > 0 ? height : 1),
-                         0.1f,
-                         100.0f,
-                         projection);
-
-        ImGui::Begin("Gizmo");
-        ImGui::Text("translation: %.2f, %.2f, %.2f", matrix[12], matrix[13], matrix[14]);
-        if (ImGui::Button("translate"))
-        {
-            operation = ImGuizmo::TRANSLATE;
-        }
-        ImGui::SameLine();
-        if (ImGui::Button("rotate"))
-        {
-            operation = ImGuizmo::ROTATE;
-        }
-        ImGui::SameLine();
-        if (ImGui::Button("scale"))
-        {
-            operation = ImGuizmo::SCALE;
-        }
-        // Draw + edit inside this window's rect (upstream sample pattern: SetRect, then Manipulate).
-        ImGuizmo::SetRect(ImGui::GetWindowPos().x,
-                          ImGui::GetWindowPos().y,
-                          ImGui::GetWindowWidth(),
-                          ImGui::GetWindowHeight());
-        ImGuizmo::Manipulate(view, projection, operation, ImGuizmo::LOCAL, matrix);
-        ImGui::End();
-
-        host.end_frame(); // ImGui::Render() + renderer.render(draw_data)
-        SDL_GL_SwapWindow(host_sdl.window);
-    }
-
-    host.shutdown();
-    host_sdl.shutdown();
-    return 0;
+            ImGui::SameLine();
+            if (ImGui::Button("scale"))
+            {
+                operation = ImGuizmo::SCALE;
+            }
+            // Draw + edit inside this window's rect (upstream sample pattern: SetRect, then Manipulate).
+            ImGuizmo::SetRect(ImGui::GetWindowPos().x,
+                              ImGui::GetWindowPos().y,
+                              ImGui::GetWindowWidth(),
+                              ImGui::GetWindowHeight());
+            ImGuizmo::Manipulate(view, projection, operation, ImGuizmo::LOCAL, matrix);
+            ImGui::End();
+            return false;
+        });
+    return rc;
 }

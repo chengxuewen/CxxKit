@@ -22,41 +22,19 @@
 **
 ***********************************************************************************************************************/
 
-// exp_imgui_plot: ImPlot 2D plotting — lines, histograms, in an SDL3+GL window.
-// Requires a display + a GL 3+ context to run; headless machines exit with rc=1 at SDL_Init.
+// exp_imgui_plot: ImPlot 2D plotting — lines, histograms, in an SdlImGuiApplication window.
+// The application owns the SDL lifecycle and the frame loop; the lambda is pure per-frame UI.
+// Requires a display + a GL 3+ context to run; headless machines get rc=1 from exec().
 #include <cmath>
 #include <cstdio>
 #include <random>
-#include <cstdio>
 
 #include <cxxkit/3rdparty/implot/implot.h>
-#include <cxxkit/imgui/context.hpp>
-#include <cxxkit/imgui/sdl3/sdl3_backend.hpp>
-
-#include "sdl_host.hpp"
+#include <cxxkit/imgui/sdl3/sdl_application.hpp>
 
 int main()
 {
-    // ---- SDL lifecycle block: the EXAMPLE is the host and owns every SDL call ----
-    imgui_example::SdlHost host_sdl;
-    if (!host_sdl.init("cxxkit exp_imgui_plot", 1280, 720))
-    {
-        return 1;
-    }
-
-    // ---- cxxkit imgui block: ImGuiHost + ImPlot context ----
-    // implot.h contract: CreateContext after ImGui::CreateContext (host.init does it),
-    // DestroyContext before ImGui::DestroyContext (host.shutdown does it).
-    cxxkit::Sdl3PlatformBackend platform;
-    cxxkit::Sdl3RendererBackend renderer;
-    cxxkit::ImGuiHost host(platform, renderer);
-    if (!host.init())
-    {
-        printf("imgui host init failed: %s\n", SDL_GetError());
-        host_sdl.shutdown();
-        return 1;
-    }
-    ImPlot::CreateContext();
+    cxxkit::SdlImGuiApplication app("cxxkit exp_imgui_plot", 1280, 720);
 
     // ---- deterministic demo data: fixed arrays, fixed seed (runs identically every frame/run) ----
     enum
@@ -78,42 +56,29 @@ int main()
         samples[i] = gauss(rng);
     }
 
-    bool quit = false;
-    while (!quit)
-    {
-        SDL_Event event;
-        while (SDL_PollEvent(&event))
+    // ImPlot demo windows run inside the frame callback; the application owns the loop.
+    // ImPlot context: CreateContext must follow the ImGui context creation (done by the
+    // app constructor via ImGuiHost::init), DestroyContext must precede its destruction
+    // (happens here, before the app destructor).
+    ImPlot::CreateContext();
+    const int rc = app.exec(
+        [&]() -> bool
         {
-            if (event.type == SDL_EVENT_QUIT || event.type == SDL_EVENT_WINDOW_CLOSE_REQUESTED)
+            ImGui::Begin("ImPlot demo");
+            if (ImPlot::BeginPlot("signals"))
             {
-                quit = true;
+                ImPlot::PlotLine("sin", xs, sine, kCount);
+                ImPlot::PlotLine("cos", xs, cosine, kCount);
+                ImPlot::EndPlot();
             }
-            else if (event.type == SDL_EVENT_KEY_DOWN && event.key.scancode == SDL_SCANCODE_ESCAPE)
+            if (ImPlot::BeginPlot("histogram"))
             {
-                quit = true;
+                ImPlot::PlotHistogram("gauss", samples, kCount);
+                ImPlot::EndPlot();
             }
-        }
-        host.begin_frame();
-        ImGui::Begin("ImPlot demo");
-        if (ImPlot::BeginPlot("signals"))
-        {
-            ImPlot::PlotLine("sin", xs, sine, kCount);
-            ImPlot::PlotLine("cos", xs, cosine, kCount);
-            ImPlot::EndPlot();
-        }
-        if (ImPlot::BeginPlot("histogram"))
-        {
-            ImPlot::PlotHistogram("gauss", samples, kCount);
-            ImPlot::EndPlot();
-        }
-        ImGui::End();
-        host.end_frame();
-        SDL_GL_SwapWindow(host_sdl.window);
-    }
-
-    // ---- teardown: ImPlot first, then cxxkit imgui, then host SDL ----
+            ImGui::End();
+            return false;
+        });
     ImPlot::DestroyContext();
-    host.shutdown();
-    host_sdl.shutdown();
-    return 0;
+    return rc;
 }

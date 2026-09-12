@@ -24,7 +24,7 @@ Organized abseil-style: **directory = sublibrary = CMake target**, pick only wha
 | `cxxkit::tools` | compiled | logging, random, assert, clock, status, error, metrics, filesystem, optional, expected, variant |
 | `cxxkit::network` | compiled | http (cpr backend) |
 | `cxxkit::crash` | compiled | crash handler, minidump (breakpad), stack trace (backward-cpp) — opt-in `CXXKIT_ENABLE_LIB_CRASH` |
-| `cxxkit::imgui` | compiled | headless ImGui context (`ImGuiHost`) over host-injected `PlatformBackend`/`RendererBackend` — opt-in `CXXKIT_ENABLE_LIB_IMGUI` |
+| `cxxkit::imgui` | compiled | headless ImGui context (`ImGuiHost`) over host-injected `PlatformBackend`/`RendererBackend`, plus `SdlImGuiApplication` (SDL3 window + frame loop, opt-in host) — opt-in `CXXKIT_ENABLE_LIB_IMGUI` |
 | `cxxkit::uv` | compiled | event loop dispatcher (socket notifier: `register/unregister_socket_notifier` uv_poll backend) + TcpSocket/TcpServer (memcached-style state machines) over vendored libuv — opt-in `CXXKIT_ENABLE_LIB_UV` |
 
 ## Quick start
@@ -132,7 +132,7 @@ Build them with the main build (`cmake --build build`); binaries land in `build/
 | `exp_units` | units | DataSize/DataRate/TimeDelta/Frequency typed arithmetic |
 | `exp_crash` | crash | safe path: config, manual minidump (needs `CXXKIT_ENABLE_LIB_CRASH=ON`) |
 | `exp_network_version` | network | HTTP failure-path demo (needs `CXXKIT_ENABLE_LIB_NETWORK=ON`) |
-| `exp_imgui` | imgui | SDL3+GL3 windowed core; plus `examples/imgui/` family: headless, plot, plot3d, gizmo, file_dialog, markdown, nodes |
+| `exp_imgui` | imgui | SDL3+GL3 windowed core via `SdlImGuiApplication`; plus `examples/imgui/` family: headless, plot, plot3d, gizmo, file_dialog, markdown, nodes |
 | `exp_event_loop` | uv | deterministic 3-tick timer loop, rc=0 (needs `CXXKIT_ENABLE_LIB_UV=ON`) |
 | `exp_tcp_echo` | uv | TcpServer+TcpSocket loopback echo over an ephemeral port, fixed stdout, rc=0 (needs `CXXKIT_ENABLE_LIB_UV=ON`) |
 | `exp_qt_embed` | kernel | cxxkit EventLoop embedded in a host Qt loop: bridge QTimer pump, queued signal delivery, rc=0 (needs Qt6 — auto-detected; runtime gate `docs/qt-embed-smoke.md`) |

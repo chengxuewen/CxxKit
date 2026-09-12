@@ -22,67 +22,26 @@
 **
 ***********************************************************************************************************************/
 
-// exp_imgui: SDL3 + OpenGL3 windowed walkthrough — real window, real GPU pipeline.
-// Requires a display + a GL 3+ context to run; headless machines exit with rc=1 at SDL_Init.
+// exp_imgui: SDL3 + OpenGL3 windowed walkthrough via SdlImGuiApplication.
+// The application owns the SDL lifecycle and the frame loop (QUIT / window close / ESC are
+// internal); the lambda below is pure per-frame UI. Requires a display + a GL 3+ context to
+// run; headless machines get rc=1 from exec() (init-failed path).
 #include <cstdio>
 
-#include <cxxkit/imgui/context.hpp>
-#include <cxxkit/imgui/sdl3/sdl3_backend.hpp>
-
-#include "sdl_host.hpp"
+#include <cxxkit/imgui/sdl3/sdl_application.hpp>
 
 int main()
 {
-    // ---- SDL lifecycle block: the EXAMPLE is the host and owns every SDL call ----
-    // cxxkit never inits SDL or creates windows (architecture contract, see sdl3_backend.hpp).
-    imgui_example::SdlHost host_sdl;
-    if (!host_sdl.init("cxxkit exp_imgui", 1280, 720))
-    {
-        return 1;
-    }
-    // ---- cxxkit imgui block: UI code below is identical to what any other backend would run ----
-
-    // (same property the headless version proved with fake backends — UI and backend stay decoupled).
-    cxxkit::Sdl3PlatformBackend platform;
-    cxxkit::Sdl3RendererBackend renderer;
-    cxxkit::ImGuiHost host(platform, renderer);
-    if (!host.init())
-    {
-        printf("imgui host init failed: %s\n", SDL_GetError());
-        host_sdl.shutdown();
-        return 1;
-    }
-
-    // ---- main loop: poll events (QUIT / window close / ESC), then drive one ImGui frame ----
-    // Sdl3PlatformBackend::new_frame() drains the queue internally too; the flag below is the
-    // example-side exit record from that same poll stream.
-    bool quit = false;
-    while (!quit)
-    {
-        SDL_Event event;
-        while (SDL_PollEvent(&event))
+    cxxkit::SdlImGuiApplication app("cxxkit exp_imgui", 1280, 720);
+    const int rc = app.exec(
+        []() -> bool
         {
-            if (event.type == SDL_EVENT_QUIT || event.type == SDL_EVENT_WINDOW_CLOSE_REQUESTED)
-            {
-                quit = true;
-            }
-            else if (event.type == SDL_EVENT_KEY_DOWN && event.key.scancode == SDL_SCANCODE_ESCAPE)
-            {
-                quit = true;
-            }
-        }
-        host.begin_frame(); // backend drains + feeds events, ImGui::NewFrame()
-        ImGui::Text("frame %d", ImGui::GetFrameCount());
-        ImGui::Text("fps %.1f", ImGui::GetIO().Framerate);
-        static float value = 0.5f;
-        ImGui::SliderFloat("value", &value, 0.0f, 1.0f);
-        ImGui::Button("click");
-        host.end_frame(); // ImGui::Render() + renderer.render(draw_data)
-        SDL_GL_SwapWindow(host_sdl.window);
-    }
-
-    // ---- teardown: cxxkit side first (renderer + platform shutdown inside), then host SDL ----
-    host.shutdown(); // ImGui_ImplOpenGL3_Shutdown + ImGui_ImplSDL3_Shutdown
-    host_sdl.shutdown();
-    return 0;
+            ImGui::Text("frame %d", ImGui::GetFrameCount());
+            ImGui::Text("fps %.1f", ImGui::GetIO().Framerate);
+            static float value = 0.5f;
+            ImGui::SliderFloat("value", &value, 0.0f, 1.0f);
+            ImGui::Button("click");
+            return false;
+        });
+    return rc;
 }

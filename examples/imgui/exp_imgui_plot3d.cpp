@@ -22,39 +22,18 @@
 **
 ***********************************************************************************************************************/
 
-// exp_imgui_plot3d: ImPlot3D — 3D surface/scatter in an SDL3+GL window.
-// Requires a display + a GL 3+ context to run; headless machines exit with rc=1 at SDL_Init.
+// exp_imgui_plot3d: ImPlot3D — 3D surface/scatter in an SdlImGuiApplication window.
+// The application owns the SDL lifecycle and the frame loop; the lambda is pure per-frame UI.
+// Requires a display + a GL 3+ context to run; headless machines get rc=1 from exec().
 #include <cmath>
 #include <cstdio>
 
 #include <cxxkit/3rdparty/implot3d/implot3d.h>
-#include <cxxkit/imgui/context.hpp>
-#include <cxxkit/imgui/sdl3/sdl3_backend.hpp>
-
-#include "sdl_host.hpp"
+#include <cxxkit/imgui/sdl3/sdl_application.hpp>
 
 int main()
 {
-    // ---- SDL lifecycle block: the EXAMPLE is the host and owns every SDL call ----
-    imgui_example::SdlHost host_sdl;
-    if (!host_sdl.init("cxxkit exp_imgui_plot3d", 1280, 720))
-    {
-        return 1;
-    }
-
-    // ---- cxxkit imgui block: ImGuiHost + ImPlot3D context ----
-    // implot3d.h contract: CreateContext after ImGui::CreateContext (host.init does it),
-    // DestroyContext before ImGui::DestroyContext (host.shutdown does it).
-    cxxkit::Sdl3PlatformBackend platform;
-    cxxkit::Sdl3RendererBackend renderer;
-    cxxkit::ImGuiHost host(platform, renderer);
-    if (!host.init())
-    {
-        printf("imgui host init failed: %s\n", SDL_GetError());
-        host_sdl.shutdown();
-        return 1;
-    }
-    ImPlot3D::CreateContext();
+    cxxkit::SdlImGuiApplication app("cxxkit exp_imgui_plot3d", 1280, 720);
 
     // ---- deterministic demo data: 32x32 ripple surface, z = sin(sqrt(x^2 + y^2)) ----
     // PlotSurface grid contract (see implot3d.h): x_count * y_count vertices per array,
@@ -76,40 +55,26 @@ int main()
         }
     }
 
-    bool quit = false;
-    while (!quit)
-    {
-        SDL_Event event;
-        while (SDL_PollEvent(&event))
+    // ImPlot3D context: CreateContext must follow the ImGui context creation (done by the
+    // app constructor via ImGuiHost::init), DestroyContext must precede its destruction
+    // (happens here, before the app destructor).
+    ImPlot3D::CreateContext();
+    const int rc = app.exec(
+        [&]() -> bool
         {
-            if (event.type == SDL_EVENT_QUIT || event.type == SDL_EVENT_WINDOW_CLOSE_REQUESTED)
+            ImGui::Begin("ImPlot3D demo");
+            if (ImPlot3D::BeginPlot("ripple"))
             {
-                quit = true;
+                ImPlot3D::SetupAxes("x", "y", "z");
+                ImPlot3D::SetupAxesLimits(-3, 3, -3, 3, -1.5, 1.5);
+                ImPlot3D::PlotSurface("z = sin(sqrt(x^2+y^2))", xs, ys, zs, kGrid, kGrid);
+                ImPlot3D::EndPlot();
             }
-            else if (event.type == SDL_EVENT_KEY_DOWN && event.key.scancode == SDL_SCANCODE_ESCAPE)
-            {
-                quit = true;
-            }
-        }
-        host.begin_frame();
-        ImGui::Begin("ImPlot3D demo");
-        if (ImPlot3D::BeginPlot("ripple"))
-        {
-            ImPlot3D::SetupAxes("x", "y", "z");
-            ImPlot3D::SetupAxesLimits(-3, 3, -3, 3, -1.5, 1.5);
-            ImPlot3D::PlotSurface("z = sin(sqrt(x^2+y^2))", xs, ys, zs, kGrid, kGrid);
-            ImPlot3D::EndPlot();
-        }
-        ImGui::Text("drag to rotate, scroll to zoom, right-drag to pan");
-        ImGui::Text("frame %d", ImGui::GetFrameCount());
-        ImGui::End();
-        host.end_frame();
-        SDL_GL_SwapWindow(host_sdl.window);
-    }
-
-    // ---- teardown: ImPlot3D first, then cxxkit imgui, then host SDL ----
+            ImGui::Text("drag to rotate, scroll to zoom, right-drag to pan");
+            ImGui::Text("frame %d", ImGui::GetFrameCount());
+            ImGui::End();
+            return false;
+        });
     ImPlot3D::DestroyContext();
-    host.shutdown();
-    host_sdl.shutdown();
-    return 0;
+    return rc;
 }

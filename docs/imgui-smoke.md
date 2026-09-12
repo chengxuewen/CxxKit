@@ -18,16 +18,17 @@ crash/network examples.
 | 2 | `./build/examples/cxxkit_exp_imgui` | 1280x720 resizable window "cxxkit exp_imgui" appears |
 | 3 | Look at the UI | ImGui default font renders crisply (no smear/overlap) |
 | 4 | Drag the `value` slider | Thumb follows mouse, value animates smoothly |
-| 5 | Read the `fps` line | ≈ display refresh rate (vsync on via `SDL_GL_SetSwapInterval(1)`; 60 on most panels) |
+| 5 | Read the `fps` line | ≈ display refresh rate (vsync on — `SdlImGuiApplication` default; 60 on most panels) |
 | 6 | Press ESC or click the window X | Window closes, process exits with rc=0 |
 | 7 | Re-run with `2>stderr.log`; inspect log | No GL errors/warnings from the driver or imgui_impl_opengl3 |
 
 ## Known boundaries
 
-- Headless/CI machines: the binary exits at the first gate with
-  `SDL_Init failed: No available video device` (rc=1) — that is the designed failure path, not a bug.
-- All SDL lifecycle calls (init/window/context/quit) live in the example — cxxkit never opens
-  windows (host-owns-SDL contract, `cxxkit/imgui/sdl3/sdl3_backend.hpp`).
+- Headless/CI machines: the binary exits via the designed init-failed path (rc=1) — not a bug.
+- Windowed examples construct `cxxkit::SdlImGuiApplication` (D40): the application object owns the
+  full SDL lifecycle and the frame loop (QUIT / window close / ESC are internal). Kernel + imgui
+  core (`ImGuiHost`/backend contracts) still never touch SDL lifecycle state — the SDL platform
+  corner lives exclusively in `cxxkit/imgui/sdl3/` (`cxxkit/imgui/sdl3/sdl_application.hpp`).
 - `imgui` sublibrary unit tests (`cxxkit_tst_imgui`) cover the host/fake-backend contract only;
   the GL/SDL3 backend has no automated runtime test anywhere in this repo.
 
