@@ -26,15 +26,32 @@ cmake_minimum_required(VERSION ${CXXKIT_MIN_NEW_POLICY_CMAKE_VERSION}...${CXXKIT
 cxxkit_configure_library_begin(CxxKitNetwork)
 
 cxxkit_find_package(Libcpr PROVIDED_TARGETS CxxKitWrapLibcpr::WrapLibcpr)
-# libuv is unconditional here (D38): TcpSocket/TcpServer live in network now and drive uv_tcp_t directly,
-# regardless of the kernel's default-backend switch.
-cxxkit_find_package(Libuv PROVIDED_TARGETS CxxKitWrapLibuv::WrapLibuv)
+# Backend selection (Task 4, D41): uv is the default; asio is the second (vendored,
+# header-only standalone). Exactly ONE backend .cpp is compiled/linked per build —
+# make_stream_backend() has one definition per backend and no #ifdef anywhere.
+set(CXXKIT_NETWORK_BACKEND "uv" CACHE STRING "cxxkit network backend (uv|asio)")
+set_property(CACHE CXXKIT_NETWORK_BACKEND PROPERTY STRINGS uv asio)
+if(CXXKIT_NETWORK_BACKEND STREQUAL "asio")
+    cxxkit_find_package(Asio PROVIDED_TARGETS CxxKitWrapAsio::WrapAsio)
+    list(APPEND _backend_sources detail/stream_backend_asio.cpp)
+    set(_backend_libs CxxKitWrapAsio::WrapAsio)
+else()
+    # libuv is the default backend (D38): TcpSocket/TcpServer drive uv_tcp_t directly.
+    cxxkit_find_package(Libuv PROVIDED_TARGETS CxxKitWrapLibuv::WrapLibuv)
+    list(APPEND _backend_sources detail/stream_backend_uv.cpp)
+    set(_backend_libs CxxKitWrapLibuv::WrapLibuv)
+endif()
 
 cxxkit_add_library(cxxkit_network
-    SOURCES http.cpp tcp_socket.cpp tcp_server.cpp socket_error.cpp detail/stream_backend_uv.cpp
-    PUBLIC_LIBRARIES cxxkit::base cxxkit::text cxxkit::thread cxxkit::memory cxxkit::tools cxxkit::kernel CxxKitWrapLibcpr::WrapLibcpr CxxKitWrapLibuv::WrapLibuv
+    SOURCES http.cpp tcp_socket.cpp tcp_server.cpp socket_error.cpp ${_backend_sources}
+    PUBLIC_LIBRARIES cxxkit::base cxxkit::text cxxkit::thread cxxkit::memory cxxkit::tools cxxkit::kernel CxxKitWrapLibcpr::WrapLibcpr ${_backend_libs}
     EXPORT_NAME network
     FOLDER "CxxKit/libs")
+# The backend choice must reach the preprocessor (PIT-48): backend-conditional include/branch
+# gating keys off CXXKIT_NETWORK_BACKEND_ASIO; core_config carries no module switches.
+if(CXXKIT_NETWORK_BACKEND STREQUAL "asio")
+    target_compile_definitions(cxxkit_network PUBLIC CXXKIT_NETWORK_BACKEND_ASIO=1)
+endif()
 cxxkit_install_public_wrap_headers(cxxkit_network
     WRAPS
     CxxKitWrapLibcpr::WrapLibcpr|cpr
@@ -46,7 +63,18 @@ cxxkit_configure_library_end(CxxKitNetwork)
 
 if(CXXKIT_BUILD_INSTALL)
     install(TARGETS cxxkit_network EXPORT cxxkitTargets)
-    install(DIRECTORY ${PROJECT_SOURCE_DIR}/cxxkit/network/
-        DESTINATION include/cxxkit/network
-        FILES_MATCHING PATTERN "*.hpp")
+    # Backend-conditional header exclusion (Task 4.2b half): the non-selected backend's detail
+    # header would drag its native include (uv.h / asio.hpp) into installed consumers. The
+    # CxxKitConfig/.pc consumer half of this step is DEFERRED (later task).
+    if(CXXKIT_NETWORK_BACKEND STREQUAL "asio")
+        install(DIRECTORY ${PROJECT_SOURCE_DIR}/cxxkit/network/
+            DESTINATION include/cxxkit/network
+            FILES_MATCHING PATTERN "*.hpp"
+            PATTERN "detail/stream_backend_uv.hpp" EXCLUDE)
+    else()
+        install(DIRECTORY ${PROJECT_SOURCE_DIR}/cxxkit/network/
+            DESTINATION include/cxxkit/network
+            FILES_MATCHING PATTERN "*.hpp"
+            PATTERN "detail/stream_backend_asio.hpp" EXCLUDE)
+    endif()
 endif()

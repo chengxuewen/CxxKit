@@ -68,6 +68,12 @@ inline bool fill_sockaddr(const std::string &ip, uint16_t port, sockaddr_storage
     return false;
 }
 
+///sockaddr family sniffer (backend-neutral): AF_INET / AF_INET6 / neither (invalid).
+inline int sockaddr_family(const sockaddr_storage *addr)
+{
+    return addr->ss_family;
+}
+
 } // namespace detail
 } // namespace network
 

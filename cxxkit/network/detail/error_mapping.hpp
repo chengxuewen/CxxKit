@@ -29,6 +29,8 @@
 
 #include <cxxkit/3rdparty/libuv/uv.h>
 
+#include <system_error>
+
 #if CXXKIT_FEATURE_ENABLE_KERNEL
 
 CXXKIT_BEGIN_NAMESPACE
@@ -53,6 +55,31 @@ inline SocketError map_transport_error(int status)
         case UV_EPIPE: return SocketError::kBrokenPipe;
         default: return SocketError::kUnknown;
     }
+}
+
+/// Maps an asio backend status (std::error_code value) onto the SAME public SocketError set
+/// (Task 4, D41): the errno-category pairs mirror map_transport_error, so both backends
+/// surface identical public errors. EOF is NOT mapped here — asio reports eof via
+/// asio::error::eof and the read site normalizes it onto the kBackendEof sentinel exactly
+/// like uv does (UV_EOF path). Needs <system_error>; included by the asio backend's TU.
+inline SocketError map_asio_error(const std::error_code &ec)
+{
+#    ifndef _WIN32
+    switch (ec.value())
+    {
+        case ECONNREFUSED: return SocketError::kConnectionRefused;
+        case ECONNRESET: return SocketError::kConnectionReset;
+        case ETIMEDOUT: return SocketError::kTimedOut;
+        case EHOSTUNREACH: return SocketError::kHostUnreachable;
+        case ENETUNREACH: return SocketError::kNetworkUnreachable;
+        case EADDRNOTAVAIL: return SocketError::kAddrNotAvailable;
+        case EPIPE: return SocketError::kBrokenPipe;
+        default: return SocketError::kUnknown;
+    }
+#    else
+    (void)ec;
+    return SocketError::kUnknown;
+#    endif
 }
 
 } // namespace detail
