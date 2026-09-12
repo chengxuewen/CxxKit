@@ -44,7 +44,7 @@ TcpServerPrivate::TcpServerPrivate(TcpServer *p, EventLoop &loop)
 }
 
 // Forward declaration (tcp_server.cpp must not include backend headers — grep gate): the accepted
-// client's void* native handle hands the uv handle over to TcpSocket::adopt_native (R-T3-1).
+// client's void* native handle hands the native handle over to TcpSocket::adopt_native (R-T3-1).
 
 TcpServerPrivate::~TcpServerPrivate()
 {

@@ -31,26 +31,16 @@ std::string to_string(SocketError error)
 {
     switch (error)
     {
-        case SocketError::kNone:
-            return "none";
-        case SocketError::kUnknown:
-            return "unknown";
-        case SocketError::kConnectionRefused:
-            return "connection refused";
-        case SocketError::kConnectionReset:
-            return "connection reset";
-        case SocketError::kTimedOut:
-            return "timed out";
-        case SocketError::kHostUnreachable:
-            return "host unreachable";
-        case SocketError::kNetworkUnreachable:
-            return "network unreachable";
-        case SocketError::kAddrNotAvailable:
-            return "address not available";
-        case SocketError::kBrokenPipe:
-            return "broken pipe";
-        case SocketError::kEof:
-            return "end of file";
+        case SocketError::kNone: return "none";
+        case SocketError::kUnknown: return "unknown";
+        case SocketError::kConnectionRefused: return "connection refused";
+        case SocketError::kConnectionReset: return "connection reset";
+        case SocketError::kTimedOut: return "timed out";
+        case SocketError::kHostUnreachable: return "host unreachable";
+        case SocketError::kNetworkUnreachable: return "network unreachable";
+        case SocketError::kAddrNotAvailable: return "address not available";
+        case SocketError::kBrokenPipe: return "broken pipe";
+        case SocketError::kEof: return "end of file";
     }
     return "unknown"; // unreachable for valid enumerators; silences -Wreturn-type on exotic compilers
 }

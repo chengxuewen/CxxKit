@@ -149,11 +149,11 @@ void AsioStreamBackend::ensure_pump()
             std::shared_ptr<std::atomic<bool>> alive = alive_weak.lock();
             if (!alive || !alive->load())
             {
-                if (EventLoop *loop = this->mLoop)
-                {
-                    loop->stop_timer(this->mN->timer_id); // dtor flipped alive but a timer lingered
-                }
-                return; // backend destroyed: the cycle dies here, no freed state touched
+                // Backend destroyed: cycle ends here. Touch NOTHING through this — mLoop/mN are
+                // members of the freed backend; the repeating cadence timer's own body sees the
+                // dead flag and stops itself (pump_tick's dead branch). ASAN-proven UAF if we
+                // dereference here (destroy-after-close flows).
+                return;
             }
             mN->pending_tick = false;
             this->pump_tick();

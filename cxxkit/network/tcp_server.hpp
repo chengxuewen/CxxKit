@@ -64,9 +64,9 @@ class CXXKIT_NETWORK_API TcpServer
 {
 public:
     /**
-     * @brief Creates a server bound to @p loop 's uv engine.
+     * @brief Creates a server bound to the loop's transport backend.
      *
-     * The uv handle is initialized lazily at listen time. Loop thread only.
+     * The transport is initialized lazily at listen time. Loop thread only.
      */
     explicit TcpServer(EventLoop &loop);
 

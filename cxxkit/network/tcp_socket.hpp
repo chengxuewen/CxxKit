@@ -78,7 +78,7 @@ public:
     /**
      * @brief Creates a socket bound to @p loop 's uv engine.
      *
-     * The uv handle is initialized lazily at connect/adopt time. Loop thread only.
+     * The transport is initialized lazily at connect/adopt time. Loop thread only.
      */
     explicit TcpSocket(EventLoop &loop);
     /// Server-accept bridge ctor: takes over a whole client backend (detail-layer only).
@@ -122,7 +122,7 @@ public:
      * @brief Closes the socket. Idempotent (F8-②) — subsequent calls are no-ops.
      *
      * Pending writes are completed with @c on_written(false) (discard semantics); an in-flight
-     * connect completes with @c on_connected(false). The uv handle dies asynchronously via
+     * connect completes with @c on_connected(false). The transport dies asynchronously via
      * the transport close; state becomes kClosing then kClosed when the close callback runs. Loop thread only.
      */
     void close();
