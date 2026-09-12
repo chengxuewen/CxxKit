@@ -26,7 +26,6 @@
 
 #include <cxxkit/kernel/event_loop.hpp>
 #include <cxxkit/kernel/default_dispatcher.hpp>
-#include <cxxkit/kernel/event_loop.hpp>
 #include <cxxkit/network/socket_error.hpp>
 #include <cxxkit/network/socket_state.hpp>
 #include <cxxkit/network/tcp_server.hpp>

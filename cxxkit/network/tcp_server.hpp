@@ -43,13 +43,12 @@ class TcpServerPrivate;
  * @brief TCP listener over a @c cxxkit::network event loop — accepts connections into TcpSocket
  *        instances (phase-2 core IO, F10).
  *
- * Wraps one @c uv_tcp_t server handle (Node pipe/tcp server pattern): @c uv_tcp_bind +
- * @c uv_listen install the listener; each @c connection_cb drains the pending backlog with a
- * @c while (uv_accept(...) == 0) loop (memcached accept-batch discipline), initting a bare
- * client handle per round. Every accepted handle is handed to @c TcpSocket::adopt_native
- * (R-T3-1) — ownership of the handle transfers to the TcpSocket, whose lifecycle is then the
- * consumer's alone. An accept that fails mid-drain closes the client handle it was holding and
- * produces no socket (no half-adopted state ever escapes).
+ * The transport is a pluggable backend (network/detail/stream_backend.hpp): bind+listen install
+ * the listener; each connection callback drains the pending backlog (memcached accept-batch
+ * discipline), producing one client per queued connection. Every accepted handle is handed to
+ * @c TcpSocket::adopt_native (R-T3-1) — ownership of the handle transfers to the TcpSocket, whose
+ * lifecycle is then the consumer's alone. An accept that fails mid-drain closes the client handle
+ * it was holding and produces no socket (no half-adopted state ever escapes).
  *
  * Accepted-socket ownership (I6 boundary): destroying the server closes the SERVER handle only;
  * already-accepted sockets are independent objects and keep working. The server does not track
@@ -78,7 +77,7 @@ public:
      * @brief Binds to @p ip : @p port and starts listening with @p backlog pending connections.
      *
      * Pass @c port 0 to let the OS assign an ephemeral port; read it back with @c bound_port()
-     * (uv_tcp_getsockname — R-T3-2, race-free versus probing ports from the outside). Returns
+     * getsockname read-back — R-T3-2, race-free versus probing ports from the outside). Returns
      * false on bind/listen failure (address in use, invalid address, ...) — the server stays
      * unlistened and may be retried. Fails (false) if already listening. Loop thread only.
      */

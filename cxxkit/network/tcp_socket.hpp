@@ -30,6 +30,14 @@
 #include <cxxkit/network/socket_error.hpp>
 #include <cxxkit/network/socket_state.hpp>
 
+// Detail-layer forward declaration for the server accept bridge (adopt_backend). A forward
+// declaration keeps the private header out of the public surface; the type is abstract and only
+// ever passed through a unique_ptr, so no definition is needed here.
+namespace cxxkit::network::detail
+{
+class StreamBackend;
+} // namespace cxxkit::network::detail
+
 #include <cstddef>
 #include <cstdint>
 #include <functional>
@@ -38,10 +46,6 @@
 
 #if CXXKIT_FEATURE_ENABLE_KERNEL
 
-struct
-    uv_tcp_s; // libuv tcp handle (global scope: same type uv.h typedefs as uv_tcp_t; D8 keeps uv out of public headers)
-
-
 CXXKIT_BEGIN_NAMESPACE
 
 class TcpSocketPrivate;
@@ -49,31 +53,24 @@ class TcpSocketPrivate;
 /**
  * @brief TCP stream over a @c cxxkit network event loop — memcached-style state machine.
  *
- * Wraps one @c uv_tcp_t directly (Node tcp_wrap pattern): the uv callbacks trampoline back into this
- * class via @c handle->data, drive a state machine, and re-arm interest on every transition. The
- * memcached poll-mask discipline maps onto libuv's stream API as follows: read interest is the
- * @c uv_read_start/@c uv_read_stop pair (a level-triggered readable watch) and write interest is the
- * pending-@c uv_write chain (an implicit writable watch that fires exactly once per queued buffer).
- * There is no single mask to re-attach; each direction arms independently, which preserves the
- * discipline's intent — the loop never watches a direction the state machine did not ask for.
+ * The transport is a pluggable backend (network/detail/stream_backend.hpp): this class owns the
+ * state machine and the callback surface; the backend owns the native handle and the raw I/O.
+ * Read and write run duplex on a connected socket (the memcached kReading/kWriting bits collapse
+ * into "connected + read armed / write queued" sub-interests rather than distinct machine states).
  *
- * States: @c kIdle → @c kConnecting → @c kConnected → @c kClosing → @c kClosed. Read and write run
- * duplex on a connected socket (the memcached kReading/kWriting bits collapse into "connected +
- * read_start armed / write queued" sub-interests rather than distinct machine states).
- *
- * Write backpressure (lws discipline): at most one @c uv_write is in flight. Further @c write calls
- * queue in @c pending_writes and are submitted strictly from the previous write's completion
- * callback, preserving order. @c on_written(false) is the discard signal.
+ * Write backpressure (lws discipline): at most one transport write is in flight. Further @c write
+ * calls queue and are submitted strictly from the previous write's completion callback, preserving
+ * order. @c on_written(false) is the discard signal.
  *
  * Threading (I1): every method is loop-thread only — violations are fatal. Cross-thread producers
  * must serialize through @c EventLoop::post() explicitly; this class deliberately does not do it
  * for them (stricter than the porting-scan allowance, clearer contract).
  *
- * Lifecycle (I3/I6): @c close() is idempotent (F8-②) — a second call is a no-op because
- * @c uv_close is asynchronous and double-closing the same handle is use-after-free. Pending writes
- * at close time are completed with @c on_written(false) (discard semantics). The destructor closes
- * if needed and pumps the loop until the close callback has run, so no uv state outlives the object
- * (ASAN-clean).
+ * Lifecycle (I3/I6): @c close() is idempotent (F8-②) — a second call is a no-op because the
+ * transport close is asynchronous and double-closing the same handle is use-after-free. Pending
+ * writes at close time are completed with @c on_written(false) (discard semantics). The destructor
+ * closes if needed and pumps the loop until the close callback has run, so no transport state
+ * outlives the object (ASAN-clean).
  */
 class CXXKIT_NETWORK_API TcpSocket
 {
@@ -84,6 +81,8 @@ public:
      * The uv handle is initialized lazily at connect/adopt time. Loop thread only.
      */
     explicit TcpSocket(EventLoop &loop);
+    /// Server-accept bridge ctor: takes over a whole client backend (detail-layer only).
+    TcpSocket(EventLoop &loop, std::unique_ptr<network::detail::StreamBackend> backend);
 
     /** @brief Closes (if needed) and pumps the loop until the close callback ran (I6). Loop thread only. */
     ~TcpSocket();
@@ -124,7 +123,7 @@ public:
      *
      * Pending writes are completed with @c on_written(false) (discard semantics); an in-flight
      * connect completes with @c on_connected(false). The uv handle dies asynchronously via
-     * @c uv_close; state becomes kClosing then kClosed when the close callback runs. Loop thread only.
+     * the transport close; state becomes kClosing then kClosed when the close callback runs. Loop thread only.
      */
     void close();
 
@@ -139,8 +138,9 @@ public:
 
     /**
      * @brief Sets the state-change callback: invoked on the loop thread on every entry into
-     *        kConnecting / kConnected / kClosing / kClosed (kIdle is never reported — it is the
-     *        constructed state before any callback can be installed).
+     *        kIdle / kConnecting / kConnected / kClosing / kClosed. kIdle recurs after a failed
+     *        connect (handle-less, retryable) and IS reported; it is only absent before the first
+     *        user-visible transition.
      *
      * The callback is invoked through a local copy (PIT-40). Re-setting replaces the previous
      * callback. Loop thread only.
@@ -159,22 +159,24 @@ public:
     /**
      * @brief Adopts an already-connected fd (e.g. an accepted socket) into a TcpSocket (R-T2-2).
      *
-     * @c uv_tcp_open attaches the fd to a fresh uv handle on the loop; the socket enters kConnected
-     * directly. The fd is owned by the uv handle from here on — do not close it externally. For
+     * directly. The fd is owned by the native handle from here on — do not close it externally. For
      * phase-2 test rigging (socketpair peers) and TcpServer accept (T3, F10 preview). Loop thread only.
      */
     static std::unique_ptr<TcpSocket> adopt_fd(EventLoop &loop, int fd);
 
-    /**
-     * @brief Adopts an already-initialized, already-connected native handle (R-T3-1).
-     *
-     * TcpServer's accept path: the server inits a bare handle, @c uv_accept fills it, then hands
-     * it over here. The handle must be initialized on @p loop 's engine and in the connected
-     * (accepted) state — @c native_handle is a uv_tcp_t* under the uv backend.
-     * Ownership of the handle (and its @c uv_close) transfers to the returned TcpSocket — the
-     * caller must not touch or close it afterwards. Enters kConnected directly. Loop thread only.
-     */
     static std::unique_ptr<TcpSocket> adopt_native(EventLoop &loop, void *native_handle);
+
+    /**
+     * @brief Takes over a whole backend produced by another backend's accept path (R-T3-1).
+     *
+     * TcpServer's accept path only: the server's backend creates a client backend over the
+     * accepted native handle and hands it here WHOLE — exactly one backend ever owns a given
+     * native handle. Enters kConnected directly; the backend's loop must be @p loop.
+     * Loop thread only. @note detail-layer escape hatch: exposed for the server bridge; callers
+     * outside cxxkit::network should treat the signature as unstable.
+     */
+    static std::unique_ptr<TcpSocket> adopt_backend(EventLoop &loop,
+                                                    std::unique_ptr<network::detail::StreamBackend> backend);
 
 private:
     CXXKIT_DECLARE_PRIVATE(TcpSocket)

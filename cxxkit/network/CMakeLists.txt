@@ -31,7 +31,7 @@ cxxkit_find_package(Libcpr PROVIDED_TARGETS CxxKitWrapLibcpr::WrapLibcpr)
 cxxkit_find_package(Libuv PROVIDED_TARGETS CxxKitWrapLibuv::WrapLibuv)
 
 cxxkit_add_library(cxxkit_network
-    SOURCES http.cpp tcp_socket.cpp tcp_server.cpp socket_error.cpp
+    SOURCES http.cpp tcp_socket.cpp tcp_server.cpp socket_error.cpp detail/stream_backend_uv.cpp
     PUBLIC_LIBRARIES cxxkit::base cxxkit::text cxxkit::thread cxxkit::memory cxxkit::tools cxxkit::kernel CxxKitWrapLibcpr::WrapLibcpr CxxKitWrapLibuv::WrapLibuv
     EXPORT_NAME network
     FOLDER "CxxKit/libs")

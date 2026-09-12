@@ -7,7 +7,7 @@
 ** License: MIT License
 **
 ** Permission is hereby granted, free of charge, to any person obtaining a copy of this software and associated
-** documentation files (the "Software"), to deal in without restriction, including without limitation
+** documentation files (the "Software"), to deal in the Software without restriction, including without limitation
 ** the rights to use, copy, modify, merge, publish, distribute, sublicense, and/or sell copies of the Software,
 ** and to permit persons to whom the Software is furnished to do so, subject to the following conditions:
 **
@@ -27,18 +27,15 @@
 #include <cxxkit/network/tcp_socket.hpp>
 
 #include <cxxkit/base/macros.hpp>
-#include <cxxkit/kernel/uv/detail/uv_event_dispatcher.hpp>
+#include <cxxkit/kernel/event_loop.hpp> // defines the kernel guard that socket_error.hpp gates on
+#include <cxxkit/network/detail/stream_backend.hpp>
 #include <cxxkit/network/socket_error.hpp>
 #include <cxxkit/network/socket_state.hpp>
 
-#include <cxxkit/3rdparty/libuv/uv.h>
-
-#include <cstddef>
-#include <cstdint>
-#include <deque>
 #include <functional>
+#include <memory>
+#include <string>
 #include <thread>
-#include <vector>
 
 #if CXXKIT_FEATURE_ENABLE_KERNEL
 
@@ -51,35 +48,17 @@ class TcpSocketPrivate
 
 public:
     explicit TcpSocketPrivate(TcpSocket *p, EventLoop &loop);
+    /// Takes over a pre-built backend (accept path: the server's client backend moves in whole —
+    /// no second backend is ever created over the same native handle).
+    explicit TcpSocketPrivate(TcpSocket *p, std::unique_ptr<network::detail::StreamBackend> backend);
     ~TcpSocketPrivate();
 
     // The machine states are the public SocketState (socket_state.hpp) — no private enum anymore.
     // Lifecycle: kIdle → kConnecting → kConnected → kClosing → kClosed; a failed connect returns
     // to kIdle (the handle-less constructed state; connect is retryable).
 
-    /** @brief One queued transmission: the copied bytes + its completion callback (lws backpressure). */
-    struct PendingWrite
-    {
-        std::vector<uint8_t> mData;
-        std::function<void(bool ok)> mOnWritten;
-    };
-
-    // uv C callbacks (static trampolines) — handle->data routes back to the pimpl (Node tcp_wrap pattern).
-    static void on_connect_done(uv_connect_t *req, int status);
-    static void on_alloc(uv_handle_t *handle, size_t suggested_size, uv_buf_t *buf);
-    static void on_read(uv_stream_t *stream, ssize_t nread, const uv_buf_t *buf);
-    static void on_write_done(uv_write_t *req, int status);
-    static void on_closed(uv_handle_t *handle);
-
     /** @brief I1 fatal: every public entry is loop-thread only (R-B2-5 shape, always-on). */
     void check_loop_thread(const char *api) const;
-
-    /**
-     * @brief Shared pimpl assembly for the two adopt entries (R-T3-1): binds an already-connected
-     * handle (fresh uv_tcp_open result, or a server-accepted uv_tcp_t) to this socket's state machine.
-     * Takes ownership of @p handle on every path that does not abort.
-     */
-    void attach_connected_handle(uv_tcp_t *handle);
 
     /** @brief Sets @p state and notifies mOnStateChange (local-copy invoke, PIT-40). */
     void set_state(SocketState state);
@@ -87,33 +66,26 @@ public:
     /** @brief Records @p error as mLastError and notifies mOnError (local-copy invoke, PIT-40). */
     void report_error(SocketError error, const std::string &message);
 
-    /** @brief Submits the front of pending_writes (at most one uv_write in flight). */
-    void submit_next_write();
-
-    /** @brief Shared teardown: flush pending callbacks, stop reading, uv_close. Idempotent via mCloseRequested. */
+    /** @brief Shared teardown: discard pending callbacks via the backend, latch the close. Idempotent. */
     void begin_close();
+
+    // Backend completion trampolines: the state-machine reactions to transport events live HERE
+    // (pimpl side) — the backend calls back with plain data, no state knowledge.
+    static void connect_done(TcpSocketPrivate *d, bool ok);
+    static void read_event(TcpSocketPrivate *d, const uint8_t *data, ssize_t nread);
 
     TcpSocket *mP{nullptr};
     EventLoop &mLoop;
-    UvEventDispatcher *mDispatcher{nullptr};
-    uv_tcp_t *mHandle{nullptr};         /// heap cell; freed in on_closed
-    uv_connect_t *mConnectReq{nullptr}; /// heap cell; freed in on_connect_done
-    uv_write_t *mWriteReq{nullptr};     /// in-flight write's req; freed in on_write_done
-    uv_buf_t mWriteBuf{nullptr, 0};     /// in-flight write's buffer view (storage owned by mInFlight)
-    std::vector<uint8_t> mInFlight;     /// storage for the in-flight uv_write (must outlive the req)
+    std::unique_ptr<network::detail::StreamBackend> mBackend{network::detail::make_stream_backend()};
 
     SocketState mState{SocketState::kIdle};
-    bool mCloseRequested{false};             /// F8-② idempotence guard
-    bool mReadArmed{false};                  /// read sub-interest (uv_read_start/stop armed state)
-    std::deque<PendingWrite> mPendingWrites; /// queued while a write is in flight (FIFO, lws)
+    bool mCloseRequested{false}; /// F8-② idempotence guard (pimpl-owned state-machine latch)
     std::function<void(bool ok)> mOnConnect;
-    std::function<void(bool ok)> mOnWrittenCurrent; /// in-flight write's callback; handed back in on_write_done
     std::function<void(const uint8_t *data, ssize_t nread)> mOnData;
     std::function<void(SocketError, const std::string &)> mOnError; /// invoked via local copy (PIT-40)
     std::function<void(SocketState)> mOnStateChange;                /// invoked via local copy (PIT-40)
     SocketError mLastError{SocketError::kNone};                     /// last mapped failure, kNone until first error
 
-    std::vector<uint8_t> mReadBuf; /// beast flat_buffer shape: one contiguous block + uv fills from the front
     std::thread::id mLoopThreadId; /// captured at construction from the loop's dispatcher
 };
 

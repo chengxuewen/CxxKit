@@ -27,12 +27,11 @@
 #include <cxxkit/network/tcp_server.hpp>
 
 #include <cxxkit/base/macros.hpp>
-#include <cxxkit/kernel/uv/detail/uv_event_dispatcher.hpp>
-
-#include <cxxkit/3rdparty/libuv/uv.h>
+#include <cxxkit/network/detail/stream_backend.hpp>
 
 #include <cstdint>
 #include <functional>
+#include <memory>
 #include <thread>
 
 #if CXXKIT_FEATURE_ENABLE_KERNEL
@@ -48,21 +47,14 @@ public:
     explicit TcpServerPrivate(TcpServer *p, EventLoop &loop);
     ~TcpServerPrivate();
 
-    /** @brief uv connection_cb trampoline: (server, status); accept-drains the backlog. */
-    static void on_connection_cb(uv_stream_t *server, int status);
-    /** @brief Server handle close callback: frees the heap cell, flags kClosed. */
-    static void on_closed(uv_handle_t *handle);
-    /** @brief Close callback for discarded bare client cells (accept-fail / no consumer). */
-    static void on_discard_closed(uv_handle_t *handle);
-
     /** @brief I1 fatal: every public entry is loop-thread only. */
     void check_loop_thread(const char *api) const;
 
     TcpServer *mP{nullptr};
     EventLoop &mLoop;
-    UvEventDispatcher *mDispatcher{nullptr};
-    uv_tcp_t *mHandle{nullptr};  /// heap cell; freed in on_closed
-    bool mCloseRequested{false}; /// F8-② idempotence latch for the server handle
+    std::unique_ptr<network::detail::StreamBackend> mBackend{network::detail::make_stream_backend()};
+
+    bool mCloseRequested{false}; /// F8-② idempotence latch for the server handle (dtor/listen teardown)
     bool mListening{false};
     uint16_t mBoundPort{0};
     std::function<void(std::unique_ptr<TcpSocket>)> mOnConnection;

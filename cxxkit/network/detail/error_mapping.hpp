@@ -38,10 +38,11 @@ namespace network
 namespace detail
 {
 
-/// Maps a libuv status onto the public SocketError set (Qt alignment: backends translate).
-inline SocketError map_uv_error(int uv_status)
+/// Maps a backend transport status onto the public SocketError set (Qt alignment: backends
+/// translate). The concrete status space is the uv errno table.
+inline SocketError map_transport_error(int status)
 {
-    switch (uv_status)
+    switch (status)
     {
         case UV_ECONNREFUSED: return SocketError::kConnectionRefused;
         case UV_ECONNRESET: return SocketError::kConnectionReset;

@@ -25,6 +25,7 @@
 #pragma once
 
 #include <cxxkit/base/global.hpp>
+#include <cxxkit/kernel/kernel_global.hpp> // defines the kernel guard this header gates on
 
 #include <string>
 
