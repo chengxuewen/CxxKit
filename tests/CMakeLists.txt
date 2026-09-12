@@ -594,6 +594,11 @@ if(CXXKIT_ENABLE_LIB_IMGUI)
         SOURCES tst_imgui.cpp
         INCLUDE_DIRECTORIES ${PROJECT_SOURCE_DIR}
         LIBRARIES ${CXXKIT_TEST_LINK_LIBRARIES} cxxkit::imgui ${CMAKE_THREAD_LIBS_INIT})
+
+    cxxkit_add_test(cxxkit_tst_imgui_application
+        SOURCES tst_imgui_application.cpp
+        INCLUDE_DIRECTORIES ${PROJECT_SOURCE_DIR}
+        LIBRARIES ${CXXKIT_TEST_LINK_LIBRARIES} cxxkit::imgui cxxkit::imgui_sdl3 ${CMAKE_THREAD_LIBS_INIT})
 endif()
 
 if(CXXKIT_ENABLE_LOOP_BACKEND_UV)

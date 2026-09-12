@@ -33,6 +33,7 @@ cxxkit_find_package(SDL3 PROVIDED_TARGETS CxxKitWrapSDL3::WrapSDL3)
 # if a future platform does, add it here with evidence from the failing link.
 cxxkit_add_library(cxxkit_imgui_sdl3
     SOURCES sdl3_backend.cpp
+        sdl_application.cpp
         ${CxxKitWrapImGui_SOURCE_DIR}/backends/imgui_impl_sdl3.cpp
         ${CxxKitWrapImGui_SOURCE_DIR}/backends/imgui_impl_opengl3.cpp
     PUBLIC_LIBRARIES cxxkit::imgui CxxKitWrapSDL3::WrapSDL3
