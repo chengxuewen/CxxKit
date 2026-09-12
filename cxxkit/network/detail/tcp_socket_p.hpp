@@ -28,6 +28,8 @@
 
 #include <cxxkit/base/macros.hpp>
 #include <cxxkit/kernel/uv/detail/uv_event_dispatcher.hpp>
+#include <cxxkit/network/socket_error.hpp>
+#include <cxxkit/network/socket_state.hpp>
 
 #include <cxxkit/3rdparty/libuv/uv.h>
 
@@ -51,15 +53,9 @@ public:
     explicit TcpSocketPrivate(TcpSocket *p, EventLoop &loop);
     ~TcpSocketPrivate();
 
-    /** @brief memcached-style machine states; kConnected carries duplex read/write sub-interests. */
-    enum class State
-    {
-        kIdle,       /// constructed; no handle yet
-        kConnecting, /// uv_tcp_connect in flight
-        kConnected,  /// connected (or adopted fd); read arm / write queue are sub-interests
-        kClosing,    /// uv_close requested; callbacks still draining (F8-② window)
-        kClosed      /// close callback ran; nothing pending
-    };
+    // The machine states are the public SocketState (socket_state.hpp) — no private enum anymore.
+    // Lifecycle: kIdle → kConnecting → kConnected → kClosing → kClosed; a failed connect returns
+    // to kIdle (the handle-less constructed state; connect is retryable).
 
     /** @brief One queued transmission: the copied bytes + its completion callback (lws backpressure). */
     struct PendingWrite
@@ -85,6 +81,12 @@ public:
      */
     void attach_connected_handle(uv_tcp_t *handle);
 
+    /** @brief Sets @p state and notifies mOnStateChange (local-copy invoke, PIT-40). */
+    void set_state(SocketState state);
+
+    /** @brief Records @p error as mLastError and notifies mOnError (local-copy invoke, PIT-40). */
+    void report_error(SocketError error, const std::string &message);
+
     /** @brief Submits the front of pending_writes (at most one uv_write in flight). */
     void submit_next_write();
 
@@ -100,13 +102,16 @@ public:
     uv_buf_t mWriteBuf{nullptr, 0};     /// in-flight write's buffer view (storage owned by mInFlight)
     std::vector<uint8_t> mInFlight;     /// storage for the in-flight uv_write (must outlive the req)
 
-    State mState{State::kIdle};
+    SocketState mState{SocketState::kIdle};
     bool mCloseRequested{false};             /// F8-② idempotence guard
     bool mReadArmed{false};                  /// read sub-interest (uv_read_start/stop armed state)
     std::deque<PendingWrite> mPendingWrites; /// queued while a write is in flight (FIFO, lws)
     std::function<void(bool ok)> mOnConnect;
     std::function<void(bool ok)> mOnWrittenCurrent; /// in-flight write's callback; handed back in on_write_done
     std::function<void(const uint8_t *data, ssize_t nread)> mOnData;
+    std::function<void(SocketError, const std::string &)> mOnError; /// invoked via local copy (PIT-40)
+    std::function<void(SocketState)> mOnStateChange;                /// invoked via local copy (PIT-40)
+    SocketError mLastError{SocketError::kNone};                     /// last mapped failure, kNone until first error
 
     std::vector<uint8_t> mReadBuf; /// beast flat_buffer shape: one contiguous block + uv fills from the front
     std::thread::id mLoopThreadId; /// captured at construction from the loop's dispatcher

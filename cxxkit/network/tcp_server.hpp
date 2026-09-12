@@ -46,7 +46,7 @@ class TcpServerPrivate;
  * Wraps one @c uv_tcp_t server handle (Node pipe/tcp server pattern): @c uv_tcp_bind +
  * @c uv_listen install the listener; each @c connection_cb drains the pending backlog with a
  * @c while (uv_accept(...) == 0) loop (memcached accept-batch discipline), initting a bare
- * client handle per round. Every accepted handle is handed to @c TcpSocket::adopt_uv_tcp
+ * client handle per round. Every accepted handle is handed to @c TcpSocket::adopt_native
  * (R-T3-1) — ownership of the handle transfers to the TcpSocket, whose lifecycle is then the
  * consumer's alone. An accept that fails mid-drain closes the client handle it was holding and
  * produces no socket (no half-adopted state ever escapes).

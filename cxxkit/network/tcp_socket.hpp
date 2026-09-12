@@ -27,11 +27,14 @@
 #include <cxxkit/network/network_global.hpp>
 
 #include <cxxkit/kernel/event_loop.hpp>
+#include <cxxkit/network/socket_error.hpp>
+#include <cxxkit/network/socket_state.hpp>
 
 #include <cstddef>
 #include <cstdint>
 #include <functional>
 #include <memory>
+#include <string>
 
 #if CXXKIT_FEATURE_ENABLE_KERNEL
 
@@ -125,6 +128,31 @@ public:
      */
     void close();
 
+    /**
+     * @brief Sets the error callback: invoked on the loop thread with a mapped @ref SocketError
+     *        and a human-readable message when a connect failure or read error occurs.
+     *
+     * The callback is invoked through a local copy (PIT-40): it may close() or even destroy the
+     * socket. Re-setting replaces the previous callback. Loop thread only.
+     */
+    void set_on_error(std::function<void(SocketError error, const std::string &message)> on_error);
+
+    /**
+     * @brief Sets the state-change callback: invoked on the loop thread on every entry into
+     *        kConnecting / kConnected / kClosing / kClosed (kIdle is never reported — it is the
+     *        constructed state before any callback can be installed).
+     *
+     * The callback is invoked through a local copy (PIT-40). Re-setting replaces the previous
+     * callback. Loop thread only.
+     */
+    void set_on_state_change(std::function<void(SocketState state)> on_state_change);
+
+    /** @brief Current machine state (kIdle..kClosed). Loop thread only. */
+    SocketState state() const;
+
+    /** @brief Last mapped error, kNone until the first failure. Loop thread only. */
+    SocketError last_error() const;
+
     /** @brief True while the socket is not closing/closed (kIdle..kConnected). */
     bool is_open() const;
 
@@ -138,15 +166,15 @@ public:
     static std::unique_ptr<TcpSocket> adopt_fd(EventLoop &loop, int fd);
 
     /**
-     * @brief Adopts an already-initialized, already-connected @c uv_tcp_t handle (R-T3-1).
+     * @brief Adopts an already-initialized, already-connected native handle (R-T3-1).
      *
      * TcpServer's accept path: the server inits a bare handle, @c uv_accept fills it, then hands
-     * it over here. The handle must be initialized on @p loop 's uv engine and in the connected
-     * (accepted) state. Ownership of the handle (and its @c uv_close) transfers to the returned
-     * TcpSocket — the caller must not touch or close it afterwards. Enters kConnected directly.
-     * Loop thread only.
+     * it over here. The handle must be initialized on @p loop 's engine and in the connected
+     * (accepted) state — @c native_handle is a uv_tcp_t* under the uv backend.
+     * Ownership of the handle (and its @c uv_close) transfers to the returned TcpSocket — the
+     * caller must not touch or close it afterwards. Enters kConnected directly. Loop thread only.
      */
-    static std::unique_ptr<TcpSocket> adopt_uv_tcp(EventLoop &loop, uv_tcp_s *taken);
+    static std::unique_ptr<TcpSocket> adopt_native(EventLoop &loop, void *native_handle);
 
 private:
     CXXKIT_DECLARE_PRIVATE(TcpSocket)

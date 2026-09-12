@@ -26,6 +26,9 @@
 
 #include <cxxkit/kernel/event_loop.hpp>
 #include <cxxkit/kernel/default_dispatcher.hpp>
+#include <cxxkit/kernel/event_loop.hpp>
+#include <cxxkit/network/socket_error.hpp>
+#include <cxxkit/network/socket_state.hpp>
 #include <cxxkit/network/tcp_server.hpp>
 #include <cxxkit/network/tcp_socket.hpp>
 
@@ -374,6 +377,105 @@ TEST(TcpSocketTest, ConnectIpv6LoopbackRoundTrip)
     loop.process_events(EventLoop::ProcessFlag::kAllEvents, 2000);
     loop.process_events(EventLoop::ProcessFlag::kAllEvents, 2000);
     EXPECT_EQ(kPayload, received);
+}
+
+// 10. T2: connect failure maps onto the public error surface (refused port 1) and the state
+// contract pins a failed connect back to kIdle (handle-less, retryable).
+TEST(TcpSocketTest, ErrorCallbackConnectionRefused)
+{
+    EventLoop loop(make_default_dispatcher());
+    TcpSocket socket(loop);
+
+    cxxkit::SocketError got = cxxkit::SocketError::kNone;
+    std::string message;
+    bool called = false;
+    socket.set_on_error(
+        [&](cxxkit::SocketError error, const std::string &msg)
+        {
+            got = error;
+            message = msg;
+            called = true;
+        });
+
+    bool connected_ok = true;
+    socket.connect("127.0.0.1", 1, [&](bool ok) { connected_ok = ok; }); // port 1: refused
+    loop.process_events(EventLoop::ProcessFlag::kAllEvents, 2000);
+
+    EXPECT_FALSE(connected_ok);
+    EXPECT_TRUE(called);
+    EXPECT_EQ(cxxkit::SocketError::kConnectionRefused, got);
+    EXPECT_EQ(cxxkit::SocketError::kConnectionRefused, socket.last_error());
+    EXPECT_FALSE(message.empty());
+    EXPECT_EQ(cxxkit::SocketState::kIdle, socket.state()); // failed connect resets to kIdle
+}
+
+// 11. T2: state-change notifications across a full echo roundtrip (IPv4): kConnecting, kConnected,
+// ... kClosing, kClosed — order-checked against the expected subsequence.
+TEST(TcpSocketTest, StateChangeSequence)
+{
+    EventLoop loop(make_default_dispatcher());
+    TcpServer server(loop);
+    std::unique_ptr<TcpSocket> server_side;
+    server.on_connection(
+        [&](std::unique_ptr<TcpSocket> socket)
+        {
+            server_side = std::move(socket); // store: no drain pump inside connection_cb (I5)
+        });
+    ASSERT_TRUE(server.listen("127.0.0.1", 0));
+
+    TcpSocket client(loop);
+    std::vector<cxxkit::SocketState> states;
+    client.set_on_state_change([&](cxxkit::SocketState state) { states.push_back(state); });
+
+    std::string received;
+    const std::string kPayload = "state-ping";
+    bool server_got_payload = false;
+    client.connect("127.0.0.1",
+                   server.bound_port(),
+                   [&](bool ok)
+                   {
+                       ASSERT_TRUE(ok);
+                       server_side->read_start(
+                           [&](const uint8_t *data, ssize_t nread)
+                           {
+                               if (nread > 0)
+                               {
+                                   received.assign(reinterpret_cast<const char *>(data), static_cast<size_t>(nread));
+                                   server_got_payload = (received == kPayload);
+                                   loop.exit(0);
+                               }
+                           });
+                       const uint8_t *bytes = reinterpret_cast<const uint8_t *>(kPayload.data());
+                       client.write(bytes, kPayload.size(), [](bool) { });
+                   });
+
+    loop.process_events(EventLoop::ProcessFlag::kAllEvents, 2000);
+    ASSERT_TRUE(server_got_payload); // the roundtrip landed
+
+    client.close();
+    loop.process_events(EventLoop::ProcessFlag::kAllEvents, 1000); // drain the close callback
+
+    // Order-checked subsequence: connecting → connected ... closing → closed.
+    const std::vector<cxxkit::SocketState> kExpected = {cxxkit::SocketState::kConnecting,
+                                                        cxxkit::SocketState::kConnected,
+                                                        cxxkit::SocketState::kClosing,
+                                                        cxxkit::SocketState::kClosed};
+    ASSERT_EQ(kExpected.size(), states.size());
+    for (size_t i = 0; i < kExpected.size(); ++i)
+    {
+        EXPECT_EQ(kExpected[i], states[i]) << "subsequence index " << i;
+    }
+    EXPECT_EQ(cxxkit::SocketState::kClosed, client.state());
+}
+
+// 12. T2: initial surface — a fresh socket reads kIdle / kNone before anything happens.
+TEST(TcpSocketTest, InitialStateAndLastError)
+{
+    EventLoop loop(make_default_dispatcher());
+    TcpSocket socket(loop);
+    EXPECT_EQ(cxxkit::SocketState::kIdle, socket.state());
+    EXPECT_EQ(cxxkit::SocketError::kNone, socket.last_error());
+    EXPECT_TRUE(socket.is_open());
 }
 } // namespace
 

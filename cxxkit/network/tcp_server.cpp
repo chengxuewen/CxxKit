@@ -202,7 +202,7 @@ void TcpServerPrivate::on_connection_cb(uv_stream_t *server, int status)
         }
         // R-T3-1: the accepted handle is handed over — its uv_close (and lifetime) belongs to the
         // TcpSocket from here on; the server never touches it again.
-        d->mOnConnection(TcpSocket::adopt_uv_tcp(d->mLoop, client));
+        d->mOnConnection(TcpSocket::adopt_native(d->mLoop, client));
     }
 }
 

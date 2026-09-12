@@ -22,12 +22,16 @@ Library: CxxKit
 ***********************************************************************************************************************/
 
 #include <cxxkit/network/detail/address_helper.hpp>
+#include <cxxkit/network/detail/error_mapping.hpp>
 #include <cxxkit/network/detail/tcp_socket_p.hpp>
+#include <cxxkit/network/socket_error.hpp>
+#include <cxxkit/network/socket_state.hpp>
 #include <cxxkit/network/tcp_socket.hpp>
 
 #include <cxxkit/tools/checks.hpp>
 
 #include <cstring>
+#include <string>
 
 #if CXXKIT_FEATURE_ENABLE_KERNEL
 
@@ -72,12 +76,14 @@ TcpSocket::~TcpSocket()
     // I6: close (idempotent — a no-op if already requested), then pump the loop until the uv close
     // callback has actually run so no uv state (handle, in-flight reqs, callbacks) survives us.
     // The pump is bounded by loop.exit + wake: process_events rounds drain close callbacks.
-    if (d->mHandle != nullptr || d->mState == TcpSocketPrivate::State::kConnecting)
+    if (d->mHandle != nullptr || d->mState == SocketState::kConnecting)
     {
         this->close();
-        // Run NOWAIT rounds until the close callback ran (it flips state to kClosed). One round
-        // typically suffices; the loop cap guards a pathological no-progress case.
-        for (int rounds = 0; rounds < 1000 && d->mState != TcpSocketPrivate::State::kClosed; ++rounds)
+        // Run NOWAIT rounds until the close callback ran (it flips state to kClosed or kIdle —
+        // a failed in-flight connect resets to kIdle). One round typically suffices; the loop cap
+        // guards a pathological no-progress case.
+        for (int rounds = 0; rounds < 1000 && d->mState != SocketState::kClosed && d->mState != SocketState::kIdle;
+             ++rounds)
         {
             d->mLoop.process_events(EventLoop::ProcessFlag::kAllEvents);
         }
@@ -110,17 +116,20 @@ std::unique_ptr<TcpSocket> TcpSocket::adopt_fd(EventLoop &loop, int fd)
     return socket;
 }
 
-std::unique_ptr<TcpSocket> TcpSocket::adopt_uv_tcp(EventLoop &loop, struct uv_tcp_s *taken)
+std::unique_ptr<TcpSocket> TcpSocket::adopt_native(EventLoop &loop, void *native_handle)
 {
     std::unique_ptr<TcpSocket> socket(new TcpSocket(loop));
     TcpSocketPrivate *d = socket->mDPtr.get();
-    d->check_loop_thread("adopt_uv_tcp");
-    CXXKIT_CHECK(taken != nullptr) << "TcpSocket::adopt_uv_tcp: null handle";
+    d->check_loop_thread("adopt_native");
+    CXXKIT_CHECK(native_handle != nullptr) << "TcpSocket::adopt_native: null handle";
+    // The only backend in this sublibrary's world is uv: the void* narrows to uv_tcp_t* here in
+    // the .cpp — the public header keeps no uv types (D8).
+    uv_tcp_t *taken = static_cast<uv_tcp_t *>(native_handle);
 
     // The handle was initialized on the server's loop engine — same engine by contract; a foreign
     // loop would corrupt uv's internal queues. Verify rather than trust (debugging aid, cheap).
     CXXKIT_CHECK(reinterpret_cast<void *>(taken->loop) == reinterpret_cast<void *>(&d->mDispatcher->loop()))
-        << "TcpSocket::adopt_uv_tcp: handle belongs to a different uv loop";
+        << "TcpSocket::adopt_native: handle belongs to a different uv loop";
     d->attach_connected_handle(taken);
     return socket;
 }
@@ -129,7 +138,29 @@ void TcpSocketPrivate::attach_connected_handle(uv_tcp_t *handle)
 {
     handle->data = this;
     mHandle = handle;
-    mState = State::kConnected; // adopted handle is already connected
+    set_state(SocketState::kConnected); // adopted handle is already connected
+}
+
+void TcpSocketPrivate::set_state(SocketState state)
+{
+    mState = state;
+    if (mOnStateChange)
+    {
+        // PIT-40: the callback may close() or even destroy the socket — invoke a local copy.
+        std::function<void(SocketState)> cb = mOnStateChange;
+        cb(state);
+    }
+}
+
+void TcpSocketPrivate::report_error(SocketError error, const std::string &message)
+{
+    mLastError = error;
+    if (mOnError)
+    {
+        // PIT-40: same discipline — the callback may tear the socket down mid-invoke.
+        std::function<void(SocketError, const std::string &)> cb = mOnError;
+        cb(error, message);
+    }
 }
 
 void TcpSocket::connect(const std::string &ip, uint16_t port, std::function<void(bool ok)> on_connected)
@@ -137,7 +168,7 @@ void TcpSocket::connect(const std::string &ip, uint16_t port, std::function<void
     CXXKIT_D(TcpSocket);
     d->check_loop_thread("connect");
     CXXKIT_CHECK(on_connected != nullptr) << "TcpSocket::connect requires a connected callback";
-    CXXKIT_CHECK(d->mState == TcpSocketPrivate::State::kIdle)
+    CXXKIT_CHECK(d->mState == SocketState::kIdle)
         << "TcpSocket::connect: state must be kIdle (got " << static_cast<int>(d->mState) << ")";
     CXXKIT_CHECK(d->mCloseRequested == false) << "TcpSocket::connect: socket is closing/closed";
 
@@ -145,6 +176,9 @@ void TcpSocket::connect(const std::string &ip, uint16_t port, std::function<void
     if (!cxxkit::network::detail::fill_sockaddr(ip, port, &addr))
     {
         // Invalid address: connect failure, not a programming error (symmetric with TcpServer::listen).
+        // State stays kIdle (never left it); the error surface reports an unmappable failure as kUnknown.
+        d->report_error(SocketError::kUnknown,
+                        "TcpSocket::connect: invalid address \"" + ip + "\" (neither IPv4 nor IPv6)");
         std::function<void(bool ok)> cb = std::move(on_connected);
         cb(false);
         return;
@@ -159,7 +193,7 @@ void TcpSocket::connect(const std::string &ip, uint16_t port, std::function<void
     }
     handle->data = d;
     d->mHandle = handle;
-    d->mState = TcpSocketPrivate::State::kConnecting;
+    d->set_state(SocketState::kConnecting);
     d->mOnConnect = std::move(on_connected);
 
     uv_connect_t *req = new uv_connect_t;
@@ -170,11 +204,18 @@ void TcpSocket::connect(const std::string &ip, uint16_t port, std::function<void
                                   &TcpSocketPrivate::on_connect_done);
     if (rc != 0)
     {
-        // Synchronous failure: no connect_cb will come. Deliver false inline, then tear the handle down.
+        // Synchronous failure: no connect_cb will come. Deliver false inline, then tear the handle
+        // down. The teardown lands in kClosing→kClosed via set_state — but a failed connect leaves
+        // the machine back at kIdle (handle-less, retryable), mirroring the async path in
+        // on_connect_done; there the async close callback reports kClosed, here the socket never
+        // left the connect attempt, so reset to kIdle after the error report.
         delete req;
+        d->report_error(network::detail::map_uv_error(rc),
+                        "TcpSocket::connect: uv_tcp_connect failed (" + std::to_string(rc) + ")");
         std::function<void(bool ok)> cb = std::move(d->mOnConnect);
         d->mOnConnect = nullptr;
         d->begin_close();
+        d->set_state(SocketState::kIdle);
         cb(false);
         return;
     }
@@ -187,13 +228,12 @@ void TcpSocket::write(const uint8_t *data, size_t len, std::function<void(bool o
     d->check_loop_thread("write");
     CXXKIT_CHECK(on_written != nullptr) << "TcpSocket::write requires a written callback";
     CXXKIT_CHECK(data != nullptr || len == 0) << "TcpSocket::write: null data with non-zero length";
-    if (d->mCloseRequested || d->mState == TcpSocketPrivate::State::kClosing ||
-        d->mState == TcpSocketPrivate::State::kClosed)
+    if (d->mCloseRequested || d->mState == SocketState::kClosing || d->mState == SocketState::kClosed)
     {
         on_written(false); // closed socket: immediate discard completion, documented semantics
         return;
     }
-    CXXKIT_CHECK(d->mState == TcpSocketPrivate::State::kConnected)
+    CXXKIT_CHECK(d->mState == SocketState::kConnected)
         << "TcpSocket::write: state must be kConnected (got " << static_cast<int>(d->mState) << ")";
 
     TcpSocketPrivate::PendingWrite pending;
@@ -209,7 +249,7 @@ void TcpSocket::read_start(std::function<void(const uint8_t *data, ssize_t nread
     d->check_loop_thread("read_start");
     CXXKIT_CHECK(on_data != nullptr) << "TcpSocket::read_start requires a data callback";
     CXXKIT_CHECK(d->mCloseRequested == false) << "TcpSocket::read_start: socket is closing/closed";
-    CXXKIT_CHECK(d->mState == TcpSocketPrivate::State::kConnected)
+    CXXKIT_CHECK(d->mState == SocketState::kConnected)
         << "TcpSocket::read_start: state must be kConnected (got " << static_cast<int>(d->mState) << ")";
 
     if (d->mReadArmed)
@@ -247,7 +287,35 @@ void TcpSocket::close()
 bool TcpSocket::is_open() const
 {
     CXXKIT_D(const TcpSocket);
-    return !d->mCloseRequested && d->mState != TcpSocketPrivate::State::kClosed;
+    return !d->mCloseRequested && d->mState != SocketState::kClosed;
+}
+
+void TcpSocket::set_on_error(std::function<void(SocketError, const std::string &)> on_error)
+{
+    CXXKIT_D(TcpSocket);
+    d->check_loop_thread("set_on_error");
+    d->mOnError = std::move(on_error);
+}
+
+void TcpSocket::set_on_state_change(std::function<void(SocketState)> on_state_change)
+{
+    CXXKIT_D(TcpSocket);
+    d->check_loop_thread("set_on_state_change");
+    d->mOnStateChange = std::move(on_state_change);
+}
+
+SocketState TcpSocket::state() const
+{
+    CXXKIT_D(const TcpSocket);
+    d->check_loop_thread("state");
+    return d->mState;
+}
+
+SocketError TcpSocket::last_error() const
+{
+    CXXKIT_D(const TcpSocket);
+    d->check_loop_thread("last_error");
+    return d->mLastError;
 }
 
 void TcpSocketPrivate::begin_close()
@@ -259,12 +327,12 @@ void TcpSocketPrivate::begin_close()
         return;
     }
     mCloseRequested = true;
-    if (mState == State::kClosed || mHandle == nullptr)
+    if (mState == SocketState::kClosed || mHandle == nullptr)
     {
-        mState = State::kClosed; // never initialized (kIdle) — nothing to close
+        set_state(SocketState::kClosed); // never initialized (kIdle) — nothing to close
         return;
     }
-    mState = State::kClosing;
+    set_state(SocketState::kClosing);
 
     // Pending writes are discarded — every queued callback gets its false completion now. Swap the
     // whole deque out FIRST (EventLoop::take_post_queue shape): an on_written(false) callback that
@@ -346,9 +414,27 @@ void TcpSocketPrivate::on_connect_done(uv_connect_t *req, int status)
         d->mConnectReq = nullptr;
     }
     const bool ok = (status == 0) && !d->mCloseRequested;
-    if (d->mState == State::kConnecting)
+    if (ok)
     {
-        d->mState = ok ? State::kConnected : State::kClosing;
+        if (d->mState == SocketState::kConnecting)
+        {
+            d->set_state(SocketState::kConnected);
+        }
+    }
+    else
+    {
+        // Failed connect (or close-during-connect). The failed-connect state contract: the machine
+        // returns to kIdle (handle-less, retryable) once the async teardown lands in kClosed. When
+        // close was requested externally the machine stays on the kClosing→kClosed path instead.
+        if (!d->mCloseRequested && status != 0)
+        {
+            d->report_error(network::detail::map_uv_error(status),
+                            "TcpSocket: connect failed (uv status " + std::to_string(status) + ")");
+        }
+        if (d->mState == SocketState::kConnecting)
+        {
+            d->set_state(SocketState::kClosing);
+        }
     }
     if (d->mOnConnect)
     {
@@ -356,11 +442,22 @@ void TcpSocketPrivate::on_connect_done(uv_connect_t *req, int status)
         d->mOnConnect = nullptr;
         cb(ok);
     }
-    if (!ok && d->mState == State::kClosing && !d->mCloseRequested)
+    if (!ok && d->mState == SocketState::kClosing && !d->mCloseRequested)
     {
-        d->begin_close(); // failed connect without an explicit close: tear the handle down
+        // Failed connect without an explicit close: tear the handle down, then reset the machine to
+        // kIdle — the failed-connect state contract (handle-less, retryable; the T2 test pins
+        // s.state() == kIdle after a refused connect). begin_close fires kClosing, and its async
+        // close callback would fire kClosed next; the direct reset to kIdle here keeps the notified
+        // subsequence clean: kConnecting, kClosing, kIdle. The close callback sees kIdle (already
+        // terminal for the failed-connect path) and stays silent.
+        d->begin_close();
+        if (d->mState == SocketState::kClosing)
+        {
+            d->set_state(SocketState::kIdle);
+        }
     }
 }
+
 
 void TcpSocketPrivate::on_alloc(uv_handle_t *handle, size_t suggested_size, uv_buf_t *buf)
 {
@@ -383,8 +480,15 @@ void TcpSocketPrivate::on_read(uv_stream_t *stream, ssize_t nread, const uv_buf_
     }
     if (nread < 0)
     {
-        // EOF (UV_EOF) or error: deliver the (nullptr, nread) terminal event once, disarm, and map
-        // onto the close path (error-state stickiness avoidance: everything after is a no-op).
+        // EOF (UV_EOF) or error: deliver the (nullptr, nread) terminal event once, map the failure
+        // onto the public error surface (EOF → kEof, else map_uv_error), disarm, and go through the
+        // close path (error-state stickiness avoidance: everything after is a no-op).
+        const SocketError error = (nread == UV_EOF) ? SocketError::kEof
+                                                    : network::detail::map_uv_error(static_cast<int>(nread));
+        d->report_error(error,
+                        (error == SocketError::kEof)
+                            ? "TcpSocket: end of file (peer closed)"
+                            : "TcpSocket: read error (uv status " + std::to_string(nread) + ")");
         if (d->mOnData)
         {
             std::function<void(const uint8_t *data, ssize_t nread)> cb = std::move(d->mOnData);
@@ -432,7 +536,12 @@ void TcpSocketPrivate::on_closed(uv_handle_t *handle)
 {
     TcpSocketPrivate *d = static_cast<TcpSocketPrivate *>(handle->data);
     d->mHandle = nullptr;
-    d->mState = State::kClosed;
+    if (d->mState != SocketState::kIdle)
+    {
+        // Failed-connect teardown resets the machine to kIdle before this callback runs (see
+        // on_connect_done); do not overwrite it with kClosed. Normal closes report kClosed here.
+        d->set_state(SocketState::kClosed);
+    }
     // The allocation is uv_tcp_t (248B); the callback parameter type is uv_handle_t (96B). Deleting
     // through the base-typed pointer is a new-delete-type-mismatch (ASAN) — cast back to the real
     // allocation type (both client handles and adopted/fd handles are new uv_tcp_t).
