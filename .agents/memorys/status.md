@@ -357,3 +357,13 @@ cxxkit 是 OpenCTK（an open cpp toolkit）的成功重构版本 —— 精简�
 - [x] imgui.ini gitignore（imgui 运行时产物）
 - 验证：tst_imgui_application 4/4（T4 headless 真实失败路径）/ 主树 85/85 / headless 例 rc=0 零回归 / sdl_host grep 清零 / format 干净
 - 备注：有显示环境窗口化人工 smoke 沿用 imgui-smoke.md 分层；GLFW 子类需求触发再取（需新增 vendored wrap）
+
+### 2026-09-13 Network 后端抽象 + Qt 对齐（D41，方案 A，SDD 六任务）
+
+- [x] **架构**：detail 层 StreamBackend 接口（open/connect/write/read/accept/adopt/pump + native_status/loop 查询）+ uv 平移零行为变化 + asio 1.32.0 第二后端（EMBED：io_context 经 Object::UserData 每环一槽，timer 门控泵 0% 空闲 CPU）；编译期 `CXXKIT_NETWORK_BACKEND`（uv 默认/asio opt-in，PIT-48 接线）；状态机/错误映射留 pimpl；accept 整只移交（adopt_backend，单一 backend 拥有 native handle 不变量）
+- [x] **Qt 对齐**：SocketError/SocketState 公开面（set_on_error/on_state_change/state/last_error，map_transport_error 双后端共享表）+ IPv6 双栈修复（fill_sockaddr，connect 失败 fatal→优雅 false）；adopt_uv_tcp→adopt_native(void\*) 破坏性收敛（公共头零 uv）
+- [x] **计划链**：Momus APPROVE-WITH-FIXES 4 修复全折 → SDD 六任务（T0 基线+asio 下载/T1 IPv6/T2 错误状态面/T3 抽象平移/T4 asio 后端/T5 守卫降级/T6 记忆）
+- [x] **两轮修复波**：T3（listen 失败 latch 毒化重试/无消费者 accept abort/invalid-addr 双重否定/loop() UB，Momus 复审 APPROVE）+ T4（泵忙轮询 102%→0% timer 门控，复审 APPROVE）
+- [x] **PIT-50/51/52**：地址族硬编码/SDD 实现者超时调试转储/post 链忙轮询
+- 验证：uv 树 85/85 + asio 树 84/84（qt 自动检测差 1 合法）+ tcp 双树 3/3（24+2 用例）+ uv 词汇 grep 清零 + format/C++11/octk 清零 + ASAN tcp 零诊断 + asio link.txt 零 libuv + 空闲 CPU 0.00%
+- 已知限制：Step 4.2b 消费面半边（Config stub/.pc）延期；ASAN-asio 树未跑；GLFW 式第三后端需求触发再取

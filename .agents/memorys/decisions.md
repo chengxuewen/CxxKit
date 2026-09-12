@@ -394,3 +394,17 @@ sanitizer（ASAN/LSAN/UBSan）与 coverage 用**独立 build 目录**（build-as
 **验证**：tst_imgui_application 4/4（T1-T3 double 契约 + T4 headless 真实失败路径 PASS）/ 主树 85/85 / headless rc=0 / format 干净。有显示环境窗口化人工 smoke 沿用 docs/imgui-smoke.md 分层（非自动化承诺）。
 
 **已知限制**：运行中换 draw fn 若成真需求届时加 set_draw_function+mutex（A 形状不挡路）；vsync=false 无自动化覆盖（swap 行为无显示测不了）。
+
+## D41: Network 后端抽象 + Qt 对齐（2026-09-13）
+
+**动因**：network 对外零 uv 泄漏 + Qt 级错误/状态面 + detail 层后端抽象（用户裁定方案 A：编译期 CMake 选后端 uv|asio，不运行时热切换）。
+
+**裁定**：R1 detail 层 StreamBackend 接口（方案 A），状态机/thread 检查/错误映射留 pimpl，backend 只管 I/O；R2 adopt_uv_tcp→adopt_native(void\*) 破坏性收敛（公共头零 uv 类型，grep 门验收）；R3 编译期选择 `CXXKIT_NETWORK_BACKEND`（CACHE STRING uv|asio + PIT-48 target_compile_definitions 接线，PIT-41 不适用——无 cxxkit_option DEPENDS 消费者）；R4 asio EMBED 终裁（Momus：BRIDGE 不可行——register_socket_notifier 在 UvEventDispatcher 上，uv-disabled kernel 下 notifier 机械不存在）；R5 测试+exp_tcp_echo 守卫降级 `if(CXXKIT_ENABLE_LIB_NETWORK)` 后端无关。Momus 计划审核 APPROVE-WITH-FIXES 4 修复全折（F1 Task 0 补建/F2 adopt_fd 缺失致 grep 门不可达/F3 asio 消费面接线/F4 例子守卫+RED 措辞+IPv6 SKIP 护栏）。
+
+**落地**（8f20a3c..b2a6615 六任务七提交）：IPv6 双栈修复（fill_sockaddr 共享 helper，connect 失败 fatal→优雅 false）；SocketError/SocketState 公开（map_transport_error uv 表，失败 connect kConnecting→kClosing→kIdle 契约）；StreamBackend 抽象 + uv 平移（PendingWrite 归属 backend、三 pump 统一、accept 整只移交 adopt_backend——修复双 backend 共指同一 handle 的 abort）；asio 1.32.0 vendored（extract-only wrap）+ AsioStreamBackend（EMBED：io_context 经 Object::UserData 每环一槽 + timer 门控泵——修复初版 post 链忙轮询 102% CPU；weak_ptr liveness 桥；异步 close 完成对齐 uv 交错）；守卫降级双树验证。
+
+**SDD 执行教训**：实现者超时 2 次（T3 pump bug 调试转储非报告）——controller 收尾定根因（accept 双重 backend 化 + native_status 映射丢失 + 未 open 泵空指针）；T3 修复波（Momus 审查 F1-F4+M1-M5：listen 失败 latch 毒化重试→teardown abort、无消费者 accept abort、-UV_EADDRNOTAVAIL 双重否定、loop() UB）；T4 修复波（泵忙轮询 timer 门控 102%→0%）——两波 scoped re-review 均 APPROVE。
+
+**验证**：uv 树 85/85 + asio 树 84/84（差 1 = qt 自动检测环境门，合法）；tcp 3 套件双树绿（24 用例 + 2 新回归）；空闲 CPU 0.00%（修后）；cxxkit_network link.txt asio 树零 libuv；公共头/上层 cpp uv 词汇 grep 清零；format/C++11/octk 门禁清零；ASAN tcp 3/3 零诊断（uv 树）。
+
+**已知限制**：Step 4.2b 消费面半边（CxxKitConfig stub 行/.pc WrapAsio 映射/libuv stub 后端条件）显式延期——asio 构建安装树消费未接线；ASAN-asio 树未跑；destroy-in-error-callback UAF 窗口系 T2 既有形态（非本次回归，asio 任务备案）；deferred-tick 分支 mN 空指针防御（I6 契约下不可达）。

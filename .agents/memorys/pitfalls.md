@@ -324,3 +324,24 @@
 - **解法**: close 回调内按真实分配类型释放：`delete reinterpret_cast<uv_tcp_t*>(handle)`（socket/server 双侧）
 - **验证**: `build-asan` 全量 LSAN_OPTIONS=suppressions=$(pwd)/scripts/lsan.supp 83/83 零诊断
 - **禁止**: 在 uv 回调（形参恒为 uv_handle_t*/uv_req_t* 基类）里直接 `delete` 形参指针——必须先 cast 回分配类型
+
+## PIT-50: 地址族硬编码 uv_ip4_addr（2026-09-12）
+- **症状**: TcpSocket::connect/TcpServer::listen 传 "::1" 直接失败；bound_port 无 AF_INET6 分支。
+- **根因**: D31 初版把地址解析硬编码为 uv_ip4_addr，IPv6 从未测试。
+- **解法**: detail/address_helper.hpp fill_sockaddr（inet_pton AF_INET→AF_INET6 自动判定，双后端共享单解析路径）；bound_port 加 AF_INET6 ntohs 分支。
+- **验证**: ConnectIpv6LoopbackRoundTrip + ListenIpv6EphemeralPort（GTEST_SKIP 探测 IPv6 可用性）；全 tcp 双树绿。
+- **禁止**: 新传输代码禁止假设 IPv4——地址解析一律走 fill_sockaddr。
+
+## PIT-51: SDD 实现者超时的调试转储输出（2026-09-13）
+- **症状**: deep 实现者 57 分钟超时，最终输出是思维链调试转储（"WAIT. I see it..."），无报告无提交；续投再次转储。
+- **根因**: 抽象迁移类任务（uv 直驱→接口层）调试环过深，实现者把根因分析耗在思维链里不落盘。
+- **解法**: controller 直接读工作树代码定根因并修复（D38 先例）；根因是 accept 双重 backend 化（临时 backend adopt 后未清 handle → dtor CHECK 引爆）+ 接口 connect 回调丢 status（加 native_status() 查询）+ 未 open 泵空指针。
+- **验证**: 85/85 + grep 门 + ASAN；后续 T4 相同形态（修复波 controller 派回原实现者成功——有部分上下文时续投，无产出时 controller 收尾）。
+- **禁止**: 对超时实现者盲投第三次；先查 git status 是否有半成品再决定 resume vs 收尾。
+
+## PIT-52: post 链自泵 = 忙轮询（2026-09-13）
+- **症状**: asio 后端初版 pump_tick 无条件 post 下一 tick，空闲环 CPU 102%；process_events(ms) 静默窗口全部立即返回（quiet-window 断言空洞通过）。
+- **根因**: posted task 使 EventLoop::process_events 每轮短路返回 true（排空 post 队列后即 true），阻塞等待永不发生。
+- **解法**: handlers_ran>0 才即时重投（突发保即时延迟）；否则 1ms 重复 timer 门控（TaskQueueThread C14 先例）；open() 不再起泵（首个异步操作才 arm）；空闲 0.00% CPU。
+- **验证**: idle 对 2s 窗口 /proc 实测 + armed-socket process_events(2000ms) 真等 2000ms + 双树全量绿。
+- **禁止**: 事件循环内禁止无条件自 post 泵——驱动器必须是"有活动即时、无活动 timer 门控"双模。

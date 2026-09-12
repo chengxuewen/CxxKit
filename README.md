@@ -22,7 +22,7 @@ Organized abseil-style: **directory = sublibrary = CMake target**, pick only wha
 | `cxxkit::thread` | compiled | thread_pool, task_queue, event_loop_thread (own-thread EventLoop for `move_to_loop(elt)`), future, semaphore |
 | `cxxkit::text` | compiled | string, base64, bit_buffer, ascii, string_builder, string_utils, str_split, crc32, format, string_view |
 | `cxxkit::tools` | compiled | logging, random, assert, clock, status, error, metrics, filesystem, optional, expected, variant |
-| `cxxkit::network` | compiled | http (cpr backend) |
+| `cxxkit::network` | compiled | http (cpr backend); TcpSocket/TcpServer event-loop sockets with Qt-grade error/state surface — backend selection `CXXKIT_NETWORK_BACKEND` (uv default, asio opt-in) |
 | `cxxkit::crash` | compiled | crash handler, minidump (breakpad), stack trace (backward-cpp) — opt-in `CXXKIT_ENABLE_LIB_CRASH` |
 | `cxxkit::imgui` | compiled | headless ImGui context (`ImGuiHost`) over host-injected `PlatformBackend`/`RendererBackend`, plus `SdlImGuiApplication` (SDL3 window + frame loop, opt-in host) — opt-in `CXXKIT_ENABLE_LIB_IMGUI` |
 | `cxxkit::uv` | compiled | event loop dispatcher (socket notifier: `register/unregister_socket_notifier` uv_poll backend) + TcpSocket/TcpServer (memcached-style state machines) over vendored libuv — opt-in `CXXKIT_ENABLE_LIB_UV` |
@@ -134,7 +134,7 @@ Build them with the main build (`cmake --build build`); binaries land in `build/
 | `exp_network_version` | network | HTTP failure-path demo (needs `CXXKIT_ENABLE_LIB_NETWORK=ON`) |
 | `exp_imgui` | imgui | SDL3+GL3 windowed core via `SdlImGuiApplication`; plus `examples/imgui/` family: headless, plot, plot3d, gizmo, file_dialog, markdown, nodes |
 | `exp_event_loop` | uv | deterministic 3-tick timer loop, rc=0 (needs `CXXKIT_ENABLE_LIB_UV=ON`) |
-| `exp_tcp_echo` | uv | TcpServer+TcpSocket loopback echo over an ephemeral port, fixed stdout, rc=0 (needs `CXXKIT_ENABLE_LIB_UV=ON`) |
+| `exp_tcp_echo` | network | TcpServer+TcpSocket loopback echo over an ephemeral port, fixed stdout, rc=0 (needs `CXXKIT_ENABLE_LIB_NETWORK=ON`; backend-agnostic — runs under uv or asio) |
 | `exp_qt_embed` | kernel | cxxkit EventLoop embedded in a host Qt loop: bridge QTimer pump, queued signal delivery, rc=0 (needs Qt6 — auto-detected; runtime gate `docs/qt-embed-smoke.md`) |
 
 All examples print deterministic output except where a value is genuinely runtime-dependent (timers, clocks — annotated in-line). No example performs a real network request or a deliberate crash.
