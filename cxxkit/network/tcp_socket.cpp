@@ -21,6 +21,7 @@ Library: CxxKit
 **
 ***********************************************************************************************************************/
 
+#include <cxxkit/network/detail/address_helper.hpp>
 #include <cxxkit/network/detail/tcp_socket_p.hpp>
 #include <cxxkit/network/tcp_socket.hpp>
 
@@ -140,9 +141,14 @@ void TcpSocket::connect(const std::string &ip, uint16_t port, std::function<void
         << "TcpSocket::connect: state must be kIdle (got " << static_cast<int>(d->mState) << ")";
     CXXKIT_CHECK(d->mCloseRequested == false) << "TcpSocket::connect: socket is closing/closed";
 
-    sockaddr_in addr;
-    const int addr_rc = uv_ip4_addr(ip.c_str(), port, &addr);
-    CXXKIT_CHECK(addr_rc == 0) << "TcpSocket::connect: invalid address " << ip << ":" << port << " (" << addr_rc << ")";
+    sockaddr_storage addr;
+    if (!cxxkit::network::detail::fill_sockaddr(ip, port, &addr))
+    {
+        // Invalid address: connect failure, not a programming error (symmetric with TcpServer::listen).
+        std::function<void(bool ok)> cb = std::move(on_connected);
+        cb(false);
+        return;
+    }
 
     uv_tcp_t *handle = new uv_tcp_t;
     const int init_rc = uv_tcp_init(&d->mDispatcher->loop(), handle);

@@ -36,6 +36,9 @@
 #include <string>
 #include <vector>
 
+#include <sys/socket.h>
+#include <unistd.h>
+
 #if CXXKIT_FEATURE_ENABLE_KERNEL
 
 namespace
@@ -231,5 +234,31 @@ TEST(TcpServerTest, ServerDestructorWithLiveConnections)
 }
 
 } // namespace
+
+// 4. IPv6 dual-stack: listen on "::1" port 0; bound_port() must surface the OS-assigned port (the
+// AF_INET6 getsockname branch). Runtime AF_INET6 probe guard: skip on IPv6-disabled hosts.
+TEST(TcpServerTest, ListenIpv6EphemeralPort)
+{
+    {
+        int probe = ::socket(AF_INET6, SOCK_STREAM, 0);
+        if (probe < 0)
+        {
+            GTEST_SKIP() << "ipv6 loopback unavailable";
+        }
+        ::close(probe);
+    }
+
+    EventLoop loop(make_default_dispatcher());
+    TcpServer server(loop);
+    std::unique_ptr<TcpSocket> server_side;
+    server.on_connection(
+        [&](std::unique_ptr<TcpSocket> socket)
+        {
+            server_side = std::move(socket); // store: keep alive past the callback (I5)
+        });
+    EXPECT_TRUE(server.listen("::1", 0));
+    EXPECT_NE(0u, server.bound_port()) << "port 0 must surface the OS-assigned port (v6)";
+    loop.process_events(EventLoop::ProcessFlag::kAllEvents, 200); // pump discipline: settle the listener
+}
 
 #endif // #if CXXKIT_FEATURE_ENABLE_KERNEL

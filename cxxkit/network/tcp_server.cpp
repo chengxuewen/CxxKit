@@ -21,6 +21,7 @@ Library: CxxKit
 **
 ***********************************************************************************************************************/
 
+#include <cxxkit/network/detail/address_helper.hpp>
 #include <cxxkit/network/detail/tcp_server_p.hpp>
 #include <cxxkit/network/tcp_server.hpp>
 
@@ -93,9 +94,8 @@ bool TcpServer::listen(const std::string &ip, uint16_t port, int backlog)
         return false; // already listening — an explicit retry contract, not a fatal
     }
 
-    sockaddr_in addr;
-    const int addr_rc = uv_ip4_addr(ip.c_str(), port, &addr);
-    if (addr_rc != 0)
+    sockaddr_storage addr;
+    if (!cxxkit::network::detail::fill_sockaddr(ip, port, &addr))
     {
         return false; // invalid address: a listen failure, not a programming error
     }
@@ -136,9 +136,20 @@ bool TcpServer::listen(const std::string &ip, uint16_t port, int backlog)
     // versus probing candidate ports from the outside.
     sockaddr_storage bound;
     int bound_len = static_cast<int>(sizeof(bound));
-    if (uv_tcp_getsockname(handle, reinterpret_cast<sockaddr *>(&bound), &bound_len) == 0 && bound.ss_family == AF_INET)
+    if (uv_tcp_getsockname(handle, reinterpret_cast<sockaddr *>(&bound), &bound_len) == 0)
     {
-        d->mBoundPort = ntohs(reinterpret_cast<const sockaddr_in *>(&bound)->sin_port);
+        if (bound.ss_family == AF_INET)
+        {
+            d->mBoundPort = ntohs(reinterpret_cast<const sockaddr_in *>(&bound)->sin_port);
+        }
+        else if (bound.ss_family == AF_INET6)
+        {
+            d->mBoundPort = ntohs(reinterpret_cast<const sockaddr_in6 *>(&bound)->sin6_port);
+        }
+        else
+        {
+            d->mBoundPort = port;
+        }
     }
     else
     {

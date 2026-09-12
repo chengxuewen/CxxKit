@@ -26,6 +26,7 @@
 
 #include <cxxkit/kernel/event_loop.hpp>
 #include <cxxkit/kernel/default_dispatcher.hpp>
+#include <cxxkit/network/tcp_server.hpp>
 #include <cxxkit/network/tcp_socket.hpp>
 
 #include <sys/socket.h>
@@ -46,6 +47,7 @@ namespace
 {
 
 using cxxkit::EventLoop;
+using cxxkit::TcpServer;
 using cxxkit::TcpSocket;
 using cxxkit::make_default_dispatcher;
 
@@ -309,6 +311,70 @@ TEST(TcpSocketDeathTest, CrossThreadWriteRejected)
 }
 #    endif
 
+// 9. IPv6 dual-stack: "::1" must connect like "127.0.0.1" (fill_sockaddr auto-detect). Runtime
+// AF_INET6 probe guard: skip (not fail) on IPv6-disabled hosts.
+TEST(TcpSocketTest, ConnectIpv6LoopbackRoundTrip)
+{
+    {
+        int probe = ::socket(AF_INET6, SOCK_STREAM, 0);
+        if (probe < 0)
+        {
+            GTEST_SKIP() << "ipv6 loopback unavailable";
+        }
+        ::close(probe);
+    }
+
+    EventLoop loop(make_default_dispatcher());
+    TcpServer server(loop);
+    std::unique_ptr<TcpSocket> server_side;
+    server.on_connection(
+        [&](std::unique_ptr<TcpSocket> socket)
+        {
+            // store: the unique_ptr parameter dies at lambda return — its drain pump must not run
+            // inside connection_cb (I5)
+            server_side = std::move(socket);
+            server_side->read_start(
+                [&](const uint8_t *data, ssize_t nread)
+                {
+                    if (nread > 0)
+                    {
+                        server_side->write(data, static_cast<size_t>(nread), [](bool) { });
+                    }
+                });
+        });
+    ASSERT_TRUE(server.listen("::1", 0));
+    ASSERT_NE(0u, server.bound_port());
+
+    std::unique_ptr<TcpSocket> client(new TcpSocket(loop));
+    std::string received;
+    const std::string kPayload = "ipv6-ping";
+
+    client->connect("::1",
+                    server.bound_port(),
+                    [&](bool ok)
+                    {
+                        ASSERT_TRUE(ok); // arm read interest only once connected
+                        client->read_start(
+                            [&](const uint8_t *data, ssize_t nread)
+                            {
+                                if (nread > 0)
+                                {
+                                    received.append(reinterpret_cast<const char *>(data), static_cast<size_t>(nread));
+                                    if (received == kPayload)
+                                    {
+                                        loop.exit(0);
+                                    }
+                                }
+                            });
+                        const uint8_t *bytes = reinterpret_cast<const uint8_t *>(kPayload.data());
+                        client->write(bytes, kPayload.size(), [](bool) { });
+                    });
+
+    loop.process_events(EventLoop::ProcessFlag::kAllEvents, 2000);
+    loop.process_events(EventLoop::ProcessFlag::kAllEvents, 2000);
+    loop.process_events(EventLoop::ProcessFlag::kAllEvents, 2000);
+    EXPECT_EQ(kPayload, received);
+}
 } // namespace
 
 #endif // #if CXXKIT_FEATURE_ENABLE_KERNEL
