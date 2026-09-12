@@ -47,16 +47,12 @@ namespace network
 namespace detail
 {
 
-/// Backend-owned asio cell: io_context plus the optional endpoint objects. A separate heap struct
-/// keeps the header asio-free (D8) and lets adoption construct only what it needs. mAlive is the
-/// pump-closure liveness bridge: every posted pump closure holds a shared_ptr copy and checks the
-/// flag before touching the backend — backend destruction flips it false, so no tick touches freed
-/// state and the re-post cycle ends by itself (EMBED ruling: clean loop exit, no infinite cycle).
 /// The per-loop io_context slot (Chromium SupportsUserData shape): EVERY backend bound to the
 /// same EventLoop shares ONE io_context, so all endpoints of a loop world are ordered against a
 /// single engine (uv parity: one uv_loop per EventLoop — cross-endpoint callback ordering, e.g.
 /// accept-before-connect-done, is deterministic). The loop owns the slot (Object::set_user_data);
-/// backends only reference it. Key = this TU-local address.
+/// backends only reference it. Key = this TU-local address. See Native (below) for the
+/// pump-closure liveness bridge.
 struct LoopIo : cxxkit::Object::UserData
 {
     asio::io_context io; // backends hold a raw reference; the loop outlives them (pump_until_closed
@@ -76,6 +72,8 @@ struct AsioStreamBackend::Native
     std::unique_ptr<asio::ip::tcp::acceptor> acceptor; // server face
     std::shared_ptr<std::atomic<bool>> alive;          // pump closures' liveness bridge
     bool pumping{false};                               /// re-entrancy guard: asio callbacks can re-enter pump paths
+    bool pending_tick{false};                          /// an immediate tick is in the loop's post queue
+    int timer_id{-1};                                  /// armed repeating cadence timer (0 = none armed)
 
     Native()
         : alive(new std::atomic<bool>(true))
@@ -110,8 +108,11 @@ AsioStreamBackend::~AsioStreamBackend()
         << "AsioStreamBackend: endpoint objects outlived the drain pump (teardown bug)";
     if (mN)
     {
-        // Kill the pump cycle FIRST: any queued tick closure observes alive == false and no-ops.
+        // Kill the pump cycle FIRST: any queued tick closure observes alive == false and no-ops;
+        // the cadence timer stops here (its own body would also stop it, but timer_id lives in
+        // the cell being destroyed).
         mN->alive->store(false);
+        this->stop_cadence_timer();
         mN.reset();
     }
 }
@@ -124,18 +125,23 @@ bool AsioStreamBackend::open(EventLoop &loop)
         mN.reset(new Native);
     }
     mN->io = &loop_io_slot(loop)->io; // all endpoints of this loop pump on ONE engine
-    this->ensure_pump();
+    // NO tick posted here: an adopted/never-armed backend must not carry posted work, or every
+    // EventLoop::process_events(flags, ms) quiet window returns true instantly on the pending
+    // task (uv parity: uv_tcp_open posts nothing; the pump arms with the FIRST async op).
     return true;
 }
 
 void AsioStreamBackend::ensure_pump()
 {
     CXXKIT_CHECK(mN != nullptr) << "AsioStreamBackend::ensure_pump: native cell missing";
-    // Armed lazily: the first pump_tick runs; while work is alive it re-posts itself. A dedicated
-    // "armed" bool is redundant — duplicate pending ticks are harmless (each does one bounded
-    // poll round) and post() coalesces wake-ups at the shell anyway. The weak_ptr is the
-    // liveness bridge: a tick sitting in the post queue at backend-destruction time sees a dead
-    // flag and returns without touching freed state — the cycle ends cleanly (EMBED ruling).
+    if (mN->pending_tick)
+    {
+        return; // a tick is already queued: post() coalescing by flag, no duplicate rounds
+    }
+    mN->pending_tick = true;
+    // The weak_ptr is the liveness bridge: a tick sitting in the post queue at
+    // backend-destruction time sees a dead flag and stops its timer without touching freed
+    // state — the cycle ends cleanly (EMBED ruling).
     std::weak_ptr<std::atomic<bool>> alive_weak = mN->alive;
     mLoop->post(
         [this, alive_weak]()
@@ -143,8 +149,13 @@ void AsioStreamBackend::ensure_pump()
             std::shared_ptr<std::atomic<bool>> alive = alive_weak.lock();
             if (!alive || !alive->load())
             {
+                if (EventLoop *loop = this->mLoop)
+                {
+                    loop->stop_timer(this->mN->timer_id); // dtor flipped alive but a timer lingered
+                }
                 return; // backend destroyed: the cycle dies here, no freed state touched
             }
+            mN->pending_tick = false;
             this->pump_tick();
         });
 }
@@ -155,15 +166,62 @@ void AsioStreamBackend::pump_tick()
     {
         return; // backend destroyed mid-cycle or re-entrant poll from an asio callback
     }
-    // Poll UNCONDITIONALLY (has_work checked only for the re-arm below): a just-closed endpoint
-    // still has cancelled completion handlers queued (CloseTwiceIdempotent contract — every
-    // write gets its false); skipping poll on empty has_work would strand those deliveries.
+    // Poll UNCONDITIONALLY (has_work checked only for the cadence decision below): a just-closed
+    // endpoint still has cancelled completion handlers queued (CloseTwiceIdempotent contract —
+    // every write gets its false); skipping poll on empty has_work would strand deliveries.
     mN->pumping = true;
-    mN->io->poll(); // run every ready handler; never blocks
+    const size_t handlers_ran = mN->io->poll(); // run every ready handler; never blocks
     mN->pumping = false;
-    if (this->has_work())
+
+    // Timer-gated cadence (T4 fix wave — the naive while-has_work re-post spun an idle loop at
+    // 100% CPU and made every quiet process_events(ms) window return instantly):
+    // - real asio activity -> immediate re-post (burst latency stays sub-tick);
+    // - quiet but endpoints alive -> 1ms repeating timer carries the cadence
+    //   (TaskQueueThread precedent, C14/PIT-26);
+    // - idle -> drain-to-quiet (in-round posted completions, e.g. begin_close's on_closed), stop
+    //   the timer, let the cycle die.
+    if (!this->has_work())
     {
-        this->ensure_pump(); // re-arm while work remains (shared-alive guarded)
+        for (int rounds = 0; rounds < 1000 && mN->io->poll() > 0; ++rounds)
+        {
+            // drain completions posted during the last round (close-callback delivery guarantee)
+        }
+        this->stop_cadence_timer();
+        return;
+    }
+    if (handlers_ran > 0)
+    {
+        this->ensure_pump(); // burst: next round immediately
+        return;
+    }
+    if (mN->timer_id <= 0)
+    {
+        // Quiet window: arm the 1ms cadence (repeat stays on the engine; the timer body checks
+        // the shared-alive bridge and re-runs pump_tick, so the cadence self-terminates when the
+        // backend goes idle or dies).
+        std::weak_ptr<std::atomic<bool>> alive_weak = mN->alive;
+        mN->timer_id = mLoop->start_timer(
+            1,
+            [this, alive_weak]()
+            {
+                std::shared_ptr<std::atomic<bool>> alive = alive_weak.lock();
+                if (!alive || !alive->load())
+                {
+                    this->stop_cadence_timer(); // backend died with the timer armed: stop firing
+                    return;
+                }
+                this->pump_tick();
+            },
+            true);
+    }
+}
+
+void AsioStreamBackend::stop_cadence_timer()
+{
+    if (mN != nullptr && mN->timer_id > 0)
+    {
+        mLoop->stop_timer(mN->timer_id);
+        mN->timer_id = -1;
     }
 }
 
@@ -210,7 +268,6 @@ void AsioStreamBackend::connect(const std::string &ip, uint16_t port, std::funct
                               {
                                   mNativeStatus = ec ? -static_cast<int>(ec.value()) : 0; // errno-style (uv parity)
                                   const bool ok = !ec && !mCloseRequested;
-                                  mConnected = ok;
                                   std::function<void(bool ok)> cb = std::move(mOnConnect);
                                   mOnConnect = nullptr;
                                   if (cb)
@@ -227,7 +284,6 @@ void AsioStreamBackend::connect(const std::string &ip, uint16_t port, std::funct
                                       {
                                           mN->socket.reset();
                                       }
-                                      mConnected = false;
                                   }
                               });
 }
@@ -241,6 +297,7 @@ void AsioStreamBackend::write(const uint8_t *data, size_t len, std::function<voi
     pending.mOnWritten = std::move(on_done);
     mPendingWrites.push_back(std::move(pending));
     this->submit_next_write(); // one async_write in flight (lws parity — see header note)
+    this->ensure_pump();       // new work: prefer an immediate tick over the 1ms timer cadence
 }
 
 void AsioStreamBackend::submit_next_write()
@@ -254,23 +311,23 @@ void AsioStreamBackend::submit_next_write()
 
     // Storage must outlive the operation: park the bytes in mInFlight and point asio's buffer at it.
     mInFlight = std::move(pending.mData);
-    mN->socket->async_write_some(
-        asio::buffer(mInFlight),
-        [this, on_written = std::move(pending.mOnWritten)](const std::error_code &ec, size_t /*bytes*/) mutable
-        {
-            mNativeStatus = ec ? -static_cast<int>(ec.value()) : 0; // errno-style (uv parity)
-            mInFlight.clear(); // the completion is the only trigger for the next write (lws)
-            if (on_written)
-            {
-                on_written(!ec);
-            }
-            if (!ec && !mCloseRequested)
-            {
-                this->submit_next_write();
-            }
-            // On error the pimpl tears the session down (mirrors uv); queued writes false-fan-out
-            // in begin_close.
-        });
+    std::function<void(bool ok)> on_written = std::move(pending.mOnWritten); // C11: no init-capture
+    mN->socket->async_write_some(asio::buffer(mInFlight),
+                                 [this, on_written](const std::error_code &ec, size_t /*bytes*/) mutable
+                                 {
+                                     mNativeStatus = ec ? -static_cast<int>(ec.value()) : 0; // errno-style (uv parity)
+                                     mInFlight.clear(); // the completion is the only trigger for the next write (lws)
+                                     if (on_written)
+                                     {
+                                         on_written(!ec);
+                                     }
+                                     if (!ec && !mCloseRequested)
+                                     {
+                                         this->submit_next_write();
+                                     }
+                                     // On error the pimpl tears the session down (mirrors uv); queued writes false-fan-out
+                                     // in begin_close.
+                                 });
 }
 
 void AsioStreamBackend::read_start(std::function<void(const uint8_t *data, ssize_t nread)> on_data)
@@ -284,6 +341,7 @@ void AsioStreamBackend::read_start(std::function<void(const uint8_t *data, ssize
     }
     mOnData = std::move(on_data);
     this->arm_read();
+    this->ensure_pump(); // new work: prefer an immediate tick over the 1ms timer cadence
 }
 
 void AsioStreamBackend::arm_read()
@@ -542,7 +600,6 @@ bool AsioStreamBackend::adopt_native(void *native_handle, EventLoop &loop)
     CXXKIT_CHECK(&taken->get_executor().context() == static_cast<const void *>(mN->io))
         << "AsioStreamBackend::adopt_native: socket belongs to a different io_context";
     mN->socket.reset(taken);
-    mConnected = true;
     return true;
 }
 
@@ -566,7 +623,6 @@ bool AsioStreamBackend::adopt_fd(int fd, EventLoop &loop)
         CXXKIT_FATAL() << "AsioStreamBackend::adopt_fd: socket.assign failed (" << ec.message() << ") for fd " << fd;
     }
     mN->socket.reset(new asio::ip::tcp::socket(std::move(socket)));
-    mConnected = true;
     return true;
 }
 
@@ -590,6 +646,8 @@ void AsioStreamBackend::pump_until_closed()
     {
         this->begin_close();
     }
+    // The cadence timer must not outlive the drain: pump_until_closed is the backend's last act.
+    this->stop_cadence_timer();
     // Drain the cancelled ops' completion handlers (connect false-delivery, write aborts) so no
     // asio handler survives us. mOnData is already null (begin_close); mOnConnect delivers its
     // false inside the drained connect handler.

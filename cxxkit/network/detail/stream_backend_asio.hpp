@@ -98,19 +98,19 @@ private:
 
     friend struct Native;
 
-    void ensure_pump();       /// arm the recurring pump task (once, on open)
-    void begin_close();       /// shared teardown: cancel pending work, fire mOnClosed. Idempotent.
-    void pump_tick();         /// one io_context.poll() + re-post while work is alive
-    bool has_work() const;    /// socket/acceptor alive?
-    void arm_read();          /// (re-)issue one async_read_some against mReadBuf
-    void arm_accept();        /// (re-)issue one async_accept (accept loop body)
-    void submit_next_write(); /// lws discipline: one async_write in flight, deque feeds it
+    void ensure_pump();        /// queue one immediate pump tick (pending_tick coalescing)
+    void begin_close();        /// shared teardown: cancel pending work, fire mOnClosed. Idempotent.
+    void pump_tick();          /// one poll round + timer-gated cadence decision (fix wave F1)
+    void stop_cadence_timer(); /// cancel the 1ms repeating cadence timer (dtor/teardown/drain)
+    bool has_work() const;     /// socket/acceptor alive?
+    void arm_read();           /// (re-)issue one async_read_some against mReadBuf
+    void arm_accept();         /// (re-)issue one async_accept (accept loop body)
+    void submit_next_write();  /// lws discipline: one async_write in flight, deque feeds it
 
     EventLoop *mLoop{nullptr};
     int mNativeStatus{0};
 
     bool mCloseRequested{false};
-    bool mConnected{false}; /// connect handler ran with ok
 
     /// One queued transmission: the copied bytes + its completion callback (lws backpressure,
     /// uv parity — asio queues a single stream op internally but NOT across separate calls).
