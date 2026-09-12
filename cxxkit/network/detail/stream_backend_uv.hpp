@@ -26,6 +26,8 @@
 
 #include <cxxkit/network/detail/stream_backend.hpp>
 
+#include <cxxkit/tools/checks.hpp>
+
 #include <deque>
 #include <vector>
 
@@ -79,7 +81,11 @@ public:
     bool adopt_native(void *native_handle, EventLoop &loop) override;
     bool adopt_fd(int fd, EventLoop &loop) override;
     void *native_handle() const override { return mHandle; }
-    EventLoop &loop() const override { return *mLoop; }
+    EventLoop &loop() const override
+    {
+        CXXKIT_CHECK(mLoop != nullptr) << "UvStreamBackend::loop: backend never opened";
+        return *mLoop;
+    }
     int native_status() const override { return mNativeStatus; }
 
     // dtor discipline: pump the loop until the native close callback ran
@@ -116,8 +122,6 @@ private:
     /// In-flight write's buffer view (storage owned by mInFlight). Opaque void-pair here: uv_buf_t
     /// (base/len) cannot be forward-declared opaquely as a value member; the .cpp reconstructs it
     /// from mInFlight each submit — single source of truth, zero uv types leaked.
-    void *mWriteBufBase{nullptr};
-    size_t mWriteBufLen{0};
 
     bool mCloseRequested{false};
     bool mReadArmed{false};
@@ -134,7 +138,6 @@ private:
 };
 
 /** @brief Compiled per backend selection: the uv definition (the only one today). */
-std::unique_ptr<StreamBackend> make_stream_backend();
 
 } // namespace detail
 } // namespace network

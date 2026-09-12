@@ -233,6 +233,26 @@ TEST(TcpServerTest, ServerDestructorWithLiveConnections)
     loop.process_events(EventLoop::ProcessFlag::kAllEvents);
 }
 
+// F2 regression: a listening server without on_connection installed must accept-and-discard
+// (close + drain through the interface), not abort in the dropped backend's destructor.
+TEST(TcpServerTest, AcceptWithoutConsumerDiscards)
+{
+    cxxkit::EventLoop loop(cxxkit::make_default_dispatcher());
+    cxxkit::TcpServer server(loop);
+    ASSERT_TRUE(server.listen("127.0.0.1", 0));
+    // deliberately NO on_connection handler
+
+    cxxkit::TcpSocket client(loop);
+    bool connected = false;
+    client.connect("127.0.0.1", server.bound_port(), [&](bool ok) { connected = ok; });
+    for (int i = 0; i < 100 && !connected; ++i)
+    {
+        loop.process_events(cxxkit::EventLoop::ProcessFlag::kAllEvents, 100);
+    }
+    EXPECT_TRUE(connected); // the connection landed and was discarded server-side
+    // server + client destroyed here: discarded backend must already be closed + drained
+}
+
 } // namespace
 
 // 4. IPv6 dual-stack: listen on "::1" port 0; bound_port() must surface the OS-assigned port (the

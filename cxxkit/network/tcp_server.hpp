@@ -58,7 +58,7 @@ class TcpServerPrivate;
  * producers serialize through @c EventLoop::post().
  *
  * Lifecycle (I6): the destructor closes the server handle (idempotent close, F8-② shape) and
- * pumps the loop until the close callback has run, so no uv state outlives the object.
+ * pumps the loop until the close callback has run, so no transport state outlives the object.
  */
 class CXXKIT_NETWORK_API TcpServer
 {

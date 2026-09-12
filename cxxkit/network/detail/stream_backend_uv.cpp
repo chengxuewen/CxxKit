@@ -71,7 +71,9 @@ void UvStreamBackend::connect(const std::string &ip, uint16_t port, std::functio
     {
         // Invalid address: connect failure, not a programming error — backend reports plain failure,
         // the pimpl layer maps it onto the public error surface.
-        mNativeStatus = -UV_EADDRNOTAVAIL;
+        // Inert status (maps to kUnknown) — preserves T2's invalid-address public error exactly.
+        // NOT UV_EADDRNOTAVAIL: that would map to kAddrNotAvailable and change the T2 contract.
+        mNativeStatus = -UV_EINVAL;
         if (on_done)
         {
             on_done(false);
@@ -191,11 +193,18 @@ bool UvStreamBackend::listen(const std::string &ip, uint16_t port, int backlog)
         // The handle IS registered with the loop (init did that) — the only clean teardown is
         // uv_close + pump until the callback freed it (TcpSocket dtor discipline), so a retry
         // starts from a clean slate and the loop never carries a zombie handle.
+        // No-latch teardown (T2-verbatim): the failed listen is NOT a close lifecycle — a retry
+        // must find a fresh, unlatched backend (the header documents "may be retried"). Routing
+        // through begin_close would latch mCloseRequested and poison the retry (the pump would
+        // refuse to close the next handle, leaking the listener at teardown).
         if (!uv_is_closing(reinterpret_cast<uv_handle_t *>(mHandle)))
         {
             uv_close(reinterpret_cast<uv_handle_t *>(mHandle), &UvStreamBackend::on_closed);
         }
-        pump_until_closed();
+        for (int rounds = 0; rounds < 1000 && mHandle != nullptr; ++rounds)
+        {
+            mLoop->process_events(EventLoop::ProcessFlag::kAllEvents);
+        }
         return false;
     }
 

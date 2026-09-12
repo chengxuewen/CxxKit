@@ -151,7 +151,9 @@ std::unique_ptr<TcpSocket> TcpSocket::adopt_backend(EventLoop &loop,
                                                     std::unique_ptr<network::detail::StreamBackend> backend)
 {
     CXXKIT_CHECK(backend != nullptr) << "TcpSocket::adopt_backend: null backend";
+    CXXKIT_CHECK(&backend->loop() == &loop) << "TcpSocket::adopt_backend: backend is bound to a different loop";
     std::unique_ptr<TcpSocket> socket(new TcpSocket(loop, std::move(backend)));
+    socket->mDPtr->check_loop_thread("adopt_backend");
     socket->mDPtr->set_state(SocketState::kConnected); // adopted backend is already connected
     return socket;
 }

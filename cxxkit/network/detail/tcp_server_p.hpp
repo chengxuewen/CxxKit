@@ -54,7 +54,6 @@ public:
     EventLoop &mLoop;
     std::unique_ptr<network::detail::StreamBackend> mBackend{network::detail::make_stream_backend()};
 
-    bool mCloseRequested{false}; /// F8-② idempotence latch for the server handle (dtor/listen teardown)
     bool mListening{false};
     uint16_t mBoundPort{0};
     std::function<void(std::unique_ptr<TcpSocket>)> mOnConnection;

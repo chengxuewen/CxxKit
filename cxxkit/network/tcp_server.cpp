@@ -23,6 +23,8 @@ Library: CxxKit
 
 #include <cxxkit/network/detail/tcp_server_p.hpp>
 #include <cxxkit/network/tcp_server.hpp>
+
+#include <memory>
 #include <cxxkit/network/tcp_socket.hpp>
 
 #include <cxxkit/tools/checks.hpp>
@@ -47,8 +49,7 @@ TcpServerPrivate::TcpServerPrivate(TcpServer *p, EventLoop &loop)
 TcpServerPrivate::~TcpServerPrivate()
 {
     // I6: nothing should reach here with a live handle — the public destructor closes and pumps.
-    CXXKIT_CHECK(mCloseRequested || !mBackend->is_open())
-        << "TcpServerPrivate: backend outlived the drain pump (teardown bug)";
+    CXXKIT_CHECK(!mBackend->is_open()) << "TcpServerPrivate: backend outlived the drain pump (teardown bug)";
 }
 
 void TcpServerPrivate::check_loop_thread(const char *api) const
@@ -81,7 +82,6 @@ bool TcpServer::listen(const std::string &ip, uint16_t port, int backlog)
 {
     CXXKIT_D(TcpServer);
     d->check_loop_thread("listen");
-    CXXKIT_CHECK(!d->mCloseRequested) << "TcpServer::listen: server is closing/closed";
     if (d->mListening)
     {
         return false; // already listening — an explicit retry contract, not a fatal
@@ -106,6 +106,23 @@ bool TcpServer::listen(const std::string &ip, uint16_t port, int backlog)
             if (d->mOnConnection)
             {
                 d->mOnConnection(TcpSocket::adopt_backend(d->mLoop, std::move(client)));
+            }
+            else
+            {
+                // No consumer installed: accept-and-discard keeps the backlog from filling silently
+                // (T2 semantics). We are inside the uv connection callback — process_events must
+                // NOT be re-entered (I5), so the close+drain is deferred: the backend is kept alive
+                // by moving it into the posted closure, and the next loop round closes + drains it
+                // before dropping it.
+                // std::function requires copyable captures: the shared_ptr is the ownership bridge
+                // (the posted closure is the last owner — the backend dies right after the drain).
+                std::shared_ptr<network::detail::StreamBackend> doomed(std::move(client));
+                d->mLoop.post(
+                    [doomed]()
+                    {
+                        doomed->close(nullptr);
+                        doomed->pump_until_closed();
+                    });
             }
         });
     return true;
