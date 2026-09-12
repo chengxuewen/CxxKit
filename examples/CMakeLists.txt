@@ -228,7 +228,7 @@ if(CXXKIT_ENABLE_LOOP_BACKEND_UV)
     target_link_libraries(cxxkit_exp_event_loop PRIVATE cxxkit::kernel)
 endif()
 
-if(CXXKIT_ENABLE_LIB_NETWORK AND CXXKIT_ENABLE_LOOP_BACKEND_UV)
+if(CXXKIT_ENABLE_LIB_NETWORK)
     cxxkit_add_executable(cxxkit_exp_tcp_echo
         SOURCES exp_tcp_echo.cpp
         LIBRARIES ${CXXKIT_EXAMPLE_LINK_LIBRARIES}
