@@ -380,3 +380,17 @@ sanitizer（ASAN/LSAN/UBSan）与 coverage 用**独立 build 目录**（build-as
 **Qt 发现机制更正**：`/tmp/opencode/qt-env` 从未经环境变量接 find_package——配置期 PATH 前置 qt-env/bin（qmake6 qt6.conf 生效）。CI 的 `-DCXXKIT_ENABLE_LIB_QT=$QT_FLAG`/qt6-base-dev 属上游 workflow 待同步（本机不可验）。
 
 **验证矩阵**：主树（Qt 环境）83/83 / 无 Qt 环境 79/79（qt 块静默裁剪，休眠零参与实证）/ ASAN 84/84 零诊断 / exp_qt_embed rc=0 逐字节基线 / BuildInstall 新头在位旧树净 / 词汇 grep 清零 / format 干净。
+
+## D40: ImGuiApplication 落地——抽象基类 + SDL 后端（2026-09-12）
+
+**动因**：imgui 子库"使用不方便"（SDL 生命周期躺在 examples/sdl_host.hpp 未安装 + 帧循环逐例手写）。参考 OpenCTK ImGuiApplication（.refinfo 实证：抽象基类+后端子类+Factory 注册+set 三函数）与 DearPyGui（context/viewport/单帧/循环糖四分离），团队两轮调研收敛（librarian 流派普查：inline-loop 5/registry 2/virtual 2/单回调 1/listener 1 无绝对赢家；Metis 房规裁决：OpenCTK 的 Properties/set 三函数的存在前提是其 Factory 注册表与跨线程换 fn 的伪用例——cxxkit 均无）。
+
+**裁定 R1-R5**：R1 继承体系（抽象基类 ImGuiApplication + 后端子类，GLFW 留位）／R2 不继承 kernel（零 kernel 依赖保住，帧环≠内核环）／R3 入口 A 案（`exec(FrameCallback)` 单入口，frame 返 bool=true quit，无 setter/SpinLock/存储，`is_finished()` atomic 补生产者线程退出条件）／R4 配置 C2 案（位置 ctor，vsync 默认 true）／R5 D29 契约修订（kernel+核心永不开窗不变；imgui/sdl3 角落显式拥有 SDL 生命周期）。
+
+**Momus 三修复**：ctor 失败不 fatal 存 mInitFailed（T4 headless 可测性）+ T4 显示环境 SKIP 护栏；gizmo 需 `window()` 访问器（SDL_GetWindowSize 投影）；回滚序列补 sdl_host 漏掉的 MakeCurrent 分支 SDL_Quit。
+
+**终态**：`cxxkit/imgui/application.hpp`（基类：FrameCallback/纯虚 exec/is_finished atomic）+ `cxxkit/imgui/sdl3/sdl_application.{hpp,cpp}`（SdlImGuiApplication：生命周期+回滚含 MakeCurrent 分支 SDL_Quit 补齐+事件轮询 ESC/QUIT/CLOSE+window() 访问器）；7 窗口例全迁移（sdl_host.hpp 删除，净 -348 行）；headless 例零改动。
+
+**验证**：tst_imgui_application 4/4（T1-T3 double 契约 + T4 headless 真实失败路径 PASS）/ 主树 85/85 / headless rc=0 / format 干净。有显示环境窗口化人工 smoke 沿用 docs/imgui-smoke.md 分层（非自动化承诺）。
+
+**已知限制**：运行中换 draw fn 若成真需求届时加 set_draw_function+mutex（A 形状不挡路）；vsync=false 无自动化覆盖（swap 行为无显示测不了）。

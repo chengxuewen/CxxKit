@@ -348,3 +348,12 @@ cxxkit 是 OpenCTK（an open cpp toolkit）的成功重构版本 —— 精简�
 - [x] **文档/记忆**：README 库表 qt 行删 + kernel 行补 "Qt host bridge (header-only, opt-in by include)" + gates 句去 qt + Examples 表改 "needs Qt6 (auto-detected)"；docs/qt-embed-smoke.md 路径/开关措辞同步；decisions.md D39
 - 验证：门禁 grep 清零 / Qt 环境（PATH 前置 qt-env/bin configure）主树 83/83 + ASAN 84/84（lsan.supp）零诊断 + exp rc=0 逐字节基线 / 无 Qt 净环境 fresh 树 79/79（qt 块静默裁剪，新头休眠零参与）/ BuildInstall 新头在位旧树净 / format 干净
 - 备注：根 CMakeCache 残留旧 ENABLE_LIB_QT 键手工清（D25 同款）；GitHub CI workflow 的 QT_FLAG/qt6-base-dev 属上游侧待同步（本机不可验）
+
+### 2026-09-12 ImGuiApplication 落地（D40：抽象基类 + SDL 后端 + 例子迁移）
+
+- [x] **架构**：ImGuiApplication 抽象基类（FrameCallback=std::function<bool()> + 纯虚 exec + atomic is_finished）+ SdlImGuiApplication（ctor title/w/h/vsync=true + exec 内 SDL 生命周期/事件轮询/回滚含 MakeCurrent 分支 SDL_Quit 补齐 + mInitFailed 非致命 + window() 访问器）；GLFW 子类留位
+- [x] **团队链**：两轮调研（librarian 流派普查 + Metis 房规裁决）→ OpenCTK/DearPyGui 对照 → Momus 三修复（ctor 失败语义/T4 SKIP 护栏/gizmo window 访问器/回滚补齐）→ TDD T1（测试先行，T4 真实失败路径 PASS）→ T2 例子迁移（7 例全迁移 sdl_host 消亡净 -348 行）
+- [x] **契约修订（R5）**：kernel+imgui 核心永不开窗不变；imgui/sdl3 平台角落 opt-in 拥有 SDL 生命周期（QtCore 无头/QtGui 拥有 display 同构）
+- [x] imgui.ini gitignore（imgui 运行时产物）
+- 验证：tst_imgui_application 4/4（T4 headless 真实失败路径）/ 主树 85/85 / headless 例 rc=0 零回归 / sdl_host grep 清零 / format 干净
+- 备注：有显示环境窗口化人工 smoke 沿用 imgui-smoke.md 分层；GLFW 子类需求触发再取（需新增 vendored wrap）
