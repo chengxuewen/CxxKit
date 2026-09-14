@@ -103,8 +103,7 @@ public:
                            const std::string &ca_pem_path,
                            const std::string &cert_pem_path,
                            const std::string &key_pem_path)
-        : mLoop(loop)
-        , mListener(loop)
+        : mListener(loop) // M3: mLoop member dropped — the loop flows into the listener only
         , mCaPath(ca_pem_path)
         , mCertPath(cert_pem_path)
         , mKeyPath(key_pem_path)
@@ -118,8 +117,17 @@ public:
         // are unique_ptrs — destroyed right after here, sockets drain their own transports.
     }
 
-    /** @brief Starts listening on 127.0.0.1:0 (ephemeral port). @return listen success. */
-    bool start() { return mListener.listen("127.0.0.1", 0, 128) && bind_accept(); }
+    /** @brief Starts listening on 127.0.0.1:0 (ephemeral port) and arms the accept path.
+     *  @return listen success. */
+    bool start()
+    {
+        if (!mListener.listen("127.0.0.1", 0, 128))
+        {
+            return false;
+        }
+        mListener.on_connection([this](std::unique_ptr<TcpSocket> socket) { this->on_accepted(std::move(socket)); });
+        return true;
+    }
 
     /** @brief The port the listener actually bound (valid after a successful start()). */
     uint16_t port() const { return mListener.bound_port(); }
@@ -173,12 +181,6 @@ private:
         }
     };
 
-    bool bind_accept()
-    {
-        mListener.on_connection([this](std::unique_ptr<TcpSocket> socket) { this->on_accepted(std::move(socket)); });
-        return true;
-    }
-
     void on_accepted(std::unique_ptr<TcpSocket> socket)
     {
         std::unique_ptr<Peer> peer(new Peer);
@@ -191,13 +193,13 @@ private:
                                        15); // strlen("cxxkit-tls-test")
         if (rc != 0)
         {
-            this->fail(std::move(peer), std::move(socket));
+            this->fail(p, std::move(socket));
             return;
         }
         if (tls_load_cert_chain(&p->mCa, mCaPath) != 0 || tls_load_cert_chain(&p->mCert, mCertPath) != 0 ||
             tls_load_private_key(&p->mKey, mKeyPath) != 0)
         {
-            this->fail(std::move(peer), std::move(socket));
+            this->fail(p, std::move(socket));
             return;
         }
         rc = mbedtls_ssl_config_defaults(&p->mConfig,
@@ -206,7 +208,7 @@ private:
                                          MBEDTLS_SSL_PRESET_DEFAULT);
         if (rc != 0)
         {
-            this->fail(std::move(peer), std::move(socket));
+            this->fail(p, std::move(socket));
             return;
         }
         mbedtls_ssl_conf_rng(&p->mConfig, mbedtls_ctr_drbg_random, &p->mDrbg);
@@ -214,13 +216,13 @@ private:
         rc = mbedtls_ssl_conf_own_cert(&p->mConfig, &p->mCert, &p->mKey);
         if (rc != 0)
         {
-            this->fail(std::move(peer), std::move(socket));
+            this->fail(p, std::move(socket));
             return;
         }
         rc = mbedtls_ssl_setup(&p->mSsl, &p->mConfig);
         if (rc != 0)
         {
-            this->fail(std::move(peer), std::move(socket));
+            this->fail(p, std::move(socket));
             return;
         }
 
@@ -231,10 +233,11 @@ private:
             [this, p]() { this->drive_handshake(p); },
             [this, p]() { this->on_transport_error(p); });
 
-        this->drive_handshake(p); // first kick (usually parks on WANT_READ for the ClientHello)
-
-        // Parked on WANT_*: on_written/on_data re-drive it. Ownership transfers here.
+        // Push the peer BEFORE the first drive (I2): a synchronous terminal (immediate fatal) or
+        // even a same-call success inside drive_handshake erases from mPeers — the entry must
+        // exist for erase_peer to find, or the Peer would leak and any later state would dangle.
         mPeers.push_back(std::move(peer));
+        this->drive_handshake(p); // first kick (usually parks on WANT_READ for the ClientHello)
     }
 
     void drive_handshake(Peer *p)
@@ -296,10 +299,13 @@ private:
         }
     }
 
-    void fail(std::unique_ptr<Peer> peer, std::unique_ptr<TcpSocket> socket)
+    void fail(Peer *p, std::unique_ptr<TcpSocket> socket)
     {
-        // Synchronous setup failure: close the transport, deliver the failure, drop the peer.
+        // Synchronous setup failure (seed/cert/config error): close the transport, deliver the
+        // failure, drop the peer (erase_peer finds it because on_accepted pushes every peer
+        // before any terminal can run — I2).
         socket->close();
+        this->erase_peer(p);
         if (mOnReady)
         {
             mOnReady(std::move(socket), false);
@@ -318,7 +324,7 @@ private:
         }
     }
 
-    EventLoop &mLoop;
+private:
     TcpServer mListener;
     std::string mCaPath;
     std::string mCertPath;

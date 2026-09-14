@@ -53,6 +53,11 @@
 #include <cstdint>
 #include <deque>
 #include <functional>
+#include <cstddef>
+#include <cstdint>
+#include <deque>
+#include <functional>
+#include <memory>
 #include <vector>
 
 #if CXXKIT_FEATURE_ENABLE_KERNEL
@@ -69,6 +74,20 @@ CXXKIT_BEGIN_NAMESPACE
  */
 struct TlsBioBridge
 {
+    TlsBioBridge()
+        : mAlive(new int(1))
+    {
+    }
+    ~TlsBioBridge() { mAlive.reset(); } // expires every outstanding weak token (C1 fix)
+
+
+    /// @brief Liveness token (C1 fix): every socket-callback lambda that captures this also
+    /// captures a weak_ptr to mAlive; the bridge dtor resets mAlive, so a callback that
+    /// outlives the bridge (in-flight write completion, level-triggered read event) expires
+    /// its token and returns without touching a single member. TcpSocket has no
+    /// flush/cancel API for a queued write — the token is the only safe answer.
+    std::shared_ptr<int> mAlive;
+
     /// @brief Ciphertext out-box entry: bytes mbedTLS handed f_send, waiting for transport write.
     std::deque<std::vector<uint8_t>> mOutBox;
     /// @brief Ciphertext in-ring: bytes from the socket, read by f_recv up to mInRead offset.
@@ -79,9 +98,8 @@ struct TlsBioBridge
     bool mWriteInFlight = false;
     /// @brief Owner re-drive hook: handshake step / deferred read pump (set at attach).
     std::function<void()> mOnRedrive;
-    /// @brief Transport failure hook (on_written(false) path): report + close, owner-supplied.
+    /// @brief Transport failure path (on_written(false)): report + close, owner-supplied.
     std::function<void()> mOnTransportError;
-
     /**
      * @brief Arms the socket: error reporting + always-armed level-triggered read into the ring.
      *
@@ -94,9 +112,14 @@ struct TlsBioBridge
         mSocket = &socket;
         mOnRedrive = std::move(on_redrive);
         mOnTransportError = std::move(on_transport_error);
+        std::weak_ptr<int> alive = mAlive;
         socket.set_on_error(
-            [this](SocketError error, const std::string &message)
+            [this, alive](SocketError error, const std::string &message)
             {
+                if (alive.expired())
+                {
+                    return; // bridge destroyed — pending write was cancelled with false; owner already knows
+                }
                 (void)error;
                 (void)message;
                 // EOF / transport error: surface once to the owner, which closes the peer.
@@ -108,8 +131,15 @@ struct TlsBioBridge
             });
         // Always armed (level-triggered): the ring is the read buffer; empty ring is WANT_READ.
         socket.read_start(
-            [this](const uint8_t *data, ssize_t nread)
+            [this, alive](const uint8_t *data, ssize_t nread)
             {
+                if (alive.expired())
+                {
+                    // M4: terminal invocation may arrive after Peer/bridge destruction — the
+                    // token check above already returned; this branch must not touch members
+                    // regardless.
+                    return;
+                }
                 if (nread > 0)
                 {
                     mInRing.insert(mInRing.end(), data, data + nread);
@@ -117,6 +147,14 @@ struct TlsBioBridge
                     {
                         std::function<void()> cb = mOnRedrive;
                         cb();
+                    }
+                    // I1: compact the consumed ring prefix HERE, after the re-drive returns —
+                    // f_recv only ever runs inside mOnRedrive, so this erase cannot invalidate
+                    // a live f_recv window. Keeps the ring bounded without owner cooperation.
+                    if (mInRead > 0)
+                    {
+                        mInRing.erase(mInRing.begin(), mInRing.begin() + static_cast<std::ptrdiff_t>(mInRead));
+                        mInRead = 0;
                     }
                 }
                 // nread <= 0 (EOF/error terminal event) routes through set_on_error already.
@@ -135,10 +173,16 @@ struct TlsBioBridge
         }
         mWriteInFlight = true;
         const std::vector<uint8_t> &front = mOutBox.front();
+        std::weak_ptr<int> alive = mAlive; // token survives bridge destruction (C1)
         mSocket->write(front.data(),
                        front.size(),
-                       [this](bool ok)
+                       [this, alive](bool ok)
                        {
+                           if (alive.expired())
+                           {
+                               return; // bridge died mid-flight (C1): the owner already delivered or
+                                       // tore down the peer — pop/pump/redrive must not run.
+                           }
                            mWriteInFlight = false;
                            if (!ok)
                            {
@@ -162,7 +206,9 @@ struct TlsBioBridge
                        });
     }
 
-    /// @brief Compact drained bytes from the front of the ring (call after redrive handling).
+    /// @brief Compacts the consumed ring prefix (kept public: Task 3's client reuses the
+    /// bridge for post-handshake data pump, where a manual compaction between reads may be
+    /// preferable to waiting for the next on_data tail).
     void compact_ring()
     {
         mInRing.erase(mInRing.begin(), mInRing.begin() + static_cast<std::ptrdiff_t>(mInRead));
@@ -174,6 +220,14 @@ struct TlsBioBridge
     static int f_send(void *p_ctx, const unsigned char *buf, size_t len)
     {
         TlsBioBridge *self = static_cast<TlsBioBridge *>(p_ctx);
+        if (self->mWriteInFlight || !self->mOutBox.empty())
+        {
+            return MBEDTLS_ERR_SSL_WANT_WRITE; // mbedTLS retries the SAME buffer later
+        }
+        // M1: mbedTLS fragments to MBEDTLS_SSL_OUT_CONTENT_LEN (~16KB), so len never
+        // approaches INT_MAX — the static_cast<int> below is safe.
+        // mbedTLS's buffer is only valid inside f_send — the copy IS the contract.
+        self->mOutBox.push_back(std::vector<uint8_t>(buf, buf + len));
         if (self->mWriteInFlight || !self->mOutBox.empty())
         {
             return MBEDTLS_ERR_SSL_WANT_WRITE; // mbedTLS retries the SAME buffer later
