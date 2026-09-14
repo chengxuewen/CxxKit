@@ -375,3 +375,12 @@ cxxkit 是 OpenCTK（an open cpp toolkit）的成功重构版本 —— 精简�
 - [x] **tst_http 从 0 到 1**（`9a343dc`）：14 用例回环 canned-server 特性化（请求字节捕获断言/超时→0/拒绝→0/Cookie/Bearer/Basic/async_download/ofstream 下载）；双树 ×3 全绿；**特性化钉子：async_get/put/post 不可实例化缺陷（PIT-54）+ I1 泵线程禁令（loop.exec 拥主线程、cpr 挪 worker）+ 代理 env 中毒（main 里 unset 六变量）**
 - 验证：主 86/86 + asio 85/85 + asan-asio 84/84；审查 APPROVE（0 C/I；M1-M3 备案：exec 挂看门狗//tmp 并发名/.pc 分号 join 既有缺陷）
 - 备案：M3 .pc `Libs: -lcpr;-luv` 分号 join 缺陷系 D31 时代既有（fd8b28e），一行 string(JOIN " ") 修复待取
+
+### 2026-09-14 TLS 三期 TlsSocket 落地（D42，SDD 流水线，1c7515a..3b710fa+）
+
+- [x] **架构**：TlsSocket 组合 TcpSocket（R1，StreamBackend 零改动双后端免费）+ mbedTLS 3.6.2 引擎（公共头零 TLS 类型）+ SocketError 扩展 4 TLS 枚举（R2）+ map_tls_error/tls_want_retry；WANT_* 事件驱动握手（f_send 出箱同步返/重驱 on_written/on_data 双触发）；同参部分写重试；close_notify 直接发送路；per-socket entropy+DRBG；set_transport 注入 + set_certificate/set_private_key 服务端身份
+- [x] **测试**：内嵌 mbedTLS 服务端 oracle（R3）+ P-256 证书链入库（R4）+ tst_tls_socket 12 用例（握手/回显/256KB 分片/验证 4 态/close 双向/服务端角色/death）+ 映射 8 用例；liveness token 防 in-flight write UAF（C1）
+- [x] **计划链**：Momus APPROVE-WITH-FIXES 3 修复 → SDD → T2 两轮修复波（C1+I1/I2+B1 f_send dup 死锁——功能探针门槛）→ T3 会话超时 controller 接力（asio stall=io_context auto-stop 缺 restart 根因）→ T3 审查 APPROVED-WITH-FIXES → controller F1/F2 修复波
+- [x] **消费面**：WrapMbedTLS stub 补三库链（cf9e1e9 类洞）——双树 /tmp 消费方 build+run 全通
+- 验证：uv 主树 **88/88** / asio 87/87 / tls 双树 ×3 / ASAN-asio tls 零诊断 / format+C++11+octk 清零
+- 已知限制：renegotiation 编译期禁用；ALPN/session/客户端证书/DTLS 需求触发；README 行 T4 同步

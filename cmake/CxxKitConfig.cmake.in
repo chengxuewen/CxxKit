@@ -67,6 +67,18 @@ foreach(_wrap_spec IN ITEMS
     endif()
 endforeach()
 
+# MbedTLS stub link-up (D42): cxxkit_network references mbedtls symbols directly once TlsSocket
+# exists — an empty stub is a consumer link hole (cf9e1e9 class). Wire the three static libs in
+# dependency order (ssl -> x509 -> crypto); the wrap's Config chain (MbedTLS::mbedtls) covers the
+# build tree, this covers the install tree.
+if(TARGET CxxKitWrapMbedTLS::WrapMbedTLS)
+    set_property(TARGET CxxKitWrapMbedTLS::WrapMbedTLS PROPERTY
+        INTERFACE_LINK_LIBRARIES
+        "${PACKAGE_PREFIX_DIR}/lib/libmbedtls.a"
+        "${PACKAGE_PREFIX_DIR}/lib/libmbedx509.a"
+        "${PACKAGE_PREFIX_DIR}/lib/libmbedcrypto.a")
+endif()
+
 # Transport stubs (B2/D41) — MUST run before cxxkitTargets: the exported kernel/network
 # targets reference these stub targets in their INTERFACE_LINK_LIBRARIES. The gating vars
 # arrive @-substituted (consume-side if() cannot see the builder's cache).

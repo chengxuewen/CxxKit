@@ -359,3 +359,17 @@
 - **解法**: 备案（D41.5 波次不动 API）。修复选项：ThreadPool 加 submit_future 变参（对齐 cpr::async 语义）或 detail::async 改 std::async。修复时删 tst_http 头部注释钉子 + 补 async 三动词用例。
 - **验证**: 修复后 async_get/put/post 三用例（现被跳过并注释钉死）转绿。
 - **禁止**: 声称 async_* 可用——测试与文档均已钉死其不可用现状。
+
+## PIT-55: asio io_context::poll() 空轮自动 stop（2026-09-14）
+- **症状**: asio 树 TlsSocket 握手后 stall——cadence timer 每 1ms poll 但 handlers=0 永远不动；同一代码 uv 树全绿。
+- **根因**: io_context::poll() 一轮无就绪事件即 stopped_=true；此后注册的 async ops 挂队列但 do_poll_one 见 stopped_ 直接返 0——只有 restart() 能解锁。D41 T4 泵修复时未知。
+- **解法**: pump_tick 每次 poll 前无条件 restart()（幂等单 flag store）；pump_until_closed drain 与尾部 quiet-drain 同理。
+- **验证**: asio tls 13 用例 ×3 全绿（原 2 用例挂）；vendored scheduler.ipp 源码实证（restart 只清 stopped_ 不动 op_queue_）。
+- **禁止**: 对共享/长命 io_context 做 poll 系列调用必须配对 restart——"poll 一轮没事件"是常态而非终止条件。
+
+## PIT-56: 回调 lambda 持 this 跨对象生存期 = liveness token 必备（2026-09-14）
+- **症状**: T2 测试服务端每次成功握手后 in-flight write 完成回调触碰已析构桥（ Peer erase 在 mOnReady 之前）——审查实证 deterministic UAF，ASAN 未跑到即被抓。
+- **根因**: 完成回调存于传输层（TcpSocket backend），桥/Peer 死亡不解散它；set_on_error 清了、read_stop 停了，唯独 on_written lambda 无 API 取消。
+- **解法**: shared_ptr<int> mAlive + 全部跨生存期 lambda 捕 weak_ptr 副本，首行 expired()→return（桥 dtor 显式 reset）。TlsSocket pimpl 镜像同款。
+- **验证**: token 修复后双树 ×3 + ASAN 零诊断；本 pitfall 是 PIT-40 的泛化——回调可能比捕获对象活得久的场景全部适用。
+- **禁止**: 注册到长命对象的 lambda 禁止裸捕获 this——除非对象生存期严格覆盖回调可达期（证明成本高于 token 成本）。

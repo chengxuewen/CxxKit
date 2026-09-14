@@ -408,3 +408,17 @@ sanitizer（ASAN/LSAN/UBSan）与 coverage 用**独立 build 目录**（build-as
 **验证**：uv 树 85/85 + asio 树 84/84（差 1 = qt 自动检测环境门，合法）；tcp 3 套件双树绿（24 用例 + 2 新回归）；空闲 CPU 0.00%（修后）；cxxkit_network link.txt asio 树零 libuv；公共头/上层 cpp uv 词汇 grep 清零；format/C++11/octk 门禁清零；ASAN tcp 3/3 零诊断（uv 树）。
 
 **已知限制**：Step 4.2b 消费面半边（CxxKitConfig stub 行/.pc WrapAsio 映射/libuv stub 后端条件）显式延期——asio 构建安装树消费未接线；ASAN-asio 树未跑；destroy-in-error-callback UAF 窗口系 T2 既有形态（非本次回归，asio 任务备案）；deferred-tick 分支 mN 空指针防御（I6 契约下不可达）。
+
+## D42: TlsSocket——mbedTLS over StreamBackend（2026-09-14，TLS 三期）
+
+**裁定 R1-R4**（用户四选）：R1 组合 TcpSocket（非装饰器，StreamBackend 零改动，双后端免费）／R2 扩展 SocketError（+kTlsHandshakeFailed/kTlsCertificateError/kTlsPeerClosed/kTlsProtocolError，追加 ABI 安全）／R3 内嵌 mbedTLS 测试服务端（TcpServer accept→服务端握手，handshake-oracle 定位——数据面用例走 server-role TlsSocket，审查 Q5 裁定）／R4 预生成 P-256 证书链入库（tests/certs/，10 年，SAN localhost/127.0.0.1）。
+
+**计划链**：Momus APPROVE-WITH-FIXES 3 修复全折（F1 bio-bridge 写侧契约显式化：f_send 同步拷贝出箱返 len/WANT_WRITE/on_written→重驱；F2 死枚举 TlsRole 删除——connect_tls=client/start_tls=server 隐含；F3 套件算术 88/87/86）。调研：mbedTLS 3.6.2 源码实证（ssl_set_bio 契约/WANT_* 语义/TLS 流式免 timer/ssl_read 可返 WANT_WRITE/同参重试/PEER_CLOSE_NOTIFY 三态区分）+ cxxkit 挂点盘点（WrapMbedTLS 原不在 PUBLIC/零 TLS 测试先例）。
+
+**落地**（1c7515a..3b710fa）：错误面+映射／bio bridge+测试服务端（liveness token 防 in-flight write UAF——C1 Critical 审查实证）／TlsSocket 核心（公共头零 mbedTLS 类型、组合 TcpSocket、set_transport 注入、WANT_* 事件驱动、同参部分写重试、close_notify 直接发送路、set_certificate/set_private_key 服务端身份——超计划必需）。**asio stall 根因**：io_context::poll() 空轮自动 stop 后新 ops 永不执行——每次 poll 前 restart()。**每次握手 UAF**（T2 审查）：pump 完成回调持桥 this 跨 Peer 生存期→liveness token。**INVALID_MAC**：共享 DRBG→per-socket entropy+drbg。
+
+**T3 审查修复波**（controller 落地 `3b710fa`）：F1 公共头契约谎言更正（per-socket 真相）／F2 pump_until_closed drain 补 restart——停止态调度器让 cancelled handlers 存活于 Native 析构后=latent UAF。**消费面**（T4）：WrapMbedTLS stub 补三库链（ssl→x509→crypto 依赖序，cf9e1e9 类洞，Momus 预言应验）——双树 /tmp 消费方 build+run 全通。
+
+**验证**：uv 主树 **88/88** / asio **87/87** / tls 套件双树 ×3 稳定 / ASAN-asio tls 零诊断 / 消费面双树通 / format+C++11+octk 清零。
+
+**已知限制**：renegotiation 编译期禁用（mbedTLS 3.x 默认，WANT_WRITE-in-read 路径仅评审）；ALPN/session 恢复/客户端证书/DTLS 需求触发；destroy-in-error-callback UAF 仍为 T2 形态备案；I-1 窗口分析性推导未实证复现。
