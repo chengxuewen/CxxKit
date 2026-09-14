@@ -61,9 +61,10 @@ class TlsSocketPrivate;
  * plaintext on the loop thread; a @c nread <= 0 terminal event means the TLS session ended
  * (clean close from the peer, or transport EOF).
  *
- * Threading: ALL methods are loop-thread only (fatal otherwise). One process-global entropy +
- * DRBG pair seeds every socket — safe because every operation happens on a single loop thread.
- * The class contains no third-party (TLS library) types on its public surface.
+ * Threading: ALL methods are loop-thread only (fatal otherwise). Per-socket entropy + DRBG
+ * (seeded in the ctor) — no TLS state is shared between sockets; every operation runs on the
+ * socket's single loop thread. The class contains no third-party (TLS library) types on its
+ * public surface.
  */
 class CXXKIT_NETWORK_API TlsSocket
 {

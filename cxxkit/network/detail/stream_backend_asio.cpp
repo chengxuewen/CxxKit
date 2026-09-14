@@ -662,6 +662,12 @@ void AsioStreamBackend::pump_until_closed()
     // false inside the drained connect handler.
     if (mN)
     {
+        // T3 review F2: the shared scheduler may be stopped here (a quiet poll elsewhere on this
+        // loop auto-stops it); polling a stopped scheduler returns 0 unconditionally, so the
+        // cancelled completions would never run and would survive Native destruction (their
+        // lambdas capture this backend) — a later restart+poll from another backend would then
+        // invoke them into freed memory. Restart first: handlers run while the backend lives.
+        mN->io->restart();
         for (int rounds = 0; rounds < 1000 && mN->io->poll() > 0; ++rounds)
         {
             // drain
