@@ -29,6 +29,8 @@ Library: CxxKit
 #include <cxxkit/3rdparty/asio/asio.hpp>
 
 #include <cxxkit/tools/checks.hpp>
+#include <cstdio>
+#include <cstdlib>
 
 #include <atomic>
 #include <memory>
@@ -169,6 +171,13 @@ void AsioStreamBackend::pump_tick()
     // Poll UNCONDITIONALLY (has_work checked only for the cadence decision below): a just-closed
     // endpoint still has cancelled completion handlers queued (CloseTwiceIdempotent contract —
     // every write gets its false); skipping poll on empty has_work would strand deliveries.
+    // asio scheduler auto-stop (root cause of the D42 T3 asio stall): poll()/run() mark the
+    // scheduler STOPPED when a round finds the queue empty with no outstanding work. Every op
+    // registered AFTER that stop sits in the queue un-run — every later poll() returns 0
+    // handlers forever (the D42 symptom: handshake completes, then all I/O freezes until a
+    // teardown pump). restart() clears the stopped flag; it is a no-op when not stopped, so
+    // calling it before EVERY poll is the documented, correct pattern.
+    mN->io->restart();
     mN->pumping = true;
     const size_t handlers_ran = mN->io->poll(); // run every ready handler; never blocks
     mN->pumping = false;

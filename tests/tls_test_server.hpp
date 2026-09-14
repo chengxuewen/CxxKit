@@ -143,10 +143,34 @@ public:
         mOnReady = std::move(on_ready);
     }
 
-private:
+    /**
+     * @brief D42 T3 (R-T3-3): parking slot for delivered sockets. The test sets a slot; the
+     * success path MOVES the accepted socket into it instead of delivering through the
+     * callback — so the socket (and its transport teardown) never dies inside a dispatcher
+     * callback, while the test still reads handshake success from the callback's bool.
+     */
+    void park_socket(std::unique_ptr<TcpSocket> *slot) { mParkSlot = slot; }
+
+    /**
+     * @brief D42 T3 (R-T3-3b): failure-path slot — same discipline as @ref park_socket for the
+     * handshake-failure delivery: the (still open) transport leaves through the slot and is
+     * destroyed by the test frame, never inside a dispatcher callback.
+     */
+    void park_failed_socket(std::unique_ptr<TcpSocket> *slot) { mFailSlot = slot; }
+
+    /**
+     * @brief D42 T3 (R-T3-3c): parking slot for the handshake PEER itself. The Peer owns the
+     * bio bridge whose lambdas are wired onto the delivered socket; if the Peer died at
+     * delivery while the socket lived, a stale uv read event would run into freed bridge
+     * state (UAF). Parking the Peer moves that lifetime to the test frame — destroyed AFTER
+     * the parked socket (declare the Peer slot BEFORE the socket slot).
+     */
     /// @brief Everything one accepted connection needs; freed as a unit after delivery/dtor.
+    /// (public: the R-T3-3c parking handoff gives the test ownership of peers — declared as
+    /// std::unique_ptr<Peer> in the test frame, destroyed AFTER the parked socket.)
     struct Peer
     {
+    public:
         mbedtls_x509_crt mCa;
         mbedtls_x509_crt mCert;
         mbedtls_pk_context mKey;
@@ -180,6 +204,8 @@ private:
             mbedtls_x509_crt_free(&mCa);
         }
     };
+
+    void park_peer(std::unique_ptr<Peer> *slot) { mPeerSlot = slot; }
 
     void on_accepted(std::unique_ptr<TcpSocket> socket)
     {
@@ -254,9 +280,36 @@ private:
                 p->mSocket->set_on_error(std::function<void(SocketError, const std::string &)>());
                 p->mDone = true;
                 std::unique_ptr<TcpSocket> socket = std::move(p->mSocket);
-                this->erase_peer(p);
+                if (mPeerSlot != nullptr)
+                {
+                    // R-T3-3c: hand the WHOLE peer over (bridge lifetime follows the socket).
+                    for (std::vector<std::unique_ptr<Peer>>::iterator it = mPeers.begin(); it != mPeers.end(); ++it)
+                    {
+                        if (it->get() == p)
+                        {
+                            *mPeerSlot = std::move(*it);
+                            mPeers.erase(it);
+                            break;
+                        }
+                    }
+                }
+                else
+                {
+                    this->erase_peer(p);
+                }
+                if (mParkSlot != nullptr)
+                {
+                    *mParkSlot = std::move(socket); // R-T3-3: never delete inside a callback
+                    if (mOnReady)
+                    {
+                        mOnReady(nullptr, true); // outcome only; ownership went to the slot
+                    }
+                    return;
+                }
                 if (mOnReady)
                 {
+                    // Legacy path: ownership leaves through the callback ARG — the receiver
+                    // parks it before returning; deleting it here would trip the I5 fatal.
                     mOnReady(std::move(socket), true);
                 }
                 return;
@@ -284,18 +337,45 @@ private:
 
     void fail_handshake(Peer *p, int mbedtls_rc)
     {
+        (void)mbedtls_rc; // single failure-reporting path today; the rc is mapped by the client side
         p->mDone = true;
         std::unique_ptr<TcpSocket> socket = std::move(p->mSocket);
         if (socket)
         {
-            socket->close(); // dtor would pump the loop mid-callback — close() only (I5)
-            // Clear the bridge-capturing error lambda: the Peer dies below, the socket does not.
+            // R-T3-3b: drop the bridge-capturing callbacks (the transport outlives this frame).
             socket->set_on_error(std::function<void(SocketError, const std::string &)>());
         }
-        this->erase_peer(p);
+        if (mPeerSlot != nullptr)
+        {
+            // R-T3-3c: the Peer's bridge lambdas live on the parked socket — hand the WHOLE
+            // peer to the test frame (destroyed AFTER the socket) or a residual read event
+            // runs into the freed bridge (ASAN-proven UAF).
+            for (std::vector<std::unique_ptr<Peer>>::iterator it = mPeers.begin(); it != mPeers.end(); ++it)
+            {
+                if (it->get() == p)
+                {
+                    *mPeerSlot = std::move(*it);
+                    mPeers.erase(it);
+                    break;
+                }
+            }
+        }
+        else
+        {
+            this->erase_peer(p);
+        }
+        if (mFailSlot != nullptr)
+        {
+            *mFailSlot = std::move(socket);
+        }
+        else if (socket)
+        {
+            socket->close(); // no slot wired: legacy path — close now, delete never (leak-free
+                             // via the caller frame below; test suites always wire the slot)
+        }
         if (mOnReady)
         {
-            mOnReady(std::move(socket), false);
+            mOnReady(nullptr, false);
         }
     }
 
@@ -332,6 +412,9 @@ private:
     std::string mCertPath;
     std::string mKeyPath;
     std::function<void(std::unique_ptr<TcpSocket>, bool ok)> mOnReady;
+    std::unique_ptr<TcpSocket> *mParkSlot = nullptr;
+    std::unique_ptr<TcpSocket> *mFailSlot = nullptr;
+    std::unique_ptr<Peer> *mPeerSlot = nullptr;
     std::vector<std::unique_ptr<Peer>> mPeers;
 };
 

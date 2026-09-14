@@ -630,7 +630,15 @@ if(CXXKIT_ENABLE_LIB_NETWORK)
         SOURCES tst_tls_error_mapping.cpp
         INCLUDE_DIRECTORIES ${PROJECT_SOURCE_DIR}
         LIBRARIES ${CXXKIT_TEST_LINK_LIBRARIES} cxxkit::network CxxKitWrapMbedTLS::WrapMbedTLS ${CMAKE_THREAD_LIBS_INIT})
+    # D42 T3: TEST_CERTS_DIR resolves the tests/certs/*.pem paths at compile time (tests run
+    # with cwd = build dir — a relative path would not survive).
+    cxxkit_add_test(cxxkit_tst_tls_socket
+        SOURCES tst_tls_socket.cpp
+        INCLUDE_DIRECTORIES ${PROJECT_SOURCE_DIR}
+        LIBRARIES ${CXXKIT_TEST_LINK_LIBRARIES} cxxkit::network CxxKitWrapMbedTLS::WrapMbedTLS ${CMAKE_THREAD_LIBS_INIT})
+    target_compile_definitions(cxxkit_tst_tls_socket PRIVATE TEST_CERTS_DIR="${CMAKE_CURRENT_SOURCE_DIR}/certs")
 endif()
+
 
 # Qt host-bridge dispatcher test (D39): registered only when Qt6 is auto-detected in this environment —
 # no dedicated build switch (find_package is quiet; Qt-less trees silently prune this block).
