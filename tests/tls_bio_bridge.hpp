@@ -53,10 +53,6 @@
 #include <cstdint>
 #include <deque>
 #include <functional>
-#include <cstddef>
-#include <cstdint>
-#include <deque>
-#include <functional>
 #include <memory>
 #include <vector>
 
@@ -226,12 +222,6 @@ struct TlsBioBridge
         }
         // M1: mbedTLS fragments to MBEDTLS_SSL_OUT_CONTENT_LEN (~16KB), so len never
         // approaches INT_MAX — the static_cast<int> below is safe.
-        // mbedTLS's buffer is only valid inside f_send — the copy IS the contract.
-        self->mOutBox.push_back(std::vector<uint8_t>(buf, buf + len));
-        if (self->mWriteInFlight || !self->mOutBox.empty())
-        {
-            return MBEDTLS_ERR_SSL_WANT_WRITE; // mbedTLS retries the SAME buffer later
-        }
         // mbedTLS's buffer is only valid inside f_send — the copy IS the contract.
         self->mOutBox.push_back(std::vector<uint8_t>(buf, buf + len));
         self->pump(); // submit ONE entry immediately; completion pops + re-drives

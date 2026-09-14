@@ -302,8 +302,10 @@ private:
     void fail(Peer *p, std::unique_ptr<TcpSocket> socket)
     {
         // Synchronous setup failure (seed/cert/config error): close the transport, deliver the
-        // failure, drop the peer (erase_peer finds it because on_accepted pushes every peer
-        // before any terminal can run — I2).
+        // failure. erase_peer(p) here is a NO-OP — all five setup failures fire before
+        // on_accepted's mPeers.push_back, so p is not in the vector; the Peer is freed by the
+        // caller-frame unique_ptr when on_accepted returns (kept for symmetry with
+        // fail_handshake's post-push path).
         socket->close();
         this->erase_peer(p);
         if (mOnReady)
