@@ -621,6 +621,10 @@ if(CXXKIT_ENABLE_LIB_NETWORK)
         SOURCES tst_tcp_faults.cpp
         INCLUDE_DIRECTORIES ${PROJECT_SOURCE_DIR}
         LIBRARIES ${CXXKIT_TEST_LINK_LIBRARIES} cxxkit::network ${CMAKE_THREAD_LIBS_INIT})
+    cxxkit_add_test(cxxkit_tst_http
+        SOURCES tst_http.cpp
+        INCLUDE_DIRECTORIES ${PROJECT_SOURCE_DIR}
+        LIBRARIES ${CXXKIT_TEST_LINK_LIBRARIES} cxxkit::network ${CMAKE_THREAD_LIBS_INIT})
 endif()
 
 # Qt host-bridge dispatcher test (D39): registered only when Qt6 is auto-detected in this environment —
