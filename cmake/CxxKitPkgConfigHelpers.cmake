@@ -72,6 +72,10 @@ function(cxxkit_generate_pkg_config target pc_name)
             list(APPEND _pc_extra_libs "-lyuv")
         elseif(_lib STREQUAL "CxxKitWrapLibuv::WrapLibuv")
             list(APPEND _pc_extra_libs "-luv")
+        elseif(_lib STREQUAL "CxxKitWrapAsio::WrapAsio")
+            # header-only, installs into the shared namespaced include prefix: no -l, no Requires.
+            # Explicit no-op row so the helper never silently mis-maps a future asio linkage.
+
         elseif(_lib STREQUAL "CxxKitWrapBreakpad::WrapBreakpad")
             list(APPEND _pc_extra_libs "-lbreakpad_client -pthread")
         endif()

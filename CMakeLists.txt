@@ -384,10 +384,23 @@ if(CXXKIT_BUILD_INSTALL)
     if(CXXKIT_ENABLE_LIB_CRASH)
         list(APPEND CXXKIT_VENDORED_FIND_DEPS "unofficial-breakpad" "Backward")
     endif()
-    if(CXXKIT_ENABLE_LOOP_BACKEND_UV OR CXXKIT_ENABLE_LIB_NETWORK)
+    # libuv ships with the kernel's default loop backend (uv) — and with network only when the
+    # network backend IS uv (D41: under CXXKIT_NETWORK_BACKEND=asio, network does not need libuv).
+    if(CXXKIT_ENABLE_LOOP_BACKEND_UV
+       OR (CXXKIT_ENABLE_LIB_NETWORK AND NOT CXXKIT_NETWORK_BACKEND STREQUAL "asio"))
         list(APPEND CXXKIT_VENDORED_FIND_DEPS "libuv")
     endif()
     set(CXXKIT_LOOP_BACKEND_UV ${CXXKIT_ENABLE_LOOP_BACKEND_UV})
+    if(CXXKIT_ENABLE_LIB_NETWORK AND NOT CXXKIT_NETWORK_BACKEND STREQUAL "asio")
+        set(CXXKIT_NETWORK_UV_BACKEND ON)
+    else()
+        set(CXXKIT_NETWORK_UV_BACKEND OFF)
+    endif()
+    if(CXXKIT_ENABLE_LIB_NETWORK AND CXXKIT_NETWORK_BACKEND STREQUAL "asio")
+        set(CXXKIT_NETWORK_ASIO_BACKEND ON)
+    else()
+        set(CXXKIT_NETWORK_ASIO_BACKEND OFF)
+    endif()
     set(CXXKIT_NETWORK ${CXXKIT_ENABLE_LIB_NETWORK})
     configure_package_config_file(
         "${CXXKIT_CMAKE_DIR}/CxxKitConfig.cmake.in"

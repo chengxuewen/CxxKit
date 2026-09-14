@@ -67,12 +67,13 @@ foreach(_wrap_spec IN ITEMS
     endif()
 endforeach()
 
-# libuv stub (B2, closes B1 C-1): libuv's own Config (find_dependency above) provides
-# libuv::uv_a WITH its transitive link libs (pthread;dl;rt) — delegate to it when present;
-# fall back to the raw static lib for consumers that skip the find_dependency chain.
-# Gated (D38): libuv ships only when the default loop backend is ON or network is ON
-# (kernel engine / TcpSocket+TcpServer carriers).
-if(CXXKIT_LOOP_BACKEND_UV OR CXXKIT_NETWORK)
+# Transport stubs (B2/D41) — MUST run before cxxkitTargets: the exported kernel/network
+# targets reference these stub targets in their INTERFACE_LINK_LIBRARIES. The gating vars
+# arrive @-substituted (consume-side if() cannot see the builder's cache).
+#   - libuv: ships with the uv loop backend, and with network only when network's backend IS uv.
+#   - asio: header-only (D41) — no .a; vendored headers come from the namespaced install tree,
+#     so the stub alone (include dirs on the shared prefix) is sufficient.
+if(@CXXKIT_LOOP_BACKEND_UV@ OR @CXXKIT_NETWORK_UV_BACKEND@)
     if(NOT TARGET CxxKitWrapLibuv::WrapLibuv)
         add_library(CxxKitWrapLibuv::WrapLibuv INTERFACE IMPORTED)
     endif()
@@ -81,6 +82,13 @@ if(CXXKIT_LOOP_BACKEND_UV OR CXXKIT_NETWORK)
     elseif(EXISTS "${PACKAGE_PREFIX_DIR}/lib/libuv.a")
         set_property(TARGET CxxKitWrapLibuv::WrapLibuv PROPERTY INTERFACE_LINK_LIBRARIES "${PACKAGE_PREFIX_DIR}/lib/libuv.a")
     endif()
+endif()
+if(@CXXKIT_NETWORK_ASIO_BACKEND@)
+    if(NOT TARGET CxxKitWrapAsio::WrapAsio)
+        add_library(CxxKitWrapAsio::WrapAsio INTERFACE IMPORTED)
+    endif()
+    set_property(TARGET CxxKitWrapAsio::WrapAsio PROPERTY
+        INTERFACE_INCLUDE_DIRECTORIES "${PACKAGE_PREFIX_DIR}/include")
 endif()
 
 include("${CMAKE_CURRENT_LIST_DIR}/cxxkitTargets.cmake")
