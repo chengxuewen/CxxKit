@@ -367,3 +367,11 @@ cxxkit 是 OpenCTK（an open cpp toolkit）的成功重构版本 —— 精简�
 - [x] **PIT-50/51/52**：地址族硬编码/SDD 实现者超时调试转储/post 链忙轮询
 - 验证：uv 树 85/85 + asio 树 84/84（qt 自动检测差 1 合法）+ tcp 双树 3/3（24+2 用例）+ uv 词汇 grep 清零 + format/C++11/octk 清零 + ASAN tcp 零诊断 + asio link.txt 零 libuv + 空闲 CPU 0.00%
 - 已知限制：Step 4.2b 消费面半边（Config stub/.pc）延期；ASAN-asio 树未跑；GLFW 式第三后端需求触发再取
+
+### 2026-09-13 D41.5 收尾小波（消费面 + ASAN-asio 全量 + tst_http 首覆盖）
+
+- [x] **4.2b 消费面接线**（`11791d2`）：transport stub（libuv+asio header-only stub）移到 cxxkitTargets 之前 + 门 @ 替换（PIT-53——D38 以来安装树消费面一直是坏的，消费验证首次抓到并修复）；libuv find_dependency/stub 门引入 CXXKIT_NETWORK_UV_BACKEND/_ASIO_BACKEND（network⇒libuv 蕴含在 asio 下解除）；.pc WrapAsio 显式 no-op 行；**双树消费方 find_package+build+run 全通**
+- [x] **ASAN-asio 全量**（build-asio-asan 新树，lsan.supp 纪律）：**84/84 零诊断**
+- [x] **tst_http 从 0 到 1**（`9a343dc`）：14 用例回环 canned-server 特性化（请求字节捕获断言/超时→0/拒绝→0/Cookie/Bearer/Basic/async_download/ofstream 下载）；双树 ×3 全绿；**特性化钉子：async_get/put/post 不可实例化缺陷（PIT-54）+ I1 泵线程禁令（loop.exec 拥主线程、cpr 挪 worker）+ 代理 env 中毒（main 里 unset 六变量）**
+- 验证：主 86/86 + asio 85/85 + asan-asio 84/84；审查 APPROVE（0 C/I；M1-M3 备案：exec 挂看门狗//tmp 并发名/.pc 分号 join 既有缺陷）
+- 备案：M3 .pc `Libs: -lcpr;-luv` 分号 join 缺陷系 D31 时代既有（fd8b28e），一行 string(JOIN " ") 修复待取

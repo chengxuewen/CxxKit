@@ -345,3 +345,17 @@
 - **解法**: handlers_ran>0 才即时重投（突发保即时延迟）；否则 1ms 重复 timer 门控（TaskQueueThread C14 先例）；open() 不再起泵（首个异步操作才 arm）；空闲 0.00% CPU。
 - **验证**: idle 对 2s 窗口 /proc 实测 + armed-socket process_events(2000ms) 真等 2000ms + 双树全量绿。
 - **禁止**: 事件循环内禁止无条件自 post 泵——驱动器必须是"有活动即时、无活动 timer 门控"双模。
+
+## PIT-53: Config 模板消费侧变量未 @ 替换 = 门永远 false（2026-09-13）
+- **症状**: D41.5 消费验证抓到：任何安装树消费方在 generate 期报 "link interface contains CxxKitWrapLibuv::WrapLibuv but target not found"。D38 以来所有安装树消费都是坏的。
+- **根因**: CxxKitConfig.cmake.in 的 libuv stub 块写 `if(CXXKIT_LOOP_BACKEND_UV OR CXXKIT_NETWORK)`——configure_package_config_file 只替换 @VAR@，裸 `if()` 在消费方进程读**消费方的**变量（未定义→false）→ stub 从未创建；cxxkitTargets 又在 stub 之后引用它。旧门能"看似工作"是因 C11 验证早于 D38（当时 network 不链 libuv）。
+- **解法**: 门变量全部 @ 替换（@CXXKIT_LOOP_BACKEND_UV@ 等，根 CMakeLists if/else 无条件 set 保证键存在）；stub 块移到 include(cxxkitTargets) **之前**。
+- **验证**: /tmp 双树消费方 find_package+build+run（uv 树 + asio 树 rc=0）；生成产物里门已字面化为 if(ON OR ON)。
+- **禁止**: Config.in 模板内一切条件逻辑禁止裸变量名——要么 @ 替换字面量，要么消费侧 find_*/TARGET 探测。
+
+## PIT-54: async_get/put/post 自创建起不可实例化（2026-09-13）
+- **症状**: tests/tst_http 特性化发现：http.hpp 的 async_get/async_put/async_post 任何实例化都编译失败（g++ 探针实证）；仅 async_download（std::async 路）可用。
+- **根因**: detail::async() 调 ThreadPool::start(fn, args...)，但 ThreadPool 只有 void 返回的 submit——无 future 返回变参通道。OpenCTK 移植时两边接口就不匹配，无人调用故从未暴露。
+- **解法**: 备案（D41.5 波次不动 API）。修复选项：ThreadPool 加 submit_future 变参（对齐 cpr::async 语义）或 detail::async 改 std::async。修复时删 tst_http 头部注释钉子 + 补 async 三动词用例。
+- **验证**: 修复后 async_get/put/post 三用例（现被跳过并注释钉死）转绿。
+- **禁止**: 声称 async_* 可用——测试与文档均已钉死其不可用现状。
