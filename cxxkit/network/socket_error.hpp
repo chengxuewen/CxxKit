@@ -42,16 +42,20 @@ CXXKIT_BEGIN_NAMESPACE
  */
 enum class SocketError
 {
-    kNone,               /// no error has occurred (initial last_error)
-    kUnknown,            /// unmapped backend error
-    kConnectionRefused,  /// peer refused the connection (ECONNREFUSED)
-    kConnectionReset,    /// connection reset by peer (ECONNRESET)
-    kTimedOut,           /// connection attempt or operation timed out (ETIMEDOUT)
-    kHostUnreachable,    /// no route to the host (EHOSTUNREACH)
-    kNetworkUnreachable, /// no route to the network (ENETUNREACH)
-    kAddrNotAvailable,   /// local address not available (EADDRNOTAVAIL)
-    kBrokenPipe,         /// write on a broken pipe (EPIPE)
-    kEof                 /// end of file: peer closed the stream cleanly (UV_EOF)
+    kNone,                /// no error has occurred (initial last_error)
+    kUnknown,             /// unmapped backend error
+    kConnectionRefused,   /// peer refused the connection (ECONNREFUSED)
+    kConnectionReset,     /// connection reset by peer (ECONNRESET)
+    kTimedOut,            /// connection attempt or operation timed out (ETIMEDOUT)
+    kHostUnreachable,     /// no route to the host (EHOSTUNREACH)
+    kNetworkUnreachable,  /// no route to the network (ENETUNREACH)
+    kAddrNotAvailable,    /// local address not available (EADDRNOTAVAIL)
+    kBrokenPipe,          /// write on a broken pipe (EPIPE)
+    kEof,                 /// end of file: peer closed the stream cleanly (UV_EOF)
+    kTlsHandshakeFailed,  /// TLS handshake failed (alert, protocol mismatch, bad input)
+    kTlsCertificateError, /// TLS certificate verification/parse failure (X.509)
+    kTlsPeerClosed,       /// TLS peer closed the connection cleanly (PEER_CLOSE_NOTIFY)
+    kTlsProtocolError     /// unmapped TLS protocol-level error (other MBEDTLS_ERR_SSL_*)
 };
 
 /** @brief Readable name for a @ref SocketError (full switch, all enumerators). */

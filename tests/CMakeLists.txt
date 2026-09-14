@@ -26,6 +26,7 @@ find_package(Threads REQUIRED)
 
 cxxkit_find_package(GTest PROVIDED_TARGETS CxxKitWrapGTest::WrapGTest)
 cxxkit_find_package(Benchmark PROVIDED_TARGETS CxxKitWrapBenchmark::WrapBenchmark)
+cxxkit_find_package(MbedTLS PROVIDED_TARGETS CxxKitWrapMbedTLS::WrapMbedTLS)
 
 # Conditional aggregate (Momus F3): base is unconditional; each core lib appends only
 # when its switch is ON. Guarded test blocks below keep per-lib targets in sync.
@@ -625,6 +626,10 @@ if(CXXKIT_ENABLE_LIB_NETWORK)
         SOURCES tst_http.cpp
         INCLUDE_DIRECTORIES ${PROJECT_SOURCE_DIR}
         LIBRARIES ${CXXKIT_TEST_LINK_LIBRARIES} cxxkit::network ${CMAKE_THREAD_LIBS_INIT})
+    cxxkit_add_test(cxxkit_tst_tls_error_mapping
+        SOURCES tst_tls_error_mapping.cpp
+        INCLUDE_DIRECTORIES ${PROJECT_SOURCE_DIR}
+        LIBRARIES ${CXXKIT_TEST_LINK_LIBRARIES} cxxkit::network CxxKitWrapMbedTLS::WrapMbedTLS ${CMAKE_THREAD_LIBS_INIT})
 endif()
 
 # Qt host-bridge dispatcher test (D39): registered only when Qt6 is auto-detected in this environment —

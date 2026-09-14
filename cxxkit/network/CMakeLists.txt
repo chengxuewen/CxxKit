@@ -44,7 +44,7 @@ endif()
 
 cxxkit_add_library(cxxkit_network
     SOURCES http.cpp tcp_socket.cpp tcp_server.cpp socket_error.cpp ${_backend_sources}
-    PUBLIC_LIBRARIES cxxkit::base cxxkit::text cxxkit::thread cxxkit::memory cxxkit::tools cxxkit::kernel CxxKitWrapLibcpr::WrapLibcpr ${_backend_libs}
+    PUBLIC_LIBRARIES cxxkit::base cxxkit::text cxxkit::thread cxxkit::memory cxxkit::tools cxxkit::kernel CxxKitWrapLibcpr::WrapLibcpr CxxKitWrapMbedTLS::WrapMbedTLS ${_backend_libs}
     EXPORT_NAME network
     FOLDER "CxxKit/libs")
 # The backend choice must reach the preprocessor (PIT-48): backend-conditional include/branch

@@ -41,6 +41,10 @@ std::string to_string(SocketError error)
         case SocketError::kAddrNotAvailable: return "address not available";
         case SocketError::kBrokenPipe: return "broken pipe";
         case SocketError::kEof: return "end of file";
+        case SocketError::kTlsHandshakeFailed: return "tls handshake failed";
+        case SocketError::kTlsCertificateError: return "tls certificate error";
+        case SocketError::kTlsPeerClosed: return "tls peer closed";
+        case SocketError::kTlsProtocolError: return "tls protocol error";
     }
     return "unknown"; // unreachable for valid enumerators; silences -Wreturn-type on exotic compilers
 }
