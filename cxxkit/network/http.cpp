@@ -473,13 +473,13 @@ void Multipart::add(const Part &part)
 #else
     // cpr::Part is file/buffer oriented; our Part is the plain text+filename shape: a
     // filename turns the part into a cpr Buffer-style in-memory file part.
-    cpr::Part cprPart(std::string(part.name), std::string(part.value), std::string(part.content_type));
+    cpr::Part cpr_part(std::string(part.name), std::string(part.value), std::string(part.content_type));
     if (!part.filename.empty())
     {
-        cprPart.has_filename = true;
-        cprPart.filename = std::string(part.filename);
+        cpr_part.has_filename = true;
+        cpr_part.filename = std::string(part.filename);
     }
-    d->mParts.push_back(cprPart);
+    d->mParts.push_back(cpr_part);
 #endif
     d->mCxxParts.push_back(part);
 }

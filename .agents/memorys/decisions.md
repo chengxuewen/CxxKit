@@ -422,3 +422,22 @@ sanitizer（ASAN/LSAN/UBSan）与 coverage 用**独立 build 目录**（build-as
 **验证**：uv 主树 **88/88** / asio **87/87** / tls 套件双树 ×3 稳定 / ASAN-asio tls 零诊断 / 消费面双树通 / format+C++11+octk 清零。
 
 **已知限制**：renegotiation 编译期禁用（mbedTLS 3.x 默认，WANT_WRITE-in-read 路径仅评审）；ALPN/session 恢复/客户端证书/DTLS 需求触发；destroy-in-error-callback UAF 仍为 T2 形态备案；I-1 窗口分析性推导未实证复现。
+
+## D43: signal-slot 修复波（2026-09-15，SDD T0-T9，c3175f4..1a4144a）
+
+**来源**：双评审计划（docs/superpowers/plans/2026-09-15-signal-slot-fix-plan.md）的 SDD 执行——signals 连接/发射语义修复 + SignalR 组合器 + MT 覆盖。
+
+**关键裁定**：
+- **B1 测试指针形态契约**：disconnect(obj) 按值仅对 observer/trackable 对象生效（object_pointer<普通 T>::get 返 nullptr，同 lambda 槽）；计划原文 disconnect(collector) 返 2 系误述，正确形态 = disconnect(&collector) 指针（上游 API 注释为准）。
+- **B2 mCleaner 引用→指针唯一化**：move 后槽内 cleaner 重路由到新信号（reroute_slot_cleaners）；oracle 的 no-op 预测被实际共享 SlotState 语义推翻——旧 Connection 移交后仍是活 handle，裁定 SOUND。
+- **B3 重定界 SignalUnsafe-only**：ST 快照修复 = `cow_copy_type` NullMutex 分支按值拷贝（emit-start 快照）；MT 路径 cow 不动。
+- **B4（信号级 block 语义）被驳回归位文档**：block/unblock 为 atomic 布尔，无计数；发射中变更以下一轮发射可见为准（doxygen 契约化替代行为改动）。
+- **keep-alive（trackable 槽弱引用防发射中对象死亡）在审查中被驳为既有行为**，改为用例钉死（TrackedSlotKeepAliveMidEmission）。
+- **slot_count→num_slots 去重**：slot_count() 保留为 deprecated 别名委托 const 超集 num_slots()（既有调用零破坏）。
+- **SignalBaseR 新模板强制**：组合器不得改 SignalBase/Signal 既有签名（评审 F8 红线）——SignalR/SignalUnsafeR 独立模板族，S2 懒迭代语义，Optional 取自 tools（kernel 已依赖 tools，零新边）。
+
+**落地**（12 提交 + T9 两提交）：disconnect(obj) SFINAE 参数序修复（ad9d88d）／move-UAF cleaner 重路由（78bba33）／SignalUnsafe emit 快照（843fb72）＋block 文档（38ff694）／tst_signal_mt 7 用例（962f10d+390f21d）／num_slots+empty+ScopedBlock+connect_once（3ef4575+09bcfdc）／SignalR 组合器 +589 行（8c5ff52+1a4144a）。
+
+**已知限制（备案不修）**：move-assign 换出槽 cleaner 指向 *this（静默 no-op disconnect；*this 先亡则 UAF——既有形态，修需 API 行为扩展另立决策）；Connection::disconnect 与 move 并发 unsynchronized mCleaner 读（窗口从永久缩至在途）；T5 中段发射覆盖确定性约束下不保证。
+
+**测试**：signals 相关 17→51 用例（tst_signals 28 + tst_signal_mt 7 + tst_signal_r 16，套件 +2）。门禁：主树 81/81、asan 90/90（check.sh 4/8 内）、全口径 84.2%（60 files，signals.cpp 空 TU 无行覆盖）。

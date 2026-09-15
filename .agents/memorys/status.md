@@ -412,3 +412,13 @@ cxxkit 是 OpenCTK（an open cpp toolkit）的成功重构版本 —— 精简�
 - 验证：http ×3 双树 / 主树 88/88 / ASAN http **34/34 零诊断**
 - 教训：实现者 fixture 缺陷三连（Empty reply=空响应体未装配 / WrongCA 断言反向 / GET 传 multipart）——controller 接力修复与 T2/T3 同形
 - 备案：Part Buffer 变体（文件上传语义需求触发）；curl 100-continue 与捕获窗口的二段 spin 形态已文档化在用例内
+
+### 2026-09-15 D43 signal-slot 修复波收官（T9：例子 + 文档 + 记忆）
+
+- [x] **signals.hpp 头注释契约化**：emission-time 契约（connect-during-emission 下一轮生效／disconnect 以发射起始快照裁决／MT 走 cow、ST 走 emit-start 值拷贝）+ 全变体递归支持声明（emit 不持锁调槽）+ SignalR 指引；doxygen 1.9.8 实跑 signals 零警告（残留 2 类历史无害：Doxyfile 不支持 tag + fmt 递归别名）
+- [x] **exp_kernel 补三节**（4→7 节，~60 净增行）：tracked-lifetime（shared_ptr 槽主析构 → emit 安全跳过）／SignalR 组合器（optional_last_value last=20 + maximum max=42）／跨线程 emit（std::thread 发射 1000 值 join-before-print received=500500）；3 连跑逐字节确定 + rc=0；examples/CMakeLists exp_kernel 补链 cxxkit::thread（删）；**ELT+make_default_dispatcher 组合首验即 fatal**——uv dispatcher 在构造线程捕获 mLoopThreadId，ELT 工作线程 exec() 必触发 non-loop-thread 检查（FakeDispatcher 无此检查故 tst_event_loop_thread 从未暴露）——已知缺口备案，非本波修复
+- [x] **顺手修**：http.cpp cprPart 局部变量 → cpr_part（naming gate 误报源——PascalCase 是变量名非上游函数；上游 cpr API 调用豁免不变）
+- [x] **全量门禁**：build 0 err / 主树 **81/81** / check.sh **8/8 ALL PASSED**（1 轮 asan StateChangeSequence 偶发 SEGV，单跑 15/15 过，重跑全绿）/ build-cov **89/89 全口径 84.2%（60 files）**/ format 干净 / exp_kernel rc=0
+- [x] **覆盖率口径备案**：signals.cpp 是空 TU（signals.hpp 全模板/inline）——gcov 行覆盖不可测 signals 逻辑（gcno 116B 零函数、无 gcda）；signals 质量以 51 用例三套件（28+7+16）计
+- 记录：decisions.md D43 + status 本节；无新 PIT（T5 测试侧 UAF 已在 task-5-6-report 内详录，教训与 PIT-56 同族不重复立项）
+
