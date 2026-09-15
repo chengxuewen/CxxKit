@@ -899,11 +899,12 @@ public:
 
     explicit SlotBase(Cleanable &c, GroupId gid)
         : SlotState(gid)
-        , mCleaner(c)
+        , mCleaner(&c)
     {
     }
     ~SlotBase() override = default;
 
+    void set_cleaner(Cleanable &c) { mCleaner = &c; }
     // method effectively responsible for calling the "slot" function with
     // supplied arguments whenever emission happens.
     virtual void call_slot(Args...) = 0;
@@ -945,7 +946,7 @@ public:
     }
 
 protected:
-    void do_disconnect() final { mCleaner.clean(this); }
+    void do_disconnect() final { mCleaner->clean(this); }
 
     // retieve a pointer to the object embedded in the slot
     virtual obj_ptr get_object() const noexcept { return nullptr; }
@@ -973,7 +974,7 @@ private:
 #    endif
 
 private:
-    Cleanable &mCleaner;
+    Cleanable *mCleaner;
 };
 
 /*
@@ -1348,6 +1349,7 @@ public:
         lock_type lock(o.m_mutex);
         using std::swap;
         swap(m_slots, o.m_slots);
+        reroute_slot_cleaners();
     }
 
     SignalBase &operator=(SignalBase &&o) /* not noexcept */
@@ -1359,6 +1361,7 @@ public:
         using std::swap;
         swap(m_slots, o.m_slots);
         m_block.store(o.m_block.exchange(m_block.load()));
+        reroute_slot_cleaners();
         return *this;
     }
 
@@ -1892,6 +1895,19 @@ private:
     void clear() { detail::cow_write(m_slots).clear(); }
 
 private:
+    // re-point every slot's cleaner to this; must be called under lock
+    void reroute_slot_cleaners()
+    {
+        auto &groups = detail::cow_write(m_slots);
+        for (auto &group : groups)
+        {
+            for (auto &s : group.slts)
+            {
+                s->set_cleaner(*this);
+            }
+        }
+    }
+
     mutable Lockable m_mutex;
     cow_type<list_type, Lockable> m_slots;
     std::atomic<bool> m_block;

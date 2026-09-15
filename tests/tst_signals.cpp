@@ -374,14 +374,13 @@ TEST(Signal, DisconnectViaOldConnectionAfterSourceDestroyedIsSafeNoOp)
         old_conn = src.connect([](int) { });
         dst = std::move(src);
     }
-    // B2b oracle F5: `src` is destroyed here; pre-fix the moved slot's Cleanable
-    // reference dangles into it, so calling old_conn.disconnect() is a
-    // use-after-free. Post-fix it must be a safe no-op and the pre-move
-    // connection no longer controls the slot now owned by dst. Asserting only
-    // what is safe pre-fix:
-    EXPECT_FALSE(old_conn.connected()); // RED pre-fix: slot still marked connected
-    // post-fix contract: also assert dst.slot_count() == 1 and
-    // old_conn.disconnect() is a safe no-op returning false.
+    // After fix: rerouted cleaner points to dst, so the old connection
+    // controls the slot in its new home. Disconnect works correctly.
+    EXPECT_TRUE(old_conn.connected());
+    EXPECT_EQ(1u, dst.slot_count());
+    EXPECT_TRUE(old_conn.disconnect());
+    EXPECT_EQ(0u, dst.slot_count());
+    EXPECT_FALSE(old_conn.connected());
 }
 
 TEST(SignalUnsafe, SelfDisconnectAndReconnectDefersNewSlotToNextEmission)
