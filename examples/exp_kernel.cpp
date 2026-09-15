@@ -117,7 +117,7 @@ int main()
     auto last = last_sig();
     std::cout << "  optional_last_value: last=" << *last << std::endl;
 
-    cxxkit::signals::SignalR<int, cxxkit::signals::detail::maximum<int>> max_sig;
+    cxxkit::signals::SignalR<int, cxxkit::signals::maximum<int>> max_sig;
     max_sig.connect([] { return 10; });
     max_sig.connect([] { return 42; });
     max_sig.connect([] { return 30; });

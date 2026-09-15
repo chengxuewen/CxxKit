@@ -55,10 +55,10 @@ CXXKIT_BEGIN_NAMESPACE
  *
  * - @b Connect @b during @b emission: the new slot is @em not invoked by the
  *   emission in progress. It becomes visible to the next emission.
- * - @b Disconnect @b during @b emission: the snapshot already captured at
- *   emission start decides. An in-progress emission still calls a slot that
- *   was connected when emission began even if it is disconnected mid-flight;
- *   the disconnect takes effect for subsequent emissions.
+ * - @b Disconnect @b during @b emission: a slot that is already executing
+ *   runs to completion; a slot disconnected before its turn is reached is
+ *   skipped (invoke-time connectivity check); the disconnect takes effect
+ *   for the remaining and subsequent emissions.
  * - @b Mutual-exclusion snapshotting: the thread-safe variants (@c Signal,
  *   @c SignalR) snapshot via copy-on-write under the signal mutex; the
  *   single-threaded variants (@c SignalUnsafe, @c SignalUnsafeR) snapshot
@@ -1406,55 +1406,6 @@ private:
  * (short-circuit) simply by not reaching last.
  */
 
-/*
- * S2 optional_last_value: returns an Optional<R> holding the result of the
- * LAST invoked slot; empty when no slot is invoked (empty range or all
- * slots dead/blocked). The signature R(InputIterator, InputIterator) matches
- * the S2 combiner convention so user combiners compose interchangeably.
- */
-template <typename R>
-struct optional_last_value
-{
-    using result_type = Optional<R>;
-
-    template <typename InputIterator>
-    result_type operator()(InputIterator first, InputIterator last) const
-    {
-        Optional<R> value;
-        while (first != last)
-        {
-            value = *first;
-            ++first;
-        }
-        return value;
-    }
-};
-
-/*
- * S2 maximum: returns the largest result (operator<), or an empty Optional
- * when no slot is invoked.
- */
-template <typename R>
-struct maximum
-{
-    using result_type = Optional<R>;
-
-    template <typename InputIterator>
-    result_type operator()(InputIterator first, InputIterator last) const
-    {
-        Optional<R> max_value;
-        while (first != last)
-        {
-            const R value = *first;
-            if (!max_value || max_value < value)
-            {
-                max_value = value;
-            }
-            ++first;
-        }
-        return max_value;
-    }
-};
 
 /*
  * slot_call_iterator caches the result of the slot it currently points to.
@@ -1558,6 +1509,55 @@ private:
 
 } // namespace detail
 
+/**
+ * S2 optional_last_value: returns an Optional<R> holding the result of the
+ * LAST invoked slot; empty when no slot is invoked (empty range or all
+ * slots dead/blocked). The signature R(InputIterator, InputIterator) matches
+ * the S2 combiner convention so user combiners compose interchangeably.
+ */
+template <typename R>
+struct optional_last_value
+{
+    using result_type = Optional<R>;
+
+    template <typename InputIterator>
+    result_type operator()(InputIterator first, InputIterator last) const
+    {
+        Optional<R> value;
+        while (first != last)
+        {
+            value = *first;
+            ++first;
+        }
+        return value;
+    }
+};
+
+/**
+ * S2 maximum: returns the largest result (operator<), or an empty Optional
+ * when no slot is invoked.
+ */
+template <typename R>
+struct maximum
+{
+    using result_type = Optional<R>;
+
+    template <typename InputIterator>
+    result_type operator()(InputIterator first, InputIterator last) const
+    {
+        Optional<R> max_value;
+        while (first != last)
+        {
+            const R value = *first;
+            if (!max_value || max_value < value)
+            {
+                max_value = value;
+            }
+            ++first;
+        }
+        return max_value;
+    }
+};
 
 /**
  * signal_base is an implementation of the observer pattern, through the use
@@ -2259,6 +2259,9 @@ private:
  * - the combiner is default-constructed per emission (set_combiner deferred)
  * - a blocked signal still runs the combiner over an EMPTY range (S2 semantics),
  *   e.g. optional_last_value yields an empty Optional
+ * - this class is intentionally not movable (copy deleted, no move declared);
+ *   move support for the R-family is deferred, while the void SignalBase
+ *   family supports moves with cleaner re-routing
  *
  * @tparam R the slot result type (must not be void)
  * @tparam Lockable a lock type to decide the lock policy
@@ -2427,6 +2430,11 @@ public:
 
     /**
      * Returns the number of connected (non disconnected) slots.
+     *
+     * Complexity is linear in the number of groups (a size sum over the group
+     * list). A slot disconnected via its Connection is removed from the list
+     * synchronously by the cleaner; between the connection-state exchange and
+     * the list removal a concurrent num_slots() may transiently count it.
      */
     size_t num_slots() const
     {
@@ -2603,13 +2611,13 @@ using SignalUnsafe = SignalBase<detail::NullMutex, T...>;
  * convertible to R, aggregated per emission by Combiner (S2 semantics).
  * Combiner defaults to optional_last_value<R> (last slot's result or empty).
  */
-template <typename R, typename Combiner = detail::optional_last_value<R>, typename... T>
+template <typename R, typename Combiner = optional_last_value<R>, typename... T>
 using SignalR = SignalBaseR<R, std::mutex, Combiner, T...>;
 
 /**
  * Result-collecting signal for single-threaded contexts.
  */
-template <typename R, typename Combiner = detail::optional_last_value<R>, typename... T>
+template <typename R, typename Combiner = optional_last_value<R>, typename... T>
 using SignalUnsafeR = SignalBaseR<R, detail::NullMutex, Combiner, T...>;
 /**
  * RAII helper that blocks a signal for the lifetime of the ScopedBlock object.
@@ -2656,9 +2664,9 @@ using SignalUnsafe = signals::SignalUnsafe<Args...>;
 // Flat R-signal aliases: R/Combiner must be named explicitly (C++11 alias
 // templates cannot pack-expand a trailing Args... into SignalR's leading
 // non-pack R/Combiner parameters), e.g. SignalR<int, MyCombiner, int, double>.
-template <typename R, typename Combiner = signals::detail::optional_last_value<R>, typename... Args>
+template <typename R, typename Combiner = signals::optional_last_value<R>, typename... Args>
 using SignalR = signals::SignalR<R, Combiner, Args...>;
-template <typename R, typename Combiner = signals::detail::optional_last_value<R>, typename... Args>
+template <typename R, typename Combiner = signals::optional_last_value<R>, typename... Args>
 using SignalUnsafeR = signals::SignalUnsafeR<R, Combiner, Args...>;
 
 /**

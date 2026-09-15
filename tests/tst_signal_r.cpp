@@ -169,7 +169,7 @@ TEST(SignalR, DefaultCombinerTakesLastValue)
 
 TEST(SignalR, MaximumCombinerPicksLargest)
 {
-    SignalR<int, signals::detail::maximum<int>> sig;
+    SignalR<int, signals::maximum<int>> sig;
     sig.connect([]() { return 7; });
     sig.connect([]() { return 3; });
     sig.connect([]() { return 9; });

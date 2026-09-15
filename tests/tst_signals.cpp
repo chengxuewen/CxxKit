@@ -38,7 +38,6 @@ CXXKIT_BEGIN_NAMESPACE
 using signals::Connection;
 using signals::ScopedBlock;
 using signals::ScopedConnection;
-using signals::ScopedConnection;
 using signals::Signal;
 using signals::SignalUnsafe;
 
@@ -319,20 +318,9 @@ TEST(Signal, ObserverBaseDisconnectAllOnExplicitCall)
     EXPECT_EQ(1u, obs.mValues.size());
 }
 
-// B1 (RED, compile-time probe result): the disconnect(Obj) overload at
-// signals.hpp:1693-1701 is unreachable for object types. Its SFINAE guard at
-// signals.hpp:1695 reads `!trait::detail::is_callable<ext_arg_list, Obj>::value`
-// — the type list is passed as the CALLABLE parameter and Obj as the ARG LIST,
-// i.e. the argument order is backwards (oracle: one parameter-order at :1695).
-// `is_callable<ext_arg_list, Obj>` expands to IsCallableImpl<TypeList<Connection&, T...>, Obj>
-// which matches no partial specialization; the primary template is incomplete, so
-// the whole overload is SFINAE-removed. Scratch probe confirmed:
-//   g++ -std=c++11 -I cxxkit -I build/include -fsyntax-only /tmp/b1_probe.cpp
-//   -> error: no matching function for call to 'disconnect(...)' (candidate
-//      removed by SFINAE: invalid use of incomplete type 'IsCallableImpl<...>')
-// Post-fix the guard must read is_callable<Obj, ext_arg_list>. Re-enable this
-// test once signals.hpp is fixed. API contract: disconnect(obj) takes pointer-or-trackable,
-// not by-value (plain struct by value yields nullptr from get_object_ptr).
+// B1: disconnect(Obj) takes a pointer-or-trackable (pointer form is the API
+// contract per docs); the historical SFINAE arg-order bug was fixed, this
+// test is enabled and green.
 TEST(Signal, DisconnectByObjectRemovesBoundSlots)
 {
     Signal<int> sig;
@@ -359,15 +347,13 @@ TEST(Signal, MoveConstructedSignalOldConnectionDisconnectClearsNewSignal)
     Signal<int> dst(std::move(src));
     ASSERT_EQ(1u, dst.slot_count());
 
-    // B2a RED: after move, the slot's internal Cleanable reference still points
-    // at `src` (only the slot pointers are swapped, mCleaner is not re-targeted),
-    // so disconnecting via the pre-move connection cleans src's (now empty) list
-    // and leaves the slot alive in dst.
+    // Post-fix: the rerouted cleaner points at dst, so the pre-move
+    // connection legitimately disconnects the moved slot.
     EXPECT_TRUE(old_conn.disconnect());
-    EXPECT_EQ(0u, dst.slot_count()); // currently 1 — RED
+    EXPECT_EQ(0u, dst.slot_count());
 }
 
-TEST(Signal, DisconnectViaOldConnectionAfterSourceDestroyedIsSafeNoOp)
+TEST(Signal, DisconnectViaOldConnectionAfterSourceDestroyed)
 {
     Signal<int> dst;
     Connection old_conn;
