@@ -354,6 +354,10 @@ public:
     std::string text() const;
     std::string reason() const;
     std::string header(StringView key) const;
+    /** @brief libcurl error code (CURLE_*) of the last transfer; 0 = no transport error. */
+    long error_code() const;
+    /** @brief Human-readable transport error message (empty when error_code() == 0). */
+    std::string error_message() const;
 
 protected:
     friend class Session;

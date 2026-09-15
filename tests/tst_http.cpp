@@ -46,9 +46,19 @@
 #include <cxxkit/kernel/event_loop.hpp>
 #include <cxxkit/kernel/default_dispatcher.hpp>
 #include <cxxkit/network/http.hpp>
+#include <cxxkit/network/socket_error.hpp>
+#include <cxxkit/network/socket_state.hpp>
 #include <cxxkit/network/tcp_server.hpp>
+#include <cxxkit/network/tls_socket.hpp>
 
 #include <gtest/gtest.h>
+
+// Cert paths: the CMake target compiles this file with TEST_CERTS_DIR when the kernel/network
+// stack is enabled (same convention as tst_tls_socket). Keep a source-tree fallback so the
+// file still compiles outside CMake.
+#ifndef TEST_CERTS_DIR
+#    define TEST_CERTS_DIR "../tests/certs"
+#endif
 
 #include <cstdint>
 #include <cstdio>
@@ -114,6 +124,81 @@ struct OneShotServer
         response = raw_response;
         return server.listen(kHost, 0) && server.bound_port() != 0;
     }
+};
+
+// HTTPS origin for the crossover cases (C wave item 3): a SERVER-ROLE TlsSocket over a
+// TcpServer accept (TlsEchoPeer shape, PIT-40-compliant: the session unique_ptr is parked
+// before the accept frame unwinds so the peer outlives every callback). After the handshake,
+// read_start accumulates the DECRYPTED plaintext request; once the request head terminator
+// (the four bytes CR LF CR LF) arrives, the canned @ref response is written back and
+// close_notify is sent via TlsSocket::close. TLS 1.2/1.3 interop with curl's TLS is
+// version-agnostic.
+struct TlsOriginServer
+{
+    EventLoop &loop;
+    TcpServer listener;
+    std::unique_ptr<cxxkit::TlsSocket> session;
+    bool tls_ready{false};
+    bool responded{false};
+    std::string request;
+    std::string response;
+    std::string error_log; // on_error messages — surfaced on handshake failures
+
+    explicit TlsOriginServer(EventLoop &l)
+        : loop(l)
+        , listener(l)
+    {
+    }
+
+    void start(const std::string &canned_response)
+    {
+        response = canned_response;
+        listener.listen(kHost, 0, 128);
+        listener.on_connection(
+            [this](std::unique_ptr<cxxkit::TcpSocket> socket)
+            {
+                std::unique_ptr<cxxkit::TlsSocket> tls(new cxxkit::TlsSocket(loop));
+                cxxkit::TlsSocket *raw = tls.get();
+                raw->set_transport(std::move(socket));
+                // SERVER identity (no client-cert demand): without these the handshake cannot
+                // complete; verify_mode 0 keeps mbedTLS from demanding a CA chain.
+                raw->set_verify_mode(0);
+                raw->set_certificate(std::string(TEST_CERTS_DIR) + "/server-cert.pem");
+                raw->set_private_key(std::string(TEST_CERTS_DIR) + "/server-key.pem");
+                raw->set_on_error([this](cxxkit::SocketError, const std::string &message)
+                                  { error_log += message + "; "; });
+                // Register BEFORE start_tls: the ClientHello is usually buffered at accept, so
+                // the handshake can complete inside the start_tls first drive (kConnected fires
+                // there) — same lesson as TlsEchoPeer.
+                raw->set_on_state_change(
+                    [this, raw](cxxkit::SocketState state)
+                    {
+                        if (cxxkit::SocketState::kConnected == state && !this->tls_ready)
+                        {
+                            this->tls_ready = true;
+                            raw->read_start(
+                                [this, raw](const uint8_t *data, ssize_t nread)
+                                {
+                                    if (nread <= 0)
+                                    {
+                                        return; // peer close / transport EOF: session finished
+                                    }
+                                    request.append(reinterpret_cast<const char *>(data), static_cast<size_t>(nread));
+                                    if (!this->responded && this->request.find("\r\n\r\n") != std::string::npos)
+                                    {
+                                        this->responded = true;
+                                        const uint8_t *bytes = reinterpret_cast<const uint8_t *>(this->response.data());
+                                        raw->write(bytes, this->response.size(), [raw](bool) { raw->close(); });
+                                    }
+                                });
+                        }
+                    });
+                raw->start_tls([](bool) { });
+                this->session = std::move(tls); // parked before the accept frame unwinds (PIT-40)
+            });
+    }
+
+    uint16_t port() const { return listener.bound_port(); }
 };
 
 // "Nohup" server: accepts but never answers — drives the client timeout path.
@@ -837,6 +922,146 @@ TEST(HttpTest, DownloadToWriteCallback)
     EXPECT_EQ(200L, response->status_code());
 }
 
+
+// 29-31. THE CROSSOVER (C wave item 3): TlsSocket as an HTTPS origin server x cpr SSL-options
+//        client. The TlsSocket read_start delivers DECRYPTED plaintext, so the HTTP layer
+//        (make_response / "\r\n\r\n" matching) works unchanged on top of TLS. Fresh EventLoop +
+//        spin_with_worker per case (ProxyRoutes shape — NOT run_with_loop, NOT exec reuse);
+//        bound_port() is read on the loop thread (PIT-57).
+
+// 29. VerifyOkWithCustomCA: cpr verifies our mbedTLS origin with the test CA; SAN carries
+//     127.0.0.1 (curl verifies IP SANs), so GET https://127.0.0.1:port/hello returns 200.
+TEST(HttpTest, HttpsVerifyOkWithCustomCA)
+{
+    EventLoop loop(cxxkit::make_default_dispatcher());
+    TlsOriginServer srv(loop);
+    srv.start(make_response(200, "OK", "", "https-hello"));
+
+    const uint16_t port = srv.port(); // loop thread (PIT-57)
+    const std::string ca = std::string(TEST_CERTS_DIR) + "/ca-cert.pem";
+    const std::string url = std::string("https://") + kHost + ":" + std::to_string(port) + "/hello";
+    Response::SharedPtr response = spin_with_worker(loop,
+                                                    [&url, &ca]
+                                                    {
+                                                        Session session;
+                                                        session.set_url(Url{url});
+                                                        SslOptions ssl;
+                                                        ssl.set_ca_info(ca);
+                                                        ssl.set_verify_peer(true);
+                                                        ssl.set_verify_host(true);
+                                                        session.set_ssl_options(ssl);
+                                                        return session.get();
+                                                    });
+    ASSERT_NE(nullptr, response.get());
+    fprintf(stderr, "CURL-ERR %ld %s\n", response->error_code(), response->error_message().c_str());
+    EXPECT_EQ(200L, response->status_code()) << "server errors: " << srv.error_log;
+    EXPECT_EQ(std::string("https-hello"), response->text());
+    EXPECT_TRUE(srv.tls_ready);
+    EXPECT_NE(std::string::npos, srv.request.find("GET /hello HTTP/1.1\r\n")) << "captured: " << srv.request;
+    EXPECT_NE(std::string::npos, srv.request.find("Host:")) << "captured: " << srv.request;
+}
+
+// 30. VerifyFailsWrongCA: same handshake, but the client trusts only the WRONG CA — the cert
+//     verify fails and cpr maps the curl error to status 0 (transport-failure convention).
+TEST(HttpTest, HttpsVerifyFailsWrongCA)
+{
+    // TLS certificate verification fails during the HANDSHAKE — the HTTP request never
+    // reaches the server. Pin the correct semantics: status 0 client-side, ZERO bytes server-side.
+    EventLoop loop(cxxkit::make_default_dispatcher());
+    TlsOriginServer srv(loop);
+    srv.start(make_response(200, "OK", "", "https-hello"));
+
+    const uint16_t port = srv.port();
+    const std::string ca = std::string(TEST_CERTS_DIR) + "/wrong-ca-cert.pem";
+    const std::string url = std::string("https://") + kHost + ":" + std::to_string(port) + "/hello";
+    Response::SharedPtr response = spin_with_worker(loop,
+                                                    [&url, &ca]
+                                                    {
+                                                        Session session;
+                                                        session.set_url(Url{url});
+                                                        SslOptions ssl;
+                                                        ssl.set_ca_info(ca);
+                                                        ssl.set_verify_peer(true);
+                                                        ssl.set_verify_host(true);
+                                                        session.set_ssl_options(ssl);
+                                                        return session.get();
+                                                    });
+    ASSERT_NE(nullptr, response.get());
+    EXPECT_EQ(0L, response->status_code());
+    EXPECT_TRUE(srv.request.empty()) << "verify failure must prevent the HTTP request; got: " << srv.request;
+}
+
+// 31. MultipartUpload (plain-TCP): a body-capturing OneShotServer variant answers after the
+//     FULL body (Content-Length bytes past the head) has arrived; the request must carry the
+//     multipart boundary, both parts, the part content-type and the file part's filename.
+TEST(HttpTest, MultipartUploadBodyCaptured)
+{
+    // POST carries the multipart body; OneShotServer answers on the header terminator and
+    // would drop everything after it — capture until the FINAL boundary instead.
+    EventLoop loop(cxxkit::make_default_dispatcher());
+    TcpServer server(loop);
+    std::unique_ptr<cxxkit::TcpSocket> server_side;
+    std::string captured;
+    const std::string canned = make_response(200, "OK", "", "uploaded");
+    bool responded = false;
+    server.on_connection(
+        [&](std::unique_ptr<cxxkit::TcpSocket> socket)
+        {
+            server_side = std::move(socket);
+            server_side->read_start(
+                [&server_side, &captured, &canned, &responded](const uint8_t *data, ssize_t nread)
+                {
+                    if (nread <= 0)
+                    {
+                        return;
+                    }
+                    captured.append(reinterpret_cast<const char *>(data), static_cast<size_t>(nread));
+                    if (!responded && captured.find("contents") != std::string::npos &&
+                        captured.find("--", captured.find("contents")) != std::string::npos)
+                    {
+                        // the LAST part's payload + its closing boundary have landed
+                        responded = true;
+                        server_side->write(reinterpret_cast<const uint8_t *>(canned.data()),
+                                           canned.size(),
+                                           [](bool) { });
+                    }
+                });
+        });
+    ASSERT_TRUE(server.listen(kHost, 0));
+
+    const uint16_t port = server.bound_port();
+    const std::string url = std::string("http://") + kHost + ":" + std::to_string(port) + "/upload";
+    Response::SharedPtr response = spin_with_worker(loop,
+                                                    [&url]
+                                                    {
+                                                        Session session;
+                                                        session.set_url(Url{url});
+                                                        Multipart multipart;
+                                                        multipart.add(Part{"field1", "value1"});
+                                                        multipart.add(Part{"file", "contents", "text/plain"});
+                                                        session.set_multipart(multipart);
+                                                        return session.post();
+                                                    });
+    ASSERT_NE(nullptr, response.get());
+    EXPECT_EQ(200L, response->status_code());
+    // The response can land before the loop delivers the final body segment to the capture
+    // callback — spin until the capture is complete (or budget out).
+    for (int i = 0; i < 200 && captured.find("filename=\"f.txt\"") == std::string::npos; ++i)
+    {
+        loop.process_events(cxxkit::EventLoop::ProcessFlag::kAllEvents, 10);
+    }
+    EXPECT_NE(std::string::npos, captured.find("Content-Type: multipart/form-data; boundary="))
+        << "captured: " << captured;
+    EXPECT_NE(std::string::npos, captured.find("Content-Disposition: form-data; name=\"field1\""))
+        << "captured: " << captured;
+    EXPECT_NE(std::string::npos, captured.find("value1")) << "captured: " << captured;
+    EXPECT_NE(std::string::npos, captured.find("name=\"file\"")) << "captured: " << captured;
+    EXPECT_NE(std::string::npos, captured.find("Content-Type: text/plain")) << "captured: " << captured;
+    // NOTE: no filename assertion — cpr::Part carries filename only via the File/Buffer
+    // variants, which the wrapper does not surface yet (YAGNI; add a Buffer Part overload
+    // when a file-upload consumer shows up).
+    EXPECT_NE(std::string::npos, captured.find("contents")) << "captured: " << captured;
+}
 
 // The machine's http_proxy/https_proxy environment makes curl route loopback requests through the
 // proxy (CONNECT → 502), which would poison every case. Strip the family before gtest runs: the

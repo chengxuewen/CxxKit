@@ -626,6 +626,9 @@ if(CXXKIT_ENABLE_LIB_NETWORK)
         SOURCES tst_http.cpp
         INCLUDE_DIRECTORIES ${PROJECT_SOURCE_DIR}
         LIBRARIES ${CXXKIT_TEST_LINK_LIBRARIES} cxxkit::network ${CMAKE_THREAD_LIBS_INIT})
+    # C wave item 3: the HTTPS crossover cases use the test CA/server certs (same set as
+    # tst_tls_socket — resolve at compile time, tests run with cwd = build).
+    target_compile_definitions(cxxkit_tst_http PRIVATE TEST_CERTS_DIR="${CMAKE_CURRENT_SOURCE_DIR}/certs")
     cxxkit_add_test(cxxkit_tst_tls_error_mapping
         SOURCES tst_tls_error_mapping.cpp
         INCLUDE_DIRECTORIES ${PROJECT_SOURCE_DIR}

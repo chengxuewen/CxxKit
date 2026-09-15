@@ -171,6 +171,18 @@ long Response::status_code() const
 #endif
 }
 
+long Response::error_code() const
+{
+    CXXKIT_D(const Response);
+    return static_cast<long>(d->mResponse.error.code);
+}
+
+std::string Response::error_message() const
+{
+    CXXKIT_D(const Response);
+    return d->mResponse.error.message;
+}
+
 Cookies Response::cookies() const
 {
     CXXKIT_D(const Response);
