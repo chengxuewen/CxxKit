@@ -1316,8 +1316,7 @@ class SignalBase final : public detail::Cleanable
     using cow_type = typename std::conditional<is_thread_safe<L>::value, detail::copy_on_write<U>, U>::type;
 
     template <typename U, typename L>
-    using cow_copy_type =
-        typename std::conditional<is_thread_safe<L>::value, detail::copy_on_write<U>, const U &>::type;
+    using cow_copy_type = typename std::conditional<is_thread_safe<L>::value, detail::copy_on_write<U>, U>::type;
 
     using lock_type = std::unique_lock<Lockable>;
     using slot_base = detail::SlotBase<T...>;
