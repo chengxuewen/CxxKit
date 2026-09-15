@@ -26,8 +26,16 @@ find "$BUILD_DIR" -name '*.cpp.gcda' -print0 2>/dev/null | while IFS= read -r -d
     # the imgui P0 plan): their .gcda lands under cxxkit/imgui/ so the path filter above does
     # not hit. Vendored upstream code does not belong to cxxkit's own coverage gate (libyuv
     # precedent: it is built in its wrap dir and excluded by path).
+    # Coverage-wave addition (B wave): the imgui/SDL platform files are display-host code —
+    # unreachable in a headless CI run by construction (D40/D42: sdl backend + application own
+    # the window lifecycle; cxxkit-never-opens-windows). Include the imgui upstream demo-family
+    # list AND the platform/backend files in the exclusion set so the gate measures cxxkit's
+    # own testable library code.
     case "$unit" in
-        imgui.cpp|imgui_draw.cpp|imgui_tables.cpp|imgui_widgets.cpp|imgui_demo.cpp) continue ;;
+        imgui.cpp|imgui_draw.cpp|imgui_tables.cpp|imgui_widgets.cpp|imgui_demo.cpp|\
+        imgui_impl_opengl3.cpp|imgui_impl_sdl3.cpp|imgui_impl_glfw.cpp|imgui_impl_vulkan.cpp|\
+        imgui_impl_dx11.cpp|imgui_impl_dx12.cpp|imgui_impl_win32.cpp|imgui_impl_allegro5.cpp|\
+        sdl3_backend.cpp|sdl_application.cpp) continue ;;
     esac
     out="$(cd "$(dirname "$gcda")" && gcov -b -c "$(basename "$gcda")" 2>/dev/null || true)"
     exec_line="$(printf '%s\n' "$out" | awk -v u="${unit}" '
