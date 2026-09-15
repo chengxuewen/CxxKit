@@ -467,6 +467,9 @@ protected:
     CXXKIT_DISABLE_COPY_MOVE(SslOptions)
 };
 
+class MultipartPrivate;
+
+
 /**
  * @brief One multipart/form-data part: a named value (text part) or, when @p filename is
  *        set, a file part. Field StringViews borrow — pass literals or storage that
@@ -486,6 +489,27 @@ struct Part
     StringView value;
     StringView content_type;
     StringView filename;
+};
+
+/**
+ * @brief Multipart/form-data upload body (cpr Multipart backend). Applied via
+ *        @ref Session::set_multipart or the free set_option form; implies POST semantics.
+ */
+class CXXKIT_NETWORK_API Multipart
+{
+public:
+    Multipart();
+    ~Multipart();
+    Multipart(const std::initializer_list<Part> &parts);
+
+    void add(const Part &part);
+    const std::vector<Part> &parts() const;
+
+protected:
+    friend class Session;
+    CXXKIT_DEFINE_DPTR(Multipart)
+    CXXKIT_DECLARE_PRIVATE(Multipart)
+    CXXKIT_DISABLE_COPY_MOVE(Multipart)
 };
 
 class SessionPrivate;
@@ -523,6 +547,7 @@ public:
     void set_cookies(const Cookies &cookies);
     void set_proxy(const Proxy &proxy);
     void set_ssl_options(const SslOptions &options);
+    void set_multipart(const Multipart &multipart);
     void set_redirect(bool follow, long max_redirects = -1);
     void set_redirect(const Redirect &redirect) { this->set_redirect(redirect.follow, redirect.maximum); }
 
@@ -538,6 +563,7 @@ public:
     void set_option(const Cookies &cookies) { this->set_cookies(cookies); }
     void set_option(const Proxy &proxy) { this->set_proxy(proxy); }
     void set_option(const SslOptions &options) { this->set_ssl_options(options); }
+    void set_option(const Multipart &multipart) { this->set_multipart(multipart); }
     void set_option(const Redirect &redirect) { this->set_redirect(redirect); }
 
     Response::SharedPtr get();

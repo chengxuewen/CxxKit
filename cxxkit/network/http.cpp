@@ -426,6 +426,58 @@ std::string SslOptions::get_key_file() const
 #endif
 }
 
+MultipartPrivate::MultipartPrivate()
+{
+}
+
+MultipartPrivate::~MultipartPrivate()
+{
+}
+
+Multipart::Multipart()
+    : mDPtr(new MultipartPrivate())
+{
+}
+
+Multipart::~Multipart()
+{
+}
+
+Multipart::Multipart(const std::initializer_list<Part> &parts)
+    : mDPtr(new MultipartPrivate())
+{
+    CXXKIT_D(Multipart);
+    for (const Part &item : parts)
+    {
+        this->add(item);
+    }
+}
+
+void Multipart::add(const Part &part)
+{
+    CXXKIT_D(Multipart);
+#if CXXKIT_FEATURE_USE_BOOST_BACKEND
+
+#else
+    // cpr::Part is file/buffer oriented; our Part is the plain text+filename shape: a
+    // filename turns the part into a cpr Buffer-style in-memory file part.
+    cpr::Part cprPart(std::string(part.name), std::string(part.value), std::string(part.content_type));
+    if (!part.filename.empty())
+    {
+        cprPart.has_filename = true;
+        cprPart.filename = std::string(part.filename);
+    }
+    d->mParts.push_back(cprPart);
+#endif
+    d->mCxxParts.push_back(part);
+}
+
+const std::vector<Part> &Multipart::parts() const
+{
+    CXXKIT_D(const Multipart);
+    return d->mCxxParts;
+}
+
 SessionPrivate::SessionPrivate(Session *p)
     : mPPtr(p)
 {
@@ -670,6 +722,21 @@ void Session::set_ssl_options(const SslOptions &options)
 
 #else
     d->mSession.SetSslOptions(options.d_func()->mSslOptions);
+#endif
+}
+
+void Session::set_multipart(const Multipart &multipart)
+{
+    CXXKIT_D(Session);
+#if CXXKIT_FEATURE_USE_BOOST_BACKEND
+
+#else
+    cpr::Multipart cprMultipart{};
+    for (const cpr::Part &item : multipart.d_func()->mParts)
+    {
+        cprMultipart.parts.push_back(item);
+    }
+    d->mSession.SetMultipart(cprMultipart);
 #endif
 }
 

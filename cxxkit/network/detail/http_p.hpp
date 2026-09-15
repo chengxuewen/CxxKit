@@ -26,6 +26,7 @@
 
 #include <cxxkit/network/http.hpp>
 #include <cxxkit/tools/optional.hpp>
+#include <vector>
 
 #if CXXKIT_FEATURE_USE_BOOST_BACKEND
 
@@ -116,6 +117,7 @@ protected:
 };
 
 class SslOptionsPrivate;
+class MultipartPrivate;
 
 class SessionPrivate
 {
@@ -148,6 +150,21 @@ public:
 #endif
 };
 
+class MultipartPrivate
+{
+public:
+    MultipartPrivate();
+    ~MultipartPrivate();
+
+#if CXXKIT_FEATURE_USE_BOOST_BACKEND
+
+#else
+    std::vector<cpr::Part> mParts;
+#endif
+    std::vector<http::Part> mCxxParts;
+};
+
 } // namespace http
+
 
 CXXKIT_END_NAMESPACE
