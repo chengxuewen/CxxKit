@@ -28,6 +28,7 @@
 #include <cxxkit/memory/memory.hpp>
 #include <cxxkit/tools/type_list.hpp>
 #include <cxxkit/tools/type_traits.hpp>
+#include <cxxkit/tools/optional.hpp>
 
 #include <mutex>
 #include <memory>
@@ -56,6 +57,8 @@ namespace signals
 
 template <typename, typename...>
 class SignalBase;
+template <typename, typename, typename, typename...>
+class SignalBaseR;
 
 /**
  * A group_id is used to identify a group of slots
@@ -651,6 +654,9 @@ private:
     template <typename, typename...>
     friend class ::cxxkit::signals::SignalBase;
 
+    template <typename, typename, typename, typename...>
+    friend class ::cxxkit::signals::SignalBaseR;
+
     std::size_t mIndex;   // index into the array of slot pointers inside the signal
     const GroupId mGroup; // slot group this slot belongs to
     std::atomic<bool> mBlocked;
@@ -766,6 +772,8 @@ public:
 protected:
     template <typename, typename...>
     friend class SignalBase;
+    template <typename, typename, typename, typename...>
+    friend class SignalBaseR;
     explicit Connection(std::weak_ptr<detail::SlotState> s) noexcept
         : mState{std::move(s)}
     {
@@ -1033,6 +1041,90 @@ private:
 };
 
 /*
+ * Result-returning slot family for SignalBaseR (Task 8, S2-style combiners).
+ *
+ * SlotBaseR reuses the whole SlotBase/SlotState state machine (connected/
+ * blocked/cleaner/group bookkeeping) but adds call_slot_r, a pure virtual that
+ * RETURNS the slot result instead of discarding it. The void call_slot inherited
+ * from SlotBase simply forwards to call_slot_r and drops the value, so the
+ * existing void-invocation path stays usable if a SignalBaseR slot is ever
+ * invoked through the base interface.
+ */
+template <typename R, typename... Args>
+class SlotBaseR : public SlotBase<Args...>
+{
+public:
+    explicit SlotBaseR(Cleanable &c, GroupId gid)
+        : SlotBase<Args...>(c, gid)
+    {
+    }
+    ~SlotBaseR() override = default;
+
+    // invoke the slot and RETURN its result (the combiner's value source)
+    virtual R call_slot_r(Args... args) = 0;
+
+protected:
+    void call_slot(Args... args) override { call_slot_r(args...); }
+};
+
+/*
+ * A SlotR holds a callable whose return value is convertible to R.
+ */
+template <typename Func, typename R, typename... Args>
+class SlotR final : public SlotBaseR<R, Args...>
+{
+public:
+    template <typename F, typename Gid>
+    constexpr SlotR(Cleanable &c, F &&f, Gid gid)
+        : SlotBaseR<R, Args...>(c, gid)
+        , func{std::forward<F>(f)}
+    {
+    }
+
+protected:
+    R call_slot_r(Args... args) override { return func(args...); }
+
+    func_ptr get_callable() const noexcept override { return get_function_ptr(func); }
+
+#    if CXXKIT_RTTI_ENABLED
+    const std::type_info &get_callable_type() const noexcept override { return typeid(func); }
+#    endif
+
+private:
+    typename std::decay<Func>::type func;
+};
+
+/*
+ * Variation of SlotR that prepends a connection object to the callable.
+ */
+template <typename Func, typename R, typename... Args>
+class SlotRExtended final : public SlotBaseR<R, Args...>
+{
+public:
+    template <typename F>
+    constexpr SlotRExtended(Cleanable &c, F &&f, GroupId gid)
+        : SlotBaseR<R, Args...>(c, gid)
+        , func{std::forward<F>(f)}
+    {
+    }
+
+    Connection conn;
+
+protected:
+    R call_slot_r(Args... args) override { return func(conn, args...); }
+
+    func_ptr get_callable() const noexcept override { return get_function_ptr(func); }
+
+#    if CXXKIT_RTTI_ENABLED
+    const std::type_info &get_callable_type() const noexcept override { return typeid(func); }
+#    endif
+
+private:
+    typename std::decay<Func>::type func;
+};
+
+
+/*
  * A slot object holds state information, an object and a pointer over member
  * function to be called whenever the function call operator of its slot_base
  * base class is called.
@@ -1279,6 +1371,165 @@ protected:
 private:
     typename std::decay<Pmf>::type pmf;
     typename std::decay<WeakPtr>::type ptr;
+};
+
+/*
+ * Combiners for SignalBaseR (S2 semantics, C++11, snake_case per D26).
+ *
+ * A Combiner is a callable invoked as comb(first, last) where first/last is a
+ * [first, last) range of slot_call_iterators. Dereferencing an iterator
+ * lazily invokes the corresponding live slot and returns its R result;
+ * incrementing skips disconnected/blocked slots. Combiners may stop early
+ * (short-circuit) simply by not reaching last.
+ */
+
+/*
+ * S2 optional_last_value: returns an Optional<R> holding the result of the
+ * LAST invoked slot; empty when no slot is invoked (empty range or all
+ * slots dead/blocked). The signature R(InputIterator, InputIterator) matches
+ * the S2 combiner convention so user combiners compose interchangeably.
+ */
+template <typename R>
+struct optional_last_value
+{
+    using result_type = Optional<R>;
+
+    template <typename InputIterator>
+    result_type operator()(InputIterator first, InputIterator last) const
+    {
+        Optional<R> value;
+        while (first != last)
+        {
+            value = *first;
+            ++first;
+        }
+        return value;
+    }
+};
+
+/*
+ * S2 maximum: returns the largest result (operator<), or an empty Optional
+ * when no slot is invoked.
+ */
+template <typename R>
+struct maximum
+{
+    using result_type = Optional<R>;
+
+    template <typename InputIterator>
+    result_type operator()(InputIterator first, InputIterator last) const
+    {
+        Optional<R> max_value;
+        while (first != last)
+        {
+            const R value = *first;
+            if (!max_value || max_value < value)
+            {
+                max_value = value;
+            }
+            ++first;
+        }
+        return max_value;
+    }
+};
+
+/*
+ * slot_call_iterator caches the result of the slot it currently points to.
+ * Repeated dereference of the same iterator must not re-invoke the slot, so
+ * the cache is shared between copies of the iterator that sit on the same
+ * underlying slot.
+ */
+template <typename R>
+struct slot_result_cache
+{
+    const void *slot_id = nullptr; // identity of the slot the value belongs to
+    Optional<R> value;             // engaged only when slot_id is set
+};
+
+
+/*
+ * slot_call_iterator: a forward iterator over a SNAPSHOT of result-returning
+ * slot pointers. Dereferencing lazily invokes the pointed-to slot (skipping
+ * disconnected/blocked ones) and buffers the result; incrementing advances.
+ * The S2 boost.signals2 slot_call_iterator adapted to C++11: no auto return
+ * types, hand-written typedefs, position-based equality. The value is
+ * returned BY VALUE (reference = R) because each deref may compute a fresh
+ * result for a newly skipped-to slot.
+ *
+ * @tparam R the slot result type
+ * @tparam Iter the snapshot vector's const_iterator
+ * @tparam Invoker std::function<R(const slot_r_ptr&)>-compatible invoker
+ */
+template <typename R, typename Iter, typename Invoker>
+class slot_call_iterator
+{
+public:
+    using iterator_category = std::forward_iterator_tag;
+    using value_type = R;
+    using difference_type = std::ptrdiff_t;
+    using pointer = R *;
+    using reference = R;
+
+    slot_call_iterator(Iter it, Iter last, const Invoker &invoker, std::shared_ptr<slot_result_cache<R>> cache)
+        : mIter(it)
+        , mLast(last)
+        , mInvoker(invoker)
+        , mCache(std::move(cache))
+    {
+        normalize();
+    }
+
+    R operator*() const
+    {
+        CXXKIT_CHECK(mIter != mLast) << "slot_call_iterator: dereferencing the end iterator";
+        if (!cached())
+        {
+            mCache->slot_id = static_cast<const void *>(mIter->get());
+            mCache->value = mInvoker(*mIter);
+        }
+        return mCache->value.value();
+    }
+
+    slot_call_iterator &operator++()
+    {
+        CXXKIT_CHECK(mIter != mLast) << "slot_call_iterator: incrementing past the end iterator";
+        ++mIter;
+        mCache->slot_id = nullptr;
+        mCache->value.reset();
+        normalize();
+        return *this;
+    }
+
+    slot_call_iterator operator++(int)
+    {
+        slot_call_iterator tmp(*this);
+        ++(*this);
+        return tmp;
+    }
+
+    bool operator==(const slot_call_iterator &o) const { return mIter == o.mIter; }
+    bool operator!=(const slot_call_iterator &o) const { return mIter != o.mIter; }
+
+private:
+    // skip dead slots so *this always points at an invocable slot (or end)
+    void normalize()
+    {
+        while (mIter != mLast && !(mIter->get()->connected() && !mIter->get()->blocked()))
+        {
+            ++mIter;
+        }
+    }
+
+    // true when the shared cache already holds this slot's result
+    bool cached() const
+    {
+        return mCache->slot_id == static_cast<const void *>(mIter->get()) && mCache->value.has_value();
+    }
+
+    Iter mIter;
+    Iter mLast;
+    Invoker mInvoker;
+    std::shared_ptr<slot_result_cache<R>> mCache;
 };
 
 } // namespace detail
@@ -1968,6 +2219,323 @@ private:
 
 
 /**
+ * SignalBaseR is the result-returning sibling of SignalBase (S2-style, Task 8).
+ *
+ * It runs the same group-ordered slot machinery (via the detail::SlotBaseR
+ * family reusing SlotState/SlotBase) but emission feeds a COMBINER with a lazy
+ * [first, last) range of slot_call_iterators whose dereference invokes one slot
+ * and returns its result. This enables return-value aggregation (last value,
+ * maximum) and short-circuit evaluation (stop before reaching last).
+ *
+ * Differences vs SignalBase, by design (oracle F8 - SignalBase stays untouched):
+ * - slots return a value convertible to R; void slots are rejected (R != void)
+ * - connect()/connect_extended() accept callables only (no pmf/tracked
+ *   overloads - YAGNI, connect_once precedent); connect_extended prepends
+ *   the Connection& as usual
+ * - the combiner is default-constructed per emission (set_combiner deferred)
+ * - a blocked signal still runs the combiner over an EMPTY range (S2 semantics),
+ *   e.g. optional_last_value yields an empty Optional
+ *
+ * @tparam R the slot result type (must not be void)
+ * @tparam Lockable a lock type to decide the lock policy
+ * @tparam Combiner a default-constructible callable R(It, It) over slot results
+ * @tparam T... the argument types of the emitting and slots functions
+ */
+template <typename R, typename Lockable, typename Combiner, typename... T>
+class SignalBaseR final : public detail::Cleanable
+{
+    static_assert(!std::is_void<R>::value, "SignalBaseR: R must not be void - use SignalBase for void slots");
+
+    template <typename L>
+    using is_thread_safe = std::integral_constant<bool, !std::is_same<L, detail::NullMutex>::value>;
+
+    template <typename U, typename L>
+    using cow_type = typename std::conditional<is_thread_safe<L>::value, detail::copy_on_write<U>, U>::type;
+
+    template <typename U, typename L>
+    using cow_copy_type = typename std::conditional<is_thread_safe<L>::value, detail::copy_on_write<U>, U>::type;
+
+    using lock_type = std::unique_lock<Lockable>;
+    using slot_r_base = detail::SlotBaseR<R, T...>;
+    using slot_r_ptr = std::shared_ptr<slot_r_base>;
+    using slots_type = std::vector<slot_r_ptr>;
+    struct group_type
+    {
+        slots_type slts;
+        GroupId gid;
+    };
+    using list_type = std::vector<group_type>; // kept ordered by ascending gid
+
+public:
+    using arg_list = trait::TypeList<T...>;
+    using ext_arg_list = trait::TypeList<Connection &, T...>;
+    using result_type = typename Combiner::result_type;
+
+    SignalBaseR() noexcept
+        : m_block(false)
+    {
+    }
+    ~SignalBaseR() override { disconnect_all(); }
+
+    SignalBaseR(const SignalBaseR &) = delete;
+    SignalBaseR &operator=(const SignalBaseR &) = delete;
+
+    /**
+     * Emit a signal and collect slot results through the combiner.
+     *
+     * Effect: all non blocked and connected slots are invoked lazily as the
+     *         combiner dereferences the slot iterator range; the combiner's
+     *         return value is returned. Slots run OUTSIDE the signal lock, on a
+     *         snapshot of the slot list (same MT contract as SignalBase).
+     * Safety: with proper locking (see SignalR), emission can happen from
+     *         multiple threads simultaneously.
+     *
+     * @param a arguments to emit
+     * @return the combiner's result over the invoked slots
+     */
+    template <typename... U>
+    result_type operator()(U &&...a) const
+    {
+        if (m_block)
+        {
+            // S2 semantics: a blocked signal still runs the combiner over an
+            // empty range (e.g. optional_last_value returns an empty Optional).
+            const slots_type empty_slots;
+            return combiner_range(empty_slots, a...);
+        }
+
+        cow_copy_type<list_type, Lockable> ref = slots_reference();
+
+        // flatten the group-ordered snapshot into one invocation order
+        slots_type slot_ptrs;
+        for (const auto &group : detail::cow_read(ref))
+        {
+            slot_ptrs.insert(slot_ptrs.end(), group.slts.begin(), group.slts.end());
+        }
+        return combiner_range(slot_ptrs, a...);
+    }
+
+    /**
+     * Connect a callable whose return value is convertible to R.
+     *
+     * @param c a callable
+     * @param gid an identifier that can be used to order slot execution
+     * @return a connection object that can be used to interact with the slot
+     */
+    template <typename Callable>
+    typename std::enable_if<trait::detail::is_callable<Callable, arg_list>::value, Connection>::type connect(
+        Callable &&c,
+        GroupId gid = 0)
+    {
+        using slot_t = detail::SlotR<Callable, R, T...>;
+        auto s = std::static_pointer_cast<slot_r_base>(
+            detail::make_shared<slot_r_base, slot_t>(*this, std::forward<Callable>(c), gid));
+        Connection conn(s);
+        add_slot(std::move(s));
+        return conn;
+    }
+
+    /**
+     * Connect a callable with an additional connection argument.
+     *
+     * The callable's first argument must be of type connection and return a
+     * value convertible to R.
+     *
+     * @param c a callable
+     * @param gid an identifier that can be used to order slot execution
+     * @return a connection object that can be used to interact with the slot
+     */
+    template <typename Callable>
+    typename std::enable_if<trait::detail::is_callable<Callable, ext_arg_list>::value, Connection>::type
+    connect_extended(Callable &&c, GroupId gid = 0)
+    {
+        using slot_t = detail::SlotRExtended<Callable, R, T...>;
+        auto s = std::static_pointer_cast<slot_r_base>(
+            detail::make_shared<slot_r_base, slot_t>(*this, std::forward<Callable>(c), gid));
+        Connection conn(s);
+        std::static_pointer_cast<slot_t>(s)->conn = conn;
+        add_slot(std::move(s));
+        return conn;
+    }
+
+    /**
+     * Disconnect slots bound to a callable (free functions only - function
+     * objects/lambdas need RTTI, same limitation as SignalBase).
+     *
+     * @param c a callable
+     * @return the number of disconnected slots
+     */
+    template <typename Callable>
+    typename std::enable_if<(trait::detail::is_callable<Callable, arg_list>::value ||
+                             trait::detail::is_callable<Callable, ext_arg_list>::value ||
+                             trait::is_member_function_pointer<Callable>::value) &&
+                                detail::function_traits<Callable>::is_disconnectable,
+                            size_t>::type
+    disconnect(const Callable &c)
+    {
+        return disconnect_if([&](const slot_r_ptr &s) { return s->has_full_callable(c); });
+    }
+
+    /**
+     * Disconnects all the slots.
+     * Safety: thread safety depends on locking policy
+     */
+    void disconnect_all()
+    {
+        lock_type lock(m_mutex);
+        clear();
+    }
+
+    /**
+     * Blocks signal emission (see SignalBase::block for memory-order notes).
+     */
+    void block() noexcept { m_block.store(true); }
+
+    /**
+     * Unblocks signal emission.
+     */
+    void unblock() noexcept { m_block.store(false); }
+
+    /**
+     * Returns @c true when emission is blocked.
+     */
+    bool blocked() const noexcept { return m_block.load(); }
+
+    /**
+     * Returns the number of connected (non disconnected) slots.
+     */
+    size_t num_slots() const
+    {
+        cow_copy_type<list_type, Lockable> ref = slots_reference();
+        size_t count = 0;
+        for (const auto &g : detail::cow_read(ref))
+        {
+            count += g.slts.size();
+        }
+        return count;
+    }
+
+    /**
+     * Returns @c true when no slots are connected.
+     */
+    bool empty() const { return num_slots() == 0; }
+
+protected:
+    /**
+     * remove disconnected slots (Cleanable override, same lazy-swap scheme as
+     * SignalBase::clean)
+     */
+    void clean(detail::SlotState *state) override
+    {
+        lock_type lock(m_mutex);
+        const auto idx = state->index();
+        const auto gid = state->group();
+
+        for (auto &group : detail::cow_write(m_slots))
+        {
+            if (group.gid == gid)
+            {
+                auto &slts = group.slts;
+
+                if (idx < slts.size() && slts[idx] && slts[idx].get() == state)
+                {
+                    std::swap(slts[idx], slts.back());
+                    slts[idx]->index() = idx;
+                    slts.pop_back();
+                }
+
+                return;
+            }
+        }
+    }
+
+private:
+    // used to get a reference to the slots for reading
+    inline cow_copy_type<list_type, Lockable> slots_reference() const
+    {
+        lock_type lock(m_mutex);
+        return m_slots;
+    }
+
+    // run the combiner over a snapshot of slot pointers
+    template <typename... A>
+    result_type combiner_range(const slots_type &slot_ptrs, A &&...a) const
+    {
+        using invoker_type = std::function<R(const slot_r_ptr &)>;
+        invoker_type invoker = [&a...](const slot_r_ptr &s) -> R { return s->call_slot_r(a...); };
+        using iter_type = detail::slot_call_iterator<R, typename slots_type::const_iterator, invoker_type>;
+        auto cache = std::make_shared<detail::slot_result_cache<R>>();
+        Combiner comb;
+        return comb(iter_type(slot_ptrs.begin(), slot_ptrs.end(), invoker, cache),
+                    iter_type(slot_ptrs.end(), slot_ptrs.end(), invoker, cache));
+    }
+
+    // add the slot to the list of slots of the right group
+    void add_slot(slot_r_ptr &&s)
+    {
+        const GroupId gid = s->group();
+
+        lock_type lock(m_mutex);
+        auto &groups = detail::cow_write(m_slots);
+
+        auto it = groups.begin();
+        while (it != groups.end() && it->gid < gid)
+        {
+            it++;
+        }
+
+        if (it == groups.end() || it->gid != gid)
+        {
+            it = groups.insert(it, {{}, gid});
+        }
+
+        s->index() = it->slts.size();
+        it->slts.push_back(std::move(s));
+    }
+
+    // disconnect a slot if a condition occurs
+    template <typename Cond>
+    size_t disconnect_if(Cond &&cond)
+    {
+        lock_type lock(m_mutex);
+        auto &groups = detail::cow_write(m_slots);
+
+        size_t count = 0;
+
+        for (auto &group : groups)
+        {
+            auto &slts = group.slts;
+            size_t i = 0;
+            while (i < slts.size())
+            {
+                if (cond(slts[i]))
+                {
+                    std::swap(slts[i], slts.back());
+                    slts[i]->index() = i;
+                    slts.pop_back();
+                    ++count;
+                }
+                else
+                {
+                    ++i;
+                }
+            }
+        }
+
+        return count;
+    }
+
+    // to be called under lock: remove all the slots
+    void clear() { detail::cow_write(m_slots).clear(); }
+
+private:
+    mutable Lockable m_mutex;
+    cow_type<list_type, Lockable> m_slots;
+    std::atomic<bool> m_block;
+};
+
+
+/**
  * Freestanding connect function that defers to the `signal_base::connect` member.
  */
 template <typename Lockable, typename Arg, typename... T, typename... Args>
@@ -2005,6 +2573,20 @@ using Signal = SignalBase<std::mutex, T...>;
  */
 template <typename... T>
 using SignalUnsafe = SignalBase<detail::NullMutex, T...>;
+
+/**
+ * Result-collecting signal for multi-threaded contexts: slots return a value
+ * convertible to R, aggregated per emission by Combiner (S2 semantics).
+ * Combiner defaults to optional_last_value<R> (last slot's result or empty).
+ */
+template <typename R, typename Combiner = detail::optional_last_value<R>, typename... T>
+using SignalR = SignalBaseR<R, std::mutex, Combiner, T...>;
+
+/**
+ * Result-collecting signal for single-threaded contexts.
+ */
+template <typename R, typename Combiner = detail::optional_last_value<R>, typename... T>
+using SignalUnsafeR = SignalBaseR<R, detail::NullMutex, Combiner, T...>;
 /**
  * RAII helper that blocks a signal for the lifetime of the ScopedBlock object.
  *
@@ -2047,6 +2629,13 @@ template <typename... Args>
 using Signal = signals::Signal<Args...>;
 template <typename... Args>
 using SignalUnsafe = signals::SignalUnsafe<Args...>;
+// Flat R-signal aliases: R/Combiner must be named explicitly (C++11 alias
+// templates cannot pack-expand a trailing Args... into SignalR's leading
+// non-pack R/Combiner parameters), e.g. SignalR<int, MyCombiner, int, double>.
+template <typename R, typename Combiner = signals::detail::optional_last_value<R>, typename... Args>
+using SignalR = signals::SignalR<R, Combiner, Args...>;
+template <typename R, typename Combiner = signals::detail::optional_last_value<R>, typename... Args>
+using SignalUnsafeR = signals::SignalUnsafeR<R, Combiner, Args...>;
 
 /**
  * @}
