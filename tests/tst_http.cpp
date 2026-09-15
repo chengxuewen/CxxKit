@@ -605,6 +605,129 @@ TEST(HttpTest, ProxyRoutesThroughProxySocket)
         << "proxy socket must have received the forwarded request; captured: " << proxy_request;
 }
 
+// 20-22. Redirect control: a COUNTING server answers 302+Location on the first request and 200 on
+//        the second (curl re-dials per hop, so the one-connection-per-request shape of
+//        OneShotServer still applies). Fresh EventLoop + manual process_events spin per case:
+//        EventLoop::exec after a completed exec returns immediately (preset exit), and the
+//        run_with_loop exec pump raced the accept path in the proxy fixture — the inline worker
+//        + spin shape is the proven pattern.
+struct RedirectServer
+{
+    EventLoop &loop;
+    TcpServer server;
+    std::unique_ptr<cxxkit::TcpSocket> server_side;
+    std::string requests;
+    int request_count{0};
+
+    explicit RedirectServer(EventLoop &l)
+        : loop(l)
+        , server(l)
+    {
+        server.on_connection(
+            [this](std::unique_ptr<cxxkit::TcpSocket> socket)
+            {
+                server_side = std::move(socket);
+                server_side->read_start(
+                    [this](const uint8_t *data, ssize_t nread)
+                    {
+                        if (nread <= 0)
+                        {
+                            return;
+                        }
+                        requests.append(reinterpret_cast<const char *>(data), static_cast<size_t>(nread));
+                        if (requests.find("\r\n\r\n") == std::string::npos)
+                        {
+                            return;
+                        }
+                        ++request_count;
+                        // Hop 1 -> 302 + Location; hop 2+ -> 200 with the final body.
+                        const std::string response = 1 == request_count
+                                                         ? make_response(302, "Found", "Location: /final\r\n", "")
+                                                         : make_response(200, "OK", "", "redirected-body");
+                        const uint8_t *bytes = reinterpret_cast<const uint8_t *>(response.data());
+                        server_side->write(bytes, response.size(), [this](bool) { server_side->close(); });
+                    });
+            });
+    }
+
+    bool start() { return server.listen(kHost, 0); }
+};
+
+// Runs @p blocking_call on a worker thread while THIS (loop-owner) thread spins process_events
+// until the call hands back its result via loop.post. Fresh-loop pattern: immune to the
+// exec-reuse trap (a second exec() on a completed loop returns immediately).
+Response::SharedPtr spin_with_worker(EventLoop &loop, std::function<Response::SharedPtr()> blocking_call)
+{
+    Response::SharedPtr result;
+    std::thread worker(
+        [&loop, &result, &blocking_call]
+        {
+            Response::SharedPtr response = blocking_call();
+            loop.post(
+                [&loop, &result, response]
+                {
+                    result = response;
+                    loop.exit(0);
+                });
+        });
+    for (int i = 0; i < 400 && result == nullptr; ++i)
+    {
+        loop.process_events(cxxkit::EventLoop::ProcessFlag::kAllEvents, 10);
+    }
+    worker.join();
+    return result;
+}
+
+// 20. No-follow: set_redirect(false) surfaces the 302 verbatim; exactly ONE request arrived.
+TEST(HttpTest, RedirectNoFollow)
+{
+    EventLoop loop(cxxkit::make_default_dispatcher());
+    RedirectServer srv(loop);
+    ASSERT_TRUE(srv.start());
+
+    const std::string url = std::string(kHost) + ":" + std::to_string(srv.server.bound_port()) + "/start";
+    Response::SharedPtr response = spin_with_worker(loop, [&url] { return get(Url{url}, Redirect{false, 50}); });
+    ASSERT_NE(nullptr, response.get());
+    EXPECT_EQ(302L, response->status_code());
+    EXPECT_EQ(std::string("/final"), response->header("Location"));
+    EXPECT_EQ(1, srv.request_count);
+}
+
+// 21. Follow: the 302 Location is chased; the final 200 body surfaces and TWO requests hit the
+//     server (hop 1 + hop 2).
+TEST(HttpTest, RedirectFollow)
+{
+    EventLoop loop(cxxkit::make_default_dispatcher());
+    RedirectServer srv(loop);
+    ASSERT_TRUE(srv.start());
+
+    const std::string url = std::string(kHost) + ":" + std::to_string(srv.server.bound_port()) + "/start";
+    Response::SharedPtr response = spin_with_worker(
+        loop,
+        [&url] { return get(Url{url}, Redirect{true, 50}, Timeout{std::chrono::milliseconds(1000)}); });
+    ASSERT_NE(nullptr, response.get());
+    EXPECT_EQ(200L, response->status_code());
+    EXPECT_EQ(std::string("redirected-body"), response->text());
+    EXPECT_EQ(2, srv.request_count);
+    EXPECT_NE(std::string::npos, srv.requests.find("GET /start HTTP/1.1\r\n")) << srv.requests;
+    EXPECT_NE(std::string::npos, srv.requests.find("GET /final HTTP/1.1\r\n")) << srv.requests;
+}
+
+// 22. follow=true with maximum=0: curl refuses all redirects (CURLOPT_MAXREDIRS=0), so the
+//     behavior pins to the no-follow shape — 302 surfaces, one request.
+TEST(HttpTest, RedirectMaxZeroRefusesRedirects)
+{
+    EventLoop loop(cxxkit::make_default_dispatcher());
+    RedirectServer srv(loop);
+    ASSERT_TRUE(srv.start());
+
+    const std::string url = std::string(kHost) + ":" + std::to_string(srv.server.bound_port()) + "/start";
+    Response::SharedPtr response = spin_with_worker(loop, [&url] { return get(Url{url}, Redirect{true, 0}); });
+    ASSERT_NE(nullptr, response.get());
+    EXPECT_EQ(302L, response->status_code());
+    EXPECT_EQ(1, srv.request_count);
+}
+
 // The machine's http_proxy/https_proxy environment makes curl route loopback requests through the
 // proxy (CONNECT → 502), which would poison every case. Strip the family before gtest runs: the
 // cpr/curl backend reads these at transfer time, so a one-time unset in main() is sufficient.

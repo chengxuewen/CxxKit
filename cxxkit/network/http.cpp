@@ -538,6 +538,19 @@ void Session::set_proxy(const Proxy &proxy)
     }
 #endif
 }
+
+void Session::set_redirect(bool follow, long max_redirects)
+{
+    CXXKIT_D(Session);
+#if CXXKIT_FEATURE_USE_BOOST_BACKEND
+
+#else
+    // cpr::Redirect(long maximum, bool follow, bool cont_send_cred, PostRedirectFlags post_flags);
+    // maximum: 0 refuses redirects, -1 infinite; POST_ALL keeps POST semantics across hops.
+    d->mSession.SetRedirect(cpr::Redirect(max_redirects, follow, false, cpr::PostRedirectFlags::POST_ALL));
+#endif
+}
+
 Response::SharedPtr Session::get()
 {
     CXXKIT_D(Session);

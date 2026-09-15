@@ -391,6 +391,7 @@ protected:
 };
 
 class ProxyPrivate;
+class SessionPrivate;
 /**
  * @brief HTTP proxy endpoint applied per request (http/socks5; no proxy auth yet).
  */
@@ -427,6 +428,19 @@ protected:
 };
 
 class SessionPrivate;
+
+class SessionPrivate;
+/**
+ * @brief Redirect policy applied per request: follow 3xx hops and/or cap the hop count.
+ *        maximum: 0 refuses redirects, -1 infinite (curl CURLOPT_MAXREDIRS semantics).
+ */
+struct Redirect
+{
+    bool follow{true};
+    long maximum{-1};
+};
+
+class SessionPrivate;
 /**
  * @brief HTTP session: holds connection state (URL, headers, auth, timeout)
  *        and executes requests (sync/async) via the cpr backend.
@@ -449,6 +463,8 @@ public:
     void set_payload(const Payload &payload);
     void set_cookies(const Cookies &cookies);
     void set_proxy(const Proxy &proxy);
+    void set_redirect(bool follow, long max_redirects = -1);
+    void set_redirect(const Redirect &redirect) { this->set_redirect(redirect.follow, redirect.maximum); }
 
     void set_option(const Url &url) { this->set_url(url); }
     void set_option(const Parameters &parameters) { this->set_parameters(parameters); }
@@ -461,6 +477,7 @@ public:
     void set_option(const Payload &payload) { this->set_payload(payload); }
     void set_option(const Cookies &cookies) { this->set_cookies(cookies); }
     void set_option(const Proxy &proxy) { this->set_proxy(proxy); }
+    void set_option(const Redirect &redirect) { this->set_redirect(redirect); }
 
     Response::SharedPtr get();
     Response::SharedPtr put();
