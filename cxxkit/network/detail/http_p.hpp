@@ -94,6 +94,27 @@ protected:
     CXXKIT_DISABLE_COPY_MOVE(AuthenticationPrivate)
 };
 
+class ProxyPrivate
+{
+public:
+    explicit ProxyPrivate(Proxy *p);
+    virtual ~ProxyPrivate();
+
+#if CXXKIT_FEATURE_USE_BOOST_BACKEND
+
+#else
+    Optional<cpr::Proxies> mProxies;
+#endif
+    std::string mHost;
+    uint16_t mPort{0};
+    Proxy::Type mType{Proxy::Type::kHTTP};
+
+protected:
+    CXXKIT_DEFINE_PPTR(Proxy)
+    CXXKIT_DECLARE_PUBLIC(Proxy)
+    CXXKIT_DISABLE_COPY_MOVE(ProxyPrivate)
+};
+
 class SessionPrivate
 {
 public:

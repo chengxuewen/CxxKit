@@ -311,6 +311,81 @@ SessionPrivate::~SessionPrivate()
 {
 }
 
+ProxyPrivate::ProxyPrivate(Proxy *p)
+    : mPPtr(p)
+{
+}
+
+ProxyPrivate::~ProxyPrivate()
+{
+}
+
+static std::string proxy_scheme_url(Proxy::Type type, const std::string &host, uint16_t port)
+{
+    return std::string(Proxy::Type::kSOCKS5 == type ? "socks5://" : "http://") + host + ":" + std::to_string(port);
+}
+
+Proxy::Proxy()
+    : mDPtr(new ProxyPrivate(this))
+{
+}
+
+Proxy::Proxy(const Initializer &initializer)
+    : mDPtr(new ProxyPrivate(this))
+{
+#if CXXKIT_FEATURE_USE_BOOST_BACKEND
+
+#else
+    // StringView does not implicitly convert to std::string on assignment — spell the
+    // conversion out (Initializer::host is a view into caller-owned storage).
+    mDPtr->mHost = std::string(initializer.host);
+    mDPtr->mPort = initializer.port;
+    mDPtr->mType = initializer.type;
+    mDPtr->mProxies = utils::make_optional(
+        cpr::Proxies{{"http", proxy_scheme_url(initializer.type, initializer.host.data(), initializer.port)},
+                     {"https", proxy_scheme_url(initializer.type, initializer.host.data(), initializer.port)}});
+#endif
+}
+
+Proxy::Proxy(StringView host, uint16_t port, Type type)
+    : Proxy(Initializer{host, port, type})
+{
+}
+
+Proxy::~Proxy()
+{
+}
+
+std::string Proxy::get_host() const
+{
+    CXXKIT_D(const Proxy);
+#if CXXKIT_FEATURE_USE_BOOST_BACKEND
+
+#else
+    return d->mHost;
+#endif
+}
+
+uint16_t Proxy::get_port() const
+{
+    CXXKIT_D(const Proxy);
+#if CXXKIT_FEATURE_USE_BOOST_BACKEND
+
+#else
+    return d->mPort;
+#endif
+}
+
+Proxy::Type Proxy::get_type() const
+{
+    CXXKIT_D(const Proxy);
+#if CXXKIT_FEATURE_USE_BOOST_BACKEND
+
+#else
+    return d->mType;
+#endif
+}
+
 Session::Session()
     : mDPtr(new SessionPrivate(this))
 {
@@ -451,6 +526,18 @@ void Session::set_cookies(const Cookies &cookies)
 #endif
 }
 
+void Session::set_proxy(const Proxy &proxy)
+{
+    CXXKIT_D(Session);
+#if CXXKIT_FEATURE_USE_BOOST_BACKEND
+
+#else
+    if (proxy.d_func()->mProxies.has_value())
+    {
+        d->mSession.SetProxies(*proxy.d_func()->mProxies);
+    }
+#endif
+}
 Response::SharedPtr Session::get()
 {
     CXXKIT_D(Session);

@@ -390,6 +390,41 @@ protected:
     CXXKIT_DISABLE_COPY_MOVE(Authentication)
 };
 
+class ProxyPrivate;
+/**
+ * @brief HTTP proxy endpoint applied per request (http/socks5; no proxy auth yet).
+ */
+class CXXKIT_NETWORK_API Proxy
+{
+public:
+    enum class Type
+    {
+        kHTTP,
+        kSOCKS5
+    };
+
+    struct Initializer
+    {
+        StringView host;
+        uint16_t port{0};
+        Type type{Type::kHTTP};
+    };
+
+    explicit Proxy();
+    Proxy(const Initializer &initializer);
+    Proxy(StringView host, uint16_t port, Type type = Type::kHTTP);
+    virtual ~Proxy();
+
+    std::string get_host() const;
+    uint16_t get_port() const;
+    Type get_type() const;
+
+protected:
+    friend class Session;
+    CXXKIT_DEFINE_DPTR(Proxy)
+    CXXKIT_DECLARE_PRIVATE(Proxy)
+    CXXKIT_DISABLE_COPY_MOVE(Proxy)
+};
 
 class SessionPrivate;
 /**
@@ -413,6 +448,7 @@ public:
     void set_bearer(const Bearer &bearer);
     void set_payload(const Payload &payload);
     void set_cookies(const Cookies &cookies);
+    void set_proxy(const Proxy &proxy);
 
     void set_option(const Url &url) { this->set_url(url); }
     void set_option(const Parameters &parameters) { this->set_parameters(parameters); }
@@ -424,6 +460,7 @@ public:
     void set_option(const Bearer &bearer) { this->set_bearer(bearer); }
     void set_option(const Payload &payload) { this->set_payload(payload); }
     void set_option(const Cookies &cookies) { this->set_cookies(cookies); }
+    void set_option(const Proxy &proxy) { this->set_proxy(proxy); }
 
     Response::SharedPtr get();
     Response::SharedPtr put();
