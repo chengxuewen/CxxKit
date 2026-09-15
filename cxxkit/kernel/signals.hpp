@@ -1756,19 +1756,31 @@ public:
     }
 
     /**
-     * Blocks signal emission
-     * Safety: thread safe
+     * Blocks signal emission.
+     *
+     * The @c m_block member is a plain @c std::atomic<bool> with
+     * @c memory_order_seq_cst default ordering, so @c block() / @c unblock()
+     * / @c blocked() participate in a single total order.
+     *
+     * If @c block() is called while an emission is already in progress,
+     * the current emission completes against the snapshot it already
+     * captured; only subsequent @c operator() calls observe the block.
      */
     void block() noexcept { m_block.store(true); }
 
     /**
-     * Unblocks signal emission
-     * Safety: thread safe
+     * Unblocks signal emission.
+     *
+     * Releases the block established by @c block().  Uses
+     * @c memory_order_seq_cst (the @c std::atomic default).
      */
     void unblock() noexcept { m_block.store(false); }
 
     /**
-     * Tests blocking state of signal emission
+     * Returns @c true when emission is blocked.
+     *
+     * Reads with @c memory_order_seq_cst (the @c std::atomic default),
+     * which is in the same total order as @c block() and @c unblock().
      */
     bool blocked() const noexcept { return m_block.load(); }
 
