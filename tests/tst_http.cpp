@@ -693,6 +693,154 @@ TEST(HttpTest, RedirectMaxZeroRefusesRedirects)
     EXPECT_EQ(302L, response->status_code());
     EXPECT_EQ(1, srv.request_count);
 }
+// 23. Cookie accessor family: the Initializer constructor populates every field the wrapper
+//     exposes, and the accessors round-trip them verbatim (is_including_subdomains, is_https_only,
+//     get_expires/get_expires_string/get_domain/get_path plus the covered get_name/get_value).
+//     Also pins the empty default-constructed Cookie: every accessor degrades to its fallback.
+TEST(HttpTest, CookieAccessorFamily)
+{
+    const auto expires = std::chrono::system_clock::now() + std::chrono::hours(1);
+    const Cookie cookie(Cookie::Initializer{"session",
+                                           "abc123",
+                                           "example.com",
+                                           true,
+                                           "/login",
+                                           true,
+                                           expires});
+    EXPECT_EQ(std::string("session"), cookie.get_name());
+    EXPECT_EQ(std::string("abc123"), cookie.get_value());
+    EXPECT_EQ(std::string("example.com"), cookie.get_domain());
+    EXPECT_TRUE(cookie.is_including_subdomains());
+    EXPECT_EQ(std::string("/login"), cookie.get_path());
+    EXPECT_TRUE(cookie.is_https_only());
+    EXPECT_EQ(expires, cookie.get_expires());
+    EXPECT_FALSE(std::string(cookie.get_expires_string()).empty());
+
+    // Default-constructed (no cpr cookie inside): every accessor takes the documented fallback.
+    const Cookie empty;
+    EXPECT_FALSE(empty.is_including_subdomains());
+    EXPECT_FALSE(empty.is_https_only());
+    EXPECT_EQ(std::chrono::system_clock::time_point(), empty.get_expires());
+    EXPECT_EQ(std::string(""), empty.get_expires_string());
+    EXPECT_EQ(std::string(""), empty.get_domain());
+    EXPECT_EQ(std::string(""), empty.get_value());
+    EXPECT_EQ(std::string(""), empty.get_path());
+    EXPECT_EQ(std::string(""), empty.get_name());
+}
+
+// 24. Set-Cookie with attributes: the parsed response cookie surfaces the attribute values
+//     (path/domain/https-only) through the full accessor family.
+TEST(HttpTest, CookieAttributesFromResponse)
+{
+    EventLoop loop(cxxkit::make_default_dispatcher());
+    OneShotServer srv(loop);
+    ASSERT_TRUE(srv.start(make_response(
+        200, "OK", "Set-Cookie: session=abc123; Path=/login; Domain=127.0.0.1; Secure\r\n", "")));
+
+    const std::string url = std::string(kHost) + ":" + std::to_string(srv.server.bound_port()) + "/login";
+    Response::SharedPtr response = run_with_loop(loop, [&url] { return get(Url{url}); });
+    ASSERT_NE(nullptr, response.get());
+    ASSERT_FALSE(response->cookies().data().empty());
+    const Cookie::SharedPtr cookie = response->cookies().data().at(0);
+    EXPECT_EQ(std::string("session"), cookie->get_name());
+    EXPECT_EQ(std::string("abc123"), cookie->get_value());
+    EXPECT_EQ(std::string("/login"), cookie->get_path());
+    EXPECT_TRUE(cookie->is_https_only());
+}
+
+// 25. Proxy Initializer path + getters: host/port/type round-trip through the pimpl (no
+//     transfer involved — this only pins the settings surface).
+TEST(HttpTest, ProxyAccessors)
+{
+    const Proxy::Initializer init{std::string(kHost), 8080, Proxy::Type::kSOCKS5};
+    const Proxy proxy(init);
+    EXPECT_EQ(std::string(kHost), proxy.get_host());
+    EXPECT_EQ(8080, proxy.get_port());
+    EXPECT_EQ(Proxy::Type::kSOCKS5, proxy.get_type());
+
+    // Default-constructed proxy: zero-valued fallbacks.
+    const Proxy empty;
+    EXPECT_EQ(std::string(""), empty.get_host());
+    EXPECT_EQ(0, empty.get_port());
+    EXPECT_EQ(Proxy::Type::kHTTP, empty.get_type());
+}
+
+// 26. Authentication surface: DIGEST and NTLM modes survive the to_cpr/from_cpr round trip
+//     through auth_mode(), and auth_string() returns the stored token (empty until a transfer
+//     populates it — pin the wrapper-level behavior, not curl internals).
+TEST(HttpTest, AuthenticationModesRoundTrip)
+{
+    const Authentication digest{"user", "pass", Authentication::Mode::kDIGEST};
+    EXPECT_EQ(Authentication::Mode::kDIGEST, digest.auth_mode());
+    const Authentication ntlm{"user", "pass", Authentication::Mode::kNTLM};
+    EXPECT_EQ(Authentication::Mode::kNTLM, ntlm.auth_mode());
+
+    // Default-constructed authentication: BASIC fallback; cpr materializes the token as
+    // "username:password" with both empty -> just the ":" joiner.
+    const Authentication empty;
+    EXPECT_EQ(Authentication::Mode::kBASIC, empty.auth_mode());
+    EXPECT_EQ(std::string(":"), std::string(empty.auth_string()));
+}
+
+// 27. Session-level options that the free-function forms already exercise elsewhere, pinned
+//     directly: update_header merges (the request carries BOTH headers on the wire),
+//     set_connect_timeout is accepted, and session.set_cookies attaches request cookies.
+TEST(HttpTest, SessionHeaderMergeAndCookies)
+{
+    EventLoop loop(cxxkit::make_default_dispatcher());
+    OneShotServer srv(loop);
+    ASSERT_TRUE(srv.start(make_response(200, "OK", "", "ok")));
+
+    const std::string url = std::string(kHost) + ":" + std::to_string(srv.server.bound_port()) + "/path";
+    Response::SharedPtr response = spin_with_worker(
+        loop,
+        [&url]
+        {
+            Session session;
+            session.set_url(Url{url});
+            session.set_header(Header{{"X-One", "1"}});
+            session.update_header(Header{{"X-Two", "2"}}); // merge, not replace
+            session.set_connect_timeout(ConnectTimeout{std::chrono::milliseconds(500)});
+            session.set_cookies(Cookies{Cookie::Initializer{"k", "v", "", false, "/", false}});
+            return session.get();
+        });
+    ASSERT_NE(nullptr, response.get());
+    EXPECT_EQ(200L, response->status_code());
+    EXPECT_NE(std::string::npos, srv.request.find("X-One: 1")) << "captured: " << srv.request;
+    EXPECT_NE(std::string::npos, srv.request.find("X-Two: 2")) << "captured: " << srv.request;
+    EXPECT_NE(std::string::npos, srv.request.find("Cookie:")) << "captured: " << srv.request;
+}
+
+// 28. download(WriteCallback): the callback form streams the body through user code chunk by
+//     chunk (return true = continue) and the final response still surfaces status/body.
+TEST(HttpTest, DownloadToWriteCallback)
+{
+    EventLoop loop(cxxkit::make_default_dispatcher());
+    OneShotServer srv(loop);
+    ASSERT_TRUE(srv.start(make_response(200, "OK", "", "chunked-download-body")));
+
+    const std::string url = std::string(kHost) + ":" + std::to_string(srv.server.bound_port()) + "/file";
+    Response::SharedPtr response = spin_with_worker(
+        loop,
+        [&url]
+        {
+            Session session;
+            session.set_url(Url{url});
+            std::string collected;
+            WriteCallback write(
+                [&collected](std::string data, intptr_t)
+                {
+                    collected += data;
+                    return true;
+                });
+            Response::SharedPtr result = session.download(write);
+            EXPECT_EQ(std::string("chunked-download-body"), collected);
+            return result;
+        });
+    ASSERT_NE(nullptr, response.get());
+    EXPECT_EQ(200L, response->status_code());
+}
+
 
 // The machine's http_proxy/https_proxy environment makes curl route loopback requests through the
 // proxy (CONNECT → 502), which would poison every case. Strip the family before gtest runs: the
