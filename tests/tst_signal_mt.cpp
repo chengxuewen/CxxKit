@@ -29,7 +29,6 @@
 #include <gtest/gtest.h>
 
 #include <atomic>
-#include <chrono>
 #include <memory>
 #include <mutex>
 #include <thread>
@@ -77,12 +76,12 @@ TEST(SignalMt, TrackedSlotKeepAliveMidEmission)
     std::atomic<int> started{0};
     std::atomic<int> completed{0};
     // The tracked payload is deliberately inert: the point is its lifetime, not its
-    // content. The slot reads the object only through the shared_ptr captured by
-    // reference — the signal's keep-alive (weak_ptr::lock() inside
-    // slot_tracked::call_slot) guarantees the object is alive during each invocation
-    // even after both outer owners reset their shared_ptrs mid-emission. (A raw
-    // pointer captured up front would itself be a use-after-free in the *test* —
-    // an ASAN-caught false alarm during development, not a signals.hpp bug.)
+    // content. Shape: the raw pointer is captured by value and dereferenced strictly
+    // inside the slot body — the signal's keep-alive (weak_ptr::lock() inside
+    // slot_tracked::call_slot) guarantees the object is alive for the duration of
+    // each invocation, even after the test drops @p obj mid-emission. Post-join
+    // assertions read only the test-scope mirror atomics, never @p raw (the last
+    // in-flight keep-alive may have freed the object by then).
     KeepAliveCounter *raw = new KeepAliveCounter();
     std::shared_ptr<KeepAliveCounter> obj(raw);
     std::atomic<int> hits{0};
@@ -248,7 +247,6 @@ TEST(SignalMt, ConcurrentConnectDisconnectEmitStress)
     }
     pool.clear();
 
-    EXPECT_GE(fired.load(), 0); // never negative (trivially true; documents the invariant)
     EXPECT_EQ(0u, sig.slot_count());
 }
 
@@ -285,7 +283,6 @@ TEST(SignalMt, EmitWhileAnotherThreadConnectsAndDisconnects)
     emitter.join();
     mutator.join();
     sig.disconnect_all();
-    EXPECT_GE(fired.load(), 0);
     EXPECT_EQ(0u, sig.slot_count());
 }
 
