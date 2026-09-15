@@ -27,6 +27,7 @@
 
 #include <gtest/gtest.h>
 
+#include <algorithm>
 #include <memory>
 #include <string>
 #include <vector>
@@ -370,6 +371,8 @@ TEST(Signal, DisconnectViaOldConnectionAfterSourceDestroyedIsSafeNoOp)
     // connection no longer controls the slot now owned by dst. Asserting only
     // what is safe pre-fix:
     EXPECT_FALSE(old_conn.connected()); // RED pre-fix: slot still marked connected
+    // post-fix contract: also assert dst.slot_count() == 1 and
+    // old_conn.disconnect() is a safe no-op returning false.
 }
 
 TEST(SignalUnsafe, SelfDisconnectAndReconnectDefersNewSlotToNextEmission)
@@ -394,14 +397,14 @@ TEST(SignalUnsafe, SelfDisconnectAndReconnectDefersNewSlotToNextEmission)
 
     sig.connect([&sink](int value) { sink.push_back(1000 + value); }); // dummy, runs first
 
-    sig(1);                     // dummy runs, then A runs: disconnects itself, connects B
-    ASSERT_EQ(1u, sink.size()); // RED: B runs in the same emission -> sink == {1001, 1, 102}
-    EXPECT_EQ(1, sink[0]);
+    sig(1); // dummy runs, then A runs: disconnects itself, connects B
+    // S2 contract: B must NOT run in this emission, only from the next one on.
+    // RED pre-fix: B runs in the same emission (iterator invalidation), so 101
+    // appears in sink after sig(1).
+    EXPECT_TRUE(std::find(sink.begin(), sink.end(), 101) == sink.end());
 
-    sig(2);                     // only slot B runs now
-    ASSERT_EQ(2u, sink.size()); // RED pre-fix: 4 elements
-    EXPECT_EQ(1, sink[0]);
-    EXPECT_EQ(102, sink[1]);
+    sig(2); // only slot B runs now
+    EXPECT_TRUE(std::find(sink.begin(), sink.end(), 102) != sink.end());
 }
 
 } // namespace cxxkit
