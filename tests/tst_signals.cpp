@@ -316,6 +316,94 @@ TEST(Signal, ObserverBaseDisconnectAllOnExplicitCall)
     EXPECT_EQ(1u, obs.mValues.size());
 }
 
+// B1 (RED, compile-time probe result): the disconnect(Obj) overload at
+// signals.hpp:1693-1701 is unreachable for object types. Its SFINAE guard at
+// signals.hpp:1695 reads `!trait::detail::is_callable<ext_arg_list, Obj>::value`
+// — the type list is passed as the CALLABLE parameter and Obj as the ARG LIST,
+// i.e. the argument order is backwards (oracle: one parameter-order at :1695).
+// `is_callable<ext_arg_list, Obj>` expands to IsCallableImpl<TypeList<Connection&, T...>, Obj>
+// which matches no partial specialization; the primary template is incomplete, so
+// the whole overload is SFINAE-removed. Scratch probe confirmed:
+//   g++ -std=c++11 -I cxxkit -I build/include -fsyntax-only /tmp/b1_probe.cpp
+//   -> error: no matching function for call to 'disconnect(...)' (candidate
+//      removed by SFINAE: invalid use of incomplete type 'IsCallableImpl<...>')
+// Post-fix the guard must read is_callable<Obj, ext_arg_list>. Re-enable this
+// test once signals.hpp is fixed:
+// TEST(Signal, DisconnectByObjectRemovesBoundSlots)
+// {
+//     Signal<int> sig;
+//     ValueCollector collector;
+//     sig.connect(&ValueCollector::on_int, &collector);
+//     sig.connect(&ValueCollector::on_int, &collector);
+//     EXPECT_EQ(2u, sig.disconnect(collector));
+//     sig(1);
+//     EXPECT_TRUE(collector.mValues.empty());
+// }
+
+TEST(Signal, MoveConstructedSignalOldConnectionDisconnectClearsNewSignal)
+{
+    Signal<int> src;
+    Connection old_conn = src.connect([](int) { });
+    Signal<int> dst(std::move(src));
+    ASSERT_EQ(1u, dst.slot_count());
+
+    // B2a RED: after move, the slot's internal Cleanable reference still points
+    // at `src` (only the slot pointers are swapped, mCleaner is not re-targeted),
+    // so disconnecting via the pre-move connection cleans src's (now empty) list
+    // and leaves the slot alive in dst.
+    EXPECT_TRUE(old_conn.disconnect());
+    EXPECT_EQ(0u, dst.slot_count()); // currently 1 — RED
+}
+
+TEST(Signal, DisconnectViaOldConnectionAfterSourceDestroyedIsSafeNoOp)
+{
+    Signal<int> dst;
+    Connection old_conn;
+    {
+        Signal<int> src;
+        old_conn = src.connect([](int) { });
+        dst = std::move(src);
+    }
+    // B2b oracle F5: `src` is destroyed here; pre-fix the moved slot's Cleanable
+    // reference dangles into it, so calling old_conn.disconnect() is a
+    // use-after-free. Post-fix it must be a safe no-op and the pre-move
+    // connection no longer controls the slot now owned by dst. Asserting only
+    // what is safe pre-fix:
+    EXPECT_FALSE(old_conn.connected()); // RED pre-fix: slot still marked connected
+}
+
+TEST(SignalUnsafe, SelfDisconnectAndReconnectDefersNewSlotToNextEmission)
+{
+    SignalUnsafe<int> sig;
+    std::vector<int> sink;
+    bool first_run = true;
+
+    sig.connect_extended(
+        [&](Connection &self, int value)
+        {
+            sink.push_back(value);
+            if (first_run)
+            {
+                first_run = false;
+                self.disconnect();
+                // New slot must NOT run in this emission (S2 contract), only
+                // from the next emission on.
+                sig.connect([&sink](int value) { sink.push_back(100 + value); });
+            }
+        });
+
+    sig.connect([&sink](int value) { sink.push_back(1000 + value); }); // dummy, runs first
+
+    sig(1);                     // dummy runs, then A runs: disconnects itself, connects B
+    ASSERT_EQ(1u, sink.size()); // RED: B runs in the same emission -> sink == {1001, 1, 102}
+    EXPECT_EQ(1, sink[0]);
+
+    sig(2);                     // only slot B runs now
+    ASSERT_EQ(2u, sink.size()); // RED pre-fix: 4 elements
+    EXPECT_EQ(1, sink[0]);
+    EXPECT_EQ(102, sink[1]);
+}
+
 } // namespace cxxkit
 
 int main(int argc, char *argv[])
