@@ -1692,7 +1692,7 @@ public:
      */
     template <typename Obj>
     typename std::enable_if<!trait::detail::is_callable<Obj, arg_list>::value &&
-                                !trait::detail::is_callable<ext_arg_list, Obj>::value &&
+                                !trait::detail::is_callable<Obj, ext_arg_list>::value &&
                                 !trait::is_member_function_pointer<Obj>::value,
                             size_t>::type
     disconnect(const Obj &obj)

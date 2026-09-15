@@ -329,17 +329,26 @@ TEST(Signal, ObserverBaseDisconnectAllOnExplicitCall)
 //   -> error: no matching function for call to 'disconnect(...)' (candidate
 //      removed by SFINAE: invalid use of incomplete type 'IsCallableImpl<...>')
 // Post-fix the guard must read is_callable<Obj, ext_arg_list>. Re-enable this
-// test once signals.hpp is fixed:
-// TEST(Signal, DisconnectByObjectRemovesBoundSlots)
-// {
-//     Signal<int> sig;
-//     ValueCollector collector;
-//     sig.connect(&ValueCollector::on_int, &collector);
-//     sig.connect(&ValueCollector::on_int, &collector);
-//     EXPECT_EQ(2u, sig.disconnect(collector));
-//     sig(1);
-//     EXPECT_TRUE(collector.mValues.empty());
-// }
+// test once signals.hpp is fixed. API contract: disconnect(obj) takes pointer-or-trackable,
+// not by-value (plain struct by value yields nullptr from get_object_ptr).
+TEST(Signal, DisconnectByObjectRemovesBoundSlots)
+{
+    Signal<int> sig;
+    ValueCollector collector;
+    sig.connect(&ValueCollector::on_int, &collector);
+    sig.connect(&ValueCollector::on_int, &collector);
+    // pointer form: object stored in slot is &collector, get_object_ptr(&collector) matches
+    EXPECT_EQ(2u, sig.disconnect(&collector));
+    sig(1);
+    EXPECT_TRUE(collector.mValues.empty());
+
+    // lambda slots (no object) must NOT be touched by disconnect(&collector)
+    std::vector<int> sink;
+    sig.connect([&sink](int v) { sink.push_back(v); });
+    EXPECT_EQ(0u, sig.disconnect(&collector));
+    sig(42);
+    EXPECT_EQ(1u, sink.size());
+}
 
 TEST(Signal, MoveConstructedSignalOldConnectionDisconnectClearsNewSignal)
 {
