@@ -402,3 +402,13 @@ cxxkit 是 OpenCTK（an open cpp toolkit）的成功重构版本 —— 精简�
 - [x] **PIT-58**（`cb55b70`）：StringView Initializer 借视图 + std::string 临时 = use-after-scope（ASAN 实证）——字面量传参；ASAN http 31/31 零诊断
 - 验证：主树 88/88 / asio 87/87 / build-cov 87/87 / ASAN http 31/31 零诊断
 - 备注：低分遗留（random 58.99/ascii 63.44/metrics 64.83 等）系非 network 历史备案项；tls_socket.cpp 含 2 行防御性 guard（T3 审查残留）
+
+### 2026-09-15 C 波 HTTPS crossover（c0acd1e..a216aae 后段）
+
+- [x] **SSL options 包装**（`d3fb463`）：SslOptions（ca_info/verify_peer/verify_host/cert_file/key_file，pimpl 零 cpr 泄漏）+ Session::set_ssl_options + set_option 重载；ALPN/cipher/pinned-pubkey YAGNI 延期
+- [x] **multipart**（`f0b14ab`）：Multipart/Part（name/value/content_type 三字段——cpr filename 仅 File/Buffer 变体，YAGNI）+ Session::set_multipart
+- [x] **crossover 集成**（`a216aae`）：TlsOriginServer fixture（TcpServer accept → TlsSocket server role → TLS 上跑明文 HTTP）× cpr SSL 客户端——**VerifyOkWithCustomCA 200+body 通**（SAN IP 验证对 mbedTLS origin 成立）；WrongCA 钉死正确语义（status 0 + 服务端零字节）；Multipart POST 体捕获（boundary/disposition/值断言）
+- [x] **Response 错误面**：error_code()/error_message()（cpr Error 存而不可达——诊断 CURL-ERR 2 的钥匙，顺手补齐）
+- 验证：http ×3 双树 / 主树 88/88 / ASAN http **34/34 零诊断**
+- 教训：实现者 fixture 缺陷三连（Empty reply=空响应体未装配 / WrongCA 断言反向 / GET 传 multipart）——controller 接力修复与 T2/T3 同形
+- 备案：Part Buffer 变体（文件上传语义需求触发）；curl 100-continue 与捕获窗口的二段 spin 形态已文档化在用例内
