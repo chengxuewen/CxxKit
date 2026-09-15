@@ -1681,12 +1681,6 @@ public:
      *
      * Effect: Disconnects all the slots bound to the callable in argument.
      * Safety: Thread-safety depends on locking policy.
-
-    /**
-     * Disconnect slots bound to a callable
-     *
-     * Effect: Disconnects all the slots bound to the callable in argument.
-     * Safety: Thread-safety depends on locking policy.
      *
      * If the callable is a free or static member function, this overload is always
      * available. However, RTTI is needed for it to work for pointer to member
@@ -1814,17 +1808,10 @@ public:
     /**
      * get number of connected slots
      * Safety: thread safe
+     *
+     * Deprecated alias: see @c num_slots() (the const superset).
      */
-    size_t slot_count() noexcept
-    {
-        cow_copy_type<list_type, Lockable> ref = slots_reference();
-        size_t count = 0;
-        for (const auto &g : detail::cow_read(ref))
-        {
-            count += g.slts.size();
-        }
-        return count;
-    }
+    size_t slot_count() noexcept { return num_slots(); }
 
     /**
      * Returns the number of connected (non disconnected) slots.
