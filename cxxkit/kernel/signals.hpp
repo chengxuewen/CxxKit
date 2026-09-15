@@ -809,9 +809,7 @@ public:
         return *this;
     }
 
-private:
-    template <typename, typename...>
-    friend class SignalBase;
+
     explicit ScopedConnection(std::weak_ptr<detail::SlotState> s) noexcept
         : Connection{std::move(s)}
     {
@@ -1656,6 +1654,35 @@ public:
     }
 
     /**
+     * Connect a callable to be fired exactly once.
+     *
+     * The slot disconnects itself BEFORE the callable runs, so a re-entrant
+     * emission from inside the callable cannot fire it a second time.
+     *
+     * @param c a callable
+     * @param gid an identifier that can be used to order slot execution
+     * @return a connection object that can be used to interact with the slot
+     */
+    template <typename Callable>
+    Connection connect_once(Callable &&c, GroupId gid = 0)
+    {
+        Callable wrap(std::forward<Callable>(c));
+        return connect_extended(
+            [wrap](Connection &self, T... args) mutable
+            {
+                self.disconnect();
+                wrap(std::forward<T>(args)...);
+            },
+            gid);
+    }
+
+    /**
+     * Disconnect slots bound to a callable
+     *
+     * Effect: Disconnects all the slots bound to the callable in argument.
+     * Safety: Thread-safety depends on locking policy.
+
+    /**
      * Disconnect slots bound to a callable
      *
      * Effect: Disconnects all the slots bound to the callable in argument.
@@ -1798,6 +1825,34 @@ public:
         }
         return count;
     }
+
+    /**
+     * Returns the number of connected (non disconnected) slots.
+     *
+     * Complexity is linear in the number of groups because disconnected slots
+     * are removed lazily (they can be resurrected by @c connected() racing with
+     * emission), so a dead-entry scan is required.
+     *
+     * Safety: thread safe
+     */
+    size_t num_slots() const
+    {
+        cow_copy_type<list_type, Lockable> ref = slots_reference();
+        size_t count = 0;
+        for (const auto &g : detail::cow_read(ref))
+        {
+            count += g.slts.size();
+        }
+        return count;
+    }
+
+    /**
+     * Returns @c true when no slots are connected.
+     *
+     * Safety: thread safe
+     */
+    bool empty() const { return num_slots() == 0; }
+
 
 protected:
     /**
@@ -1963,6 +2018,42 @@ using Signal = SignalBase<std::mutex, T...>;
  */
 template <typename... T>
 using SignalUnsafe = SignalBase<detail::NullMutex, T...>;
+/**
+ * RAII helper that blocks a signal for the lifetime of the ScopedBlock object.
+ *
+ * The Qt QSignalBlocker analog: the constructor blocks emission on the signal and
+ * the destructor restores unblocked state. Nesting two ScopedBlock objects on the
+ * same signal in one thread is not supported - the block flag is boolean (not
+ * counted), so the first destructor unblocks.
+ *
+ * @tparam SignalType a SignalBase specialization
+ */
+template <typename SignalType>
+class ScopedBlock final
+{
+public:
+    explicit ScopedBlock(SignalType &sig, bool initially_blocked = true) noexcept
+        : mSignal(sig)
+    {
+        if (initially_blocked)
+        {
+            mSignal.block();
+        }
+        else
+        {
+            mSignal.unblock();
+        }
+    }
+
+    ~ScopedBlock() { mSignal.unblock(); }
+
+    ScopedBlock(const ScopedBlock &) = delete;
+    ScopedBlock &operator=(const ScopedBlock &) = delete;
+
+private:
+    SignalType &mSignal;
+};
+
 } // namespace signals
 
 template <typename... Args>

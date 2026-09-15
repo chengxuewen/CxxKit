@@ -36,6 +36,8 @@
 // aliases and unqualified signals:: names resolve, mirroring library-side usage.
 CXXKIT_BEGIN_NAMESPACE
 using signals::Connection;
+using signals::ScopedBlock;
+using signals::ScopedConnection;
 using signals::ScopedConnection;
 using signals::Signal;
 using signals::SignalUnsafe;
@@ -413,6 +415,113 @@ TEST(SignalUnsafe, SelfDisconnectAndReconnectDefersNewSlotToNextEmission)
 
     sig(2); // only slot B runs now
     EXPECT_TRUE(std::find(sink.begin(), sink.end(), 102) != sink.end());
+}
+
+
+TEST(Signal, NumSlotsAndEmptyTrackConnectionLifecycle)
+{
+    Signal<int> sig;
+    EXPECT_EQ(0u, sig.num_slots());
+    EXPECT_TRUE(sig.empty());
+
+    ScopedConnection c1 = sig.connect([](int) { });
+    ScopedConnection c2 = sig.connect([](int) { });
+    EXPECT_EQ(2u, sig.num_slots());
+    EXPECT_FALSE(sig.empty());
+
+    c1.disconnect();
+    EXPECT_EQ(1u, sig.num_slots());
+
+    sig.disconnect_all();
+    EXPECT_EQ(0u, sig.num_slots());
+    EXPECT_TRUE(sig.empty());
+    (void)c2;
+}
+
+TEST(Signal, NumSlotsCountsGroupsWhenAsked)
+{
+    Signal<int> sig;
+    sig.connect([](int) { }, 1);
+    sig.connect([](int) { }, 1);
+    sig.connect([](int) { }, 5);
+    EXPECT_EQ(3u, sig.num_slots());
+}
+
+TEST(Signal, ScopedBlockSuppressesEmissionForItsLifetime)
+{
+    Signal<int> sig;
+    int count = 0;
+    sig.connect([&count](int) { ++count; });
+
+    {
+        ScopedBlock<Signal<int>> blocker(sig);
+        EXPECT_TRUE(sig.blocked());
+        sig(1);
+        EXPECT_EQ(0, count); // suppressed
+    }
+    EXPECT_FALSE(sig.blocked());
+    sig(2);
+    EXPECT_EQ(1, count); // delivered after the blocker is gone
+}
+
+TEST(Signal, ScopedBlockInitiallyUnblockedLeavesSignalOpen)
+{
+    Signal<int> sig;
+    int count = 0;
+    sig.connect([&count](int) { ++count; });
+
+    ScopedBlock<Signal<int>> blocker(sig, false);
+    EXPECT_FALSE(sig.blocked());
+    sig(1);
+    EXPECT_EQ(1, count);
+} // blocker dtor unblocks a signal that was never blocked - harmless no-op
+
+TEST(Signal, ConnectOnceFiresExactlyOnceThenDisconnects)
+{
+    Signal<int> sig;
+    std::vector<int> sink;
+    Connection conn = sig.connect_once([&sink](int value) { sink.push_back(value); });
+    ASSERT_TRUE(conn.valid());
+
+    sig(1);
+    ASSERT_EQ(1u, sink.size());
+    EXPECT_EQ(1, sink[0]);
+    EXPECT_FALSE(conn.connected()); // disconnected before the body even ran
+    EXPECT_EQ(0u, sig.slot_count());
+
+    sig(2);
+    EXPECT_EQ(1u, sink.size()); // not fired again
+}
+
+TEST(Signal, ConnectOnceSurvivesReentrantEmission)
+{
+    Signal<int> sig;
+    std::vector<int> sink;
+    Connection conn = sig.connect_once(
+        [&](int value)
+        {
+            sink.push_back(value);
+            if (value == 1)
+            {
+                sig(value); // re-entrant emit: body already self-disconnected
+            }
+        });
+
+    sig(1);
+    ASSERT_EQ(1u, sink.size()); // re-entrant emit must not re-fire
+    sig(2);
+    EXPECT_EQ(1u, sink.size());
+    (void)conn;
+}
+
+TEST(SignalUnsafe, ConnectOnceSmoke)
+{
+    SignalUnsafe<int> sig;
+    int count = 0;
+    sig.connect_once([&count](int) { ++count; });
+    sig(1);
+    sig(2);
+    EXPECT_EQ(1, count);
 }
 
 } // namespace cxxkit
