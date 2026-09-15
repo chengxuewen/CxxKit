@@ -115,6 +115,8 @@ protected:
     CXXKIT_DISABLE_COPY_MOVE(ProxyPrivate)
 };
 
+class SslOptionsPrivate;
+
 class SessionPrivate
 {
 public:
@@ -131,6 +133,19 @@ protected:
     CXXKIT_DEFINE_PPTR(Session)
     CXXKIT_DECLARE_PUBLIC(Session)
     CXXKIT_DISABLE_COPY_MOVE(SessionPrivate)
+};
+
+class SslOptionsPrivate
+{
+public:
+    SslOptionsPrivate();
+    ~SslOptionsPrivate();
+
+#if CXXKIT_FEATURE_USE_BOOST_BACKEND
+
+#else
+    cpr::SslOptions mSslOptions;
+#endif
 };
 
 } // namespace http

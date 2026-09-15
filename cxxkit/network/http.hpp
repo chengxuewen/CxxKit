@@ -30,6 +30,7 @@
 
 #include <map>
 #include <string>
+#include <vector>
 #include <future>
 #include <chrono>
 #include <fstream>
@@ -429,6 +430,64 @@ protected:
 
 class SessionPrivate;
 
+class SslOptionsPrivate;
+/**
+ * @brief TLS client options applied per request (cpr SslOptions backend): CA bundle,
+ *        peer/host verification and mutual-TLS identity files. Zero cpr types on the
+ *        public surface; defaults mirror curl (verify peer + host, no CA override).
+ *        ALPN/NPN/cipher lists/pinned keys are deferred (YAGNI).
+ */
+class CXXKIT_NETWORK_API SslOptions
+{
+public:
+    SslOptions();
+    ~SslOptions();
+
+    /** @brief PEM file with the trust anchor(s) used to verify the server certificate. */
+    SslOptions &set_ca_info(const std::string &ca_info);
+    /** @brief Verify the server certificate chain (default true). */
+    SslOptions &set_verify_peer(bool verify);
+    /** @brief Verify the server hostname against the certificate (default true). */
+    SslOptions &set_verify_host(bool verify);
+    /** @brief PEM client certificate presented to the server (mutual TLS). */
+    SslOptions &set_cert_file(const std::string &cert_file);
+    /** @brief PEM private key matching @ref set_cert_file. */
+    SslOptions &set_key_file(const std::string &key_file);
+
+    std::string get_ca_info() const;
+    bool is_verify_peer() const;
+    bool is_verify_host() const;
+    std::string get_cert_file() const;
+    std::string get_key_file() const;
+
+protected:
+    friend class Session;
+    CXXKIT_DEFINE_DPTR(SslOptions)
+    CXXKIT_DECLARE_PRIVATE(SslOptions)
+    CXXKIT_DISABLE_COPY_MOVE(SslOptions)
+};
+
+/**
+ * @brief One multipart/form-data part: a named value (text part) or, when @p filename is
+ *        set, a file part. Field StringViews borrow — pass literals or storage that
+ *        outlives the Part (PIT-58).
+ */
+struct Part
+{
+    Part(StringView p_name, StringView p_value, StringView p_content_type = "", StringView p_filename = "")
+        : name(p_name)
+        , value(p_value)
+        , content_type(p_content_type)
+        , filename(p_filename)
+    {
+    }
+
+    StringView name;
+    StringView value;
+    StringView content_type;
+    StringView filename;
+};
+
 class SessionPrivate;
 /**
  * @brief Redirect policy applied per request: follow 3xx hops and/or cap the hop count.
@@ -463,6 +522,7 @@ public:
     void set_payload(const Payload &payload);
     void set_cookies(const Cookies &cookies);
     void set_proxy(const Proxy &proxy);
+    void set_ssl_options(const SslOptions &options);
     void set_redirect(bool follow, long max_redirects = -1);
     void set_redirect(const Redirect &redirect) { this->set_redirect(redirect.follow, redirect.maximum); }
 
@@ -477,6 +537,7 @@ public:
     void set_option(const Payload &payload) { this->set_payload(payload); }
     void set_option(const Cookies &cookies) { this->set_cookies(cookies); }
     void set_option(const Proxy &proxy) { this->set_proxy(proxy); }
+    void set_option(const SslOptions &options) { this->set_ssl_options(options); }
     void set_option(const Redirect &redirect) { this->set_redirect(redirect); }
 
     Response::SharedPtr get();

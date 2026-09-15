@@ -302,6 +302,130 @@ Authentication::Mode Authentication::auth_mode() const noexcept
     return Mode::kBASIC;
 }
 
+SslOptionsPrivate::SslOptionsPrivate()
+{
+}
+
+SslOptionsPrivate::~SslOptionsPrivate()
+{
+}
+
+SslOptions::SslOptions()
+    : mDPtr(new SslOptionsPrivate())
+{
+}
+
+SslOptions::~SslOptions()
+{
+}
+
+SslOptions &SslOptions::set_ca_info(const std::string &ca_info)
+{
+    CXXKIT_D(SslOptions);
+#if CXXKIT_FEATURE_USE_BOOST_BACKEND
+
+#else
+    d->mSslOptions.ca_info = ca_info;
+#endif
+    return *this;
+}
+
+SslOptions &SslOptions::set_verify_peer(bool verify)
+{
+    CXXKIT_D(SslOptions);
+#if CXXKIT_FEATURE_USE_BOOST_BACKEND
+
+#else
+    d->mSslOptions.verify_peer = verify;
+#endif
+    return *this;
+}
+
+SslOptions &SslOptions::set_verify_host(bool verify)
+{
+    CXXKIT_D(SslOptions);
+#if CXXKIT_FEATURE_USE_BOOST_BACKEND
+
+#else
+    d->mSslOptions.verify_host = verify;
+#endif
+    return *this;
+}
+
+SslOptions &SslOptions::set_cert_file(const std::string &cert_file)
+{
+    CXXKIT_D(SslOptions);
+#if CXXKIT_FEATURE_USE_BOOST_BACKEND
+
+#else
+    d->mSslOptions.cert_file = cert_file;
+    d->mSslOptions.cert_type = "PEM";
+#endif
+    return *this;
+}
+
+SslOptions &SslOptions::set_key_file(const std::string &key_file)
+{
+    CXXKIT_D(SslOptions);
+#if CXXKIT_FEATURE_USE_BOOST_BACKEND
+
+#else
+    d->mSslOptions.key_file = key_file;
+    d->mSslOptions.key_type = "PEM";
+#endif
+    return *this;
+}
+
+std::string SslOptions::get_ca_info() const
+{
+    CXXKIT_D(const SslOptions);
+#if CXXKIT_FEATURE_USE_BOOST_BACKEND
+
+#else
+    return d->mSslOptions.ca_info;
+#endif
+}
+
+bool SslOptions::is_verify_peer() const
+{
+    CXXKIT_D(const SslOptions);
+#if CXXKIT_FEATURE_USE_BOOST_BACKEND
+
+#else
+    return d->mSslOptions.verify_peer;
+#endif
+}
+
+bool SslOptions::is_verify_host() const
+{
+    CXXKIT_D(const SslOptions);
+#if CXXKIT_FEATURE_USE_BOOST_BACKEND
+
+#else
+    return d->mSslOptions.verify_host;
+#endif
+}
+
+std::string SslOptions::get_cert_file() const
+{
+    CXXKIT_D(const SslOptions);
+#if CXXKIT_FEATURE_USE_BOOST_BACKEND
+
+#else
+    return d->mSslOptions.cert_file;
+#endif
+}
+
+std::string SslOptions::get_key_file() const
+{
+    CXXKIT_D(const SslOptions);
+#if CXXKIT_FEATURE_USE_BOOST_BACKEND
+
+#else
+    return d->mSslOptions.key_file;
+#endif
+}
+
 SessionPrivate::SessionPrivate(Session *p)
     : mPPtr(p)
 {
@@ -536,6 +660,16 @@ void Session::set_proxy(const Proxy &proxy)
     {
         d->mSession.SetProxies(*proxy.d_func()->mProxies);
     }
+#endif
+}
+
+void Session::set_ssl_options(const SslOptions &options)
+{
+    CXXKIT_D(Session);
+#if CXXKIT_FEATURE_USE_BOOST_BACKEND
+
+#else
+    d->mSession.SetSslOptions(options.d_func()->mSslOptions);
 #endif
 }
 
