@@ -380,3 +380,10 @@
 - **解法**: 需要多轮泵浦时用全新 EventLoop（每轮一个），或主线程手动 `loop.process_events(ProcessFlag::kAllEvents, 10)` 自旋等待条件。tst_http 的 RedirectServer 三用例与 ProxyRoutes inline-worker 均用 spin 模式。
 - **验证**: `grep -n "for (int i = 0; i .* process_events" tests/tst_http.cpp` —— spin 模式为多轮泵浦标准形态；redirect 三用例全绿。
 - **禁止**: 对同一 EventLoop 发起第二次 exec() 期待它阻塞——"exec 即返"是契约不是 bug；测试 fixture 里一轮业务一个新 loop。
+
+## PIT-57: Proxy 双重拼 URL + 跨线程 bound_port——fixture 失败面具（2026-09-15）
+- **症状**: tst_http ProxyRoutes 用例 on_connection 永不触发，runtime 1ms/1020ms 不等；独立同构探针却稳定通过——误判为"loop-affinity dispatcher 交互"挂账。
+- **根因**: ①Proxy 位置参数 (host, port) 收到 host="http://ip:PORT"、port=0，proxy_scheme_url 两者拼接 = 畸形 URL "http://http://...:0" → curl 秒败重试；②一次修复尝试把 bound_port() 挪进 worker lambda → loop-thread-only fatal（I1），被上游 URL 失败掩盖。
+- **解法**: 干净 (host, port) 分离传参；bound_port 在测试体（loop 线程）读好再捕获进 worker。
+- **验证**: http 套件双树 ×3 全绿（0 skip）；主树 88/88。
+- **禁止**: ①拼 URL 类 API 传"已拼好的 URL"+分离端口；②跨线程调 loop-thread-only API 后再找别的根因——先 grep FATAL 日志。
