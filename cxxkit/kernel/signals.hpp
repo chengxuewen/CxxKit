@@ -47,9 +47,32 @@ CXXKIT_BEGIN_NAMESPACE
  * @addtogroup core
  * @{
  * @addtogroup UniqueFunction
- * @brief
- * @{
+ * @brief Signal & slot: thread-safe and single-threaded signal types with observer-based lifetime tracking.
  * @details
+ *
+ * Emission-time contract (applies to every signal variant, @c SignalR and
+ * @c SignalUnsafeR included):
+ *
+ * - @b Connect @b during @b emission: the new slot is @em not invoked by the
+ *   emission in progress. It becomes visible to the next emission.
+ * - @b Disconnect @b during @b emission: the snapshot already captured at
+ *   emission start decides. An in-progress emission still calls a slot that
+ *   was connected when emission began even if it is disconnected mid-flight;
+ *   the disconnect takes effect for subsequent emissions.
+ * - @b Mutual-exclusion snapshotting: the thread-safe variants (@c Signal,
+ *   @c SignalR) snapshot via copy-on-write under the signal mutex; the
+ *   single-threaded variants (@c SignalUnsafe, @c SignalUnsafeR) snapshot
+ *   once at emission start under their no-op lock.
+ *
+ * @b Recursion: emitting the same signal from inside a slot is supported in
+ * @em all variants (including @c SignalUnsafeR) — emission never invokes
+ * slots while holding the signal lock, so re-entrant emissions see the
+ * current slot list and cannot deadlock.
+ *
+ * For emissions that produce a value, see @c SignalR / @c SignalUnsafeR and
+ * their combiner documentation (@c optional_last_value, @c maximum, custom
+ * combiners).
+ * @{
  */
 
 namespace signals
