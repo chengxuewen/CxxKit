@@ -1435,9 +1435,10 @@ struct maximum
 
 /*
  * slot_call_iterator caches the result of the slot it currently points to.
- * Repeated dereference of the same iterator must not re-invoke the slot, so
- * the cache is shared between copies of the iterator that sit on the same
- * underlying slot.
+ * Repeated dereference of the same iterator must not re-invoke the slot. All
+ * copies share the result cache; advancing any copy invalidates it for all
+ * (a stale copy dereferenced after a sibling advanced re-invokes the slot).
+ * Single-pass combiner loops never fork iterators, so this is safe.
  */
 template <typename R>
 struct slot_result_cache

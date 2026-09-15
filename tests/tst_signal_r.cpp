@@ -265,18 +265,12 @@ TEST(SignalR, BlockedSignalRunsCombinerOverEmptyRange)
 
 TEST(SignalR, RepeatedDereferenceDoesNotReinvokeSlot)
 {
-    SignalR<int> sig;
+    // the combiner derefs the same iterator twice: exactly one invocation
+    SignalR<int, double_deref_combiner> sig;
     int invocations = 0;
     sig.connect(CountingSlot{7, &invocations});
 
-    // drive the iterator machinery by hand: a counting combiner that derefs
-    // the same iterator twice must observe one invocation only
-
-    SignalR<int, double_deref_combiner> sig2;
-    sig2.template connect<CountingSlot>(CountingSlot{7, &invocations});
-    invocations = 0;
-
-    const Optional<int> result = sig2();
+    const Optional<int> result = sig();
     ASSERT_TRUE(result.has_value());
     EXPECT_EQ(7, result.value());
     EXPECT_EQ(1, invocations);

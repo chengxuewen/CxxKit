@@ -548,9 +548,9 @@ if(CXXKIT_ENABLE_LIB_KERNEL)
         INCLUDE_DIRECTORIES ${PROJECT_SOURCE_DIR}
         LIBRARIES ${CXXKIT_TEST_LINK_LIBRARIES} ${CMAKE_THREAD_LIBS_INIT})
 
-cxxkit_add_test(cxxkit_tst_signal_mt
-SOURCES tst_signal_mt.cpp
-INCLUDE_DIRECTORIES ${PROJECT_SOURCE_DIR}
+    cxxkit_add_test(cxxkit_tst_signal_mt
+        SOURCES tst_signal_mt.cpp
+        INCLUDE_DIRECTORIES ${PROJECT_SOURCE_DIR}
         LIBRARIES ${CXXKIT_TEST_LINK_LIBRARIES} ${CMAKE_THREAD_LIBS_INIT})
 
     cxxkit_add_test(cxxkit_tst_signal_r
