@@ -82,7 +82,10 @@ function(cxxkit_generate_pkg_config target pc_name)
     endforeach()
     list(REMOVE_DUPLICATES _pc_requires)
     string(JOIN " " _requires_str ${_pc_requires})
-    string(APPEND _pc_libs " ${_pc_extra_libs}")
+    # D41.5 review M3: _pc_extra_libs is a CMake list — raw APPEND bakes the ";" separators
+    # into the .pc ("Libs: -lcpr;-luv"), which pkg-config reads as ONE garbage token.
+    string(JOIN " " _pc_extra_libs_str ${_pc_extra_libs})
+    string(APPEND _pc_libs " ${_pc_extra_libs_str}")
     # All paths are literal strings (no ${} in template); pkg-config resolves \${libdir} at query time.
     set(PC_PREFIX "\${pcfiledir}/../..")
     set(PC_EXEC_PREFIX "\${prefix}")
