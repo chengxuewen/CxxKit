@@ -387,3 +387,10 @@
 - **解法**: 干净 (host, port) 分离传参；bound_port 在测试体（loop 线程）读好再捕获进 worker。
 - **验证**: http 套件双树 ×3 全绿（0 skip）；主树 88/88。
 - **禁止**: ①拼 URL 类 API 传"已拼好的 URL"+分离端口；②跨线程调 loop-thread-only API 后再找别的根因——先 grep FATAL 日志。
+
+## PIT-58: StringView 借视图 Initializer + std::string 临时 = use-after-scope（2026-09-15）
+- **症状**: ASAN 树 ProxyAccessors 用例 stack-use-after-scope——Proxy ctor 拷出 host 前视图已悬垂。
+- **根因**: Proxy::Initializer 首字段 StringView 借视图；用例传 std::string(kHost) 临时对象，语句末销毁。
+- **解法**: 用例传字面量（静态存储）；API 契约：StringView Initializer 传参禁临时（Cookie::Initializer 同形——review 时 grep {std::string）。
+- **验证**: ASAN http 31/31 零诊断；grep 全测试无 {std::string 形态。
+- **禁止**: StringView 字段的花括号初始化列表里传临时 std::string。
