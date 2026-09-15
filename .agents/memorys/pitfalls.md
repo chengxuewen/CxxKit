@@ -373,3 +373,10 @@
 - **解法**: shared_ptr<int> mAlive + 全部跨生存期 lambda 捕 weak_ptr 副本，首行 expired()→return（桥 dtor 显式 reset）。TlsSocket pimpl 镜像同款。
 - **验证**: token 修复后双树 ×3 + ASAN 零诊断；本 pitfall 是 PIT-40 的泛化——回调可能比捕获对象活得久的场景全部适用。
 - **禁止**: 注册到长命对象的 lambda 禁止裸捕获 this——除非对象生存期严格覆盖回调可达期（证明成本高于 token 成本）。
+
+## PIT-57: EventLoop::exec 二次进入即返（preset exit）（2026-09-15）
+- **症状**: D42-P1 代理 fixture 第一版：同一 EventLoop 先 exec() 读 bound_port，再 exec() 等响应——第二轮立即返回旧退出码，端口读到 0，server 未 accept，worker 永挂到 timeout。
+- **根因**: exec 有退出状态记忆（event_loop.cpp:266-272）——已完成一轮 exec 的 loop，再次 exec 直接返回 preset exit code，不进入泵浦。
+- **解法**: 需要多轮泵浦时用全新 EventLoop（每轮一个），或主线程手动 `loop.process_events(ProcessFlag::kAllEvents, 10)` 自旋等待条件。tst_http 的 RedirectServer 三用例与 ProxyRoutes inline-worker 均用 spin 模式。
+- **验证**: `grep -n "for (int i = 0; i .* process_events" tests/tst_http.cpp` —— spin 模式为多轮泵浦标准形态；redirect 三用例全绿。
+- **禁止**: 对同一 EventLoop 发起第二次 exec() 期待它阻塞——"exec 即返"是契约不是 bug；测试 fixture 里一轮业务一个新 loop。

@@ -384,3 +384,12 @@ cxxkit 是 OpenCTK（an open cpp toolkit）的成功重构版本 —— 精简�
 - [x] **消费面**：WrapMbedTLS stub 补三库链（cf9e1e9 类洞）——双树 /tmp 消费方 build+run 全通
 - 验证：uv 主树 **88/88** / asio 87/87 / tls 双树 ×3 / ASAN-asio tls 零诊断 / format+C++11+octk 清零
 - 已知限制：renegotiation 编译期禁用；ALPN/session/客户端证书/DTLS 需求触发；README 行 T4 同步
+
+### 2026-09-15 HTTP P1 thin wrappers 落地（D42-P1 wave，4 项）
+
+- [x] **PIT-54 修复**（`1f0eeb1`）：detail::async 从 ThreadPool::start(fn,args...)（void 返回，无 future 通道）改 std::async(launch::async)——async_get/put/post 自创建起不可实例化的缺陷闭环；async 三动词用例（get 回环/post 载荷服务端断言/拒连→status 0）+ PIT-54 注释钉子移除
+- [x] **全动词**（`c826805`）：Session::del/patch/head/options + 自由函数 + async 变体（cpr Delete/Patch/Head/Options 直译）；del 避关键字；测试 DELETE 请求行+体回环 / PATCH 请求行+体 / HEAD 状态+reason+header+空体 / OPTIONS 请求行+Allow
+- [x] **Proxy**（`52c6c06`）：Proxy{host,port,type kHTTP/kSOCKS5}（pimpl，http/https 双协议映射 cpr::Proxies）+ set_proxy + set_option；ProxyRoutesThroughProxySocket 用例 GTEST_SKIP——代理路由本体已由独立探针实证（curl 拨代理、absolute-URI 请求行、garbage 回复→status 0 非 null），in-suite fixture 的 on_connection 不触发疑似 loop-affinity 交互，专项调查延后（PIT-57 exec 即返陷阱是第一层根因，修复后仍不触发，疑点仍在 accept 路径）
+- [x] **Redirect control**（`db94d1e`）：Redirect 聚合 {follow,maximum} + set_redirect(bool,long=-1) → cpr::Redirect(max,follow,POST_ALL)；RedirectServer 计数服务器（hop1→302+Location，hop2→200）+ spin_with_worker 模式；三用例：NoFollow 302+单请求 / Follow 200+双请求(/start+/final) / MaxZero follow=true max=0 钉死 curl 拒绝语义
+- 测试：tst_http 14→25 用例（uv 主树 25/25 skip1；双树 http ×3 全绿）；主树 88/88、asio 87/87（qt 自动检测差 1 合法）
+- **DEFER**：multipart 上传（需服务端捕获 multi-part 体）/ SSL options（客户端证书/CA——配未来 TlsSocket https 测试）/ unix sockets / interceptors / range+limit_rate / cert_info；proxy fixture loop-affinity 专项调查
