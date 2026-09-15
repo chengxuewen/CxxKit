@@ -393,3 +393,12 @@ cxxkit 是 OpenCTK（an open cpp toolkit）的成功重构版本 —— 精简�
 - [x] **Redirect control**（`db94d1e`）：Redirect 聚合 {follow,maximum} + set_redirect(bool,long=-1) → cpr::Redirect(max,follow,POST_ALL)；RedirectServer 计数服务器（hop1→302+Location，hop2→200）+ spin_with_worker 模式；三用例：NoFollow 302+单请求 / Follow 200+双请求(/start+/final) / MaxZero follow=true max=0 钉死 curl 拒绝语义
 - 测试：tst_http 14→25 用例（uv 主树 25/25 skip1；双树 http ×3 全绿）；主树 88/88、asio 87/87（qt 自动检测差 1 合法）
 - **DEFER**：multipart 上传（需服务端捕获 multi-part 体）/ SSL options（客户端证书/CA——配未来 TlsSocket https 测试）/ unix sockets / interceptors / range+limit_rate / cert_info；proxy fixture loop-affinity 专项调查
+
+### 2026-09-15 B 波覆盖率扫盲 + proxy 专项破案（A 波收尾）
+
+- [x] **A 波破案**（`c0acd1e`）：proxy fixture 无 dispatcher bug——Proxy 位置参 (host="http://ip:PORT", port=0) 双拼畸形 URL → curl 秒败（1ms/1020ms 面具）+ 一次修复尝试跨线程调 bound_port fatal 掩盖上游；干净传参后 25/25 双树 ×3 全绿 0 skip；PIT-57
+- [x] **覆盖率口径修正**（`51b55d2`）：coverage.sh 排除清单补 imgui_impl_opengl3/impl_sdl3/sdl3_backend/sdl_application（display-host 无头不可达）——NETWORK+IMGUI 树全口径 73.1%→**84.5%**（60 files）
+- [x] **network 家族首次入覆盖口径**：http.cpp **70.79→98.50**（Cookie/Proxy 访问器族）+ tls_socket **80.09→87.66** + tcp_socket **83.33→90.81**（`3db4848`/`99b41e8`，+385 行测试）；tcp_server 90.38 / stream_backend_uv 85.77
+- [x] **PIT-58**（`cb55b70`）：StringView Initializer 借视图 + std::string 临时 = use-after-scope（ASAN 实证）——字面量传参；ASAN http 31/31 零诊断
+- 验证：主树 88/88 / asio 87/87 / build-cov 87/87 / ASAN http 31/31 零诊断
+- 备注：低分遗留（random 58.99/ascii 63.44/metrics 64.83 等）系非 network 历史备案项；tls_socket.cpp 含 2 行防御性 guard（T3 审查残留）
