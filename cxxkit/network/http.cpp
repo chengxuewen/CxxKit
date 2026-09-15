@@ -487,6 +487,54 @@ Response::SharedPtr Session::post()
     return response;
 }
 
+Response::SharedPtr Session::del()
+{
+    CXXKIT_D(Session);
+    auto response = utils::make_shared<Response>();
+#if CXXKIT_FEATURE_USE_BOOST_BACKEND
+
+#else
+    response->d_func()->mResponse = std::move(d->mSession.Delete());
+#endif
+    return response;
+}
+
+Response::SharedPtr Session::patch()
+{
+    CXXKIT_D(Session);
+    auto response = utils::make_shared<Response>();
+#if CXXKIT_FEATURE_USE_BOOST_BACKEND
+
+#else
+    response->d_func()->mResponse = std::move(d->mSession.Patch());
+#endif
+    return response;
+}
+
+Response::SharedPtr Session::head()
+{
+    CXXKIT_D(Session);
+    auto response = utils::make_shared<Response>();
+#if CXXKIT_FEATURE_USE_BOOST_BACKEND
+
+#else
+    response->d_func()->mResponse = std::move(d->mSession.Head());
+#endif
+    return response;
+}
+
+Response::SharedPtr Session::options()
+{
+    CXXKIT_D(Session);
+    auto response = utils::make_shared<Response>();
+#if CXXKIT_FEATURE_USE_BOOST_BACKEND
+
+#else
+    response->d_func()->mResponse = std::move(d->mSession.Options());
+#endif
+    return response;
+}
+
 Response::SharedPtr Session::download(std::ofstream &file)
 {
     CXXKIT_D(Session);

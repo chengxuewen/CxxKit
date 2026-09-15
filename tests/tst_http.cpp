@@ -442,6 +442,70 @@ TEST(HttpTest, DownloadToOfstream)
     std::remove(kPath);
 }
 
+// 15. DELETE verb: request line carries "DELETE", canned 200 body round-trips.
+TEST(HttpTest, DeleteVerb)
+{
+    EventLoop loop(cxxkit::make_default_dispatcher());
+    OneShotServer srv(loop);
+    ASSERT_TRUE(srv.start(make_response(200, "OK", "", "deleted")));
+
+    const std::string url = std::string(kHost) + ":" + std::to_string(srv.server.bound_port()) + "/item/7";
+    Response::SharedPtr response = run_with_loop(loop, [&url] { return del(Url{url}); });
+    ASSERT_NE(nullptr, response.get());
+    EXPECT_EQ(200L, response->status_code());
+    EXPECT_EQ(std::string("deleted"), response->text());
+    EXPECT_EQ(0UL, srv.request.find("DELETE /item/7 HTTP/1.1\r\n")) << "captured: " << srv.request;
+}
+
+// 16. PATCH verb: request line carries "PATCH", body bytes arrive after the head.
+TEST(HttpTest, PatchVerb)
+{
+    EventLoop loop(cxxkit::make_default_dispatcher());
+    OneShotServer srv(loop);
+    ASSERT_TRUE(srv.start(make_response(204, "No Content", "", "")));
+
+    const std::string url = std::string(kHost) + ":" + std::to_string(srv.server.bound_port()) + "/item/7";
+    Response::SharedPtr response = run_with_loop(loop, [&url] { return patch(Url{url}, Body{"patch bytes"}); });
+    ASSERT_NE(nullptr, response.get());
+    EXPECT_EQ(204L, response->status_code());
+    EXPECT_EQ(0UL, srv.request.find("PATCH /item/7 HTTP/1.1\r\n")) << "captured: " << srv.request;
+    const size_t body_pos = srv.request.find("\r\n\r\n");
+    ASSERT_NE(std::string::npos, body_pos);
+    EXPECT_EQ(std::string("patch bytes"), srv.request.substr(body_pos + 4));
+}
+
+// 17. HEAD verb: status/reason/headers surface, body stays empty by HTTP contract.
+TEST(HttpTest, HeadVerb)
+{
+    EventLoop loop(cxxkit::make_default_dispatcher());
+    OneShotServer srv(loop);
+    ASSERT_TRUE(srv.start(make_response(200, "OK", "X-Head-Probe: yes\r\n", "")));
+
+    const std::string url = std::string(kHost) + ":" + std::to_string(srv.server.bound_port()) + "/meta";
+    Response::SharedPtr response = run_with_loop(loop, [&url] { return head(Url{url}); });
+    ASSERT_NE(nullptr, response.get());
+    EXPECT_EQ(200L, response->status_code());
+    EXPECT_EQ(std::string("OK"), response->reason());
+    EXPECT_EQ(std::string("yes"), response->header("X-Head-Probe"));
+    EXPECT_EQ(std::string(""), response->text());
+    EXPECT_EQ(0UL, srv.request.find("HEAD /meta HTTP/1.1\r\n")) << "captured: " << srv.request;
+}
+
+// 18. OPTIONS verb: request line carries "OPTIONS", status surfaces.
+TEST(HttpTest, OptionsVerb)
+{
+    EventLoop loop(cxxkit::make_default_dispatcher());
+    OneShotServer srv(loop);
+    ASSERT_TRUE(srv.start(make_response(200, "OK", "Allow: GET, HEAD\r\n", "")));
+
+    const std::string url = std::string(kHost) + ":" + std::to_string(srv.server.bound_port()) + "/root";
+    Response::SharedPtr response = run_with_loop(loop, [&url] { return options(Url{url}); });
+    ASSERT_NE(nullptr, response.get());
+    EXPECT_EQ(200L, response->status_code());
+    EXPECT_EQ(std::string("GET, HEAD"), response->header("Allow"));
+    EXPECT_EQ(0UL, srv.request.find("OPTIONS /root HTTP/1.1\r\n")) << "captured: " << srv.request;
+}
+
 // The machine's http_proxy/https_proxy environment makes curl route loopback requests through the
 // proxy (CONNECT → 502), which would poison every case. Strip the family before gtest runs: the
 // cpr/curl backend reads these at transfer time, so a one-time unset in main() is sufficient.

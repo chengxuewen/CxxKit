@@ -428,6 +428,10 @@ public:
     Response::SharedPtr get();
     Response::SharedPtr put();
     Response::SharedPtr post();
+    Response::SharedPtr del();
+    Response::SharedPtr patch();
+    Response::SharedPtr head();
+    Response::SharedPtr options();
     Response::SharedPtr download(std::ofstream &file);
     Response::SharedPtr download(const WriteCallback &write);
 
@@ -558,6 +562,110 @@ template <typename... Ts>
 AsyncResponse async_post(Ts... ts)
 {
     return detail::async([](Ts... ts_inner) { return post(std::move(ts_inner)...); }, std::move(ts)...);
+}
+
+/**
+ * del methods
+ * @tparam Ts
+ * @param ts
+ * @return
+ */
+template <typename... Ts>
+Response::SharedPtr del(Ts &&...ts)
+{
+    Session session;
+    detail::set_option(session, std::forward<Ts>(ts)...);
+    return session.del();
+}
+
+/**
+ * del async methods
+ * @tparam Ts
+ * @param ts
+ * @return
+ */
+template <typename... Ts>
+AsyncResponse async_del(Ts... ts)
+{
+    return detail::async([](Ts... ts_inner) { return del(std::move(ts_inner)...); }, std::move(ts)...);
+}
+
+/**
+ * patch methods
+ * @tparam Ts
+ * @param ts
+ * @return
+ */
+template <typename... Ts>
+Response::SharedPtr patch(Ts &&...ts)
+{
+    Session session;
+    detail::set_option(session, std::forward<Ts>(ts)...);
+    return session.patch();
+}
+
+/**
+ * patch async methods
+ * @tparam Ts
+ * @param ts
+ * @return
+ */
+template <typename... Ts>
+AsyncResponse async_patch(Ts... ts)
+{
+    return detail::async([](Ts... ts_inner) { return patch(std::move(ts_inner)...); }, std::move(ts)...);
+}
+
+/**
+ * head methods
+ * @tparam Ts
+ * @param ts
+ * @return
+ */
+template <typename... Ts>
+Response::SharedPtr head(Ts &&...ts)
+{
+    Session session;
+    detail::set_option(session, std::forward<Ts>(ts)...);
+    return session.head();
+}
+
+/**
+ * head async methods
+ * @tparam Ts
+ * @param ts
+ * @return
+ */
+template <typename... Ts>
+AsyncResponse async_head(Ts... ts)
+{
+    return detail::async([](Ts... ts_inner) { return head(std::move(ts_inner)...); }, std::move(ts)...);
+}
+
+/**
+ * options methods
+ * @tparam Ts
+ * @param ts
+ * @return
+ */
+template <typename... Ts>
+Response::SharedPtr options(Ts &&...ts)
+{
+    Session session;
+    detail::set_option(session, std::forward<Ts>(ts)...);
+    return session.options();
+}
+
+/**
+ * options async methods
+ * @tparam Ts
+ * @param ts
+ * @return
+ */
+template <typename... Ts>
+AsyncResponse async_options(Ts... ts)
+{
+    return detail::async([](Ts... ts_inner) { return options(std::move(ts_inner)...); }, std::move(ts)...);
 }
 
 /**
