@@ -264,9 +264,13 @@ void TlsSocketPrivate::attach_bridge()
         return;
     }
     this->freeze_config();
-    if (!mConfigured)
+    if (mCloseRequested)
     {
-        return; // freeze_config hit a synchronous fatal — teardown is running
+        return; // freeze_config hit a synchronous failure (or the user closed during connect):
+                // finish_error/begin_close already ran — the bridge must NOT be attached to the
+                // now-closing transport (read_start would trip the transport's closing CHECK).
+                // Covers the old !mConfigured intent too: every freeze_config failure path goes
+                // through finish_error -> begin_close, which latches mCloseRequested.
     }
     if (mbedtls_ssl_setup(&mSsl, &mConfig) != 0)
     {

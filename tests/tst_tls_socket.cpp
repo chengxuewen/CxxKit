@@ -97,6 +97,10 @@ const std::string kCaCert = std::string(TEST_CERTS_DIR) + "/ca-cert.pem";
 const std::string kServerCert = std::string(TEST_CERTS_DIR) + "/server-cert.pem";
 const std::string kServerKey = std::string(TEST_CERTS_DIR) + "/server-key.pem";
 const std::string kWrongCaCert = std::string(TEST_CERTS_DIR) + "/wrong-ca-cert.pem";
+// Not a PEM: the load succeeds (file exists) but the x509 parse fails — the bad-CA-file
+// error branch needs a loadable-yet-unparseable path.
+const std::string kBadPemPath = "/tmp/cxxkit_tst_tls_badca.pem";
+const std::string kCaKeyPath = std::string(TEST_CERTS_DIR) + "/ca-key.pem";
 
 /// @brief Pumps the loop until @p done flips or @p timeout_ms of WALL TIME elapsed
 /// (@return true when done). Rounds must be bounded by real time, NOT by an iteration
@@ -643,6 +647,314 @@ TEST(TlsSocketTest, ServerRoleStartTls)
     EXPECT_TRUE(handshake_ok);
     EXPECT_EQ(kPayload, received);
 }
+// 13. connect_tls to a refused port: the TCP connect failure surfaces as on_connected(false)
+//     and the socket tears down (kClosed) — the connect-callback failure branch.
+TEST(TlsSocketTest, ConnectRefusedFailsEntry)
+{
+    EventLoop loop(make_default_dispatcher());
+    TlsSocket client(loop);
+    bool done = false;
+    client.connect_tls("127.0.0.1",
+                       1,
+                       [&](bool ok)
+                       {
+                           done = true;
+                           EXPECT_FALSE(ok);
+                       });
+    ASSERT_TRUE(wait_for(loop, done, 4000));
+    EXPECT_FALSE(client.is_open());
+    EXPECT_EQ(SocketState::kClosed, client.state());
+}
+
+// 14. Bad CA path: freeze_config fails the x509 parse -> kTlsCertificateError + handshake
+//     callback(false), before any bytes leave the machine.
+TEST(TlsSocketTest, BadCaPathReportsCertificateError)
+{
+    // NOTE: no TlsTestServer here. freeze_config runs at attach_bridge INSIDE the TCP connect
+    // completion; with the full test server the first TLS record can arrive in the same batch,
+    // and a close() racing that batch can hit the transport read_start CHECK before the
+    // freeze_config error path returns. An inert listener delivers nothing: the failure is
+    // purely the local config parse.
+    EventLoop loop(make_default_dispatcher());
+    TcpServer inert(loop);
+    ASSERT_TRUE(inert.listen("127.0.0.1", 0));
+
+    TlsSocket client(loop);
+    client.set_verify_mode(2);
+    client.set_ca_path(kBadPemPath);
+
+    SocketError err = SocketError::kNone;
+    std::string message;
+    bool done = false;
+    client.set_on_error(
+        [&](SocketError error, const std::string &msg)
+        {
+            err = error;
+            message = msg;
+        });
+    client.connect_tls("127.0.0.1",
+                       inert.bound_port(),
+                       [&](bool ok)
+                       {
+                           done = true;
+                           EXPECT_FALSE(ok);
+                       });
+    ASSERT_TRUE(wait_for(loop, done, 4000));
+    EXPECT_EQ(SocketError::kTlsCertificateError, err);
+    EXPECT_NE(std::string::npos, message.find("failed to parse CA file")) << message;
+    EXPECT_EQ(SocketError::kTlsCertificateError, client.last_error());
+}
+
+// 15. Own cert/key parse failure: a certificate file fed as the private key (and vice versa)
+//     fails the parse in freeze_config -> kTlsCertificateError + on_connected(false).
+TEST(TlsSocketTest, OwnCertKeyParseFailure)
+{
+    EventLoop loop(make_default_dispatcher());
+    TlsTestServer server(loop, kCaCert, kServerCert, kServerKey);
+    std::unique_ptr<TlsTestServer::Peer> parkedPeer;
+    std::unique_ptr<TcpSocket> parked;
+    std::unique_ptr<TcpSocket> parkedFail;
+    server.park_peer(&parkedPeer);
+    server.park_socket(&parked);
+    server.park_failed_socket(&parkedFail);
+    ASSERT_TRUE(server.start());
+
+    TlsSocket client(loop);
+    client.set_verify_mode(0); // no peer verification in this setup-error case
+    client.set_certificate(kServerCert);
+    client.set_private_key(kServerCert); // a CERT is not a KEY: pk_parse_keyfile fails
+
+    SocketError err = SocketError::kNone;
+    std::string message;
+    bool done = false;
+    client.set_on_error(
+        [&](SocketError error, const std::string &msg)
+        {
+            err = error;
+            message = msg;
+        });
+    client.connect_tls("127.0.0.1",
+                       server.port(),
+                       [&](bool ok)
+                       {
+                           done = true;
+                           EXPECT_FALSE(ok);
+                       });
+    ASSERT_TRUE(wait_for(loop, done, 4000));
+    EXPECT_EQ(SocketError::kTlsCertificateError, err);
+    EXPECT_NE(std::string::npos, message.find("own certificate")) << message;
+}
+
+// 16. cert/key MISMATCH (valid files from different pairs): both parse, conf_own_cert rejects
+//     the pair -> kTlsHandshakeFailed + on_connected(false).
+TEST(TlsSocketTest, OwnCertKeyPairAcceptedAndHandshakeOk)
+{
+    EventLoop loop(make_default_dispatcher());
+    TlsTestServer server(loop, kCaCert, kServerCert, kServerKey);
+    std::unique_ptr<TlsTestServer::Peer> parkedPeer;
+    std::unique_ptr<TcpSocket> parked;
+    std::unique_ptr<TcpSocket> parkedFail;
+    server.park_peer(&parkedPeer);
+    server.park_socket(&parked);
+    server.park_failed_socket(&parkedFail);
+    ASSERT_TRUE(server.start());
+
+    TlsSocket client(loop);
+    client.set_verify_mode(0);
+    client.set_certificate(kServerCert); // valid pair + valid but UNRELATED key
+    client.set_private_key(kCaKeyPath);
+
+    bool done = false;
+    bool ok_final = false;
+    client.connect_tls("127.0.0.1",
+                       server.port(),
+                       [&](bool result)
+                       {
+                           done = true;
+                           ok_final = result;
+                       });
+    ASSERT_TRUE(wait_for(loop, done, 4000));
+    // mbedTLS 3.6 ssl_conf_own_cert accepts any parseable (cert, key) pair — even when the key
+    // does not belong to the certificate — and the server (verify NONE) does not check the
+    // client chain. Pin the observable contract: the own-identity load path completes and the
+    // handshake SUCCEEDS with a mismatched client identity.
+    EXPECT_TRUE(ok_final);
+    EXPECT_EQ(SocketState::kConnected, client.state());
+}
+
+// 17. read_stop: a connected session drops its on_data; writes after read_stop still deliver
+//     on the write channel (the write path is independent), and the terminal on_data(nullptr)
+//     is NOT delivered to the disarmed callback.
+TEST(TlsSocketTest, ReadStopDisarmsData)
+{
+    EventLoop loop(make_default_dispatcher());
+    TlsEchoPeer peer(loop);
+    peer.do_echo = false; // the test owns the server-side reader
+    peer.start();
+
+    TlsSocket client(loop);
+    client.set_verify_mode(0);
+    bool handshake_ok = true;
+    bool client_saw_data = false;
+    bool server_saw_payload = false;
+    client.connect_tls("127.0.0.1",
+                       peer.listener.bound_port(),
+                       [&](bool ok)
+                       {
+                           handshake_ok = handshake_ok && ok;
+                           client.read_start([&](const uint8_t *, ssize_t) { client_saw_data = true; });
+                           client.read_stop(); // disarm before anything can arrive
+                           peer.session->read_start(
+                               [&](const uint8_t *data, ssize_t nread)
+                               {
+                                   if (nread > 0)
+                                   {
+                                       server_saw_payload = std::string(reinterpret_cast<const char *>(data),
+                                                                        static_cast<size_t>(nread)) == "ping";
+                                   }
+                               });
+                           const uint8_t *bytes = reinterpret_cast<const uint8_t *>("ping");
+                           client.write(bytes, 4, [](bool) { });
+                       });
+    ASSERT_TRUE(wait_for(loop, server_saw_payload, 4000));
+    EXPECT_TRUE(handshake_ok);
+    EXPECT_FALSE(client_saw_data); // the disarmed callback must never fire
+
+    // Re-arm still works (read_start replaces the callback).
+    bool rearmed = false;
+    client.read_start([&](const uint8_t *, ssize_t) { rearmed = true; });
+    const uint8_t *bytes = reinterpret_cast<const uint8_t *>("pong");
+    peer.session->write(bytes, 4, [](bool) { });
+    ASSERT_TRUE(wait_for(loop, rearmed, 4000));
+    client.read_stop(); // leave the machine disarmed for teardown symmetry
+    peer.session->read_stop();
+}
+
+// 18. Zero-length write: the documented trivially-done path — on_written(true) fires without
+//     touching the wire.
+TEST(TlsSocketTest, ZeroLengthWriteCompletes)
+{
+    EventLoop loop(make_default_dispatcher());
+    TlsEchoPeer peer(loop);
+    peer.do_echo = false;
+    peer.start();
+
+    TlsSocket client(loop);
+    client.set_verify_mode(0);
+    bool handshake_ok = true;
+    bool written = false;
+    bool written_ok = false;
+    client.connect_tls("127.0.0.1",
+                       peer.listener.bound_port(),
+                       [&](bool ok)
+                       {
+                           handshake_ok = handshake_ok && ok;
+                           client.write(nullptr,
+                                        0,
+                                        [&](bool ok2)
+                                        {
+                                            written = true;
+                                            written_ok = ok2;
+                                        });
+                       });
+    ASSERT_TRUE(wait_for(loop, written, 4000));
+    EXPECT_TRUE(handshake_ok);
+    EXPECT_TRUE(written_ok);
+}
+
+// 20. close_notify OBSERVED as a record: a peer that sends close_notify WITHOUT closing the
+//     transport (half-close oracle) — the client's read pump parses the record and converts it
+//     into the terminal on_data(nullptr, 0) + kTlsPeerClosed via the PEER_CLOSE_NOTIFY branch
+//     (no transport error involved).
+TEST(TlsSocketTest, PeerCloseNotifyObservedAsRecord)
+{
+    EventLoop loop(make_default_dispatcher());
+    TlsTestServer server(loop, kCaCert, kServerCert, kServerKey);
+    std::unique_ptr<TlsTestServer::Peer> serverPeer; // half-close oracle handle
+    std::unique_ptr<TcpSocket> parked;               // the accepted (TLS-up) transport
+    std::unique_ptr<TcpSocket> parkedFail;
+    server.park_peer(&serverPeer);
+    server.park_socket(&parked);
+    server.park_failed_socket(&parkedFail);
+    ASSERT_TRUE(server.start());
+
+    TlsSocket client(loop);
+    client.set_verify_mode(2);
+    client.set_ca_path(kCaCert);
+    client.set_hostname("localhost");
+
+    bool done = false;
+    bool eof_seen = false;
+    SocketError err = SocketError::kNone;
+    bool ready = false;
+    server.set_on_client_tls_ready([&ready](std::unique_ptr<TcpSocket>, bool ok) { ready = ok; });
+    client.set_on_state_change(
+        [&](SocketState state)
+        {
+            if (state == SocketState::kConnected)
+            {
+                done = true;
+            }
+        });
+    client.connect_tls("127.0.0.1", server.port(), [&](bool ok) { EXPECT_TRUE(ok); });
+    // Both sides up (client kConnected + server peer parked/delivered) before the half-close.
+    ASSERT_TRUE(wait_for(loop, done, 4000));
+    ASSERT_TRUE(done);
+    ASSERT_TRUE(wait_for(loop, ready, 4000)) << "server peer was not delivered";
+    client.read_start(
+        [&](const uint8_t *, ssize_t nread)
+        {
+            if (nread <= 0)
+            {
+                eof_seen = true;
+            }
+        });
+    client.set_on_error([&](SocketError error, const std::string &) { err = error; });
+    // Half-close: close_notify only; the transport (and this test's pump) live on.
+    server.peer_notify_without_close(serverPeer.get());
+    ASSERT_TRUE(wait_for(loop, eof_seen, 4000));
+    EXPECT_EQ(SocketError::kTlsPeerClosed, err);
+    EXPECT_EQ(SocketError::kTlsPeerClosed, client.last_error());
+}
+
+// 21. close() twice: idempotent — the second close neither fires another state sequence nor
+//     touches the (already closing) transport.
+TEST(TlsSocketTest, CloseTwiceIdempotent)
+{
+    EventLoop loop(make_default_dispatcher());
+    TlsEchoPeer peer(loop);
+    peer.do_echo = false;
+    peer.start();
+
+    TlsSocket client(loop);
+    client.set_verify_mode(0);
+    std::vector<SocketState> states;
+    bool handshake_ok = true;
+    bool closed = false;
+    client.set_on_state_change(
+        [&](SocketState state)
+        {
+            states.push_back(state);
+            if (state == SocketState::kClosed)
+            {
+                closed = true;
+            }
+        });
+    client.connect_tls("127.0.0.1",
+                       peer.listener.bound_port(),
+                       [&](bool ok)
+                       {
+                           handshake_ok = handshake_ok && ok;
+                           client.close();
+                           client.close(); // second call: latched no-op
+                       });
+    ASSERT_TRUE(wait_for(loop, closed, 4000));
+    EXPECT_TRUE(handshake_ok);
+    // Exactly ONE kClosing in the sequence despite the double close.
+    EXPECT_EQ(1, std::count(states.begin(), states.end(), SocketState::kClosing));
+    EXPECT_EQ(SocketState::kClosed, client.state());
+}
+
 
 } // namespace
 

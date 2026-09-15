@@ -476,6 +476,79 @@ TEST(TcpSocketTest, InitialStateAndLastError)
     EXPECT_EQ(cxxkit::SocketError::kNone, socket.last_error());
     EXPECT_TRUE(socket.is_open());
 }
+
+// 13. Discard-write contract: write() on a CLOSED socket completes on_written(false) directly
+//     (documented immediate-discard semantics — the pre-CHECK branch, not a fatal).
+TEST(TcpSocketTest, WriteAfterCloseDiscardsWithFalse)
+{
+    EventLoop loop(make_default_dispatcher());
+    SocketPair pair(loop);
+
+    bool written = false;
+    bool written_ok = true;
+    pair.a->close();
+    const uint8_t byte = 'x';
+    pair.a->write(&byte,
+                  1,
+                  [&](bool ok)
+                  {
+                      written = true;
+                      written_ok = ok;
+                  });     // closed: immediate false, NO loop pump needed
+    EXPECT_TRUE(written); // completed synchronously on the caller stack
+    EXPECT_FALSE(written_ok);
+    loop.process_events(EventLoop::ProcessFlag::kAllEvents, 200); // drain the close
+    EXPECT_FALSE(pair.a->is_open());
+}
+
+// 14. close() on a never-connected (kIdle) socket: the never-initialized branch — no transport
+//     exists, the machine goes straight to kClosed with no pump, and stays destroyable.
+TEST(TcpSocketTest, CloseNeverOpened)
+{
+    EventLoop loop(make_default_dispatcher());
+    TcpSocket socket(loop); // kIdle: connect never called, no handle
+    std::vector<cxxkit::SocketState> states;
+    socket.set_on_state_change([&](cxxkit::SocketState s) { states.push_back(s); });
+    socket.close(); // kIdle branch: kClosed + backend->close(nullptr), no I6 pump
+    EXPECT_EQ(cxxkit::SocketState::kClosed, socket.state());
+    EXPECT_FALSE(socket.is_open());
+    EXPECT_TRUE(states.empty() || states.back() == cxxkit::SocketState::kClosed);
+    loop.process_events(EventLoop::ProcessFlag::kAllEvents, 100); // quiet teardown, no abort
+}
+
+// 15. close() while a connect is in flight: the pending connect completes false via the
+//     begin_close fan-out, then the machine settles kClosed.
+TEST(TcpSocketTest, CloseDuringPendingConnectFailsIt)
+{
+    EventLoop loop(make_default_dispatcher());
+    TcpServer server(loop);
+    ASSERT_TRUE(server.listen("127.0.0.1", 0)); // accept but never answer
+    std::unique_ptr<cxxkit::TcpSocket> server_side;
+    server.on_connection(
+        [&](std::unique_ptr<cxxkit::TcpSocket> socket)
+        {
+            server_side = std::move(socket); // hold: no I5 pump inside the callback
+        });
+
+    TcpSocket socket(loop);
+    std::vector<cxxkit::SocketState> states;
+    socket.set_on_state_change([&](cxxkit::SocketState s) { states.push_back(s); });
+    bool connect_called = false;
+    bool connect_result = true;
+    socket.connect("127.0.0.1",
+                   server.bound_port(),
+                   [&](bool ok)
+                   {
+                       connect_called = true;
+                       connect_result = ok;
+                   });
+    socket.close(); // same stack: the connect is still pending
+    // Pending connect completes false (fan-out) — either here synchronously or via the pump.
+    loop.process_events(EventLoop::ProcessFlag::kAllEvents, 2000);
+    EXPECT_TRUE(connect_called);
+    EXPECT_FALSE(connect_result);
+    EXPECT_EQ(cxxkit::SocketState::kClosed, socket.state());
+}
 } // namespace
 
 #endif // #if CXXKIT_FEATURE_ENABLE_KERNEL

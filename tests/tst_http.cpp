@@ -700,13 +700,7 @@ TEST(HttpTest, RedirectMaxZeroRefusesRedirects)
 TEST(HttpTest, CookieAccessorFamily)
 {
     const auto expires = std::chrono::system_clock::now() + std::chrono::hours(1);
-    const Cookie cookie(Cookie::Initializer{"session",
-                                           "abc123",
-                                           "example.com",
-                                           true,
-                                           "/login",
-                                           true,
-                                           expires});
+    const Cookie cookie(Cookie::Initializer{"session", "abc123", "example.com", true, "/login", true, expires});
     EXPECT_EQ(std::string("session"), cookie.get_name());
     EXPECT_EQ(std::string("abc123"), cookie.get_value());
     EXPECT_EQ(std::string("example.com"), cookie.get_domain());
@@ -734,8 +728,8 @@ TEST(HttpTest, CookieAttributesFromResponse)
 {
     EventLoop loop(cxxkit::make_default_dispatcher());
     OneShotServer srv(loop);
-    ASSERT_TRUE(srv.start(make_response(
-        200, "OK", "Set-Cookie: session=abc123; Path=/login; Domain=127.0.0.1; Secure\r\n", "")));
+    ASSERT_TRUE(srv.start(
+        make_response(200, "OK", "Set-Cookie: session=abc123; Path=/login; Domain=127.0.0.1; Secure\r\n", "")));
 
     const std::string url = std::string(kHost) + ":" + std::to_string(srv.server.bound_port()) + "/login";
     Response::SharedPtr response = run_with_loop(loop, [&url] { return get(Url{url}); });
@@ -752,7 +746,10 @@ TEST(HttpTest, CookieAttributesFromResponse)
 //     transfer involved — this only pins the settings surface).
 TEST(HttpTest, ProxyAccessors)
 {
-    const Proxy::Initializer init{std::string(kHost), 8080, Proxy::Type::kSOCKS5};
+    // PIT-58: Initializer's StringView field borrows — passing a std::string TEMPORARY makes
+    // the view dangle before the Proxy ctor copies it out (ASAN use-after-scope). Literals
+    // (static storage) are the safe shape; the ctor's copy-out is immediate.
+    const Proxy::Initializer init{kHost, 8080, Proxy::Type::kSOCKS5};
     const Proxy proxy(init);
     EXPECT_EQ(std::string(kHost), proxy.get_host());
     EXPECT_EQ(8080, proxy.get_port());
@@ -820,23 +817,22 @@ TEST(HttpTest, DownloadToWriteCallback)
     ASSERT_TRUE(srv.start(make_response(200, "OK", "", "chunked-download-body")));
 
     const std::string url = std::string(kHost) + ":" + std::to_string(srv.server.bound_port()) + "/file";
-    Response::SharedPtr response = spin_with_worker(
-        loop,
-        [&url]
-        {
-            Session session;
-            session.set_url(Url{url});
-            std::string collected;
-            WriteCallback write(
-                [&collected](std::string data, intptr_t)
-                {
-                    collected += data;
-                    return true;
-                });
-            Response::SharedPtr result = session.download(write);
-            EXPECT_EQ(std::string("chunked-download-body"), collected);
-            return result;
-        });
+    Response::SharedPtr response = spin_with_worker(loop,
+                                                    [&url]
+                                                    {
+                                                        Session session;
+                                                        session.set_url(Url{url});
+                                                        std::string collected;
+                                                        WriteCallback write(
+                                                            [&collected](std::string data, intptr_t)
+                                                            {
+                                                                collected += data;
+                                                                return true;
+                                                            });
+                                                        Response::SharedPtr result = session.download(write);
+                                                        EXPECT_EQ(std::string("chunked-download-body"), collected);
+                                                        return result;
+                                                    });
     ASSERT_NE(nullptr, response.get());
     EXPECT_EQ(200L, response->status_code());
 }

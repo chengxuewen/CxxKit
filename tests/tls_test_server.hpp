@@ -207,6 +207,18 @@ public:
 
     void park_peer(std::unique_ptr<Peer> *slot) { mPeerSlot = slot; }
 
+    /**
+     * @brief TEST ORACLE for the close_notify-record path: sends a TLS close_notify over the
+     *        parked peer's session WITHOUT closing the underlying transport. Real peers that
+     *        half-close (e.g. openssl s_client with -no_shutdown variants) produce exactly this
+     *        shape: the client must observe the parsed close_notify RECORD, not a transport EOF.
+     *        Loop thread only, after a successful handshake delivery.
+     */
+    void peer_notify_without_close(Peer *peer)
+    {
+        (void)mbedtls_ssl_close_notify(&peer->mSsl); // queues + submits via the bridge's f_send
+    }
+
     void on_accepted(std::unique_ptr<TcpSocket> socket)
     {
         std::unique_ptr<Peer> peer(new Peer);
@@ -270,6 +282,10 @@ public:
     {
         while (true)
         {
+            if (p->mDone || p->mSocket == nullptr)
+            {
+                return; // already delivered (a residual write completion re-entered us) — touch nothing
+            }
             const int rc = mbedtls_ssl_handshake(&p->mSsl);
             if (rc == 0)
             {
