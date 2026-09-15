@@ -26,7 +26,6 @@
 
 #include <cxxkit/network/network_global.hpp>
 #include <cxxkit/text/string_view.hpp>
-#include <cxxkit/thread/thread_pool.hpp>
 #include <cxxkit/memory/memory.hpp>
 
 #include <map>
@@ -477,7 +476,9 @@ void set_option(Session &session, Ts &&...ts)
 template <class Fn, class... Args>
 auto async(Fn &&fn, Args &&...args) -> std::future<decltype(fn(args...))>
 {
-    return ThreadPool::default_instance()->start(std::forward<Fn>(fn), std::forward<Args>(args)...);
+    // std::async, not ThreadPool: ThreadPool::start() returns void (no future-returning
+    // variadic submit), which made async_get/put/post un-instantiable (PIT-54).
+    return std::async(std::launch::async, std::forward<Fn>(fn), std::forward<Args>(args)...);
 }
 } // namespace detail
 

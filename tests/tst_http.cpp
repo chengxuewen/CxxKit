@@ -35,9 +35,8 @@
 /// Characterization findings pinned here (2026-09-14):
 /// - Transport failures (timeout, connection refused) yield status_code() == 0 per the wrapper's
 ///   documented convention (cpr maps curl errors to status 0 in its Response).
-/// - async_get/async_put/async_post are un-instantiable as shipped: http.hpp detail::async() calls
-///   ThreadPool::start(fn, args...) but ThreadPool has no future-returning variadic submit; any
-///   instantiation fails to compile (g++ probe). async_download alone works (std::async path).
+/// - async_get/async_put/async_post/async_download run on std::async worker threads (not the
+///   cxxkit ThreadPool — its start() returns void, PIT-54); .get() joins.
 /// - cpr joins Payload pairs url-encoded as k=v&k2=v2 in the request body.
 /// - env http_proxy/https_proxy break loopback requests (curl CONNECT → 502); tests run with
 ///   proxy environment stripped (CI default).
@@ -361,10 +360,7 @@ TEST(HttpTest, TimeoutMapsToZeroStatus)
 }
 
 // 13. Async download: async_download resolves via std::async with the canned body written to disk.
-//     CHARACTERIZATION: async_get/async_put/async_post are un-instantiable as shipped — http.hpp's
-//     detail::async() calls ThreadPool::start(fn, args...) but ThreadPool has no future-returning
-//     variadic submit; any instantiation fails to compile (g++ probe, 2026-09-14). async_download is
-//     the only async entry point that works (std::async path). Defect recorded; suite pins what works.
+//     async_get/async_put/async_post share the same std::async path since the PIT-54 fix
 TEST(HttpTest, AsyncDownload)
 {
     EventLoop loop(cxxkit::make_default_dispatcher());
@@ -378,6 +374,49 @@ TEST(HttpTest, AsyncDownload)
     std::remove(path.c_str());
     ASSERT_NE(nullptr, response.get());
     EXPECT_EQ(200L, response->status_code());
+}
+
+// 13a. Async GET: resolves on a std::async worker; body asserted server-round-trip.
+TEST(HttpTest, AsyncGet)
+{
+    EventLoop loop(cxxkit::make_default_dispatcher());
+    OneShotServer srv(loop);
+    ASSERT_TRUE(srv.start(make_response(200, "OK", "", "async-get-body")));
+
+    const std::string url = std::string(kHost) + ":" + std::to_string(srv.server.bound_port()) + "/async";
+    Response::SharedPtr response = run_with_loop(loop, [&url] { return async_get(Url{url}).get(); });
+    ASSERT_NE(nullptr, response.get());
+    EXPECT_EQ(200L, response->status_code());
+    EXPECT_EQ(std::string("async-get-body"), response->text());
+}
+
+// 13b. Async POST: payload asserted server-side, proving the request body crossed the worker
+//      thread boundary intact.
+TEST(HttpTest, AsyncPostPayload)
+{
+    EventLoop loop(cxxkit::make_default_dispatcher());
+    OneShotServer srv(loop);
+    ASSERT_TRUE(srv.start(make_response(201, "Created", "", "")));
+
+    const std::string url = std::string(kHost) + ":" + std::to_string(srv.server.bound_port()) + "/async-post";
+    Response::SharedPtr response = run_with_loop(loop,
+                                                 [&url]
+                                                 { return async_post(Url{url}, Payload{{"k", "v1&v2"}}).get(); });
+    ASSERT_NE(nullptr, response.get());
+    EXPECT_EQ(201L, response->status_code());
+    EXPECT_NE(std::string::npos, srv.request.find("k=v1%26v2")) << "captured: " << srv.request;
+}
+
+// 13c. Async failure path: connection refused on the std::async worker still yields a Response
+//      with status 0 (transport-failure convention) — no exception escapes .get().
+TEST(HttpTest, AsyncConnectionRefused)
+{
+    EventLoop loop(cxxkit::make_default_dispatcher());
+    Response::SharedPtr response = run_with_loop(loop,
+                                                 []
+                                                 { return async_get(Url{std::string("127.0.0.1:1/nothing")}).get(); });
+    ASSERT_NE(nullptr, response.get());
+    EXPECT_EQ(0L, response->status_code());
 }
 
 // 14. Download: session.download(file) streams the canned body into the target file.
