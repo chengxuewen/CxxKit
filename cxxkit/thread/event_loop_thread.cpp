@@ -58,7 +58,7 @@ void EventLoopThreadPrivate::thread_main()
     }
     mLoopCv.notify_all(); // loop() waiters (and any pre-exec accessor) may proceed
 
-    // The worker is the only exec() caller and start() joined no thread yet: the exit
+    // exec() returns only when exit() fires (stop() or a user call); the worker is its only caller.
     p->loop().exec();
 
     // Teardown ON the worker thread (D43.5 T1): uv handles are loop-thread bound, so the
