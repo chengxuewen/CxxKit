@@ -30,7 +30,6 @@ Library: CxxKit
 #include <cxxkit/tools/checks.hpp>
 
 #include <string>
-#include <string>
 #include <utility>
 
 #if CXXKIT_FEATURE_ENABLE_KERNEL
