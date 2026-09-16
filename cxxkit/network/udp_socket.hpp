@@ -110,8 +110,9 @@ public:
      * Legal from kIdle (a lazy ephemeral bind happens first) and kBound. @p data is copied
      * before returning. Each send's callback is invoked on the loop thread with @c false on
      * failure — @c last_error() carries the mapped reason (@c kMessageTooLarge for oversized
-     * datagrams). No in-flight limit; completions arrive in submission order (the backend
-     * preserves FIFO per socket).
+     * datagrams). No in-flight limit; completions arrive in submission order on the uv backend
+     * (libuv queues per-handle sends FIFO). The asio backend does not guarantee completion
+     * ordering for concurrent async_send_to — treat per-send results as unordered under asio.
      * Loop thread only.
      */
     void send_to(const uint8_t *data,
@@ -155,8 +156,8 @@ public:
     void set_backend(std::unique_ptr<network::detail::DgramBackend> backend);
 
     /**
-     * @brief Sets the error callback: invoked on the loop thread with a mapped @ref SocketError
-     *        and a human-readable message on bind/send failure or a receive error.
+     *        and a human-readable message on bind/send failure (receive errors stop delivery
+     *        silently; re-arm via set_on_datagram).
      *
      * The callback is invoked through a local copy (PIT-40): it may close() or even destroy the
      * socket. Re-setting replaces the previous callback. Loop thread only.
