@@ -70,6 +70,8 @@ public:
                  const std::string &ip,
                  uint16_t port,
                  std::function<void(bool ok)> on_done) override;
+    bool connect(const std::string &ip, uint16_t port) override;
+    void disconnect_remote() override;
     void receive_start(std::function<void(const uint8_t *data, size_t len, const std::string &ip, uint16_t port)>
                            on_datagram) override;
     void close() override;
@@ -92,6 +94,7 @@ private:
     void stop_cadence_timer(); /// cancel the 1ms repeating cadence timer (dtor/teardown)
     bool has_work() const;     /// udp socket alive? (no acceptor concept on udp)
     void arm_receive();        /// (re-)issue one async_receive_from against mRecvBuf
+    void on_send_done(const std::error_code &ec, std::function<void(bool ok)> cb); /// shared send completion
 
     EventLoop *mLoop{nullptr};
     int mNativeStatus{0};
@@ -102,6 +105,7 @@ private:
 
     std::function<void(const uint8_t *data, size_t len, const std::string &ip, uint16_t port)> mOnDatagram;
     uint16_t mBoundPort{0};
+    bool mConnected{false}; /// default peer pinned via connect() (kept in sync with the Native cell)
 };
 
 } // namespace detail

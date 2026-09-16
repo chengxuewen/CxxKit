@@ -44,10 +44,12 @@ namespace detail
  * @brief Backend-neutral datagram transport interface (D44): bind/send/receive/close
  *        for UDP and similar connectionless protocols.
  *
- * Mirrors the style of @ref StreamBackend but exposes datagram semantics: no connect
- * (each send specifies a destination), no read/write pairing (send_to / receive_start
- * are independent), and bind is synchronous (no async handshake). Backends translate
- * their native error status onto the pimpl's SocketError via @c native_status.
+ * Mirrors the style of @ref StreamBackend but exposes datagram semantics: no read/write
+ * pairing (send_to / receive_start are independent), and bind is synchronous (no async
+ * handshake). Connected mode (D45): @c connect pins a default peer so @c send goes
+ * without an address and receive filters to that peer — synchronous on both backends
+ * (UDP connect has no handshake). Backends translate their native error status onto the
+ * pimpl's SocketError via @c native_status.
  */
 class DgramBackend
 {
@@ -68,6 +70,18 @@ public:
 
     /// Actual bound port (0 = ephemeral; read back after bind with port 0). TcpServer same pattern.
     virtual uint16_t bound_port() const = 0;
+
+    /**
+     * @brief Pin the default peer (@c connect(2) semantics on the datagram socket).
+     *
+     * Synchronous — connected UDP has no handshake. Subsequent @c send calls deliver to
+     * this peer; receives filter to it. Does not change the local binding.
+     * @return false on failure (native_status carries the reason).
+     */
+    virtual bool connect(const std::string &ip, uint16_t port) = 0;
+
+    /// Un-pin the default peer (connected → unconnected; binding and buffered data kept).
+    virtual void disconnect_remote() = 0;
 
     /**
      * @brief Send a datagram to the specified destination.

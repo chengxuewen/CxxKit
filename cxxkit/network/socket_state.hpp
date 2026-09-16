@@ -37,9 +37,12 @@ CXXKIT_BEGIN_NAMESPACE
  * Reported by @ref TcpSocket::state and @ref TcpSocket::set_on_state_change. Lifecycle:
  * kIdle → kConnecting → kConnected → kClosing → kClosed (kIdle recurs after a failed connect —
  * the socket returns to its constructed, handle-less state and may connect again).
- * UDP-only: kIdle → kBound — bind succeeds and the socket stays in kBound until closed; no
- * connect/connected transitions exist for datagram sockets. kClosed is the only terminal state
- * reachable from kBound; a closed datagram backend may be re-opened+bound.
+ * UDP-only: kIdle → kBound (bind); a connected-mode datagram socket (D45 @c UdpSocket::connect_to)
+ * additionally reaches kConnected — kConnected overlaps kBound there (the local binding stays;
+ * connected is a pin on top). @c disconnect_remote returns kConnected → kBound. @c send_to is
+ * illegal while connected (Qt contract: a connected socket sends via @c send only);
+ * @c bound_port stays legal in both. kClosed is the only terminal state reachable from
+ * kBound/kConnected; a closed datagram backend may be re-opened+bound.
  */
 enum class SocketState
 {
@@ -48,7 +51,7 @@ enum class SocketState
     kConnected,  /// connected (or adopted handle); duplex read/write active
     kClosing,    /// close requested; callbacks still draining
     kClosed,     /// close completed; nothing pending
-    kBound       /// UDP-only: bind succeeded; socket ready for send/receive (no connection)
+    kBound       /// UDP-only: bind succeeded (no pin); ready for send_to/receive
 };
 CXXKIT_END_NAMESPACE
 

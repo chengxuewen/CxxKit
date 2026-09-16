@@ -55,7 +55,12 @@ public:
 
     // The machine states are the public SocketState (socket_state.hpp). UDP lifecycle (v1):
     // kIdle → kBound → kClosed; a failed bind stays kIdle (handle-less, retryable — TCP
-    // failed-connect shape). No kConnecting/kConnected in v1 (connected-UDP is v1.5).
+    // failed-connect shape). D45 connected mode: connect_to pins a default peer —
+    // kIdle lazy-binds to kBound first, then the synchronous backend connect flips the
+    // machine to kConnected (no kConnecting — UDP connect has no handshake). A failed connect
+    // stays kBound (the binding survives). disconnect_remote returns kConnected → kBound.
+    // While kConnected: send() delivers to the peer, send_to is fatal, and receives deliver
+    // only peer traffic (the backend filters in-kernel; this layer re-checks defensively).
 
     /** @brief I1 fatal: every public entry is loop-thread only (TcpSocket shape, always-on). */
     void check_loop_thread(const char *api) const;
@@ -76,8 +81,18 @@ public:
      *        machine stays kIdle).
      */
     bool lazy_bind_for_send();
-    // Backend completion trampolines: state-machine reactions live HERE (pimpl side).
+
+    /**
+     * @brief Backend completion trampoline: send failure maps onto the public error surface
+     *        (kConnected refusal errors surface here too — ICMP port-unreachable arrives as a
+     *        send completion failure on the NEXT send after it lands).
+     */
     static void send_done(UdpSocketPrivate *d, bool ok);
+
+    /**
+     * @brief Backend trampoline: delivers peer-only traffic — while kConnected a datagram
+     *        from any other sender is dropped (defensive re-check; the kernel filters first).
+     */
     static void datagram_event(UdpSocketPrivate *d, const std::string &data, const std::string &ip, uint16_t port);
 
     UdpSocket *mP{nullptr};
@@ -91,6 +106,9 @@ public:
     std::function<void(SocketError, const std::string &)> mOnError; /// invoked via local copy (PIT-40)
     std::function<void(SocketState)> mOnStateChange;                /// invoked via local copy (PIT-40)
     SocketError mLastError{SocketError::kNone};                     /// last mapped failure, kNone until first error
+    /// D45 connected mode: the pinned default peer (mPeerIp empty + port 0 = unconnected).
+    std::string mPeerIp;
+    uint16_t mPeerPort{0};
 
     std::thread::id mLoopThreadId; /// captured at construction from the loop's dispatcher
 };

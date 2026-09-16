@@ -30,6 +30,7 @@ Library: CxxKit
 #include <cxxkit/tools/checks.hpp>
 
 #include <string>
+#include <string>
 #include <utility>
 
 #if CXXKIT_FEATURE_ENABLE_KERNEL
@@ -133,6 +134,12 @@ void UdpSocketPrivate::datagram_event(UdpSocketPrivate *d,
 {
     // Backend trampoline: the backend hands us copies already (its buffer dies with the
     // callback); we deliver the user's copy — holding data past this call is safe.
+    // D45 connected mode: the kernel filters to the pinned peer already; this re-check is the
+    // defensive layer for backends without in-kernel filtering — non-peer datagrams are dropped.
+    if (d->mState == SocketState::kConnected && (ip != d->mPeerIp || port != d->mPeerPort))
+    {
+        return;
+    }
     if (d->mOnDatagram)
     {
         // PIT-40: invoke through a local copy — the callback may close()/destroy the socket.
@@ -196,8 +203,8 @@ uint16_t UdpSocket::bound_port() const
 {
     CXXKIT_D(const UdpSocket);
     d->check_loop_thread("bound_port");
-    CXXKIT_CHECK(d->mState == SocketState::kBound)
-        << "UdpSocket::bound_port: state must be kBound (got " << static_cast<int>(d->mState) << ")";
+    CXXKIT_CHECK(d->mState == SocketState::kBound || d->mState == SocketState::kConnected)
+        << "UdpSocket::bound_port: state must be kBound or kConnected (got " << static_cast<int>(d->mState) << ")";
     return d->mBackend->bound_port();
 }
 
@@ -216,6 +223,9 @@ void UdpSocket::send_to(const uint8_t *data,
         on_done(false); // closed socket: immediate discard completion, documented semantics
         return;
     }
+    CXXKIT_CHECK(d->mState != SocketState::kConnected)
+        << "UdpSocket::send_to: socket is connected — use send() (Qt contract: a connected socket"
+           " sends via send only)";
     CXXKIT_CHECK(d->mState == SocketState::kIdle || d->mState == SocketState::kBound)
         << "UdpSocket::send_to: state must be kIdle or kBound (got " << static_cast<int>(d->mState) << ")";
 
@@ -250,14 +260,84 @@ void UdpSocket::send_to(const std::string &data,
     this->send_to(reinterpret_cast<const uint8_t *>(data.data()), data.size(), ip, port, std::move(on_done));
 }
 
+void UdpSocket::connect_to(const std::string &ip, uint16_t port)
+{
+    CXXKIT_D(UdpSocket);
+    d->check_loop_thread("connect_to");
+    CXXKIT_CHECK(d->mCloseRequested == false) << "UdpSocket::connect_to: socket is closing/closed";
+    CXXKIT_CHECK(d->mState == SocketState::kIdle || d->mState == SocketState::kBound)
+        << "UdpSocket::connect_to: state must be kIdle or kBound (got " << static_cast<int>(d->mState) << ")";
+
+    if (d->mState == SocketState::kIdle)
+    {
+        // Lazy ephemeral bind first (same contract as unbound send/receive-arming).
+        if (!d->lazy_bind_for_send())
+        {
+            const int status = d->mBackend->native_status();
+            d->report_error(network::detail::map_transport_error(status),
+                            "UdpSocket: implicit bind before connect failed (native status " + std::to_string(status) +
+                                ")");
+            return;
+        }
+        d->set_state(SocketState::kBound); // auto-transition kIdle → kBound
+    }
+
+    // Synchronous pin (UDP connect has no handshake). Failure keeps kBound — the binding
+    // survives and the caller may retry (Qt failed-connect shape adapted to datagram reality).
+    if (!d->mBackend->connect(ip, port))
+    {
+        const int status = d->mBackend->native_status();
+        d->report_error(network::detail::map_transport_error(status),
+                        "UdpSocket: connect failed (native status " + std::to_string(status) + ")");
+        return;
+    }
+    d->mPeerIp = ip;
+    d->mPeerPort = port;
+    d->set_state(SocketState::kConnected);
+}
+
+void UdpSocket::disconnect_remote()
+{
+    CXXKIT_D(UdpSocket);
+    d->check_loop_thread("disconnect_remote");
+    CXXKIT_CHECK(d->mState == SocketState::kConnected)
+        << "UdpSocket::disconnect_remote: state must be kConnected (got " << static_cast<int>(d->mState) << ")";
+
+    d->mBackend->disconnect_remote(); // un-pin at the native level (binding kept)
+    d->mPeerIp.clear();
+    d->mPeerPort = 0;
+    d->set_state(SocketState::kBound);
+}
+
+void UdpSocket::send(const uint8_t *data, size_t len, std::function<void(bool ok)> on_done)
+{
+    CXXKIT_D(UdpSocket);
+    d->check_loop_thread("send");
+    CXXKIT_CHECK(on_done != nullptr) << "UdpSocket::send requires a done callback";
+    CXXKIT_CHECK(data != nullptr || len == 0) << "UdpSocket::send: null data with non-zero length";
+    CXXKIT_CHECK(d->mState == SocketState::kConnected)
+        << "UdpSocket::send: state must be kConnected (got " << static_cast<int>(d->mState) << ") — connect_to first";
+
+    // FIFO completion queue mirrors send_to; the backend delivers to the pinned peer.
+    d->mPendingSendDones.push_back(std::move(on_done));
+    d->mBackend->send_to(data, len, d->mPeerIp, d->mPeerPort, [d](bool ok) { UdpSocketPrivate::send_done(d, ok); });
+}
+
+void UdpSocket::send(const std::string &data, std::function<void(bool ok)> on_done)
+{
+    this->send(reinterpret_cast<const uint8_t *>(data.data()), data.size(), std::move(on_done));
+}
+
 void UdpSocket::set_on_datagram(
     std::function<void(const std::string &data, const std::string &sender_ip, uint16_t sender_port)> on_datagram)
 {
     CXXKIT_D(UdpSocket);
     d->check_loop_thread("set_on_datagram");
     CXXKIT_CHECK(d->mCloseRequested == false) << "UdpSocket::set_on_datagram: socket is closing/closed";
-    CXXKIT_CHECK(d->mState == SocketState::kIdle || d->mState == SocketState::kBound)
-        << "UdpSocket::set_on_datagram: state must be kIdle or kBound (got " << static_cast<int>(d->mState) << ")";
+    CXXKIT_CHECK(d->mState == SocketState::kIdle || d->mState == SocketState::kBound ||
+                 d->mState == SocketState::kConnected)
+        << "UdpSocket::set_on_datagram: state must be kIdle, kBound or kConnected (got " << static_cast<int>(d->mState)
+        << ")";
 
     // C1 (review wave 1): receive_start needs a live handle — arming from kIdle performs the
     // same lazy ephemeral bind the send path does. Failure stays kIdle (re-arm allowed later).
@@ -359,6 +439,8 @@ void UdpSocketPrivate::begin_close()
     }
     mPendingSendDones.clear();
     mOnDatagram = nullptr;
+    mPeerIp.clear(); // connected pin dies with the socket
+    mPeerPort = 0;
     mBackend->close();
     set_state(SocketState::kClosed); // uv close drains in the backend; the machine is terminal now
 }

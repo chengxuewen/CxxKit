@@ -71,6 +71,8 @@ public:
                  const std::string &ip,
                  uint16_t port,
                  std::function<void(bool ok)> on_done) override;
+    bool connect(const std::string &ip, uint16_t port) override;
+    void disconnect_remote() override;
     void receive_start(std::function<void(const uint8_t *data, size_t len, const std::string &ip, uint16_t port)>
                            on_datagram) override;
     void close() override;
@@ -123,6 +125,7 @@ private:
 
     std::function<void(const uint8_t *data, size_t len, const std::string &ip, uint16_t port)> mOnDatagram;
     uint16_t mBoundPort{0};
+    bool mConnected{false}; /// default peer pinned via connect() (clears in disconnect_remote)
 };
 
 } // namespace detail

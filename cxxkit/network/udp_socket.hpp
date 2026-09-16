@@ -54,9 +54,18 @@ class UdpSocketPrivate;
  *
  * The transport is a pluggable datagram backend (network/detail/dgram_backend.hpp): this class
  * owns the state machine and the callback surface; the backend owns the native handle and the
- * raw I/O. State machine (v1): kIdle → kBound → kClosed — no kConnecting/kConnected (a
- * connected-mode UDP is v1.5). A failed @c bind stays kIdle (retryable, TCP failed-connect
- * shape).
+ * raw I/O. State machine (v1): kIdle → kBound → kClosed; connected mode (D45) adds a pin:
+ * kIdle lazy-binds to kBound, then a synchronous connect flips kBound → kConnected (no
+ * kConnecting — UDP connect has no handshake). A failed connect stays kBound (the binding
+ * survives). @c disconnect_remote returns kConnected → kBound. A failed @c bind stays kIdle
+ * (retryable, TCP failed-connect shape).
+ *
+ * Connected-mode contract (Qt alignment): while kConnected, @c send() delivers to the pinned
+ * peer, @c send_to is fatal (a connected socket sends via @c send only), @c bound_port stays
+ * legal, and only peer datagrams are delivered. Connection refusal is asynchronous on most
+ * platforms — an ICMP port-unreachable for a datagram sent to a closed port surfaces later as
+ * a @c kConnectionRefused error through the send-completion/receive error path, NOT from
+ * @c connect_to itself.
  *
  * Unbound first use (send or receive arming): from kIdle the socket lazily binds an IPv4
  * ephemeral endpoint ("0.0.0.0":0) — Qt's "unbound socket may send" contract — and
@@ -65,7 +74,7 @@ class UdpSocketPrivate;
  *
  * @c set_on_datagram delivers each datagram's copy on the loop thread (the backend's receive
  * buffer is valid only during its callback; this class hands the user a @c std::string copy,
- * so holding it past the callback is safe).
+ * so holding it past the callback is safe). While kConnected, only peer datagrams arrive.
  *
  * Threading (I1): every method is loop-thread only — violations are fatal. Cross-thread
  * producers must serialize through @c EventLoop::post() explicitly.
@@ -125,6 +134,33 @@ public:
     void send_to(const std::string &data, const std::string &ip, uint16_t port, std::function<void(bool ok)> on_done);
 
     /**
+     * @brief Pins a default peer (connected-mode UDP, D45): kIdle lazily binds an ephemeral
+     *        endpoint first, then the peer is attached — synchronous (no handshake).
+     *
+     * Legal from kIdle and kBound only (fatal from kConnected — use disconnect first; fatal
+     * when closing/closed). On success the machine is kConnected: @c send() goes to @p ip : @p port,
+     * only datagrams from it are delivered, and @c send_to becomes fatal until
+     * @c disconnect_remote. On failure the machine stays kBound (the binding survives) and
+     * @c last_error()/@c set_on_error carry the mapped reason. Loop thread only.
+     */
+    void connect_to(const std::string &ip, uint16_t port);
+
+    /**
+     * @brief Un-pins the default peer: kConnected → kBound. Legal from kConnected only (fatal
+     *        otherwise); the local binding and the receive arming are kept. Loop thread only.
+     */
+    void disconnect_remote();
+
+    /**
+     * @brief Connected-mode send: delivers to the pinned peer. Fatal unless kConnected (Qt
+     *        contract). Completion semantics mirror @ref send_to. Loop thread only.
+     */
+    void send(const uint8_t *data, size_t len, std::function<void(bool ok)> on_done);
+
+    /** @brief @c std::string overload of @ref send. Loop thread only. */
+    void send(const std::string &data, std::function<void(bool ok)> on_done);
+
+    /**
      * @brief Arms receive interest; every arriving datagram is delivered as a copy on the loop
      *        thread.
      *
@@ -166,14 +202,14 @@ public:
 
     /**
      * @brief Sets the state-change callback: invoked on the loop thread on every entry into
-     *        kIdle / kBound / kClosed.
+     *        kIdle / kBound / kConnected / kClosed.
      *
      * The callback is invoked through a local copy (PIT-40). Re-setting replaces the previous
      * callback. Loop thread only.
      */
     void set_on_state_change(std::function<void(SocketState state)> on_state_change);
 
-    /** @brief Current machine state (kIdle / kBound / kClosed). Loop thread only. */
+    /** @brief Current machine state (kIdle / kBound / kConnected / kClosed). Loop thread only. */
     SocketState state() const;
 
     /** @brief Last mapped error, kNone until the first failure. Loop thread only. */

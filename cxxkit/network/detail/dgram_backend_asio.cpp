@@ -76,6 +76,8 @@ struct AsioDgramBackend::Native
     bool pending_tick{false};                      /// an immediate tick is in the loop's post queue
     int timer_id{-1};                              /// armed repeating cadence timer (-1 = none armed)
     asio::ip::udp::endpoint sender_scratch;        /// receiver's sender-endpoint scratch cell (asio
+    bool connected{false};                         /// a default peer is pinned (connect())
+    asio::ip::udp::endpoint peer;                  /// the pinned default peer
                                                    /// fills it during completion; must outlive the
                                                    /// op — a stack local would dangle, F1)
 
@@ -235,28 +237,114 @@ void AsioDgramBackend::send_to(const uint8_t *data,
                                                         : static_cast<socklen_t>(sizeof(sockaddr_in));
     std::memcpy(endpoint.data(), &addr, sa_len);
     endpoint.resize(sa_len);
+    // D45 connected mode: an explicit-destination send from a connected socket overrides the
+    // pin at the socket level for THIS datagram (sendto(2) semantics), then the pin resumes —
+    // the public layer fatals this case, so the backend branch is a defensive passthrough.
+    const bool connected = mConnected && mN != nullptr && mN->connected;
+    if (connected && endpoint != mN->peer)
+    {
+        endpoint = mN->peer;
+    }
 
     // One async op per call, no queue (uv native multi-in-flight parity): the handler owns the
     // copied bytes through a shared_ptr cell — PIT-40: nothing on our side is referenced after
     // this function returns except asio-owned state; the completion only touches the cell.
     std::shared_ptr<std::vector<uint8_t>> payload(new std::vector<uint8_t>(data, data + len));
     std::function<void(bool ok)> cb = std::move(on_done);
-    mN->socket->async_send_to(asio::buffer(*payload),
-                              endpoint,
-                              [this, payload, cb](const std::error_code &ec, size_t /*bytes*/) mutable
-                              {
-                                  mNativeStatus = ec ? -static_cast<int>(ec.value()) : 0; // errno-style (uv parity)
-                                  if (cb)
-                                  {
-                                      // PIT-40: invoke through the moved-out local — the callback may
-                                      // close()/destroy the backend mid-execution.
-                                      cb(!ec);
-                                  }
-                                  // payload dies with the handler; no lws queue on udp (concurrent
-                                  // async_send_to is native asio behavior).
-                              });
+    // Connected: send WITHOUT an address (the pinned peer routes it — sendto(2) with any name
+    // on a connected socket is rejected EINVAL by the Linux kernel, uv null-addr parity).
+    if (connected)
+    {
+        mN->socket->async_send(asio::buffer(*payload),
+                               [this, payload, cb](const std::error_code &ec, size_t /*bytes*/) mutable
+                               { this->on_send_done(ec, std::move(cb)); });
+    }
+    else
+    {
+        mN->socket->async_send_to(asio::buffer(*payload),
+                                  endpoint,
+                                  [this, payload, cb](const std::error_code &ec, size_t /*bytes*/) mutable
+                                  { this->on_send_done(ec, std::move(cb)); });
+    }
     this->ensure_pump(); // new work: prefer an immediate tick over the 1ms timer cadence
 }
+
+void AsioDgramBackend::on_send_done(const std::error_code &ec, std::function<void(bool ok)> cb)
+{
+    mNativeStatus = ec ? -static_cast<int>(ec.value()) : 0; // errno-style (uv parity)
+    if (cb)
+    {
+        // PIT-40: invoke through the moved-out local — the callback may close()/destroy the
+        // backend mid-execution.
+        cb(!ec);
+    }
+    // payload dies with the handler; no lws queue on udp (concurrent async_send_to is native
+    // asio behavior).
+}
+
+bool AsioDgramBackend::connect(const std::string &ip, uint16_t port)
+{
+    CXXKIT_CHECK(mLoop != nullptr) << "AsioDgramBackend::connect: open() was not called";
+    if (mCloseRequested || mN == nullptr || mN->socket == nullptr)
+    {
+        mNativeStatus = -ESHUTDOWN;
+        return false;
+    }
+    sockaddr_storage addr;
+    if (!fill_sockaddr(ip, port, &addr))
+    {
+        // Invalid address: connect failure, not a programming error (uv invalid-addr shape).
+        mNativeStatus = -EINVAL;
+        return false;
+    }
+    // Build the endpoint the same way bind() does (single fill_sockaddr parse path).
+    const sockaddr &sa = reinterpret_cast<const sockaddr &>(addr);
+    const asio::ip::udp protocol = (sa.sa_family == AF_INET6) ? asio::ip::udp::v6() : asio::ip::udp::v4();
+    asio::ip::udp::endpoint endpoint(protocol, 0);
+    const socklen_t sa_len = (sa.sa_family == AF_INET6) ? static_cast<socklen_t>(sizeof(sockaddr_in6))
+                                                        : static_cast<socklen_t>(sizeof(sockaddr_in));
+    std::memcpy(endpoint.data(), &addr, sa_len);
+    endpoint.resize(sa_len);
+
+    // Synchronous on a udp socket (connect(2) with no handshake). Error-style codes only.
+    std::error_code ec;
+    mN->socket->connect(endpoint, ec);
+    if (ec)
+    {
+        mNativeStatus = -static_cast<int>(ec.value());
+        return false;
+    }
+    mN->peer = endpoint;
+    mN->connected = true;
+    mConnected = true;
+    // asio's sync_connect aborts the outstanding async_receive_from (operation_aborted fires
+    // on the next pump) — re-arm receive interest so a connected socket keeps delivering
+    // (uv parity: uv_udp_connect does not disturb recv interest).
+    if (mRecvArmed)
+    {
+        mRecvArmed = false; // the aborted handler already dropped the re-arm guard
+        this->arm_receive();
+        this->ensure_pump();
+    }
+    return true;
+}
+
+void AsioDgramBackend::disconnect_remote()
+{
+    // Un-pin the peer; keep the handle and its binding. asio's datagram disconnect is a
+    // zero-endpoint connect (POSIX disconnect(2) shape).
+    if (mN != nullptr && mN->socket && !mCloseRequested)
+    {
+        std::error_code ec;
+        mN->socket->connect(asio::ip::udp::endpoint(), ec);
+    }
+    if (mN != nullptr)
+    {
+        mN->connected = false;
+    }
+    mConnected = false;
+}
+
 
 void AsioDgramBackend::receive_start(
     std::function<void(const uint8_t *data, size_t len, const std::string &ip, uint16_t port)> on_datagram)
@@ -296,14 +384,17 @@ void AsioDgramBackend::arm_receive()
             }
             if (ec)
             {
-                // Recv error (EMSGSIZE...): stop receiving (uv nread<0 docs parity — the caller
-                // MUST stop), surface the status; the pimpl maps it and the user's error path
-                // decides re-arm. No auto-delivery of a datagram.
+                // Recv error (EMSGSIZE / connected-ICMP ECONNREFUSED...): stop receiving (uv
+                // nread<0 docs parity — the caller MUST stop), surface the status; the pimpl
+                // maps it and the user's error path decides re-arm. No auto-delivery.
                 mNativeStatus = -static_cast<int>(ec.value()); // errno-style (uv parity)
                 mRecvArmed = false;
                 mOnDatagram = nullptr; // dropping the callback stops deliveries; socket stays open
                 return;
             }
+            // D45 connected mode: the kernel filters to the pinned peer — a sender address can
+            // only be the peer, so surface it directly (the op carries no source address).
+            const bool connected = mConnected && mN != nullptr && mN->connected;
             if (bytes > 0 && mOnDatagram && mRecvArmed)
             {
                 // PIT-40 copy discipline: the callback may close()/destroy the backend mid-
@@ -312,8 +403,9 @@ void AsioDgramBackend::arm_receive()
                 // strings must not re-read it after a re-arm).
                 std::function<void(const uint8_t *data, size_t len, const std::string &ip, uint16_t port)> cb =
                     mOnDatagram;
-                const std::string sender_ip = mN->sender_scratch.address().to_string();
-                const uint16_t sender_port = mN->sender_scratch.port();
+                const std::string sender_ip = connected ? mN->peer.address().to_string()
+                                                        : mN->sender_scratch.address().to_string();
+                const uint16_t sender_port = connected ? mN->peer.port() : mN->sender_scratch.port();
                 cb(mRecvBuf.data(), bytes, sender_ip, sender_port);
             }
             // Level-triggered: keep receiving (uv recv_start parity) — zero-length datagrams
@@ -354,6 +446,13 @@ void AsioDgramBackend::close()
             // drain cancelled completions
         }
         mN->socket.reset(); // destructor closes the descriptor synchronously (stream parity)
+    }
+    // Connected state dies with the socket: a closed backend reports unconnected (no re-pin
+    // is possible — the close lifecycle is latched).
+    if (mN != nullptr)
+    {
+        mN->connected = false;
+        mConnected = false;
     }
 }
 

@@ -138,6 +138,44 @@ bool UvDgramBackend::bind(const std::string &ip, uint16_t port)
     return true;
 }
 
+bool UvDgramBackend::connect(const std::string &ip, uint16_t port)
+{
+    CXXKIT_CHECK(mLoop != nullptr) << "UvDgramBackend::connect: open() was not called";
+    if (mCloseRequested || mHandle == nullptr)
+    {
+        mNativeStatus = -UV_ESHUTDOWN;
+        return false;
+    }
+    sockaddr_storage addr;
+    if (!fill_sockaddr(ip, port, &addr))
+    {
+        // Invalid address: connect failure, not a programming error (uv invalid-addr shape).
+        mNativeStatus = -UV_EINVAL;
+        return false;
+    }
+    // Synchronous (no handshake, no callback); connected mode also fixes the family for
+    // send(). Failure keeps the previous connection state.
+    const int rc = uv_udp_connect(reinterpret_cast<uv_udp_t *>(mHandle), reinterpret_cast<const sockaddr *>(&addr));
+    if (rc != 0)
+    {
+        mNativeStatus = rc;
+        return false;
+    }
+    mConnected = true;
+    return true;
+}
+
+void UvDgramBackend::disconnect_remote()
+{
+    // Un-pin the peer; keep the handle and its binding. Un-connected uv handles route send_to
+    // normally afterwards.
+    if (mHandle != nullptr && !mCloseRequested)
+    {
+        uv_udp_connect(reinterpret_cast<uv_udp_t *>(mHandle), nullptr);
+    }
+    mConnected = false;
+}
+
 uint16_t UvDgramBackend::bound_port() const
 {
     return mBoundPort;
@@ -181,6 +219,13 @@ void UvDgramBackend::send_to(const uint8_t *data,
     // heap req per call, no queue: the request cell owns the buffer view, the destination address
     // and the completion callback; all three die in on_send_done (PIT-40: nothing on our side is
     // referenced after this function returns except uv-owned state).
+    // D45 connected mode: a connected uv handle REQUIRES a null address on uv_udp_send
+    // (addr != NULL on a connected handle is UV_EISCONN) — the kernel routes to the pin.
+    const sockaddr *dest = nullptr;
+    if (!mConnected)
+    {
+        dest = reinterpret_cast<const sockaddr *>(&send->mAddr);
+    }
     uv_udp_send_t *req = new uv_udp_send_t;
     req->data = send;
     uv_buf_t send_buf = uv_buf_init(reinterpret_cast<char *>(send->mData.data()), send->mData.size());
@@ -188,7 +233,7 @@ void UvDgramBackend::send_to(const uint8_t *data,
                                reinterpret_cast<uv_udp_t *>(mHandle),
                                &send_buf,
                                1,
-                               reinterpret_cast<const sockaddr *>(&send->mAddr),
+                               dest,
                                &UvDgramBackend::on_send_done);
     if (rc != 0)
     {
