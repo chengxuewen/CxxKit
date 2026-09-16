@@ -75,6 +75,9 @@ struct AsioDgramBackend::Native
     bool pumping{false};                           /// re-entrancy guard: asio callbacks can re-enter pump paths
     bool pending_tick{false};                      /// an immediate tick is in the loop's post queue
     int timer_id{-1};                              /// armed repeating cadence timer (-1 = none armed)
+    asio::ip::udp::endpoint sender_scratch;        /// receiver's sender-endpoint scratch cell (asio
+                                                   /// fills it during completion; must outlive the
+                                                   /// op — a stack local would dangle, F1)
 
     Native()
         : alive(new std::atomic<bool>(true))
@@ -280,11 +283,14 @@ void AsioDgramBackend::arm_receive()
     {
         mRecvBuf.resize(kMaxDgramSize); // one contiguous reusable block (uv alloc parity)
     }
-    asio::ip::udp::endpoint endpoint; // filled by asio: the datagram's sender (scratch, per-op)
+    // The sender endpoint lives in the Native cell (F1): asio's async_receive_from holds
+    // Endpoint& and writes it during completion — a stack local would dangle the moment this
+    // function returns (use-after-scope; completions run on a later pump tick). The cell
+    // outlives every op.
     mN->socket->async_receive_from(
         asio::buffer(mRecvBuf),
-        endpoint,
-        [this, &endpoint](const std::error_code &ec, size_t bytes)
+        mN->sender_scratch,
+        [this](const std::error_code &ec, size_t bytes)
         {
             if (ec == asio::error::operation_aborted)
             {
@@ -304,12 +310,12 @@ void AsioDgramBackend::arm_receive()
             {
                 // PIT-40 copy discipline: the callback may close()/destroy the backend mid-
                 // execution — invoke through a local copy, and hand out copies of the source
-                // address strings built before the call (the endpoint outlives the callback
-                // by reference only until we re-arm).
+                // address strings built before the call (the scratch cell is ours, but the
+                // strings must not re-read it after a re-arm).
                 std::function<void(const uint8_t *data, size_t len, const std::string &ip, uint16_t port)> cb =
                     mOnDatagram;
-                const std::string sender_ip = endpoint.address().to_string();
-                const uint16_t sender_port = endpoint.port();
+                const std::string sender_ip = mN->sender_scratch.address().to_string();
+                const uint16_t sender_port = mN->sender_scratch.port();
                 cb(mRecvBuf.data(), bytes, sender_ip, sender_port);
             }
             // Level-triggered: keep receiving (uv recv_start parity) — zero-length datagrams
@@ -336,8 +342,20 @@ void AsioDgramBackend::close()
     if (mN != nullptr && mN->socket)
     {
         std::error_code ec;
-        mN->socket->cancel(ec); // aborts the outstanding receive (its handler early-returns)
-        mN->socket.reset();     // destructor closes the descriptor synchronously (stream parity)
+        mN->socket->cancel(ec); // aborts the outstanding ops (receive early-returns; sends
+                                // deliver cb(false) — the pimpl tolerates late false, uv parity)
+        // F2: the cancelled handlers fire on the NEXT poll and capture this — they write
+        // mNativeStatus and invoke their callbacks, so they MUST run while the backend is alive.
+        // Reset without draining = UAF write + phantom cb into freed state on a later pump tick
+        // (uv parity: uv_close keeps the handle alive until on_closed, so the pimpl's drain pump
+        // actually drives the cancellations; stream_backend_asio fixed the identical shape at
+        // T3-review-F2 with drain-then-reset). restart() first per PIT-55 (scheduler auto-stop).
+        mN->io->restart();
+        for (int rounds = 0; rounds < 1000 && mN->io->poll() > 0; ++rounds)
+        {
+            // drain cancelled completions
+        }
+        mN->socket.reset(); // destructor closes the descriptor synchronously (stream parity)
     }
 }
 

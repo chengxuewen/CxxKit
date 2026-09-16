@@ -101,8 +101,6 @@ private:
     std::vector<uint8_t> mRecvBuf; /// one contiguous block asio fills per datagram (64KiB max UDP payload)
 
     std::function<void(const uint8_t *data, size_t len, const std::string &ip, uint16_t port)> mOnDatagram;
-    std::string mSenderIp;   /// scratch storage for the outstanding receive's sender endpoint
-    uint16_t mSenderPort{0}; /// scratch storage for the outstanding receive's sender endpoint
     uint16_t mBoundPort{0};
 };
 
