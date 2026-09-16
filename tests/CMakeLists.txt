@@ -650,6 +650,11 @@ if(CXXKIT_ENABLE_LIB_NETWORK)
         INCLUDE_DIRECTORIES ${PROJECT_SOURCE_DIR}
         LIBRARIES ${CXXKIT_TEST_LINK_LIBRARIES} cxxkit::network CxxKitWrapMbedTLS::WrapMbedTLS ${CMAKE_THREAD_LIBS_INIT})
     target_compile_definitions(cxxkit_tst_tls_socket PRIVATE TEST_CERTS_DIR="${CMAKE_CURRENT_SOURCE_DIR}/certs")
+    # D44: datagram socket suite — loopback, lazy-bind, dual-backend acceptance (uv + asio).
+    cxxkit_add_test(cxxkit_tst_udp_socket
+        SOURCES tst_udp_socket.cpp
+        INCLUDE_DIRECTORIES ${PROJECT_SOURCE_DIR}
+        LIBRARIES ${CXXKIT_TEST_LINK_LIBRARIES} cxxkit::network ${CMAKE_THREAD_LIBS_INIT})
 endif()
 
 

@@ -163,14 +163,12 @@ bool AsioDgramBackend::bind(const std::string &ip, uint16_t port)
 
     std::error_code ec;
     mN->socket.reset(new asio::ip::udp::socket(*mN->io));
-    // uv parity: reuse-address by default (uv_udp_bind sets SO_REUSEADDR); open+bind in two steps
-    // so a bind failure leaves a retryable unbound socket (stream listen shape — synchronous
-    // destruction is the clean teardown, no pump needed: no async op was ever registered).
+    // No SO_REUSEADDR here: uv_udp_bind does not set it (parity reference), and on Linux two
+    // SO_REUSEADDR UDP sockets may BOTH bind the same port successfully — which would break the
+    // public bind-conflict contract (false + kAddressInUse). open+bind in two steps so a bind
+    // failure leaves a retryable unbound socket (stream listen shape — synchronous destruction
+    // is the clean teardown: no async op was ever registered on the virgin socket).
     mN->socket->open(protocol, ec);
-    if (!ec)
-    {
-        mN->socket->set_option(asio::socket_base::reuse_address(true), ec);
-    }
     if (!ec)
     {
         mN->socket->bind(endpoint, ec);
