@@ -80,6 +80,7 @@ public:
                          std::function<void(bool ok)> on_done) = 0;
 
     /// Start receiving datagrams. on_datagram delivers (data, len, src_ip, src_port).
+    /// The data buffer is valid only during the callback; consumers must copy.
     virtual void receive_start(
         std::function<void(const uint8_t *data, size_t len, const std::string &ip, uint16_t port)> on_datagram) = 0;
 
@@ -92,9 +93,11 @@ public:
     /// Last native failure status of the most recent completed operation (0 = none/success).
     virtual int native_status() const = 0;
 
-    /// Native handle view (void* — backend-owned type). Debugging aid only.
     virtual void *native_handle() const = 0;
 };
+
+/** @brief Compiled per backend selection (uv today; asio lands as another definition). */
+std::unique_ptr<DgramBackend> make_dgram_backend();
 
 } // namespace detail
 } // namespace network

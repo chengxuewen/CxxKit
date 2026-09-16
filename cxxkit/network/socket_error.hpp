@@ -55,7 +55,9 @@ enum class SocketError
     kTlsHandshakeFailed,  /// TLS handshake failed (alert, protocol mismatch, bad input)
     kTlsCertificateError, /// TLS certificate verification/parse failure (X.509)
     kTlsPeerClosed,       /// TLS peer closed the connection cleanly (PEER_CLOSE_NOTIFY)
-    kTlsProtocolError     /// unmapped TLS protocol-level error (other MBEDTLS_ERR_SSL_*)
+    kTlsProtocolError,    /// unmapped TLS protocol-level error (other MBEDTLS_ERR_SSL_*)
+    kMessageTooLarge,     /// datagram exceeds the path MTU / max message size (EMSGSIZE — UDP send)
+    kAddressInUse         /// local address/port already bound by another socket (EADDRINUSE — UDP bind)
 };
 
 /** @brief Readable name for a @ref SocketError (full switch, all enumerators). */

@@ -53,6 +53,8 @@ inline SocketError map_transport_error(int status)
         case UV_ENETUNREACH: return SocketError::kNetworkUnreachable;
         case UV_EADDRNOTAVAIL: return SocketError::kAddrNotAvailable;
         case UV_EPIPE: return SocketError::kBrokenPipe;
+        case UV_EMSGSIZE: return SocketError::kMessageTooLarge; /// UDP: datagram exceeds the max size
+        case UV_EADDRINUSE: return SocketError::kAddressInUse;  /// UDP: bind conflict (port already bound)
         default: return SocketError::kUnknown;
     }
 }

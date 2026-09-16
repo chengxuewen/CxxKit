@@ -74,6 +74,9 @@ bool UvDgramBackend::open(EventLoop &loop)
 bool UvDgramBackend::bind(const std::string &ip, uint16_t port)
 {
     CXXKIT_CHECK(mLoop != nullptr) << "UvDgramBackend::bind: open() was not called";
+    // Double-bind guard (T1 review MEDIUM, pimpl state machine gates it too): a second uv_udp_init
+    // over a live handle would leak the first one — latched via the heap cell pointer.
+    CXXKIT_CHECK(mHandle == nullptr) << "UvDgramBackend::bind: already bound (double bind)";
     if (mCloseRequested)
     {
         return false; // closed backends do not re-bind (lifecycle latched, TcpSocket same shape)

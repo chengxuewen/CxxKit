@@ -45,6 +45,8 @@ std::string to_string(SocketError error)
         case SocketError::kTlsCertificateError: return "tls certificate error";
         case SocketError::kTlsPeerClosed: return "tls peer closed";
         case SocketError::kTlsProtocolError: return "tls protocol error";
+        case SocketError::kMessageTooLarge: return "message too large";
+        case SocketError::kAddressInUse: return "address in use";
     }
     return "unknown"; // unreachable for valid enumerators; silences -Wreturn-type on exotic compilers
 }
