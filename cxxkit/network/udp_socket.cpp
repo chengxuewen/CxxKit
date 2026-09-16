@@ -347,7 +347,10 @@ void UdpSocketPrivate::begin_close()
     // flow through send_done with UV_ECANCELED → their callbacks were already fired here, and
     // the queue is empty by then (send_done pops, finds nothing, is inert). The datagram
     // callback is dropped with the socket.
-    for (auto &cb : mPendingSendDones)
+    // Snapshot first (PIT-40): a cb(false) may destroy the socket — its dtor clears the
+    // (now-empty) deque; iterating the live container would be UB.
+    std::deque<std::function<void(bool ok)>> pending = std::move(mPendingSendDones);
+    for (auto &cb : pending)
     {
         if (cb)
         {
