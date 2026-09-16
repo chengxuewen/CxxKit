@@ -62,10 +62,9 @@ class UdpSocketPrivate;
  *
  * Connected-mode contract (Qt alignment): while kConnected, @c send() delivers to the pinned
  * peer, @c send_to is fatal (a connected socket sends via @c send only), @c bound_port stays
- * legal, and only peer datagrams are delivered. Connection refusal is asynchronous on most
- * platforms — an ICMP port-unreachable for a datagram sent to a closed port surfaces later as
- * a @c kConnectionRefused error through the send-completion/receive error path, NOT from
- * @c connect_to itself.
+ * a @c kConnectionRefused error through the send-completion path, NOT from @c connect_to itself.
+ * (A refusal arriving while receive is armed stops delivery silently — re-arm via
+ * @c set_on_datagram; it does not fire @c on_error.)
  *
  * Unbound first use (send or receive arming): from kIdle the socket lazily binds an IPv4
  * ephemeral endpoint ("0.0.0.0":0) — Qt's "unbound socket may send" contract — and
