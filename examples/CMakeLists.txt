@@ -127,7 +127,7 @@ if(CXXKIT_ENABLE_LIB_MEDIA)
         INCLUDE_DIRECTORIES ${PROJECT_SOURCE_DIR}
         FOLDER "CxxKit/examples")
 endif()
-if(CXXKIT_ENABLE_LIB_KERNEL)
+if(CXXKIT_ENABLE_LIB_KERNEL AND CXXKIT_ENABLE_LOOP_BACKEND_UV)
     cxxkit_add_executable(cxxkit_exp_kernel
         SOURCES exp_kernel.cpp
         LIBRARIES ${CXXKIT_EXAMPLE_LINK_LIBRARIES} cxxkit::kernel cxxkit::thread

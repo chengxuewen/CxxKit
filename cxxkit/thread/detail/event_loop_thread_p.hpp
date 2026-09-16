@@ -65,7 +65,7 @@ public:
     };
 
     /** Invoked on the worker thread: builds the dispatcher + loop (worker-first, D43.5 T1),
-     *  loops exec() until stop() flips the flag, then destroys the loop on the worker too
+     *  loops exec() until exit fires (stop() just joins), then destroys the loop on the worker too
      *  (uv handles are loop-thread bound — teardown must run where exec ran). */
     void thread_main();
 
@@ -73,7 +73,6 @@ public:
     Runner mThread;                                       // platform thread carrier (runs thread_main)
     EventLoopThread::DispatcherFactory mFactory{nullptr}; // invoked ON the worker (loop thread)
     std::atomic<bool> mStarted{false};
-    std::atomic<bool> mExitRequested{false};
     std::mutex mStartMutex; // reserved for future restart support (start is once-only today)
 
     /** Blocks until the worker-built loop is consumable (D43.5 T1 worker-first contract).

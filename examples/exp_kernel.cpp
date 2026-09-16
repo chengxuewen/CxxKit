@@ -34,8 +34,6 @@
 #include <cxxkit/thread/event_loop_thread.hpp>
 #include <atomic>
 #include <thread>
-#include <atomic>
-#include <thread>
 
 using cxxkit::signals::Connection;
 using cxxkit::signals::ScopedConnection;

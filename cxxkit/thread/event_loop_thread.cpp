@@ -59,9 +59,7 @@ void EventLoopThreadPrivate::thread_main()
     mLoopCv.notify_all(); // loop() waiters (and any pre-exec accessor) may proceed
 
     // The worker is the only exec() caller and start() joined no thread yet: the exit
-    // code write races nothing. exec() returns when stop() (or a user exit) fires.
     p->loop().exec();
-    mExitRequested.store(true); // exec() has returned: the thread is done
 
     // Teardown ON the worker thread (D43.5 T1): uv handles are loop-thread bound, so the
     // dispatcher destructor must run where exec() ran. After this, loop() waiters get a
@@ -130,7 +128,6 @@ void EventLoopThread::start()
     CXXKIT_CHECK(!mDPtr->mStarted.load()) << "EventLoopThread::start: already started";
     CXXKIT_CHECK(!mDPtr->mLoopGone)
         << "EventLoopThread::start: restart after stop is unsupported (the loop was torn down on the worker thread)";
-    mDPtr->mExitRequested.store(false);
     mDPtr->mStarted.store(true); // published before the thread exists — no race with thread_main
     const Status status = mDPtr->mThread.start();
     if (!status)
