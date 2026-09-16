@@ -110,7 +110,7 @@ StreamBackend (D41, 不动)          DgramBackend (新, 本计划)
 - Modify: `tests/CMakeLists.txt`（注册，kernel/network 门同 tst_tcp_socket）
 - Modify: `.agents/memorys/{status,decisions}.md`、`README.md`（network 行补 UDP）
 
-- [ ] **Step 4.1**: 测试用例（loopback fixture，spin_with_worker）：
+- [x] **Step 4.1**: 测试用例（loopback fixture，spin_with_worker）：
   - bind 回读（port 0 → ephemeral bound_port）
   - bind 冲突（同端口第二个 socket → false + kAddressInUse）
   - send_to → on_datagram 收到（数据/发送方地址/端口全对）
@@ -119,9 +119,9 @@ StreamBackend (D41, 不动)          DgramBackend (新, 本计划)
   - dtor 未 close → 自动 close 不崩
   - 大包（接近 8192）往返
   - 双 socket 互发
-- [ ] **Step 4.2**: 双树全量：build（uv）+ build-asio 全绿；ASAN 定向 udp 零诊断。
-- [ ] **Step 4.3**: README network 行补 UdpSocket；记忆：status.md D44 条目 + decisions.md D44（R1-R4 裁定 + 直营调研说明）。
-- [ ] **Step 4.4**: commit `test(network): UDP suite + docs (D44 closeout)`。
+- [x] **Step 4.2**: 双树全量：build（uv）+ build-asio 全绿；ASAN 定向 udp 零诊断。
+- [x] **Step 4.3**: README network 行补 UdpSocket；记忆：status.md D44 条目 + decisions.md D44（R1-R4 裁定 + 直营调研说明）。
+- [x] **Step 4.4**: commit `test(network): UDP suite + docs (D44 closeout)`。
 
 ---
 

@@ -451,3 +451,28 @@ sanitizer（ASAN/LSAN/UBSan）与 coverage 用**独立 build 目录**（build-as
 - **T2 SignalBaseR move 镜像 SignalBase**（da01e55）：move 后槽内 cleaner 双向重路由（旧→新 + 新→旧），补齐 D43 只给 SignalBase 做 move 支持的另一半；D43 备案的 move-assign 换出槽 MEDIUM（cleaner 指向 *this 静默 no-op / UAF）以 outgoing-slot cleaner 重路由闭合。
 - **T3 exp_kernel 补 ELT 生命周期节**：第 8 节——worker 环上 emit 100×1..100，主线程自旋等 5050 后 stop()；join-before-print 确定性；exp_kernel 注册补链 cxxkit::thread（D43 期曾误加误删，本次为真实依赖正式加上）。
 - **过程观察（非 PIT）**：T2 首任实现者停滞在半成品状态（reroute_slots_to 写了一半未验证），继任者发现后完成并验证——顺序会话无并行编辑红线被遵守，half-done 状态靠 grep 自验发现；多代理接力时前任中断的树不可假设干净。
+
+## D44: UdpSocket 落地（2026-09-16，SDD T0-T4，271d82a..80b3e12）
+
+**来源**：UDP 计划（docs/superpowers/plans/2026-09-16-udp-socket-plan.md）——network 子库补无连接数据报套接字，双后端对齐 TcpSocket 的 Qt 级错误/状态面。
+
+**用户裁定 R1-R4**（2026-09-16，"ok" = 按推荐全收）：
+- **R1 架构：并行 DgramBackend 新接口**——不塞 StreamBackend（流语义 vs 数据报语义不兼容，uv_udp/asio udp API 形状完全不同）；每后端一个 cpp（dgram_backend_uv.cpp / dgram_backend_asio.cpp），`make_dgram_backend()` 工厂按编译期 `CXXKIT_NETWORK_BACKEND` 选择。
+- **R2 范围：v1 = bind/send_to/on_datagram/close 无连接核心**；connected-UDP + broadcast = v1.5，multicast = v2，DTLS 远期（Deferred 备案）。
+- **R3 状态机：SocketState 尾部追加 kBound**——公共枚举追加值向后兼容；UDP 生命周期 kIdle → kBound → kClosed；失败 bind 停 kIdle 可重试（TCP failed-connect 形状）。
+- **R4 测试：loopback 收发 fixture + spin_with_worker + PIT-57/58 纪律**——T4 落地为 fresh EventLoop/case + 主线程 process_events 有界自旋 + arm-then-send 纪律（收端先武装）。
+
+**执行期演进裁定**（评审波闭环）：
+- **Lazy-bind**（T2 controller 裁定）：kIdle 上的 send_to 与 set_on_datagram 均隐式 `bind("0.0.0.0", 0)`（IPv4-only v1，Qt "unbound socket may send" 契约），成功即自动迁移 kBound（state-change 回调照发）；失败停 kIdle 可重试。
+- **单发槽 → H3 FIFO**：T2 原实现单完成回调槽（二次在途 send = fatal，Qt 单槽语义）→ 评审裁定改 mPendingSendDones FIFO 队列（TlsSocket PendingWrite 先例；uv/asio 均原生保序）。
+- **C1**：set_on_datagram 从 kIdle 原样调 receive_start = 空句柄 recv_start segfault（文档声称合法的路径）→ 与 send 路径对称的 lazy-bind 修复。
+- **T3 F1/F2**：asio arm_receive 栈局部 endpoint 被完成 handler 持引用 = 每次完成都 use-after-scope（x86-64 上靠运气工作）→ sender_scratch 移入 Native cell；close() cancel+reset 无 drain = 取消的 handler 下一次 poll 携悬垂 this 反写 → restart+有界 drain+reset（PIT-55 纪律）。
+- **T4 发现真 bug（回归钉价值）**：asio dgram bind 设 `reuse_address(true)`，注释声称 "uv parity: uv_udp_bind sets SO_REUSEADDR"——**不实**，uv_udp_bind 不设它；Linux 上两个 SO_REUSEADDR UDP socket 可同时绑成功同一端口，直接破坏公共 bind 冲突契约（false + kAddressInUse）。bind 冲突用例在 asio 树 RED、uv 树 GREEN 的双树差异把它钉出来；已删该选项，用例转正为回归钉。**教训：注释里的 "parity" 声称必须对照真实现验证，不能复制粘贴**。
+
+**测试**：tst_udp_socket 8 用例（显式 bind 回读 / bind 冲突 / 收发往返含发送方身份 / lazy-bind / close 后发送同步 false 丢弃 / dtor 未 close / 8192 大包 / 双 socket 乒乓）；零长数据报有意不覆盖（uv nread==0 keep-alive 平台差异，用例文件头注释备案）。套件 87→88。
+
+**验证门禁**：uv 主树 88/88；asio 树 90/90（imgui 套件 asio 树额外注册，差 2 合法）；ASAN-asio udp 8/8 零诊断（T3 F1 use-after-scope 的回归证明——ASAN 正是抓它的工具）；clang-format（pixi 23.1.0）干净；C4 C++14 门禁干净。
+
+**孤儿 pimpl 备案**：T1 期末发现 7 文件未提交的 pimpl 重构（CXXKIT_DEFINE_DPTR→mPPtr 直访 + DECLARE_PRIVATE 重排），来源不明（本计划无会话产出），已 stash@{0} 留档（"orphaned pimpl-refactor"）——D44 后复查：要么立正式任务要么丢弃。
+
+**已知限制（备案不修）**：N2 LOW——close 后 stale ECANCELED 错误噪声（装饰性）；lazy-bind IPv4-only（IPv6 目的地需显式 bind）；无 connected-UDP/broadcast/multicast/DTLS（R2 Deferred 阶梯）。

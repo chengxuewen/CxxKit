@@ -430,3 +430,14 @@ cxxkit 是 OpenCTK（an open cpp toolkit）的成功重构版本 —— 精简�
 - [x] **exp_kernel 第 8 节 ELT 生命周期**：worker 环 emit 100 值 → 主线程收 5050 → stop()；join-before-print 确定性；注册补链 cxxkit::thread（真实依赖）+ README 行同步
 - 验证：build 0 err / 主树 **87/87** / exp_kernel ×3 rc=0 逐字节一致（GCOV_PREFIX 重定向规避 build 树 coverage 计数器 stderr 噪声）/ clang-format（pixi 23.1.0）干净
 - 记录：decisions.md D43.5（含 T2 半成品接力过程观察）
+
+### 2026-09-16 D44 UdpSocket 落地（271d82a..80b3e12，SDD T0-T4 流水线）
+
+- [x] **架构**：并行 `DgramBackend` 新接口（StreamBackend 零触碰）+ uv_udp_t / asio udp::socket 双后端 + `UdpSocket` 公共类（TcpSocket 形态：check_loop_thread I1 fatal、PIT-40 局部拷贝回调、F8-② close 幂等）；状态机 kIdle→kBound→kClosed（SocketState 尾部追加 kBound）；失败 bind 停 kIdle 可重试
+- [x] **关键裁定落地**：lazy-bind（kIdle send/set_on_datagram → 隐式 "0.0.0.0":0 绑定 + 自动 kBound，IPv4-only v1）；单发槽致命 → H3 FIFO 队列（TlsSocket PendingWrite 先例）；R-T2-1 socketpair 式 loopback 测试骨架
+- [x] **评审波修复**：T2 C1（set_on_datagram kIdle 空指针 recv_start）/ H2（SOURCES 双行）/ N1（begin_close range-for UB → 快照）；T3 F1（asio arm_receive 栈 endpoint 引用悬垂 → Native cell）/ F2（close cancel+reset 无 drain → restart+drain+reset，PIT-55）
+- [x] **测试**：tst_udp_socket 8 用例（显式 bind 回读 / bind 冲突 false+kAddressInUse 停 kIdle / 收发往返含发送方身份 / lazy-bind 发送 / close 后发送同步 false 丢弃 / dtor 未 close / 8192 大包 / 双 socket 乒乓）；零长数据报不覆盖（uv nread==0 keep-alive 平台差异，注释备案）；套件 87→88
+- [x] **T4 抓到真 bug**：asio dgram bind 设 reuse_address(true)（注释谎称 uv parity——uv_udp_bind 并不设它），Linux 上两个 SO_REUSEADDR UDP socket 可同时绑同一端口 → bind 冲突契约破坏；已删该选项，冲突用例即回归钉
+- 验证：uv 主树 **88/88** / asio 树 **90/90**（imgui 套件在 asio 树额外注册）/ ASAN-asio udp 8/8 **零诊断**（F1 use-after-scope 回归证明）/ clang-format 干净 / C4 C++14 门禁干净
+- 记录：decisions.md D44（R1-R4 用户裁定 + lazy-bind/单发 FIFO 演进 + 孤儿 pimpl stash 复查项）
+- 备忘：孤儿 pimpl 重构 stash@{0}（7 文件，T1 期发现，D44 后复查——要么立正式任务要么丢弃）；N2 LOW 备案（close 后 stale ECANCELED 错误噪声，装饰性）；connected-UDP/broadcast v1.5、multicast v2、DTLS 远期（Deferred）
