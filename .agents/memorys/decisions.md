@@ -441,3 +441,13 @@ sanitizer（ASAN/LSAN/UBSan）与 coverage 用**独立 build 目录**（build-as
 **已知限制（备案不修）**：move-assign 换出槽 cleaner 指向 *this（静默 no-op disconnect；*this 先亡则 UAF——既有形态，修需 API 行为扩展另立决策）；Connection::disconnect 与 move 并发 unsynchronized mCleaner 读（窗口从永久缩至在途）；T5 中段发射覆盖确定性约束下不保证。
 
 **测试**：signals 相关 17→51 用例（tst_signals 28 + tst_signal_mt 7 + tst_signal_r 16，套件 +2）。门禁：主树 81/81、asan 90/90（check.sh 4/8 内）、全口径 84.2%（60 files，signals.cpp 空 TU 无行覆盖）。
+
+## D43.5: ELT dispatcher 收官小波（2026-09-15/16，T1-T3，da01e55..HEAD）
+
+**来源**：D43 遗留缺口（ELT+make_default_dispatcher 组合 fatal——uv dispatcher 在构造线程捕获线程 ID，ELT 工作线程 exec 必触发 non-loop-thread 检查）的 SDD 收官（.superpowers/sdd/2026-09-15-d435-elt-dispatcher-closeout-plan/）。
+
+**关键裁定**：
+- **T1 ELT factory 推迟到 worker 线程执行**（12009e4 + 549cfbc 修复轮）：dispatcher 在 start() 启动的 runner 内构造（worker-first）——thread-bound 引擎（libuv 构造时捕获线程）与 exec() 线程按构造匹配，loop/dispatcher 也在该线程销毁。契约随之收紧：loop() 阻塞至 worker 建好、未 start 即 fatal（EXPECT_DEATH 钉死）；start once-only（double start 与 stop 后 restart 均 fatal——CXXKIT_CHECK(!mLoopGone)）；stop() 终态不可逆；move_to_loop(elt) pre-start 路径废止——亲和绑定改由 in-loop construction（环内构造零亲和对象绑 EventLoop::current()）表达。**契约破坏的代价被接受**：全仓 grep 零消费者，破坏性变更是响亮的（fatal + 文档）而非静默的。
+- **T2 SignalBaseR move 镜像 SignalBase**（da01e55）：move 后槽内 cleaner 双向重路由（旧→新 + 新→旧），补齐 D43 只给 SignalBase 做 move 支持的另一半；D43 备案的 move-assign 换出槽 MEDIUM（cleaner 指向 *this 静默 no-op / UAF）以 outgoing-slot cleaner 重路由闭合。
+- **T3 exp_kernel 补 ELT 生命周期节**：第 8 节——worker 环上 emit 100×1..100，主线程自旋等 5050 后 stop()；join-before-print 确定性；exp_kernel 注册补链 cxxkit::thread（D43 期曾误加误删，本次为真实依赖正式加上）。
+- **过程观察（非 PIT）**：T2 首任实现者停滞在半成品状态（reroute_slots_to 写了一半未验证），继任者发现后完成并验证——顺序会话无并行编辑红线被遵守，half-done 状态靠 grep 自验发现；多代理接力时前任中断的树不可假设干净。

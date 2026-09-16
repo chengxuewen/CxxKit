@@ -422,3 +422,11 @@ cxxkit 是 OpenCTK（an open cpp toolkit）的成功重构版本 —— 精简�
 - [x] **覆盖率口径备案**：signals.cpp 是空 TU（signals.hpp 全模板/inline）——gcov 行覆盖不可测 signals 逻辑（gcno 116B 零函数、无 gcda）；signals 质量以 51 用例三套件（28+7+16）计
 - 记录：decisions.md D43 + status 本节；无新 PIT（T5 测试侧 UAF 已在 task-5-6-report 内详录，教训与 PIT-56 同族不重复立项）
 
+
+### 2026-09-16 D43.5 ELT dispatcher 收官小波（da01e55..HEAD）
+
+- [x] **ELT worker-first 构造**（`12009e4`+`549cfbc`）：dispatcher 由 factory 在 start() 的 worker runner 内构造——uv 线程亲和 fatal 根治；契约收紧：loop() 阻塞至就绪/pre-start fatal、start once-only（restart fatal）、stop 终态、move_to_loop(elt) 废止改 in-loop construction；tst_event_loop_thread 9 用例（EXPECT_DEATH + uv-gated born-on-worker 回归钉）
+- [x] **SignalBaseR move + move-assign 双向重路由**（`da01e55`）：镜像 SignalBase move 支持；D43 备案 MEDIUM（move-assign 换出槽 cleaner 悬垂）闭合
+- [x] **exp_kernel 第 8 节 ELT 生命周期**：worker 环 emit 100 值 → 主线程收 5050 → stop()；join-before-print 确定性；注册补链 cxxkit::thread（真实依赖）+ README 行同步
+- 验证：build 0 err / 主树 **87/87** / exp_kernel ×3 rc=0 逐字节一致（GCOV_PREFIX 重定向规避 build 树 coverage 计数器 stderr 噪声）/ clang-format（pixi 23.1.0）干净
+- 记录：decisions.md D43.5（含 T2 半成品接力过程观察）
