@@ -33,7 +33,7 @@ set(CXXKIT_NETWORK_BACKEND "uv" CACHE STRING "cxxkit network backend (uv|asio)")
 set_property(CACHE CXXKIT_NETWORK_BACKEND PROPERTY STRINGS uv asio)
 if(CXXKIT_NETWORK_BACKEND STREQUAL "asio")
     cxxkit_find_package(Asio PROVIDED_TARGETS CxxKitWrapAsio::WrapAsio)
-    list(APPEND _backend_sources detail/stream_backend_asio.cpp)
+    list(APPEND _backend_sources detail/stream_backend_asio.cpp detail/dgram_backend_asio.cpp)
     set(_backend_libs CxxKitWrapAsio::WrapAsio)
 else()
     # libuv is the default backend (D38): TcpSocket/TcpServer drive uv_tcp_t directly.
