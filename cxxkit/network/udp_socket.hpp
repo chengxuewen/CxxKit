@@ -151,6 +151,19 @@ public:
     void disconnect_remote();
 
     /**
+     * @brief Toggles SO_BROADCAST (IPv4 only — IPv6 has no broadcast).
+     *
+     * Legal from kIdle (the flag applies at the lazy/actual bind — a level socket option
+     * governs subsequent sends) and kBound (applied immediately); kClosed returns false.
+     * Returns true on success; false means the backend/platform rejected the option
+     * (@c last_error()/@c set_on_error carry the reason — e.g. on an IPv6-destined socket).
+     * NOTE: a broadcast send (e.g. to 255.255.255.255) may still fail at delivery time —
+     * firewalls/sandbox namespaces routinely drop it; the send completion reports that.
+     * Loop thread only.
+     */
+    bool set_broadcast(bool enable);
+
+    /**
      * @brief Connected-mode send: delivers to the pinned peer. Fatal unless kConnected (Qt
      *        contract). Completion semantics mirror @ref send_to. Loop thread only.
      */

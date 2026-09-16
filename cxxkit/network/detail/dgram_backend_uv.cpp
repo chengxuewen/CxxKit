@@ -176,6 +176,40 @@ void UvDgramBackend::disconnect_remote()
     mConnected = false;
 }
 
+bool UvDgramBackend::set_broadcast(bool enable)
+{
+    CXXKIT_CHECK(mLoop != nullptr) << "UvDgramBackend::set_broadcast: open() was not called";
+#    ifdef _WIN32
+    // Windows is not a first-class target (platform-support statement): no implementation —
+    // the public API surfaces a plain failure.
+    (void)enable;
+    mNativeStatus = -UV_ENOSYS;
+    return false;
+#    else
+    // SO_BROADCAST is a level option: it applies to SUBSEQUENT sends, so any live handle
+    // works — post-bind is fine (uv_fileno resolves the descriptor the kernel option needs).
+    if (mCloseRequested || mHandle == nullptr)
+    {
+        mNativeStatus = -UV_ESHUTDOWN;
+        return false;
+    }
+    uv_os_sock_t fd = -1;
+    if (uv_fileno(reinterpret_cast<uv_handle_t *>(mHandle), &fd) != 0 || fd < 0)
+    {
+        mNativeStatus = -UV_EBADF;
+        return false;
+    }
+    int flag = enable ? 1 : 0;
+    if (setsockopt(fd, SOL_SOCKET, SO_BROADCAST, &flag, sizeof(flag)) != 0)
+    {
+        mNativeStatus = -errno;
+        return false;
+    }
+    mNativeStatus = 0;
+    return true;
+#    endif
+}
+
 uint16_t UvDgramBackend::bound_port() const
 {
     return mBoundPort;

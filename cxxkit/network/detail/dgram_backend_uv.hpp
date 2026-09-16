@@ -73,6 +73,7 @@ public:
                  std::function<void(bool ok)> on_done) override;
     bool connect(const std::string &ip, uint16_t port) override;
     void disconnect_remote() override;
+    bool set_broadcast(bool enable) override;
     void receive_start(std::function<void(const uint8_t *data, size_t len, const std::string &ip, uint16_t port)>
                            on_datagram) override;
     void close() override;

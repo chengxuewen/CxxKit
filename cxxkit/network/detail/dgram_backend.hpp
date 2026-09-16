@@ -84,6 +84,16 @@ public:
     virtual void disconnect_remote() = 0;
 
     /**
+     * @brief Toggle SO_BROADCAST (IPv4 only — IPv6 has no broadcast; backends report failure).
+     *
+     * Legal on a bound or never-bound handle (a level socket option — applies to subsequent
+     * sends; the uv path resolves the descriptor via uv_fileno, which requires a created
+     * handle). @return false when the platform/backend rejects the option (native_status
+     * carries the reason).
+     */
+    virtual bool set_broadcast(bool enable) = 0;
+
+    /**
      * @brief Send a datagram to the specified destination.
      * @param on_done called with true on success, false on failure (native_status carries reason).
      */

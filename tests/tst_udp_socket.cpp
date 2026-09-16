@@ -460,6 +460,44 @@ TEST(UdpSocketTest, ConnectedRefusedSurfacesAsynchronously)
     GTEST_SKIP() << "ICMP refusal timing is Linux-specific";
 #    endif
 }
+
+// 13. set_broadcast: API contract (store-at-kIdle / apply-at-kBound / false-at-kClosed). The
+//     actual broadcast send to 255.255.255.255 is NOT asserted for delivery — firewalls and
+//     container namespaces routinely drop it; real broadcast receive testing is
+//     platform/firewall-dependent, out of CI scope.
+TEST(UdpSocketTest, SetBroadcastContract)
+{
+    EventLoop loop(make_default_dispatcher());
+    UdpSocket s(loop);
+
+    // kIdle: store-only, the flag applies at the lazy bind — the API reports success.
+    EXPECT_TRUE(s.set_broadcast(true));
+
+    // Bound now: the deferred flag lands; a second explicit toggle applies immediately.
+    ASSERT_TRUE(s.bind("127.0.0.1", 0));
+    EXPECT_TRUE(s.set_broadcast(false));
+    EXPECT_TRUE(s.set_broadcast(true));
+
+    // Broadcast SEND is a no-crash contract: the send must return without fatal, and the
+    // completion (true or false — firewalls may drop it) must arrive. on_done(false) tolerated.
+    bool send_done = false;
+    s.send_to(std::string("bcast"), "255.255.255.255", 9, [&](bool) { send_done = true; });
+    spin_until(loop, [&] { return send_done; });
+    EXPECT_TRUE(send_done); // completion fired — the ok value is environment-dependent
+
+    EXPECT_EQ(cxxkit::SocketError::kNone, s.last_error());
+}
+
+// 14. set_broadcast on a closed socket: plain false, no fatal.
+TEST(UdpSocketTest, SetBroadcastAfterCloseIsFalse)
+{
+    EventLoop loop(make_default_dispatcher());
+    UdpSocket s(loop);
+    ASSERT_TRUE(s.bind("127.0.0.1", 0));
+    s.close();
+    EXPECT_FALSE(s.set_broadcast(true));
+}
+
 } // namespace
 
 #endif // #if CXXKIT_FEATURE_ENABLE_KERNEL

@@ -99,7 +99,29 @@ bool UdpSocketPrivate::lazy_bind_for_send()
 {
     // Unbound send = implicit ephemeral bind (controller ruling on plan Step 4.1 case 4 —
     // Qt's unbound-send contract). Failure leaves the machine kIdle; the caller maps the error.
-    return mBackend->bind("0.0.0.0", 0);
+    const bool ok = mBackend->bind("0.0.0.0", 0);
+    if (ok)
+    {
+        this->apply_pending_broadcast(); // deferred kIdle set_broadcast lands here
+    }
+    return ok;
+}
+
+void UdpSocketPrivate::apply_pending_broadcast()
+{
+    // Level option applied right after the handle exists — a rejection is surfaced (error
+    // path) but never blocks the bind itself: the socket is usable without broadcast.
+    if (mBroadcastPending && mBackend->set_broadcast(true))
+    {
+        mBroadcastPending = false;
+    }
+    else if (mBroadcastPending)
+    {
+        const int status = mBackend->native_status();
+        this->report_error(network::detail::map_transport_error(status),
+                           "UdpSocket: deferred set_broadcast(true) failed (native status " + std::to_string(status) +
+                               ")");
+    }
 }
 
 void UdpSocketPrivate::send_done(UdpSocketPrivate *d, bool ok)
@@ -195,6 +217,7 @@ bool UdpSocket::bind(const std::string &ip, uint16_t port)
                         "UdpSocket: bind failed (native status " + std::to_string(status) + ")");
         return false;
     }
+    d->apply_pending_broadcast(); // deferred kIdle set_broadcast lands here
     d->set_state(SocketState::kBound);
     return true;
 }
@@ -307,6 +330,32 @@ void UdpSocket::disconnect_remote()
     d->mPeerIp.clear();
     d->mPeerPort = 0;
     d->set_state(SocketState::kBound);
+}
+
+bool UdpSocket::set_broadcast(bool enable)
+{
+    CXXKIT_D(UdpSocket);
+    d->check_loop_thread("set_broadcast");
+    if (d->mCloseRequested || d->mState == SocketState::kClosed)
+    {
+        return false; // closed socket: no option application (no fatal — plain rejection)
+    }
+    if (d->mState == SocketState::kIdle)
+    {
+        // Store-only: the level option applies once the lazy/actual bind creates the handle.
+        d->mBroadcastPending = enable;
+        return true;
+    }
+    // kBound / kConnected: apply immediately. Failure maps onto the error surface (e.g.
+    // IPv6-destined socket — broadcast is IPv4-only).
+    if (!d->mBackend->set_broadcast(enable))
+    {
+        const int status = d->mBackend->native_status();
+        d->report_error(network::detail::map_transport_error(status),
+                        "UdpSocket: set_broadcast failed (native status " + std::to_string(status) + ")");
+        return false;
+    }
+    return true;
 }
 
 void UdpSocket::send(const uint8_t *data, size_t len, std::function<void(bool ok)> on_done)
@@ -439,7 +488,8 @@ void UdpSocketPrivate::begin_close()
     }
     mPendingSendDones.clear();
     mOnDatagram = nullptr;
-    mPeerIp.clear(); // connected pin dies with the socket
+    mBroadcastPending = false; // deferred option dies with the machine
+    mPeerIp.clear();           // connected pin dies with the socket
     mPeerPort = 0;
     mBackend->close();
     set_state(SocketState::kClosed); // uv close drains in the backend; the machine is terminal now

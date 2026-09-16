@@ -95,6 +95,12 @@ public:
      */
     static void datagram_event(UdpSocketPrivate *d, const std::string &data, const std::string &ip, uint16_t port);
 
+    /**
+     * @brief Applies the deferred broadcast flag after any bind (bind() + the lazy paths).
+     *        Failure is non-fatal: surfaced through the error path, never blocks the bind.
+     */
+    void apply_pending_broadcast();
+
     UdpSocket *mP{nullptr};
     EventLoop &mLoop;
     std::unique_ptr<network::detail::DgramBackend> mBackend;
@@ -109,6 +115,7 @@ public:
     /// D45 connected mode: the pinned default peer (mPeerIp empty + port 0 = unconnected).
     std::string mPeerIp;
     uint16_t mPeerPort{0};
+    bool mBroadcastPending{false}; /// set_broadcast from kIdle — applied at the bind (level option)
 
     std::thread::id mLoopThreadId; /// captured at construction from the loop's dispatcher
 };
