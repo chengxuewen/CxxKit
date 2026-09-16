@@ -38,7 +38,7 @@ if(CXXKIT_NETWORK_BACKEND STREQUAL "asio")
 else()
     # libuv is the default backend (D38): TcpSocket/TcpServer drive uv_tcp_t directly.
     cxxkit_find_package(Libuv PROVIDED_TARGETS CxxKitWrapLibuv::WrapLibuv)
-    list(APPEND _backend_sources detail/stream_backend_uv.cpp)
+    list(APPEND _backend_sources detail/stream_backend_uv.cpp detail/dgram_backend_uv.cpp)
     set(_backend_libs CxxKitWrapLibuv::WrapLibuv)
 endif()
 
@@ -70,11 +70,13 @@ if(CXXKIT_BUILD_INSTALL)
         install(DIRECTORY ${PROJECT_SOURCE_DIR}/cxxkit/network/
             DESTINATION include/cxxkit/network
             FILES_MATCHING PATTERN "*.hpp"
-            PATTERN "detail/stream_backend_uv.hpp" EXCLUDE)
+            PATTERN "detail/stream_backend_uv.hpp" EXCLUDE
+            PATTERN "detail/dgram_backend_uv.hpp" EXCLUDE)
     else()
         install(DIRECTORY ${PROJECT_SOURCE_DIR}/cxxkit/network/
             DESTINATION include/cxxkit/network
             FILES_MATCHING PATTERN "*.hpp"
-            PATTERN "detail/stream_backend_asio.hpp" EXCLUDE)
+            PATTERN "detail/stream_backend_asio.hpp" EXCLUDE
+            PATTERN "detail/dgram_backend_asio.hpp" EXCLUDE)
     endif()
 endif()
