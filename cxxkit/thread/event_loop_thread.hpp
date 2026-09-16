@@ -91,11 +91,12 @@ public:
     operator EventLoop *() const { return &const_cast<EventLoopThread *>(this)->loop(); }
 
     /** @brief Starts the worker thread: it builds the loop (worker-first) and runs exec().
-     *  Double start is fatal (CXXKIT_CHECK). */
+     *  Once-only: double start AND restart after stop are fatal (CXXKIT_CHECK). */
     void start();
 
     /** @brief Thread-safe: exits the loop and joins the worker. Not started = no-op
-     *  (worker-first: no loop exists either). Idempotent. */
+     *  (worker-first: no loop exists either). Idempotent, TERMINAL: after stop() the
+     *  instance cannot be started again (the loop was destroyed on the worker). */
     void stop();
 
     /** @brief True while the worker thread is alive. */

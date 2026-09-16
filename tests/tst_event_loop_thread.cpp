@@ -143,14 +143,32 @@ TEST(EventLoopThread, in_loop_construction_binds_elt_affinity)
     elt.start();
     EventLoop &loop = elt.loop(); // blocks on the main thread until the worker published the loop
     std::atomic<Object *> created{nullptr};
-    loop.post([&created]() { created.store(new Object); });
+    std::atomic<bool> deleted{false};
+    loop.post(
+        [&created, &deleted]()
+        {
+            // Dtor pins the deferred-delete proof: if stop() raced ahead of the
+            // DeferredDeleteEvent, ~EventLoop would drop it and leak this object (LSan).
+            struct Pinned : Object
+            {
+                std::atomic<bool> &mDeleted;
+                explicit Pinned(std::atomic<bool> &deleted)
+                    : Object()
+                    , mDeleted(deleted)
+                {
+                }
+                ~Pinned() override { mDeleted.store(true); }
+            };
+            created.store(new Pinned(deleted));
+        });
     for (int i = 0; i < 2000000 && created.load() == nullptr; ++i)
     {
         std::this_thread::yield();
     }
     ASSERT_NE(created.load(), nullptr);
     EXPECT_EQ(created.load()->loop(), &loop);
-    created.load()->delete_later(); // cleanup runs on the worker
+    created.load()->delete_later();   // cleanup runs on the worker
+    EXPECT_TRUE(wait_until(deleted)); // delete observed BEFORE stop() — no deferred-drop race
     elt.stop();
 }
 

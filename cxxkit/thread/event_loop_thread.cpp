@@ -128,6 +128,8 @@ void EventLoopThread::start()
 {
     CXXKIT_CHECK(mDPtr != nullptr) << "EventLoopThread::start: no private state";
     CXXKIT_CHECK(!mDPtr->mStarted.load()) << "EventLoopThread::start: already started";
+    CXXKIT_CHECK(!mDPtr->mLoopGone)
+        << "EventLoopThread::start: restart after stop is unsupported (the loop was torn down on the worker thread)";
     mDPtr->mExitRequested.store(false);
     mDPtr->mStarted.store(true); // published before the thread exists — no race with thread_main
     const Status status = mDPtr->mThread.start();
