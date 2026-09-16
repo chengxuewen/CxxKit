@@ -37,6 +37,9 @@ CXXKIT_BEGIN_NAMESPACE
  * Reported by @ref TcpSocket::state and @ref TcpSocket::set_on_state_change. Lifecycle:
  * kIdle → kConnecting → kConnected → kClosing → kClosed (kIdle recurs after a failed connect —
  * the socket returns to its constructed, handle-less state and may connect again).
+ * UDP-only: kIdle → kBound — bind succeeds and the socket stays in kBound until closed; no
+ * connect/connected transitions exist for datagram sockets. kClosed is the only terminal state
+ * reachable from kBound; a closed datagram backend may be re-opened+bound.
  */
 enum class SocketState
 {
@@ -44,9 +47,9 @@ enum class SocketState
     kConnecting, /// connect in flight
     kConnected,  /// connected (or adopted handle); duplex read/write active
     kClosing,    /// close requested; callbacks still draining
-    kClosed      /// close completed; nothing pending
+    kClosed,     /// close completed; nothing pending
+    kBound       /// UDP-only: bind succeeded; socket ready for send/receive (no connection)
 };
-
 CXXKIT_END_NAMESPACE
 
 #endif // #if CXXKIT_FEATURE_ENABLE_KERNEL
