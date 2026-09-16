@@ -319,6 +319,56 @@ TEST(SignalR, SignalUnsafeRSmoke)
     EXPECT_EQ(22, result.value());
 }
 
+TEST(SignalR, MoveConstructedSignalOldConnectionDisconnectClearsNewSignal)
+{
+    SignalR<int> src;
+    Connection old_conn = src.connect([]() { return 1; });
+    SignalR<int> dst(std::move(src));
+    ASSERT_EQ(1u, dst.num_slots());
+
+    // Rerouted cleaner points at dst: the pre-move connection legitimately
+    // disconnects the moved slot.
+    EXPECT_TRUE(old_conn.disconnect());
+    EXPECT_EQ(0u, dst.num_slots());
+}
+
+TEST(SignalR, MoveAssignReroutesBothIncomingAndOutgoingSlots)
+{
+    SignalR<int> dst;
+    SignalR<int> src;
+    Connection conn_dst = dst.connect([]() { return 1; });
+    Connection conn_src = src.connect([]() { return 2; });
+    ASSERT_EQ(1u, dst.num_slots());
+    ASSERT_EQ(1u, src.num_slots());
+
+    dst = std::move(src);
+    EXPECT_EQ(1u, dst.num_slots()); // dst now holds src's slot
+    EXPECT_EQ(1u, src.num_slots()); // src now holds dst's slot
+
+    // Outgoing slot (dst's original) now lives in src; its cleaner points at src.
+    EXPECT_TRUE(conn_dst.connected());
+    EXPECT_TRUE(conn_dst.disconnect());
+    EXPECT_EQ(0u, src.num_slots());
+
+    // Incoming slot (src's) now lives in dst; its cleaner points at dst.
+    EXPECT_TRUE(conn_src.connected());
+    EXPECT_TRUE(conn_src.disconnect());
+    EXPECT_EQ(0u, dst.num_slots());
+}
+
+TEST(SignalR, SignalUnsafeRMoveSmoke)
+{
+    SignalUnsafeR<int> src;
+    Connection old_conn = src.connect([]() { return 7; });
+    SignalUnsafeR<int> dst(std::move(src));
+    ASSERT_EQ(1u, dst.num_slots());
+    EXPECT_TRUE(old_conn.disconnect());
+    EXPECT_EQ(0u, dst.num_slots());
+    const Optional<int> result = dst();
+    EXPECT_FALSE(result.has_value());
+}
+
+
 TEST(SignalR, EmptySignalWithCustomCombiner)
 {
     SignalR<int, collect_all<int>> sig;

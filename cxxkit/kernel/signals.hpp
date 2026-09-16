@@ -1633,7 +1633,8 @@ public:
         using std::swap;
         swap(m_slots, o.m_slots);
         m_block.store(o.m_block.exchange(m_block.load()));
-        reroute_slot_cleaners();
+        reroute_slots_to(detail::cow_write(m_slots), *this);
+        reroute_slots_to(detail::cow_write(o.m_slots), o);
         return *this;
     }
 
@@ -2223,15 +2224,17 @@ private:
     void clear() { detail::cow_write(m_slots).clear(); }
 
 private:
-    // re-point every slot's cleaner to this; must be called under lock
-    void reroute_slot_cleaners()
+    void reroute_slot_cleaners() { reroute_slots_to(detail::cow_write(m_slots), *this); }
+
+    // re-point every slot in a slots list to target; must be called under lock
+    static void reroute_slots_to(list_type &slots, Cleanable &target)
     {
-        auto &groups = detail::cow_write(m_slots);
+        auto &groups = detail::cow_write(slots);
         for (auto &group : groups)
         {
             for (auto &s : group.slts)
             {
-                s->set_cleaner(*this);
+                s->set_cleaner(target);
             }
         }
     }
@@ -2259,9 +2262,8 @@ private:
  * - the combiner is default-constructed per emission (set_combiner deferred)
  * - a blocked signal still runs the combiner over an EMPTY range (S2 semantics),
  *   e.g. optional_last_value yields an empty Optional
- * - this class is intentionally not movable (copy deleted, no move declared);
- *   move support for the R-family is deferred, while the void SignalBase
- *   family supports moves with cleaner re-routing
+ * - this class supports moves (copy is deleted); slot cleaners are
+ *   rerouted from source to destination, mirroring SignalBase's pattern
  *
  * @tparam R the slot result type (must not be void)
  * @tparam Lockable a lock type to decide the lock policy
@@ -2306,6 +2308,29 @@ public:
 
     SignalBaseR(const SignalBaseR &) = delete;
     SignalBaseR &operator=(const SignalBaseR &) = delete;
+
+    SignalBaseR(SignalBaseR &&o) /* not noexcept */
+        : m_block{o.m_block.load()}
+    {
+        lock_type lock(o.m_mutex);
+        using std::swap;
+        swap(m_slots, o.m_slots);
+        reroute_slot_cleaners();
+    }
+
+    SignalBaseR &operator=(SignalBaseR &&o) /* not noexcept */
+    {
+        lock_type lock1(m_mutex, std::defer_lock);
+        lock_type lock2(o.m_mutex, std::defer_lock);
+        std::lock(lock1, lock2);
+
+        using std::swap;
+        swap(m_slots, o.m_slots);
+        m_block.store(o.m_block.exchange(m_block.load()));
+        reroute_slots_to(detail::cow_write(m_slots), *this);
+        reroute_slots_to(detail::cow_write(o.m_slots), o);
+        return *this;
+    }
 
     /**
      * Emit a signal and collect slot results through the combiner.
@@ -2555,6 +2580,21 @@ private:
         }
 
         return count;
+    }
+
+    void reroute_slot_cleaners() { reroute_slots_to(detail::cow_write(m_slots), *this); }
+
+    // re-point every slot in a slots list to target; must be called under lock
+    static void reroute_slots_to(list_type &slots, Cleanable &target)
+    {
+        auto &groups = detail::cow_write(slots);
+        for (auto &group : groups)
+        {
+            for (auto &s : group.slts)
+            {
+                s->set_cleaner(target);
+            }
+        }
     }
 
     // to be called under lock: remove all the slots

@@ -371,6 +371,62 @@ TEST(Signal, DisconnectViaOldConnectionAfterSourceDestroyed)
     EXPECT_FALSE(old_conn.connected());
 }
 
+TEST(Signal, MoveAssignReroutesBothIncomingAndOutgoingSlots)
+{
+    Signal<int> dst;
+    Signal<int> src;
+    Connection conn_dst = dst.connect([](int v) { (void)v; });
+    Connection conn_src = src.connect([](int v) { (void)v; });
+    ASSERT_EQ(1u, dst.slot_count());
+    ASSERT_EQ(1u, src.slot_count());
+
+    dst = std::move(src);
+    // After move: dst holds Y (was src's), src holds X (was dst's)
+    EXPECT_EQ(1u, dst.slot_count());
+    EXPECT_EQ(1u, src.slot_count());
+
+    // Old dst slot (X) was swapped into src — its cleaner now points at src.
+    // Disconnecting it removes from src.
+    EXPECT_TRUE(conn_dst.connected());
+    conn_dst.disconnect();
+    EXPECT_FALSE(conn_dst.connected());
+    EXPECT_EQ(0u, src.slot_count()); // X removed from src
+
+    // src slot (Y) was swapped into dst — its cleaner now points at dst.
+    EXPECT_TRUE(conn_src.connected());
+    conn_src.disconnect();
+    EXPECT_FALSE(conn_src.connected());
+    EXPECT_EQ(0u, dst.slot_count());
+}
+
+TEST(Signal, MoveAssignReroutesBothIncomingAndOutgoingSlotsDualCheck)
+{
+    Signal<int> dst;
+    Signal<int> src;
+    Connection connX = dst.connect([](int v) { (void)v; });
+    Connection connY = src.connect([](int v) { (void)v; });
+    ASSERT_EQ(1u, dst.slot_count());
+    ASSERT_EQ(1u, src.slot_count());
+
+    dst = std::move(src);
+    // X (dst's original) swapped into src; Y (src's) swapped into dst.
+    EXPECT_EQ(1u, dst.slot_count());
+    EXPECT_EQ(1u, src.slot_count());
+
+    // connX.disconnect() works against src (its slot's cleaner was rerouted there).
+    EXPECT_TRUE(connX.connected());
+    connX.disconnect();
+    EXPECT_FALSE(connX.connected());
+    EXPECT_EQ(0u, src.slot_count());
+
+    // connY.disconnect() works against dst.
+    EXPECT_TRUE(connY.connected());
+    connY.disconnect();
+    EXPECT_FALSE(connY.connected());
+    EXPECT_EQ(0u, dst.slot_count());
+}
+
+
 TEST(SignalUnsafe, SelfDisconnectAndReconnectDefersNewSlotToNextEmission)
 {
     SignalUnsafe<int> sig;
