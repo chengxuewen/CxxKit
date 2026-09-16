@@ -452,7 +452,7 @@ sanitizer（ASAN/LSAN/UBSan）与 coverage 用**独立 build 目录**（build-as
 - **T3 exp_kernel 补 ELT 生命周期节**：第 8 节——worker 环上 emit 100×1..100，主线程自旋等 5050 后 stop()；join-before-print 确定性；exp_kernel 注册补链 cxxkit::thread（D43 期曾误加误删，本次为真实依赖正式加上）。
 - **过程观察（非 PIT）**：T2 首任实现者停滞在半成品状态（reroute_slots_to 写了一半未验证），继任者发现后完成并验证——顺序会话无并行编辑红线被遵守，half-done 状态靠 grep 自验发现；多代理接力时前任中断的树不可假设干净。
 
-## D44: UdpSocket 落地（2026-09-16，SDD T0-T4，271d82a..80b3e12）
+## D44: UdpSocket 落地（2026-09-16，SDD T0-T4，271d82a..600c2f3）
 
 **来源**：UDP 计划（docs/superpowers/plans/2026-09-16-udp-socket-plan.md）——network 子库补无连接数据报套接字，双后端对齐 TcpSocket 的 Qt 级错误/状态面。
 

@@ -431,7 +431,7 @@ cxxkit 是 OpenCTK（an open cpp toolkit）的成功重构版本 —— 精简�
 - 验证：build 0 err / 主树 **87/87** / exp_kernel ×3 rc=0 逐字节一致（GCOV_PREFIX 重定向规避 build 树 coverage 计数器 stderr 噪声）/ clang-format（pixi 23.1.0）干净
 - 记录：decisions.md D43.5（含 T2 半成品接力过程观察）
 
-### 2026-09-16 D44 UdpSocket 落地（271d82a..80b3e12，SDD T0-T4 流水线）
+### 2026-09-16 D44 UdpSocket 落地（271d82a..600c2f3，SDD T0-T4 流水线）
 
 - [x] **架构**：并行 `DgramBackend` 新接口（StreamBackend 零触碰）+ uv_udp_t / asio udp::socket 双后端 + `UdpSocket` 公共类（TcpSocket 形态：check_loop_thread I1 fatal、PIT-40 局部拷贝回调、F8-② close 幂等）；状态机 kIdle→kBound→kClosed（SocketState 尾部追加 kBound）；失败 bind 停 kIdle 可重试
 - [x] **关键裁定落地**：lazy-bind（kIdle send/set_on_datagram → 隐式 "0.0.0.0":0 绑定 + 自动 kBound，IPv4-only v1）；单发槽致命 → H3 FIFO 队列（TlsSocket PendingWrite 先例）；R-T2-1 socketpair 式 loopback 测试骨架
