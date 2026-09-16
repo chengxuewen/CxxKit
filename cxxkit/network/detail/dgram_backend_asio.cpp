@@ -317,15 +317,11 @@ bool AsioDgramBackend::connect(const std::string &ip, uint16_t port)
     mN->peer = endpoint;
     mN->connected = true;
     mConnected = true;
-    // asio's sync_connect aborts the outstanding async_receive_from (operation_aborted fires
-    // on the next pump) — re-arm receive interest so a connected socket keeps delivering
-    // (uv parity: uv_udp_connect does not disturb recv interest).
-    if (mRecvArmed)
-    {
-        mRecvArmed = false; // the aborted handler already dropped the re-arm guard
-        this->arm_receive();
-        this->ensure_pump();
-    }
+    // No re-arm needed (M2 probe verdict (b), asio 1.32 headers + live probe): a synchronous
+    // UDP connect does NOT abort a parked async_receive_from (operation_aborted never fires —
+    // the reactor only cancels via cancel()/close()) and the parked op keeps delivering (the
+    // kernel filters to the pinned peer post-connect). uv parity: uv_udp_connect does not
+    // disturb recv interest either.
     return true;
 }
 
@@ -343,6 +339,27 @@ void AsioDgramBackend::disconnect_remote()
         mN->connected = false;
     }
     mConnected = false;
+}
+
+bool AsioDgramBackend::set_broadcast(bool enable)
+{
+    CXXKIT_CHECK(mLoop != nullptr) << "AsioDgramBackend::set_broadcast: open() was not called";
+    if (mCloseRequested || mN == nullptr || mN->socket == nullptr)
+    {
+        mNativeStatus = -ESHUTDOWN;
+        return false;
+    }
+    // IPv4-only option: IPv6 has no broadcast — the kernel rejects it on an IPv6 socket
+    // (EOPNOTSUPP/EINVAL per platform) and we surface that failure as-is.
+    std::error_code ec;
+    mN->socket->set_option(asio::socket_base::broadcast(enable), ec);
+    if (ec)
+    {
+        mNativeStatus = -static_cast<int>(ec.value());
+        return false;
+    }
+    mNativeStatus = 0;
+    return true;
 }
 
 
