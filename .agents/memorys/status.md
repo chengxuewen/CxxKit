@@ -441,3 +441,13 @@ cxxkit 是 OpenCTK（an open cpp toolkit）的成功重构版本 —— 精简�
 - 验证：uv 主树 **88/88** / asio 树 **90/90**（imgui 套件在 asio 树额外注册）/ ASAN-asio udp 8/8 **零诊断**（F1 use-after-scope 回归证明）/ clang-format 干净 / C4 C++14 门禁干净
 - 记录：decisions.md D44（R1-R4 用户裁定 + lazy-bind/单发 FIFO 演进 + 孤儿 pimpl stash 复查项）
 - 备忘：孤儿 pimpl 重构 stash@{0}（7 文件，T1 期发现，D44 后复查——要么立正式任务要么丢弃）；N2 LOW 备案（close 后 stale ECANCELED 错误噪声，装饰性）；connected-UDP/broadcast v1.5、multicast v2、DTLS 远期（Deferred）
+
+### 2026-09-16 D45 UDP v1.5 落地（connected-UDP + broadcast，d2e4cb4..HEAD，T1-T2 SDD）
+
+- [x] **T1 connected-UDP**（`9e82116`+`6c73b3c`）：`connect_to`/`disconnect_remote`/`send`（kIdle lazy-bind 先行，kBound→kConnected 同步 pin 无握手；send_to-while-connected fatal Qt 契约；bool 返回 connect 失败停 kBound 绑定幸存）；后端 `DgramBackend::connect/disconnect_remote` 双实现（uv_udp_connect / asio socket.connect）；NULL-dest send 走 connected 通道（uv EISCONN 契约修复）+ asio 平台 recv 错误（ECONNREFUSED）不再中断 arm（receive-error 契约澄清：拒绝经 send-completion 表面化，receive 静默）
+- [x] **M2 前提探针收官**（`a008faa`）：T1 审查争议（asio sync connect 是否 abort parked async_receive_from）实测定案——**(b) FALSE**：vendored asio 1.32 `socket_ops::sync_connect` = 裸 connect(2)+poll_connect（reactor 仅 cancel()/close() 取消 op）；live probe 0 aborted / 1 delivered。connect 里的 re-arm 块是死代码已删，注释改为 verdict (b) 陈述
+- [x] **T2 broadcast**（`2b27176`）：`UdpSocket::set_broadcast`（kIdle 存 flag 于 bind 落地（lazy 三路共用 apply_pending_broadcast）/ kBound+kConnected 立即应用 / kClosed false；失败走 error 面不 fatal）；`DgramBackend::set_broadcast` 双后端（uv: uv_fileno→setsockopt SO_BROADCAST，_WIN32 false；asio: socket_base::broadcast）；IPv4-only 契约（IPv6 内核拒绝如实表面化）
+- [x] **测试**：tst_udp_socket 13→15（SetBroadcastContract：kIdle 存储/绑定后切换/255.255.255.255 no-crash 发送 on_done(false) 容忍；SetBroadcastAfterCloseIsFalse）；真广播接收防火墙/命名空间相关，CI 外备案
+- 验证：uv 主树 **88/88** / asio 树 **90/90** / ASAN-asio udp 15/15 零诊断 / clang-format 干净 / C4+octk 门禁干净
+- 记录：decisions.md D45；探针文件一次性（/tmp，未入库）
+- 备忘：multicast v2、DTLS 远期（Deferred）；孤儿 pimpl stash@{0} 复查项维持

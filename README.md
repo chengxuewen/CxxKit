@@ -22,7 +22,7 @@ Organized abseil-style: **directory = sublibrary = CMake target**, pick only wha
 | `cxxkit::thread` | compiled | thread_pool, task_queue, event_loop_thread (own-thread EventLoop; dispatcher born on the worker — bind affinity via in-loop construction), future, semaphore |
 | `cxxkit::text` | compiled | string, base64, bit_buffer, ascii, string_builder, string_utils, str_split, crc32, format, string_view |
 | `cxxkit::tools` | compiled | logging, random, assert, clock, status, error, metrics, filesystem, optional, expected, variant |
-| `cxxkit::network` | compiled | http (cpr backend); TcpSocket/TcpServer + TlsSocket + UdpSocket (datagram, dual-backend) event-loop sockets with Qt-grade error/state surface — backend selection `CXXKIT_NETWORK_BACKEND` (uv default, asio opt-in) |
+| `cxxkit::network` | compiled | http (cpr backend); TcpSocket/TcpServer + TlsSocket + UdpSocket (datagram, connected-UDP + broadcast, dual-backend) event-loop sockets with Qt-grade error/state surface — backend selection `CXXKIT_NETWORK_BACKEND` (uv default, asio opt-in) |
 | `cxxkit::crash` | compiled | crash handler, minidump (breakpad), stack trace (backward-cpp) — opt-in `CXXKIT_ENABLE_LIB_CRASH` |
 | `cxxkit::imgui` | compiled | headless ImGui context (`ImGuiHost`) over host-injected `PlatformBackend`/`RendererBackend`, plus `SdlImGuiApplication` (SDL3 window + frame loop, opt-in host) — opt-in `CXXKIT_ENABLE_LIB_IMGUI` |
 

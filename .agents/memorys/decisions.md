@@ -476,3 +476,26 @@ sanitizer（ASAN/LSAN/UBSan）与 coverage 用**独立 build 目录**（build-as
 **孤儿 pimpl 备案**：T1 期末发现 7 文件未提交的 pimpl 重构（CXXKIT_DEFINE_DPTR→mPPtr 直访 + DECLARE_PRIVATE 重排），来源不明（本计划无会话产出），已 stash@{0} 留档（"orphaned pimpl-refactor"）——D44 后复查：要么立正式任务要么丢弃。
 
 **已知限制（备案不修）**：N2 LOW——close 后 stale ECANCELED 错误噪声（装饰性）；lazy-bind IPv4-only（IPv6 目的地需显式 bind）；无 connected-UDP/broadcast/multicast/DTLS（R2 Deferred 阶梯）。
+
+## D45: UDP v1.5 — connected-UDP + broadcast（2026-09-16，T1-T2 SDD，d2e4cb4..HEAD）
+
+**T1 connected-UDP 裁定**：
+- **无 kConnecting**：UDP connect(2) 无握手，kBound→kConnected 同步翻转（Qt 同款）。
+- **send_to-while-connected fatal**（Qt 契约直译）：connected socket 只经 `send()` 发送；后端侧的显式目的地分支仅为防御性 passthrough（公共层已 fatal）。
+- **connect_to 返回 void + 失败停 kBound**：绑定幸存可重试（TCP failed-connect 形状适配数据报现实——TCP 失败 connect 停 kIdle，UDP 侧等价物是 kBound）。
+- **kIdle 路径 lazy-bind 先行**：与 send/set_on_datagram 共用 lazy_bind_for_send。
+- **NULL-dest send 通道修复**：connected uv handle 上 uv_udp_send 带 addr = UV_EISCONN——NULL-dest send 走 connected 通道（kernel 按 pin 路由）；asio 对称（async_send 无地址）。
+- **平台 recv 错误契约澄清**（`6c73b3c`）：connected socket 上的 ICMP ECONNREFUSED 在 Linux 经 recv 路径表面化——asio 后端不再因 receive-error 中断 arm（uv nread<0 语义不移植到 asio 侧）；拒绝统一经 send-completion 表面化，receive 静默。
+
+**M2 前提探针（`a008faa`，审查遗留定案）**：T1 审查质疑 asio connect() 的 re-arm 前提（"sync_connect 会 abort parked async_receive_from"）。三路证据定案 **(b) FALSE**：① 头文件源码——`socket_ops::sync_connect` = 裸 connect(2) + poll_connect（socket_ops.ipp L562）；`epoll_reactor::cancel_ops` 是唯一 operation_aborted 源，仅 cancel()/close() 调用；② live probe（/tmp 一次性程序）——park 1 个 async_receive_from → connect ×2 → 0 aborted / 1 delivered；③ 结论——原 re-arm 块是死代码，且其 `mRecvArmed=false` 注释（"aborted handler already dropped the guard"）描述的路径不存在。已删块 + 注释改为 verdict (b) 陈述。教训：**审查争议中的前提断言用最小探针实证，不靠 gdb 转述**。
+
+**T2 broadcast 裁定**：
+- **store-at-kIdle**：`set_broadcast(true)` 在 kIdle 只存 flag（`mBroadcastPending`），bind() 与三条 lazy 路径共用 `apply_pending_broadcast()` 落地；SO_BROADCAST 是 level 选项管后续 send，落地点在 handle 创建后即刻。
+- **失败面不 fatal**：backend 拒绝（IPv6 socket 内核拒绝——IPv6 无广播）映射 last_error/set_on_error，set_broadcast 返 false；deferred 落地失败报 error 但不阻断 bind。
+- **uv 实现约束**：uv_fileno 取 fd 后 setsockopt(SOL_SOCKET, SO_BROADCAST)；_WIN32 返 false（platform-support 声明，非首要目标）。
+- **asio 实现**：socket.set_option(socket_base::broadcast(enable), ec)，errno-style 负值上 surface。
+- **测试边界**：真广播接收依赖防火墙/网络命名空间——CI 只钉 API 契约 + 255.255.255.255 发送 no-crash（on_done(false) 容忍）；接收测试 out of CI scope（用例注释备案）。
+
+**验证门禁**：uv 主树 88/88；asio 树 90/90；ASAN-asio udp 15/15 零诊断；clang-format 干净；C4/octk 门禁干净。
+
+**Deferred（阶梯）**：multicast v2、DTLS 远期；connected-UDP 已由本波落地。
