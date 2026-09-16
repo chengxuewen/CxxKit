@@ -22,13 +22,18 @@
 **
 ***********************************************************************************************************************/
 
-// exp_kernel: signals walkthrough (sigslot port) + SignalR combiners + cross-thread emit.
+// exp_kernel: signals walkthrough (sigslot port) + SignalR combiners + cross-thread emit
+// (raw std::thread and EventLoopThread lifecycle).
 #include <iostream>
 #include <memory>
 #include <vector>
 
 #include <cxxkit/base/global.hpp>
 #include <cxxkit/kernel/signals.hpp>
+#include <cxxkit/kernel/default_dispatcher.hpp>
+#include <cxxkit/thread/event_loop_thread.hpp>
+#include <atomic>
+#include <thread>
 #include <atomic>
 #include <thread>
 
@@ -124,7 +129,7 @@ int main()
     auto max_v = max_sig();
     std::cout << "  maximum: max=" << *max_v << std::endl;
 
-    // 7) Cross-thread emit: a worker thread emits 1000 values while main is
+    // 7) Cross-thread emit (raw thread): a worker thread emits 1000 values while main is
     // connected; main joins the worker before reading the counter, so the
     // printed result is deterministic (join-before-print).
     std::cout << "--- 7. cross-thread emit ---" << std::endl;
@@ -143,6 +148,30 @@ int main()
         emitter.join(); // all emissions complete before anything below runs
     }
     std::cout << "  joined: received=" << received.load() << " (expected 500500)" << std::endl;
+
+    // 8) EventLoopThread lifecycle: the loop is born on the worker thread (worker-first,
+    // D43.5); main posts an emit onto it and joins before printing, so the result is
+    // deterministic -- and stop() tears the loop down on the worker that built it.
+    std::cout << "--- 8. EventLoopThread lifecycle emit ---" << std::endl;
+    Signal<int> elt_sig;
+    std::atomic<int> elt_received{0};
+    elt_sig.connect([&](int v) { elt_received.fetch_add(v); });
+    cxxkit::EventLoopThread elt(&cxxkit::make_default_dispatcher);
+    elt.start(); // loop constructed + exec() on the worker thread
+    elt.loop().post(
+        [&elt_sig]
+        {
+            for (int i = 1; i <= 100; ++i)
+            {
+                elt_sig(i);
+            }
+        });
+    while (elt_received.load() < 5050)
+    {
+        std::this_thread::yield();
+    }
+    elt.stop(); // terminal: exits the loop and joins the worker
+    std::cout << "  stopped: received=" << elt_received.load() << " (expected 5050)" << std::endl;
 
     std::cout << "--- done ---" << std::endl;
     return 0;

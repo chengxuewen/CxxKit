@@ -130,7 +130,7 @@ endif()
 if(CXXKIT_ENABLE_LIB_KERNEL)
     cxxkit_add_executable(cxxkit_exp_kernel
         SOURCES exp_kernel.cpp
-        LIBRARIES ${CXXKIT_EXAMPLE_LINK_LIBRARIES} cxxkit::kernel
+        LIBRARIES ${CXXKIT_EXAMPLE_LINK_LIBRARIES} cxxkit::kernel cxxkit::thread
         INCLUDE_DIRECTORIES ${PROJECT_SOURCE_DIR}
         FOLDER "CxxKit/examples")
 endif()

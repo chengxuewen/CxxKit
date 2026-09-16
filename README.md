@@ -118,7 +118,7 @@ Build them with the main build (`cmake --build build`); binaries land in `build/
 | `exp_base` | base | version/compiler-feature report, pimpl (`CXXKIT_DEFINE_DPTR`), `DISABLE_COPY_MOVE` |
 | `exp_containers` | containers | flat_hash_map/set, ArrayView, InlinedVector, FixedArray |
 | `exp_functional` | functional | FunctionView (non-owning), UniqueFunction (move-only) |
-| `exp_kernel` | kernel | signals walkthrough: tracked-lifetime slots, SignalR combiners, cross-thread emit |
+| `exp_kernel` | kernel | signals walkthrough: tracked-lifetime slots, SignalR combiners, cross-thread emit (raw thread + EventLoopThread lifecycle) |
 | `exp_media` | media | FrameGenerator pattern -> I420Buffer rotate/scale -> PSNR |
 | `exp_memory` | memory | SharedRefPtr intrusive counting, aligned_malloc, zero_memory |
 | `exp_numerics` | numerics | RunningStatistics, ExpFilter, sequence unwrapping |
