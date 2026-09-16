@@ -46,25 +46,69 @@ void EventLoopThreadPrivate::Runner::run()
 void EventLoopThreadPrivate::thread_main()
 {
     EventLoopThread *p = mPPtr;
+    // Worker-first construction (D43.5 T1): the dispatcher MUST be born on the thread that
+    // will exec() it — uv captures the constructing thread id in its ctor and fatals when
+    // exec runs elsewhere. A null product is fatal here (was fatal in the ctor before).
+    std::unique_ptr<AbstractEventDispatcher> dispatcher = mFactory();
+    CXXKIT_CHECK(dispatcher != nullptr) << "EventLoopThread: factory returned a null dispatcher";
+    {
+        std::lock_guard<std::mutex> lock(mLoopMutex);
+        p->mLoop.reset(new EventLoop(std::move(dispatcher)));
+        mLoopReady = true;
+    }
+    mLoopCv.notify_all(); // loop() waiters (and any pre-exec accessor) may proceed
+
     // The worker is the only exec() caller and start() joined no thread yet: the exit
     // code write races nothing. exec() returns when stop() (or a user exit) fires.
     p->loop().exec();
     mExitRequested.store(true); // exec() has returned: the thread is done
+
+    // Teardown ON the worker thread (D43.5 T1): uv handles are loop-thread bound, so the
+    // dispatcher destructor must run where exec() ran. After this, loop() waiters get a
+    // fatal instead of a dangling member — the terminal state for this ELT instance.
+    {
+        std::lock_guard<std::mutex> lock(mLoopMutex);
+        p->mLoop.reset();
+        mLoopReady = false;
+        mLoopGone = true;
+    }
+    mLoopCv.notify_all();
+}
+
+EventLoop *EventLoopThreadPrivate::wait_for_loop()
+{
+    // Never started: the worker does not exist, so no notify will ever come — waiting on
+    // the cv here would deadlock (D43.5 T1 controller ruling). Return immediately; the
+    // public accessor turns null into a fatal with the start() hint.
+    if (!mStarted.load())
+    {
+        return nullptr;
+    }
+    std::unique_lock<std::mutex> lock(mLoopMutex);
+    // Started-but-building: wait for the worker handoff. Terminal states pass through and
+    // let the caller decide (never started / already torn down -> null).
+    mLoopCv.wait(lock, [this]() { return mLoopReady || mLoopGone; });
+    return mLoopReady ? mPPtr->mLoop.get() : nullptr;
 }
 
 EventLoopThread::EventLoopThread(DispatcherFactory factory, Object *parent)
     : Object(parent)
 {
     CXXKIT_CHECK(factory != nullptr) << "EventLoopThread requires a dispatcher factory";
-    std::unique_ptr<AbstractEventDispatcher> dispatcher = factory();
-    CXXKIT_CHECK(dispatcher != nullptr) << "EventLoopThread: factory returned a null dispatcher";
     mDPtr.reset(new EventLoopThreadPrivate(this));
+    // D43.5 T1: the factory is STORED, not called. The dispatcher (and the loop wrapping it)
+    // is constructed on the worker thread inside thread_main(), after start() spawns it —
+    // that is the whole fix: uv's loop-thread capture then matches the exec() thread by
+    // construction. The loop does not exist between ctor and start().
+    mDPtr->mFactory = factory;
     // Momus F4 (plan): the loop is a PLAIN MEMBER with parent = nullptr — making it a child
     // would double-own it (member + parent cascade) and dispatch a ChildEvent during
     // construction. Declared after mDPtr in the header on purpose: it outlives the private
-    // state, so the destructor body (stop) can still reach loop().exit().
-    mLoop.reset(new EventLoop(std::move(dispatcher)));
+    // state, so the destructor body (stop) can still reach loop().exit(). Since D43.5 the
+    // member is written/destroyed on the worker thread (under mLoopMutex) and is already
+    // null by the time member destruction runs — the dtor body only joins.
 }
+
 
 EventLoopThread::~EventLoopThread()
 {
@@ -73,7 +117,11 @@ EventLoopThread::~EventLoopThread()
 
 EventLoop &EventLoopThread::loop()
 {
-    return *mLoop;
+    CXXKIT_CHECK(mDPtr != nullptr) << "EventLoopThread::loop: no private state";
+    EventLoop *loop = mDPtr->wait_for_loop();
+    CXXKIT_CHECK(loop != nullptr) << "EventLoopThread::loop: no loop — call start() first (worker-first construction: "
+                                     "the loop is born on the worker thread)";
+    return *loop;
 }
 
 void EventLoopThread::start()
@@ -96,14 +144,20 @@ void EventLoopThread::stop()
     {
         return; // defensive: nothing to stop
     }
-    // Thread-safe exit + wake (D35 I1 contract): legal from any thread, with or without a
-    // running exec(); on a never-started loop it just presets the exit code (harmless).
-    mLoop->exit(0);
-    if (mDPtr->mStarted.load())
+    if (!mDPtr->mStarted.load())
     {
-        (void)mDPtr->mThread.wait(); // join: thread_main always returns after exit()
-        mDPtr->mStarted.store(false);
+        return; // never started: no worker exists, and with worker-first construction no loop either
     }
+    // Thread-safe exit + wake (D35 I1 contract): legal from any thread. wait_for_loop blocks
+    // only while the worker is still building the loop (it always finishes building — exec
+    // returns only via the exit below) and returns null if the worker already tore the loop
+    // down (cannot happen before our exit: only exit() ends exec).
+    if (EventLoop *loop = mDPtr->wait_for_loop())
+    {
+        loop->exit(0);
+    }
+    (void)mDPtr->mThread.wait(); // join: thread_main always returns after exit(); loop + dispatcher die on the worker
+    mDPtr->mStarted.store(false);
 }
 
 bool EventLoopThread::is_running() const

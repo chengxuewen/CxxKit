@@ -30,6 +30,7 @@
 #include <cxxkit/kernel/event_loop.hpp>
 
 #include <atomic>
+#include <condition_variable>
 #include <mutex>
 
 CXXKIT_BEGIN_NAMESPACE
@@ -63,14 +64,30 @@ public:
         EventLoopThreadPrivate *mD;
     };
 
-    /** Invoked on the worker thread: loops exec() until stop() flips the flag. */
+    /** Invoked on the worker thread: builds the dispatcher + loop (worker-first, D43.5 T1),
+     *  loops exec() until stop() flips the flag, then destroys the loop on the worker too
+     *  (uv handles are loop-thread bound — teardown must run where exec ran). */
     void thread_main();
 
     EventLoopThread *mPPtr;
-    Runner mThread; // platform thread carrier (runs thread_main)
+    Runner mThread;                                       // platform thread carrier (runs thread_main)
+    EventLoopThread::DispatcherFactory mFactory{nullptr}; // invoked ON the worker (loop thread)
     std::atomic<bool> mStarted{false};
     std::atomic<bool> mExitRequested{false};
     std::mutex mStartMutex; // reserved for future restart support (start is once-only today)
+
+    /** Blocks until the worker-built loop is consumable (D43.5 T1 worker-first contract).
+     *  Returns nullptr when the loop can never appear (never started) or is already gone
+     *  (worker teardown after exec returned) — the public accessor turns that into a fatal
+     *  with the contract message; the started-but-building case waits on the cv. */
+    EventLoop *wait_for_loop();
+
+    // Loop handoff state (guarded by mLoopMutex): the loop object itself lives in the
+    // public class member mLoop, written ONLY on the worker thread under this mutex.
+    std::mutex mLoopMutex;
+    std::condition_variable mLoopCv;
+    bool mLoopReady{false}; // worker finished EventLoop construction — loop() may return it
+    bool mLoopGone{false};  // worker destroyed the loop after exec() — terminal for this ELT
 };
 
 CXXKIT_END_NAMESPACE

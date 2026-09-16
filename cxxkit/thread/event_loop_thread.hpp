@@ -38,20 +38,28 @@ CXXKIT_BEGIN_NAMESPACE
  * QEventLoopThread analog).
  *
  * The dispatcher is created by @p factory (the @c make_default_dispatcher convention — a plain
- * function pointer; host bridges like the header-only @c make_qt_dispatcher also fit) at
- * construction time, so the loop exists and can
- * accept affinity binding BEFORE start() is called:
+ * function pointer; host bridges like the header-only @c make_qt_dispatcher also fit) ON THE
+ * WORKER THREAD, inside the runner started by start() — not in the ctor (D43.5 T1). Thread-bound
+ * engines (the default libuv dispatcher captures its loop thread at construction) then match
+ * the exec() thread by construction, and the loop/dispatcher are also destroyed on that thread.
  *
  * @code
  * cxxkit::EventLoopThread elt(&cxxkit::make_default_dispatcher);
- * worker.move_to_loop(elt); // static migration: the loop is not running yet
- * elt.start();
+ * elt.start();                    // the loop is born on the worker thread
+ * elt.loop().post([] { ... });    // cross-thread post; loop() blocks until the loop is ready
  * @endcode
  *
- * The loop is a plain (parentless) member — it is NOT a child object, so destruction order
- * is deterministic: the derived destructor joins the thread first, then the loop is destroyed,
- * then the Object base. stop() requests the loop to exit from any thread (thread-safe exit +
- * wake contract) and joins. Destroying a running thread stops it implicitly.
+ * Consequence of worker-first construction: the loop does not exist between the ctor and start().
+ * loop() blocks until the worker finishes building it and is fatal on a never-started thread.
+ * Objects get ELT affinity by being created inside the loop (zero-affinity objects bind to
+ * EventLoop::current()); migrating a foreign object with move_to_loop() requires a non-running
+ * target loop, which a started ELT never is.
+ *
+ * The loop is a plain (parentless) member — it is NOT a child object. It is written and destroyed
+ * only on the worker thread (under the private handoff mutex) and is already null when the
+ * destructor's member destruction runs: the destructor body just stops and joins.
+ * stop() requests the loop to exit from any thread (thread-safe exit + wake contract) and joins.
+ * Destroying a running thread stops it implicitly.
  *
  * @since 0.2
  */
@@ -64,41 +72,46 @@ public:
     typedef std::unique_ptr<AbstractEventDispatcher> (*DispatcherFactory)();
 
     /**
-     * @brief Constructs the thread and its loop.
-     *
-     * The factory is invoked exactly once; a null product is fatal (CXXKIT_CHECK).
+     * @brief Constructs the thread. The factory is stored, not invoked — it runs on the
+     * worker thread after start(). A null factory is fatal (CXXKIT_CHECK).
      */
     explicit EventLoopThread(DispatcherFactory factory, Object *parent = nullptr);
 
-    /** @brief Stops the thread if it is still running, then destroys the loop. */
+    /** @brief Stops the thread if it is still running; the loop was already destroyed on
+     *  the worker (worker-first teardown). */
     ~EventLoopThread() override;
 
-    /** @brief The loop running on the dedicated thread (constructed in the ctor; never null).
-     *  Valid for affinity binding immediately — before start(). */
+    /** @brief The loop running on the dedicated thread. Blocks until the worker has built
+     *  it (after start()); fatal before start() or after the worker tore it down. */
     EventLoop &loop();
 
-    /** @brief Implicit conversion to the owned loop's address — enables `obj.move_to_loop(elt)`.
+    /** @brief Implicit conversion to the owned loop's address. Same contract as loop():
+     *  blocks until the loop is ready, fatal outside the started window.
      *  Lifetime: the ELT must outlive objects bound to its loop. */
-    operator EventLoop *() const { return mLoop.get(); }
+    operator EventLoop *() const { return &const_cast<EventLoopThread *>(this)->loop(); }
 
-    /** @brief Starts the worker thread (it runs loop().exec()). Double start is fatal
-     *  (CXXKIT_CHECK). */
+    /** @brief Starts the worker thread: it builds the loop (worker-first) and runs exec().
+     *  Double start is fatal (CXXKIT_CHECK). */
     void start();
 
-    /** @brief Thread-safe: exits the loop and joins the worker. Not started = no-op.
-     *  Idempotent. */
+    /** @brief Thread-safe: exits the loop and joins the worker. Not started = no-op
+     *  (worker-first: no loop exists either). Idempotent. */
     void stop();
 
     /** @brief True while the worker thread is alive. */
     bool is_running() const;
 
 private:
+    friend class EventLoopThreadPrivate; // worker writes the mLoop member under the handoff mutex
     CXXKIT_DEFINE_DPTR(EventLoopThread)
     CXXKIT_DISABLE_COPY_MOVE(EventLoopThread)
 
     std::unique_ptr<EventLoop> mLoop; // PLAIN MEMBER, no parent (Momus F4): no double
                                       // ownership, no ChildEvent noise; declared after
-                                      // mDPtr so it outlives the private state in ~
+                                      // mDPtr so it outlives the private state in ~.
+                                      // Since D43.5 written/destroyed ONLY on the worker
+                                      // thread (under the private handoff mutex) — null
+                                      // before start() and again after worker teardown.
 };
 
 CXXKIT_END_NAMESPACE
