@@ -104,19 +104,25 @@ bool UdpSocketPrivate::lazy_bind_for_send()
 void UdpSocketPrivate::send_done(UdpSocketPrivate *d, bool ok)
 {
     // Backend completion trampoline: send failure maps onto the public error surface here.
-    // Close-requested sends have already fired false via the pimpl's send_to guard — anything
-    // reaching here belongs to a live machine.
+    // Close-requested sends fire false via begin_close's fanout (in-flight uv requests complete
+    // UV_ECANCELED after close and also flow through here with false) — anything reaching this
+    // trampoline belongs to a live machine.
     if (!ok)
     {
         const int status = d->mBackend->native_status();
         d->report_error(network::detail::map_transport_error(status),
                         "UdpSocket: send failed (native status " + std::to_string(status) + ")");
     }
-    if (d->mOnSendDone)
+    if (!d->mPendingSendDones.empty())
     {
-        std::function<void(bool ok)> cb = std::move(d->mOnSendDone);
-        d->mOnSendDone = nullptr;
-        cb(ok);
+        // FIFO: the backend fires completions strictly in submission order per socket — pop
+        // the oldest. PIT-40: invoke through a local copy (the callback may close()/destroy).
+        std::function<void(bool ok)> cb = std::move(d->mPendingSendDones.front());
+        d->mPendingSendDones.pop_front();
+        if (cb)
+        {
+            cb(ok);
+        }
     }
 }
 
@@ -146,8 +152,9 @@ UdpSocket::~UdpSocket()
     // I6: close (idempotent — a no-op if already requested), then pump the loop until the close
     // callback has actually run so no transport state (handle, in-flight sends) survives us.
     // All user callbacks are cleared BEFORE the backend teardown (PIT-40: nothing user-visible
-    // can fire during the drain).
-    d->mOnSendDone = nullptr;
+    // can fire during the drain) — including every queued send completion (begin_close would
+    // fan them out, but a never-submitted pending edge must not fire into a dying socket).
+    d->mPendingSendDones.clear();
     d->mOnDatagram = nullptr;
     d->mOnError = nullptr;
     d->mOnStateChange = nullptr;
@@ -227,11 +234,11 @@ void UdpSocket::send_to(const uint8_t *data,
         d->set_state(SocketState::kBound); // auto-transition kIdle → kBound
     }
 
-    // One datagram one callback: the single-slot mOnSendDone holds THIS send's completion. The
-    // backend supports concurrent in-flight sends, but the public single-slot surface (Qt shape)
-    // would silently overwrite a previous in-flight callback — v1 serializes via the slot swap.
-    CXXKIT_CHECK(d->mOnSendDone == nullptr) << "UdpSocket::send_to: a previous send is still in flight";
-    d->mOnSendDone = std::move(on_done);
+    // FIFO completion queue (TlsSocket mPendingWrites precedent): each send pushes its done-
+    // callback; the backend fires completions strictly in submission order per socket (uv
+    // preserves FIFO), so send_done pops front-first. No in-flight limit (uv supports
+    // concurrent uv_udp_send requests natively).
+    d->mPendingSendDones.push_back(std::move(on_done));
     d->mBackend->send_to(data, len, ip, port, [d](bool ok) { UdpSocketPrivate::send_done(d, ok); });
 }
 
@@ -251,6 +258,21 @@ void UdpSocket::set_on_datagram(
     CXXKIT_CHECK(d->mCloseRequested == false) << "UdpSocket::set_on_datagram: socket is closing/closed";
     CXXKIT_CHECK(d->mState == SocketState::kIdle || d->mState == SocketState::kBound)
         << "UdpSocket::set_on_datagram: state must be kIdle or kBound (got " << static_cast<int>(d->mState) << ")";
+
+    // C1 (review wave 1): receive_start needs a live handle — arming from kIdle performs the
+    // same lazy ephemeral bind the send path does. Failure stays kIdle (re-arm allowed later).
+    if (d->mState == SocketState::kIdle)
+    {
+        if (!d->lazy_bind_for_send())
+        {
+            const int status = d->mBackend->native_status();
+            d->report_error(network::detail::map_transport_error(status),
+                            "UdpSocket: implicit bind before receive failed (native status " + std::to_string(status) +
+                                ")");
+            return;
+        }
+        d->set_state(SocketState::kBound); // auto-transition kIdle → kBound
+    }
 
     d->mOnDatagram = std::move(on_datagram);
     // The pimpl owns the user callback; the backend gets a trampoline into it (PIT-40: the
@@ -320,14 +342,19 @@ void UdpSocketPrivate::begin_close()
     }
     mCloseRequested = true;
 
-    // Pending send completes false right here (discard semantics, symmetric with TcpSocket
-    // writes); the datagram callback is dropped with the socket.
-    if (mOnSendDone)
+    // Pending sends complete false right here (discard semantics, symmetric with TcpSocket
+    // writes) — covers the never-submitted queue edge too; in-flight uv requests additionally
+    // flow through send_done with UV_ECANCELED → their callbacks were already fired here, and
+    // the queue is empty by then (send_done pops, finds nothing, is inert). The datagram
+    // callback is dropped with the socket.
+    for (auto &cb : mPendingSendDones)
     {
-        std::function<void(bool ok)> cb = std::move(mOnSendDone);
-        mOnSendDone = nullptr;
-        cb(false);
+        if (cb)
+        {
+            cb(false);
+        }
     }
+    mPendingSendDones.clear();
     mOnDatagram = nullptr;
     mBackend->close();
     set_state(SocketState::kClosed); // uv close drains in the backend; the machine is terminal now

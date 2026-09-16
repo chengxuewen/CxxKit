@@ -93,6 +93,7 @@ public:
     /// Last native failure status of the most recent completed operation (0 = none/success).
     virtual int native_status() const = 0;
 
+    /// Native handle view (void* — backend-owned type). Debugging aid only.
     virtual void *native_handle() const = 0;
 };
 

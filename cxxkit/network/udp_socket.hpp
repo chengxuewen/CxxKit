@@ -58,8 +58,10 @@ class UdpSocketPrivate;
  * connected-mode UDP is v1.5). A failed @c bind stays kIdle (retryable, TCP failed-connect
  * shape).
  *
- * Unbound sends: sending from kIdle performs a lazy ephemeral bind ("0.0.0.0":0) first — Qt's
- * "unbound socket may send" contract — and auto-transitions kIdle → kBound on success.
+ * Unbound first use (send or receive arming): from kIdle the socket lazily binds an IPv4
+ * ephemeral endpoint ("0.0.0.0":0) — Qt's "unbound socket may send" contract — and
+ * auto-transitions kIdle → kBound on success. Sending to IPv6 destinations from an unbound
+ * socket is unsupported in v1 (bind explicitly first).
  *
  * @c set_on_datagram delivers each datagram's copy on the loop thread (the backend's receive
  * buffer is valid only during its callback; this class hands the user a @c std::string copy,
@@ -78,8 +80,8 @@ public:
     /**
      * @brief Creates a socket bound to @p loop 's engine.
      *
-     * The transport is created immediately (unlike TcpSocket, UDP has no lazy connect point —
-     * bind needs a handle). Loop thread only.
+     * The transport is created immediately — UDP has no lazy connect point, bind needs a
+     * handle. Loop thread only.
      */
     explicit UdpSocket(EventLoop &loop);
 
@@ -105,12 +107,11 @@ public:
     uint16_t bound_port() const;
 
     /**
-     * @brief Sends @p len bytes to @p ip : @p port; @p on_done fires with the outcome.
-     *
      * Legal from kIdle (a lazy ephemeral bind happens first) and kBound. @p data is copied
-     * before returning. The callback is invoked on the loop thread with @c false on failure —
-     * @c last_error() carries the mapped reason (@c kMessageTooLarge for oversized datagrams).
-     * Re-setting replaces the previous callback (the previous one is dropped un-invoked).
+     * before returning. Each send's callback is invoked on the loop thread with @c false on
+     * failure — @c last_error() carries the mapped reason (@c kMessageTooLarge for oversized
+     * datagrams). No in-flight limit; completions arrive in submission order (the backend
+     * preserves FIFO per socket).
      * Loop thread only.
      */
     void send_to(const uint8_t *data,
@@ -126,8 +127,9 @@ public:
      * @brief Arms receive interest; every arriving datagram is delivered as a copy on the loop
      *        thread.
      *
-     * Legal from kIdle and kBound. Re-setting replaces the callback (callback swap, backend
-     * re-arm shape). Loop thread only.
+     * Legal from kIdle (a lazy ephemeral IPv4 bind happens first — arming needs a live
+     * handle; failure stays kIdle, re-arm allowed later) and kBound. Re-setting replaces the
+     * callback (callback swap, backend re-arm shape). Loop thread only.
      */
     void set_on_datagram(
         std::function<void(const std::string &data, const std::string &sender_ip, uint16_t sender_port)> on_datagram);

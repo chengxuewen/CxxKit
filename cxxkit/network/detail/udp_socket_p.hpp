@@ -32,6 +32,7 @@
 #include <cxxkit/network/socket_error.hpp>
 #include <cxxkit/network/socket_state.hpp>
 
+#include <deque>
 #include <functional>
 #include <memory>
 #include <string>
@@ -69,12 +70,12 @@ public:
     void begin_close();
 
     /**
-     * @brief Lazy ephemeral bind for unbound sends (controller ruling on plan Step 4.1 case 4):
-     *        first send_to from kIdle binds "0.0.0.0":0 implicitly. @return false on bind failure
-     *        (error reported by the caller — the machine stays kIdle).
+     * @brief Lazy ephemeral bind for unbound sends / unbound receive arming (controller ruling
+     *        on plan Step 4.1 case 4): first use from kIdle binds "0.0.0.0":0 implicitly
+     *        (IPv4-only in v1). @return false on bind failure (the caller maps the error — the
+     *        machine stays kIdle).
      */
     bool lazy_bind_for_send();
-
     // Backend completion trampolines: state-machine reactions live HERE (pimpl side).
     static void send_done(UdpSocketPrivate *d, bool ok);
     static void datagram_event(UdpSocketPrivate *d, const std::string &data, const std::string &ip, uint16_t port);
@@ -85,7 +86,7 @@ public:
 
     SocketState mState{SocketState::kIdle};
     bool mCloseRequested{false}; /// F8-② idempotence guard (pimpl-owned state-machine latch)
-    std::function<void(bool ok)> mOnSendDone;
+    std::deque<std::function<void(bool ok)>> mPendingSendDones; /// FIFO (uv preserves per-socket send order)
     std::function<void(const std::string &data, const std::string &ip, uint16_t port)> mOnDatagram;
     std::function<void(SocketError, const std::string &)> mOnError; /// invoked via local copy (PIT-40)
     std::function<void(SocketState)> mOnStateChange;                /// invoked via local copy (PIT-40)

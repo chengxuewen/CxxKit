@@ -44,7 +44,6 @@ endif()
 
 cxxkit_add_library(cxxkit_network
     SOURCES http.cpp tcp_socket.cpp tcp_server.cpp socket_error.cpp tls_socket.cpp udp_socket.cpp ${_backend_sources}
-    SOURCES http.cpp tcp_socket.cpp tcp_server.cpp socket_error.cpp tls_socket.cpp ${_backend_sources}
     PUBLIC_LIBRARIES cxxkit::base cxxkit::text cxxkit::thread cxxkit::memory cxxkit::tools cxxkit::kernel CxxKitWrapLibcpr::WrapLibcpr CxxKitWrapMbedTLS::WrapMbedTLS ${_backend_libs}
     EXPORT_NAME network
     FOLDER "CxxKit/libs")
