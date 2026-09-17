@@ -22,6 +22,7 @@
 **
 ***********************************************************************************************************************/
 #include <cxxkit/kernel/event_loop.hpp>
+#include <cxxkit/kernel/connect_queued.hpp>
 #include <cxxkit/kernel/event.hpp>
 #include "fake_dispatcher.hpp"
 #include <gtest/gtest.h>
@@ -1537,5 +1538,114 @@ TEST(Object, delete_later_compression_works_across_priority_mix)
         loop.process_events(cxxkit::EventLoop::ProcessFlag::kAllEvents)); // queue empty (no leak/compression miss)
 }
 
+
+
+// =============================================================================================
+// W3 Task 2 — G3 receiver-liveness + eager-release + composition pins (design §2/§3)
+// =============================================================================================
+
+namespace
+{
+// W3 test fixture: a live loop per test (tst_object.cpp had no loop fixture before —
+// W3 G3 pins need one; matches tst_event_loop.cpp EventLoopTest shape).
+class W3LoopTest : public ::testing::Test
+{
+protected:
+    void SetUp() override
+    {
+        mDispatcher = std::make_unique<FakeDispatcher>();
+        mDispatcherPtr = mDispatcher.get();
+        mLoop = std::make_unique<cxxkit::EventLoop>(std::move(mDispatcher));
+    }
+    void TearDown() override { mLoop.reset(); }
+
+    std::unique_ptr<FakeDispatcher> mDispatcher;
+    FakeDispatcher *mDispatcherPtr{nullptr};
+    std::unique_ptr<cxxkit::EventLoop> mLoop;
+};
+
+// W3-SV3 receiver-death pin (design §2 option (a)): connect_queued with a receiver —
+// destroy the receiver BEFORE the drain — delivery must be a silent skip (zero execution),
+// no UAF. Pre-token implementations post a closure that dereferences dead receiver state;
+// the closure-embedded liveness token (SafetyFlag precedent, design §2.4) skips instead.
+TEST_F(W3LoopTest, ConnectQueuedReceiverDeathSkipsDelivery)
+{
+    cxxkit::Signal<int> sig;
+    int delivered = 0;
+    auto receiver = std::make_shared<cxxkit::Object>();
+    cxxkit::connect_queued(sig,
+                           mLoop.get(),
+                           receiver.get(),
+                           [&delivered](int v)
+                           {
+                               delivered = v; // stand-in for receiver-adjacent state writes
+                           });
+    sig(1); // enqueued on mLoop
+    receiver.reset(); // receiver dies before the drain — token flips early in ~Object (§2.4)
+    mLoop->process_events(cxxkit::EventLoop::ProcessFlag::kAllEvents);
+    EXPECT_EQ(0, delivered); // zero delivery + ASAN zero UAF
+}
+
+// H4 eager-release pin (design §3.2): ~Object runs disconnect_all AFTER destroying() and
+// BEFORE purge_pending — counting live connections before/after pins the insertion point.
+TEST_F(W3LoopTest, DestructorEagerlyDisconnectsConnections)
+{
+    cxxkit::Signal<int> sig;
+    auto receiver = std::make_shared<cxxkit::Object>();
+    cxxkit::connect_queued(sig, mLoop.get(), receiver.get(), [](int) {});
+    EXPECT_GT(sig.slot_count(), 0u); // connected
+    receiver.reset(); // ~Object: eager disconnect_all drops the slot from the signal
+    EXPECT_EQ(0u, sig.slot_count()); // H4: released eagerly, not left dangling
+    sig(1); // no slot: no post, no crash
+    mLoop->process_events(cxxkit::EventLoop::ProcessFlag::kAllEvents);
+}
+
+// H3 composition pin (design §3.0): ObjectPrivate embeds signals::observer and Object
+// forwards add_connection — the grep-level non-inheritance guarantee lives in the gate
+// script; here we pin the API surface: add_connection accepts a Connection and ~Object
+// releases it on destruction.
+TEST_F(W3LoopTest, AddConnectionRegistersAndReleasesOnDestruction)
+{
+    cxxkit::Signal<int> sig;
+    auto receiver = std::make_shared<cxxkit::Object>();
+    auto conn = sig.connect([](int) {});
+    receiver->add_connection(conn);
+    EXPECT_TRUE(conn.connected());
+    receiver.reset(); // ~Object disconnect_all — connection dies with the owner
+    EXPECT_FALSE(conn.connected());
+}
+
+// Design §3 axis 3 ruling: move_to_loop does NOT redirect existing queued connections —
+// the loop argument is a connection-level static property (post_event is the affinity-
+// following channel; covered by existing move_to_loop tests as the control arm).
+TEST_F(W3LoopTest, MoveToLoopDoesNotRedirectQueuedConnections)
+{
+    auto dst = std::make_unique<cxxkit::EventLoop>(std::make_unique<FakeDispatcher>());
+    cxxkit::Signal<int> sig;
+    int viaOldLoop = 0;
+    auto receiver = std::make_shared<cxxkit::Object>();
+    cxxkit::connect_queued(sig, mLoop.get(), receiver.get(), [&](int v) { viaOldLoop = v; });
+    receiver->move_to_loop(dst.get()); // affinity migrates; queued binding must not
+    sig(2); // emit post-migration
+    mLoop->process_events(cxxkit::EventLoop::ProcessFlag::kAllEvents); // OLD loop drain
+    EXPECT_EQ(2, viaOldLoop); // still delivered on the ORIGINAL loop (explicit binding)
+}
+
+// Design §3 axis 5 (expired-loop trichotomy): loop dies before dispatch — in-flight closures
+// still run during the ~EventLoop drain (receiver token alive); emit AFTER loop death is a
+// silent skip (loop token dead). Matches T1's loop-token behavior.
+TEST_F(W3LoopTest, ExpiredLoopDrainsInFlightButBlocksNewPosts)
+{
+    cxxkit::Signal<int> sig;
+    int inflight = 0;
+    auto receiver = std::make_shared<cxxkit::Object>();
+    cxxkit::connect_queued(sig, mLoop.get(), receiver.get(), [&](int v) { inflight = v; });
+    sig(7); // enqueued while the loop is alive
+    mLoop.reset(); // ~EventLoop drain executes the in-flight closure (receiver still alive)
+    EXPECT_EQ(7, inflight);
+    sig(9); // loop dead now — emit-side loop-token check intercepts (silent skip)
+    receiver.reset();
+}
+} // namespace
 
 #endif // CXXKIT_FEATURE_ENABLE_KERNEL
