@@ -32,6 +32,7 @@
 
 #include <gtest/gtest.h>
 
+#include <atomic>
 #include <memory>
 #include <vector>
 
@@ -239,6 +240,52 @@ TEST_F(EventLoopTest, ConnectQueuedArgsCopiedNotReferenced)
     mLoop->process_events(EventLoop::ProcessFlag::kAllEvents);
     EXPECT_EQ(1, delivered);
 }
+
+// 16. W3-SV2 dead-loop pin: emit after the loop died must be a silent skip — no post
+// into a dangling loop pointer (UAF), fn never runs, no crash. The pre-token
+// implementation posted straight into the destroyed loop (ASAN: heap-use-after-free);
+// the weak loop token (design §1.3) closes the hole.
+TEST_F(EventLoopTest, ConnectQueuedSkipsWhenLoopDead)
+{
+    cxxkit::Signal<int> sig;
+    int delivered = 0;
+    {
+        EventLoop loop(std::make_unique<FakeDispatcher>());
+        connect_queued(sig, &loop, [&delivered](int v) { delivered = v; });
+    } // loop destroyed; the signal still holds the connection
+    sig(1); // must not touch the dead loop
+    EXPECT_EQ(0, delivered);
+}
+
+// 17. Loop liveness token (design §1.3): alive while the loop lives, naturally expired
+// once the loop private is destroyed — no manual flip anywhere (unlike the receiver
+// token, the loop token must stay alive through the ~EventLoop drain, so natural
+// expiry is exactly the right lifetime).
+TEST_F(EventLoopTest, LoopAliveTokenTracksLoopLifetime)
+{
+    std::weak_ptr<std::atomic<bool>> token;
+    {
+        EventLoop loop(std::make_unique<FakeDispatcher>());
+        token = loop.alive_token();
+        EXPECT_FALSE(token.expired());
+        EXPECT_TRUE(token.lock() != nullptr);
+    }
+    EXPECT_TRUE(token.expired()); // natural expiry with the loop private
+}
+
+// 18. §3.5 row 2 pin: a closure already enqueued before ~EventLoop still RUNS during the
+// destructor drain — the token stays alive while the drain executes; emission-side
+// checks only gate NEW posts into the dying loop.
+TEST_F(EventLoopTest, EventLoopDtorDrainsPostedWork)
+{
+    int ran = 0;
+    {
+        EventLoop loop(std::make_unique<FakeDispatcher>());
+        loop.post([&ran] { ++ran; });
+    } // destructor drain executes the posted closure
+    EXPECT_EQ(1, ran);
+}
+
 
 // 11. D38: nullptr now selects the default-backend overload (EventLoop(Object*) -> make_default_dispatcher()).
 // The old null-dispatcher fatality is gone by design; the fatal moved into make_default_dispatcher()
