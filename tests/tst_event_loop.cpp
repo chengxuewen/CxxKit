@@ -33,7 +33,11 @@
 #include <gtest/gtest.h>
 
 #include <atomic>
+#include <chrono>
+#include <functional>
 #include <memory>
+#include <stdexcept>
+#include <thread>
 #include <vector>
 
 #if CXXKIT_FEATURE_ENABLE_KERNEL
@@ -284,6 +288,99 @@ TEST_F(EventLoopTest, EventLoopDtorDrainsPostedWork)
         loop.post([&ran] { ++ran; });
     } // destructor drain executes the posted closure
     EXPECT_EQ(1, ran);
+}
+
+// ---- W4: call_and_wait (G2, OQ1 ruling) ---------------------------------------------------------
+
+// Pump helper: runs the loop on a dedicated thread while @p running is set. FakeDispatcher has no
+// real event source, so a 1 ms poll keeps these tests backend-agnostic (no uv gate needed) while
+// still exercising genuinely concurrent caller/loop handshakes.
+namespace
+{
+void pump_loop_while(EventLoop *loop, std::atomic<bool> &running)
+{
+    while (running.load(std::memory_order_relaxed))
+    {
+        loop->process_events(EventLoop::ProcessFlag::kAllEvents);
+        std::this_thread::sleep_for(std::chrono::milliseconds(1));
+    }
+}
+} // namespace
+
+// 19. Round-trip value: fn runs on the loop thread, the caller blocks until the result arrives,
+// and the value crosses threads intact.
+TEST_F(EventLoopTest, CallAndWaitRoundTripValue)
+{
+    std::atomic<bool> running{true};
+    std::thread worker(pump_loop_while, mLoop.get(), std::ref(running));
+    const int result = cxxkit::call_and_wait(mLoop.get(), [] { return 42; });
+    running.store(false);
+    worker.join();
+    EXPECT_EQ(42, result);
+}
+
+// 20. Round-trip void: the handshake still orders the caller after the loop-side execution
+// (the condvar edge), so reading the flag after the call is race-free.
+TEST_F(EventLoopTest, CallAndWaitRoundTripVoid)
+{
+    std::atomic<bool> running{true};
+    std::thread worker(pump_loop_while, mLoop.get(), std::ref(running));
+    bool ran = false;
+    cxxkit::call_and_wait(mLoop.get(), [&ran] { ran = true; });
+    running.store(false);
+    worker.join();
+    EXPECT_TRUE(ran);
+}
+
+// 21. Same-loop call is fatal BY DESIGN (D10 pre-commitment, stronger than Qt's runtime
+// warning): the posted task runs on the loop thread, so the nested call_and_wait must abort
+// instead of deadlocking.
+TEST_F(EventLoopTest, CallAndWaitSameLoopFatal)
+{
+    mLoop->post([this] { (void)cxxkit::call_and_wait(mLoop.get(), [] { return 1; }); });
+    EXPECT_DEATH(mLoop->exec(), "");
+}
+
+// 22. Dead loop: a synchronous caller would block forever — fatal is the only honest answer.
+// (connect_queued's silent-skip contract does NOT carry over: call_and_wait has no token
+// capture point before the call, so a destroyed loop is a caller contract violation that the
+// guard turns into fail-fast instead of a hang.)
+TEST_F(EventLoopTest, CallAndWaitDeadLoopFatal)
+{
+    EventLoop *loop = new EventLoop(std::make_unique<FakeDispatcher>());
+    (void)loop->alive_token(); // materialize the token while the loop is alive
+    delete loop;
+    EXPECT_DEATH((void)cxxkit::call_and_wait(loop, [] { return 1; }), "");
+}
+
+// 23. Exception propagation: a throwing fn surfaces the original exception on the caller side
+// (std::exception_ptr round-trip).
+TEST_F(EventLoopTest, CallAndWaitExceptionPropagates)
+{
+    std::atomic<bool> running{true};
+    std::thread worker(pump_loop_while, mLoop.get(), std::ref(running));
+    ASSERT_THROW(cxxkit::call_and_wait(mLoop.get(), []() -> int { throw std::runtime_error("boom"); }),
+                 std::runtime_error);
+    running.store(false);
+    worker.join();
+}
+
+// 24. Concurrent callers: two blocked callers on the same loop each get their own result —
+// pin for the per-call mutex/condvar handshake (no shared result-cell cross-talk).
+TEST_F(EventLoopTest, CallAndWaitConcurrentCallers)
+{
+    std::atomic<bool> running{true};
+    std::thread worker(pump_loop_while, mLoop.get(), std::ref(running));
+    int first = 0;
+    int second = 0;
+    std::thread callerA([&] { first = cxxkit::call_and_wait(mLoop.get(), [] { return 7; }); });
+    std::thread callerB([&] { second = cxxkit::call_and_wait(mLoop.get(), [] { return 13; }); });
+    callerA.join();
+    callerB.join();
+    running.store(false);
+    worker.join();
+    EXPECT_EQ(7, first);
+    EXPECT_EQ(13, second);
 }
 
 
