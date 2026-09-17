@@ -48,6 +48,10 @@ EventLoop *EventLoop::current()
 
 EventLoopPrivate::EventLoopPrivate(EventLoop *p)
     : ObjectPrivate(p)
+    ,
+    // F1: eager token — concurrent connect_queued from two threads is legal, and a lazy
+    // creation here would race the shared_ptr write (formal UB).
+    mAliveToken(std::make_shared<std::atomic<bool>>(true))
 {
 }
 
@@ -337,13 +341,8 @@ AbstractEventDispatcher &EventLoop::dispatcher()
 
 std::weak_ptr<std::atomic<bool>> EventLoop::alive_token()
 {
-    CXXKIT_D(EventLoop);
-    // Lazy: created on first request; loops without queued connections never allocate.
-    if (!d->mAliveToken)
-    {
-        d->mAliveToken = std::make_shared<std::atomic<bool>>(true);
-    }
-    return d->mAliveToken;
+    // F1: eager creation in EventLoopPrivate's ctor — no lazy path, no race, no guard needed.
+    return this->d_func()->mAliveToken;
 }
 
 void EventLoop::enqueue_event(EventLoop *loop, Object *receiver, Event *event, int priority)

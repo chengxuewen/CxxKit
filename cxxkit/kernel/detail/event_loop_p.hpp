@@ -188,11 +188,12 @@ public:
     /**
      * @brief Loop liveness token (connect_queued family, design §1.3).
      *
-     * Lazily created by alive_token() — loops that never host a queued connection pay
-     * nothing. Natural expiry: the token dies with the private (no manual flip anywhere),
-     * so it stays alive through the ~EventLoop posted-task drain (§3.5 row 2: closures
-     * already enqueued still run) and gates only NEW posts afterwards (§1.3 emit-side
-     * check: dead loop → silent skip, no post into a dangling loop pointer).
+     * Created EAGERLY in the EventLoopPrivate constructor (F1): connect_queued form 1 is
+     * legally callable from two threads concurrently — lazy creation here raced the shared_ptr
+     * write (formal UB). 16B on a heavyweight object; natural expiry is unchanged: the token
+     * dies with the private (no manual flip anywhere), so it stays alive through the ~EventLoop
+     * posted-task drain (§3.5 row 2: closures already enqueued still run) and gates only NEW
+     * posts afterwards (§1.3 emit-side check: dead loop → silent skip).
      */
     std::shared_ptr<std::atomic<bool>> mAliveToken;
 };

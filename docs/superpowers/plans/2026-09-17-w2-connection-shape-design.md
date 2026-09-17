@@ -57,8 +57,8 @@ signals::Connection connect_queued(Signal<Args...> &sig,
 
 namespace detail
 {
-/// kernel 内部：liveness 令牌检查（lock → 未过期且未失效 = 活）。
-/// 令牌统一形态 std::weak_ptr<std::atomic<bool>>：store(true) = 手工失效（Object 早翻），
+/// kernel 内部：liveness 令牌检查（lock → 未过期且 flag=true = 活；flag 读必查，手工翻才能被观测）。
+/// 令牌统一形态 std::weak_ptr<std::atomic<bool>>：store(false) = 手工失效（Object 早翻；true=活），
 /// 控制块析构 = 自然过期（EventLoop 路径，从不手工翻）。
 bool token_alive(const std::weak_ptr<std::atomic<bool>> &token) noexcept;
 } // namespace detail
@@ -184,14 +184,14 @@ event_loop_p.hpp:138）只扫 `mEventQueue`。connect_queued 投出的闭包捕�
 
 ```cpp
 // object_p.hpp（ObjectPrivate 成员区追加）
-std::shared_ptr<std::atomic<bool>> mAliveToken;   // 惰性创建于首次 alive_token() 调用；false=活
+std::shared_ptr<std::atomic<bool>> mAliveToken;   // 惰性创建于首次 alive_token() 调用；true=活，false=死
 
 // object.hpp（Object 公有区追加）
 std::weak_ptr<std::atomic<bool>> alive_token() const;   // kernel 内部：queued 闭包 receiver 检查
 ```
 
 - **与 loop 令牌的差异 = 手工早翻**：`~Object` **第一行**（A1 timer stop 之前）执行
-  `mAliveToken->store(true, release)`。必须在最前：派生类成员在 `~Object` body 运行前已死，
+  `mAliveToken->store(false, release)`（true=活；翻 false = 死）。必须在最前：派生类成员在 ~Object body 运行前已死,
   自然过期（private 析构时）太晚——闭包会在"派生成员已亡、令牌仍活"窗口投递。
   这正是 WeakPtrFactory 显式失效存在的理由（D33-T3 同款 flip 时机考量）。
 - **投递侧检查**（住 connect_queued.hpp 的 posted 闭包内）：
