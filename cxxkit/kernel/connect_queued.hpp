@@ -29,9 +29,16 @@
 #include <cxxkit/kernel/event_loop.hpp>
 #include <cxxkit/tools/checks.hpp>
 
+#include <cxxkit/tools/optional.hpp>
+
 #include <atomic>
+#include <condition_variable>
+#include <exception>
 #include <functional>
 #include <memory>
+#include <mutex>
+#include <type_traits>
+#include <utility>
 
 #if CXXKIT_FEATURE_ENABLE_KERNEL
 
@@ -185,6 +192,154 @@ signals::Connection connect_queued(Signal<Args...> &sig,
     receiver->add_connection(conn);
     return conn;
 }
+
+// -------------------------------------------------------------------------------------------------
+// call_and_wait — synchronous cross-thread call primitive (G2, OQ1 ruling: kernel-layer v1).
+// -------------------------------------------------------------------------------------------------
+
+/**
+ * @brief Synchronization cell shared between the blocked caller and the loop-side runner.
+ *
+ * The loop side calls @c run(fn) exactly once; the caller calls @c wait() then inspects the
+ * outcome. Handshake order: the result/exception is stored under the mutex BEFORE the done flag
+ * is published, so everything the caller reads after @c wait() is already visible.
+ */
+class result_box_base
+{
+public:
+    /// Blocks until the loop side has completed (value stored or exception stored).
+    void wait()
+    {
+        std::unique_lock<std::mutex> lock(mMutex);
+        mDoneCondition.wait(lock, [this] { return mDone; });
+    }
+
+    /// Non-null iff the loop-side invocation threw; valid after wait().
+    std::exception_ptr exception()
+    {
+        std::lock_guard<std::mutex> lock(mMutex);
+        return mException;
+    }
+
+protected:
+    void finish()
+    {
+        std::lock_guard<std::mutex> lock(mMutex);
+        mDone = true;
+        mDoneCondition.notify_one();
+    }
+
+    void finish_exception()
+    {
+        std::lock_guard<std::mutex> lock(mMutex);
+        mException = std::current_exception();
+        mDone = true;
+        mDoneCondition.notify_one();
+    }
+
+    std::mutex mMutex;
+    std::condition_variable mDoneCondition;
+    bool mDone{false};
+    std::exception_ptr mException;
+};
+
+template <typename R>
+class result_box CXXKIT_FINAL : public result_box_base
+{
+public:
+    template <typename F>
+    void run(F &&fn)
+    {
+        try
+        {
+            R value(fn());
+            {
+                std::lock_guard<std::mutex> lock(mMutex);
+                mValue.emplace(std::move(value));
+            }
+            this->finish();
+        }
+        catch (...)
+        {
+            this->finish_exception();
+        }
+    }
+
+    /// Valid after wait() when no exception was stored; moves the result out.
+    R take()
+    {
+        std::lock_guard<std::mutex> lock(mMutex);
+        return std::move(*mValue);
+    }
+
+private:
+    Optional<R> mValue;
+};
+
+template <>
+class result_box<void> CXXKIT_FINAL : public result_box_base
+{
+public:
+    template <typename F>
+    void run(F &&fn)
+    {
+        try
+        {
+            fn();
+            this->finish();
+        }
+        catch (...)
+        {
+            this->finish_exception();
+        }
+    }
+
+    void take() { }
+};
+
+/**
+ * @brief Calls @p fn on @p loop 's thread and blocks the calling thread until it returns.
+ *
+ * The synchronous counterpart of @ref connect_queued (Qt BlockingQueuedConnection shape).
+ * v1 caps (by ruling): no timeout, no cancellation, single fire.
+ *
+ * Contract:
+ * - Same-loop call is fatal by design: blocking the loop's own thread on the loop would
+ *   deadlock. Stronger than Qt, which only warns at runtime.
+ * - A destroyed loop is fatal: a synchronous caller would otherwise block forever. Note
+ *   @ref connect_queued 's silent-skip contract does NOT carry over — the token guard here is
+ *   best-effort (the raw-loop pointer is dereferenced to fetch it), so a loop that died long
+ *   before the call is a caller contract violation turned fail-fast, not a guaranteed-detectable
+ *   state. The loop must outlive the call.
+ * - Exceptions propagate: if @p fn throws, the original exception is rethrown on the caller side.
+ * - Blocking anti-pattern warning: do not hold locks or resources while calling; if the result
+ *   is not needed, prefer @ref connect_queued (fire-and-forget) or EventLoop::post.
+ */
+template <typename F>
+auto call_and_wait(EventLoop *loop, F &&fn) -> decltype(fn())
+{
+    CXXKIT_CHECK(loop != nullptr) << "call_and_wait requires a loop";
+    if (EventLoop::current() == loop)
+    {
+        CXXKIT_FATAL() << "call_and_wait on the loop's own thread would deadlock";
+    }
+    if (!detail::token_alive(loop->alive_token()))
+    {
+        CXXKIT_FATAL() << "call_and_wait on a dead loop";
+    }
+
+    typedef typename std::decay<decltype(fn())>::type result_type;
+    result_box<result_type> box;
+    loop->post([&box, fn] { box.run(fn); });
+    box.wait();
+    const std::exception_ptr failure = box.exception();
+    if (failure)
+    {
+        std::rethrow_exception(failure);
+    }
+    return box.take();
+}
+
 
 CXXKIT_END_NAMESPACE
 

@@ -337,9 +337,22 @@ TEST_F(EventLoopTest, CallAndWaitRoundTripVoid)
 // instead of deadlocking.
 TEST_F(EventLoopTest, CallAndWaitSameLoopFatal)
 {
-    mLoop->post([this] { (void)cxxkit::call_and_wait(mLoop.get(), [] { return 1; }); });
-    EXPECT_DEATH(mLoop->exec(), "");
+    // gtest death tests fork: the child runs the statement and dies; the PARENT resumes right
+    // after EXPECT_DEATH with all pre-fork state intact. A task parked in a loop's post queue
+    // would survive in the parent and detonate later (teardown drain runs call_and_wait on the
+    // loop thread -> the whole test process aborts mid-verdict). So post+exec live INSIDE the
+    // statement lambda: the child posts, drains, and fatals; the parent's throwaway loop never
+    // receives a task and its destructor is a no-op drain.
+    EXPECT_DEATH(
+        []
+        {
+            EventLoop local_loop(std::unique_ptr<cxxkit::AbstractEventDispatcher>(new FakeDispatcher), nullptr);
+            local_loop.post([&local_loop] { (void)cxxkit::call_and_wait(&local_loop, [] { return 1; }); });
+            local_loop.exec();
+        }(),
+        "");
 }
+
 
 // 22. Dead loop: a synchronous caller would block forever — fatal is the only honest answer.
 // (connect_queued's silent-skip contract does NOT carry over: call_and_wait has no token
