@@ -460,4 +460,6 @@ cxxkit 是 OpenCTK（an open cpp toolkit）的成功重构版本 —— 精简�
 - [x] **W3 实现**（e480e1f..edeb732，7 提交）：T1 loop token + 家族 v1（3 新用例，防火墙 0 命中）；T2 G3 组合 + receiver token（五轴全收敛无 fallback，signals.hpp 仅访问符加宽 disconnect_all/add_connection）；T1 token_alive 勘误（lock()&&load(acquire)——手动翻转不可见 bug，判别性回归钉）；终审 APPROVE-WITH-FIXES → 修复波：F1 EventLoop token 惰性创建竞态→ctor 理智初始化（与 Object 侧对称）+ F2 两轴并发测试补齐（CrossThreadConnectEmitAndDestroyStress/DisconnectAllDuringEmission）+ F3 设计文档注释反转勘误
 - 验证：主树 88/88 + tst_object 72/72 + ASAN 72/72 零诊断（含并发新用例）+ 防火墙/非继承 grep 0 + format 干净；终审逐区 SOUND（家族形状/liveness/G3 插入点/防火墙/blast radius/迁移零 diff）
 - 记录：G6 处死 D46；W1 report + W2 design + W3 task-1/2/fix-wave 报告在 .superpowers/sdd/2026-09-17-*/
-- 备忘：asio timer 超期审计（D4 遗留，独立小任务）；exp_qt_embed 死环语义注释 ~3 行（F4 化妆品级）；W4（G2 call_and_wait kernel 原语）门已开；W5/W6 需求触发
+- [x] **W4 G2 call_and_wait**（67c7caf..2fcab8d，OQ1=(b) kernel 层 v1 封顶）：result_box（mutex+condvar+Optional<R>+void 特化）+异常传播+双 fatal（同环/死环，D10 兑现）；**PIT-59**（gtest fork 死亡测试父进程存活——post 残留任务 teardown 排空时引爆全进程，post 必须活 statement lambda 内）；88/88
+- [x] **W1-SV2 asio 审计闭环**（69fcf1a）：审计定案——asio network 后端 cadence timer 骑同一 uv 引擎（D41 泵），契约按构造成立；RepeatingTimerOverrunCollapses 钉（uv-gated 真引擎：5ms timer 回调睡 30ms，160ms 窗口 2-5 发非 burst）；契约行 "audit pending"→"pinned by construction"；D43.5 构造线程亲和教训复用（exec 在构造线程跑，stopper 线程 exit）
+- 备忘：exp_qt_embed 死环语义注释 ~3 行（F4 化妆品级）；W5（G7 stop_and_wait）/W6（G4 future 族）需求触发门
