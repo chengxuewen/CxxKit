@@ -1661,6 +1661,66 @@ TEST_F(W3LoopTest, ReceiverTokenFlipIsObservableBeforeControlBlockDies)
     shared.reset();                                   // natural-expiry path: block gone
     EXPECT_FALSE(cxxkit::detail::token_alive(token));
 }
+
+// §3.6 axis-1 pin (lock variant, F2): cross-thread connect + emit + destroy stress.
+// Worker thread performs 100 form-2 connects while the main thread emits 100 times on
+// the shared signal; afterwards the receiver is destroyed and the loop drained. The
+// mutex-variant observer must keep every touchpoint race-free; deterministic assertions
+// only (no timing): the pin is ASAN silence plus post-destroy silent skip.
+TEST_F(W3LoopTest, CrossThreadConnectEmitAndDestroyStress)
+{
+    cxxkit::Signal<int> sig;
+    std::atomic<int> delivered{0};
+    auto receiver = std::make_shared<cxxkit::Object>();
+
+    const int kConnects = 100;
+    const int kEmits = 100;
+    std::thread connector(
+        [&sig, &receiver, &delivered, this]()
+        {
+            for (int i = 0; i < kConnects; ++i)
+            {
+                cxxkit::connect_queued(sig, mLoop.get(), receiver.get(), [&delivered](int) { ++delivered; });
+            }
+        });
+    for (int i = 0; i < kEmits; ++i)
+    {
+        sig(1); // concurrent with the connects — signal mutex vs observer mutex, one-way order
+    }
+    connector.join();
+
+    receiver.reset();                                                  // ~Object disconnect_all during/after the storm
+    mLoop->process_events(cxxkit::EventLoop::ProcessFlag::kAllEvents); // drain whatever got posted
+    EXPECT_LE(delivered.load(), kConnects * kEmits);                   // trivially true; the pin is ASAN silence
+    sig(1); // post-destroy emit: token + disconnect must make it a silent skip
+    mLoop->process_events(cxxkit::EventLoop::ProcessFlag::kAllEvents);
+}
+
+// §3.6 axis-4 pin (lock order, F2): disconnect_all DURING emission. A worker emits in a
+// bounded loop while the main thread destroys the receiver mid-emission; the observer
+// mutex nests one-way under the signal mutex (design §3.4), so no deadlock is possible —
+// this test completing IS the no-deadlock proof, ASAN silence the no-crash proof.
+TEST_F(W3LoopTest, DisconnectAllDuringEmissionDoesNotDeadlock)
+{
+    cxxkit::Signal<int> sig;
+    std::atomic<bool> done{false};
+    auto receiver = std::make_shared<cxxkit::Object>();
+    cxxkit::connect_queued(sig, mLoop.get(), receiver.get(), [](int) { });
+
+    std::thread emitter(
+        [&sig, &done]()
+        {
+            for (int i = 0; i < 1000 && !done.load(); ++i)
+            {
+                sig(1); // snapshot taken under the signal lock; slots run outside it
+            }
+            done.store(true);
+        });
+    receiver.reset(); // mid-emission eager disconnect_all (observer mutex, no signal lock)
+    emitter.join();
+    mLoop->process_events(cxxkit::EventLoop::ProcessFlag::kAllEvents);
+    SUCCEED() << "joined without deadlock"; // completing = proof
+}
 } // namespace
 
 #endif // CXXKIT_FEATURE_ENABLE_KERNEL
