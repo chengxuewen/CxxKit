@@ -307,6 +307,49 @@ void pump_loop_while(EventLoop *loop, std::atomic<bool> &running)
 }
 } // namespace
 
+// 18b. W1-SV2 overrun-collapse pin: when a repeating timer's callback overruns its interval
+// (or the loop stalls), missed expirations collapse into ONE catch-up fire instead of a burst
+// (Qt qtimer.html contract, D4; verified for the uv engine -- libuv timer.c arms each single-shot
+// fire, so a late timer re-arms from "now", never replaying missed periods). The callback sleeps
+// 30 ms against a 5 ms interval: an engine that back-filled missed expirations would fire ~6x
+// per overrun; the collapse contract fires exactly once per callback completion.
+// 18b. W1-SV2 overrun-collapse pin (uv engine, gated): when a repeating timer's callback
+// overruns its interval (or the loop stalls), missed expirations collapse into ONE catch-up
+// fire instead of a burst (Qt qtimer.html contract, D4; libuv timer.c arms each single-shot
+// fire, so a late timer re-arms from "now" and never replays missed periods). The callback
+// sleeps 30 ms against a 5 ms interval on a REAL loop thread: a back-filling engine would fire
+// ~6x per overrun; the collapse contract fires once per callback completion.
+#    if defined(CXXKIT_ENABLE_LOOP_BACKEND_UV)
+TEST_F(EventLoopTest, RepeatingTimerOverrunCollapses)
+{
+    EventLoop loop(nullptr); // default (uv) engine -- real time-driven timer source
+    std::atomic<int> fires{0};
+    loop.start_timer(
+        5,
+        [&fires]
+        {
+            ++fires;
+            std::this_thread::sleep_for(std::chrono::milliseconds(30));
+        },
+        true);
+
+    // The uv dispatcher captures the loop thread AT CONSTRUCTION (main here), so exec() runs
+    // on this thread; a stopper thread exits the loop after ~5 overrun cadence rounds.
+    std::thread stopper(
+        [&loop]
+        {
+            std::this_thread::sleep_for(std::chrono::milliseconds(160));
+            loop.exit(0);
+        });
+    loop.exec();
+    stopper.join();
+
+    const int n = fires.load();
+    EXPECT_GE(n, 2); // the timer genuinely repeated through overruns
+    EXPECT_LE(n, 5); // collapse: no back-fill burst (a burst engine would show ~25+)
+}
+#    endif // CXXKIT_ENABLE_LOOP_BACKEND_UV
+
 // 19. Round-trip value: fn runs on the loop thread, the caller blocks until the result arrives,
 // and the value crosses threads intact.
 TEST_F(EventLoopTest, CallAndWaitRoundTripValue)
