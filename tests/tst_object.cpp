@@ -1645,6 +1645,22 @@ TEST_F(W3LoopTest, ExpiredLoopDrainsInFlightButBlocksNewPosts)
     sig(9); // loop dead now — emit-side loop-token check intercepts (silent skip)
     receiver.reset();
 }
+
+// Regression pin (W3-T2 erratum): token_alive must read the FLAG, not just control-block
+// liveness — the ~Object manual flip (store false) happens while ObjectPrivate (and the
+// control block) is still alive. A lock()-only check would report the flipped token as
+// alive, making the ~Object early flip unobservable. Loop token composes too: its flag is
+// never written, so the flag read must not break natural expiry.
+TEST_F(W3LoopTest, ReceiverTokenFlipIsObservableBeforeControlBlockDies)
+{
+    auto shared = std::make_shared<std::atomic<bool>>(true);
+    std::weak_ptr<std::atomic<bool>> token = shared;
+    EXPECT_TRUE(cxxkit::detail::token_alive(token));  // flag true, block alive
+    shared->store(false, std::memory_order_release);  // ~Object-style manual flip
+    EXPECT_FALSE(cxxkit::detail::token_alive(token)); // block STILL alive — flag decides
+    shared.reset();                                   // natural-expiry path: block gone
+    EXPECT_FALSE(cxxkit::detail::token_alive(token));
+}
 } // namespace
 
 #endif // CXXKIT_FEATURE_ENABLE_KERNEL

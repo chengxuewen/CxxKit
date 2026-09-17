@@ -52,14 +52,20 @@ namespace detail
 /**
  * @brief Liveness-token check for the connect_queued family (design §1.2/§2.4).
  *
- * Unified token shape std::weak_ptr<std::atomic<bool>>: lock success = alive. Natural
- * expiry = the owner's control block died (EventLoop private destroyed — the loop token
- * is never flipped by hand); the receiver token (Object, design §2.4) is manually flipped
- * false at the very top of ~Object — both compose with this single check.
+ * Unified token shape std::weak_ptr<std::atomic<bool>>: lock success AND flag true = alive.
+ * Two lifetime strategies compose with this single check: natural expiry (EventLoop loop
+ * token — the control block dies with the loop private, flag never written) and manual
+ * early flip (Object receiver token, design §2.4 — ~Object stores false BEFORE its
+ * members die, closing the "derived members dead but ObjectPrivate alive" window that
+ * control-block expiry alone would leave open).
  */
 inline bool token_alive(const std::weak_ptr<std::atomic<bool>> &token) noexcept
 {
-    return token.lock() != nullptr;
+    const std::shared_ptr<std::atomic<bool>> owner = token.lock();
+    // Flag read is REQUIRED for the manual-flip strategy: a store(false) on a still-living
+    // control block must read as dead (design §2.4). Natural-expiry owners never write the
+    // flag, so the load stays true for them — both strategies compose.
+    return (owner != nullptr) && owner->load(std::memory_order_acquire);
 }
 } // namespace detail
 
