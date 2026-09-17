@@ -451,3 +451,13 @@ cxxkit 是 OpenCTK（an open cpp toolkit）的成功重构版本 —— 精简�
 - 验证：uv 主树 **88/88** / asio 树 **90/90** / ASAN-asio udp 15/15 零诊断 / clang-format 干净 / C4+octk 门禁干净
 - 记录：decisions.md D45；探针文件一次性（/tmp，未入库）
 - 备忘：multicast v2、DTLS 远期（Deferred）；孤儿 pimpl stash@{0} 复查项维持
+
+### 2026-09-17 信号/循环差距计划落地（W1+W2+W3，53ce39e..edeb732）
+
+- [x] **差距分析 + hyperplan 对抗审核**（53ce39e）：三路调研（qt-signals/qt-loop/eco）+ 4 人对抗 3 轮（6 击杀/22 存活）+ 迟到 researcher 实证 2 处事实错误；修订版计划 12 项逐项审核全过；三扇 OQ 门裁定（G2=kernel 层/OQ2=全删枚举/OQ3=维持门+HC5 预埋）
+- [x] **W1 文档速修包**（cce6cc1）：D1 双句排空契约（任务队列快照/事件队列活排空——researcher 修正原调研半假表述）/D2 删 4 死枚举/D3 嵌套环分裂契约/D4 timer 契约（uv 已验证 asio 待审计）/D5-D6/D8 删 future.hpp 空壳+README 同步/D9 G6 墓志铭（D46：语义不可移植）/D10 G2 底线；D7 connect_unique 合理跳过；88/88
+- [x] **W2 形状联合裁定**（904c56e，Momus OKAY 全引用实证）：G1 家族永居 kernel（signals.hpp EventLoop 零知识防火墙）；weak loop token=shared_ptr<atomic<bool>>；receiver liveness=闭包内嵌 token（弃 registry——mPostQueue 手术否决）；G3 五轴全裁（observer mutex 内嵌/disconnect_all 插 destroying 后 purge 前/move_to_loop 不重定向/单向锁序/环亡三分岔）；fallback 路径显式化；G4 on_loop/on_pool 两上下文封顶
+- [x] **W3 实现**（e480e1f..edeb732，7 提交）：T1 loop token + 家族 v1（3 新用例，防火墙 0 命中）；T2 G3 组合 + receiver token（五轴全收敛无 fallback，signals.hpp 仅访问符加宽 disconnect_all/add_connection）；T1 token_alive 勘误（lock()&&load(acquire)——手动翻转不可见 bug，判别性回归钉）；终审 APPROVE-WITH-FIXES → 修复波：F1 EventLoop token 惰性创建竞态→ctor 理智初始化（与 Object 侧对称）+ F2 两轴并发测试补齐（CrossThreadConnectEmitAndDestroyStress/DisconnectAllDuringEmission）+ F3 设计文档注释反转勘误
+- 验证：主树 88/88 + tst_object 72/72 + ASAN 72/72 零诊断（含并发新用例）+ 防火墙/非继承 grep 0 + format 干净；终审逐区 SOUND（家族形状/liveness/G3 插入点/防火墙/blast radius/迁移零 diff）
+- 记录：G6 处死 D46；W1 report + W2 design + W3 task-1/2/fix-wave 报告在 .superpowers/sdd/2026-09-17-*/
+- 备忘：asio timer 超期审计（D4 遗留，独立小任务）；exp_qt_embed 死环语义注释 ~3 行（F4 化妆品级）；W4（G2 call_and_wait kernel 原语）门已开；W5/W6 需求触发
