@@ -29,7 +29,9 @@
 #include <cxxkit/kernel/event_loop.hpp>
 #include <cxxkit/tools/checks.hpp>
 
+#include <atomic>
 #include <functional>
+#include <memory>
 
 #if CXXKIT_FEATURE_ENABLE_KERNEL
 
@@ -45,6 +47,22 @@ struct type_identity
     using type = T;
 };
 
+namespace detail
+{
+/**
+ * @brief Liveness-token check for the connect_queued family (design §1.2/§2.4).
+ *
+ * Unified token shape std::weak_ptr<std::atomic<bool>>: lock success = alive. Natural
+ * expiry = the owner's control block died (EventLoop private destroyed — the loop token
+ * is never flipped by hand); a future manual store(false) flip (receiver token, Task 2)
+ * composes with the same check.
+ */
+inline bool token_alive(const std::weak_ptr<std::atomic<bool>> &token) noexcept
+{
+    return token.lock() != nullptr;
+}
+} // namespace detail
+
 /**
  * @brief Connects @p sig to a slot that hops onto @p loop: each emission copies the arguments
  * and enqueues @p fn to run on the loop thread via EventLoop::post.
@@ -54,7 +72,15 @@ struct type_identity
  * a pending delivery. Because @p fn runs on the loop thread, later re-entrancy through the
  * loop is safe.
  *
- * Lifecycle: @p loop must outlive the returned connection (event-loop design spec, appendix C ④).
+ * Lifecycle (weak loop token, design §1.3): the slot captures a weak loop token captured at
+ * connect time. On each emission the slot checks the token on the emitting thread — if the
+ * loop has been destroyed the emission silently skips (no post, no crash), mirroring the
+ * tracked-slot "dead → skip, not throw" contract. Known narrow window (documented limitation):
+ * a "token check passed → post" step can still race a concurrent ~EventLoop (instruction-level
+ * TOCTOU); the token shrinks the exposure from "the loop's whole remaining lifetime" to that
+ * instruction-level window — the same best-effort boundary as PendingTaskSafetyFlag.
+ * Closures already enqueued when the loop dies still run: ~EventLoop drains the posted-task
+ * queue unconditionally and the token stays alive during that drain.
  *
  * Disconnection (spec I7): disconnect() stops future deliveries only — deliveries already
  * enqueued before the disconnect still run. To undo safely, stop the emit source first or use
@@ -78,7 +104,18 @@ signals::Connection connect_queued(Signal<Args...> &sig,
                                    typename type_identity<std::function<void(Args...)>>::type fn)
 {
     CXXKIT_CHECK(loop != nullptr) << "connect_queued requires a loop";
-    return sig.connect([loop, fn](const Args &...args) { loop->post(std::bind(fn, args...)); });
+    const std::weak_ptr<std::atomic<bool>> loopToken = loop->alive_token();
+    return sig.connect(
+        [loop, loopToken, fn](const Args &...args)
+        {
+            // Emit-side check on the emitting thread (PIT-40 safe: signals invoke slots outside
+            // the signal lock). Dead loop → silent skip, never post into a dangling pointer.
+            if (!detail::token_alive(loopToken))
+            {
+                return;
+            }
+            loop->post(std::bind(fn, args...));
+        });
 }
 
 CXXKIT_END_NAMESPACE

@@ -184,6 +184,17 @@ public:
     std::atomic<int> mRetCode{-1};
     std::atomic<bool> mHasExitCode{false}; // exit() ran — distinguishes preset exit from fresh state
     ReferenceCounter mRefCounter;
+
+    /**
+     * @brief Loop liveness token (connect_queued family, design §1.3).
+     *
+     * Lazily created by alive_token() — loops that never host a queued connection pay
+     * nothing. Natural expiry: the token dies with the private (no manual flip anywhere),
+     * so it stays alive through the ~EventLoop posted-task drain (§3.5 row 2: closures
+     * already enqueued still run) and gates only NEW posts afterwards (§1.3 emit-side
+     * check: dead loop → silent skip, no post into a dangling loop pointer).
+     */
+    std::shared_ptr<std::atomic<bool>> mAliveToken;
 };
 
 CXXKIT_END_NAMESPACE

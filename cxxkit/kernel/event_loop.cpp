@@ -29,6 +29,7 @@
 #include <cxxkit/tools/checks.hpp>
 #include <cxxkit/tools/logging.hpp>
 
+#include <atomic>
 #include <chrono>
 
 #if CXXKIT_FEATURE_ENABLE_KERNEL
@@ -332,6 +333,17 @@ AbstractEventDispatcher &EventLoop::dispatcher()
 {
     CXXKIT_D(EventLoop);
     return *d->mDispatcher;
+}
+
+std::weak_ptr<std::atomic<bool>> EventLoop::alive_token()
+{
+    CXXKIT_D(EventLoop);
+    // Lazy: created on first request; loops without queued connections never allocate.
+    if (!d->mAliveToken)
+    {
+        d->mAliveToken = std::make_shared<std::atomic<bool>>(true);
+    }
+    return d->mAliveToken;
 }
 
 void EventLoop::enqueue_event(EventLoop *loop, Object *receiver, Event *event, int priority)

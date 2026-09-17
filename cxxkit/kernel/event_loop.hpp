@@ -172,6 +172,18 @@ public:
      */
     AbstractEventDispatcher &dispatcher();
 
+    /**
+     * @brief Returns this loop's liveness token (kernel-internal: the connect_queued
+     * family's dead-loop check, design §1.3).
+     *
+     * The token expires naturally when the loop's private is destroyed — no manual
+     * invalidation point. It stays alive through the ~EventLoop posted-task drain (the
+     * "delete_later closures must run" invariant), so closures already enqueued keep
+     * running; after destruction, emit-side checks fail and the emission silently skips
+     * instead of posting into the dangling loop.
+     */
+    std::weak_ptr<std::atomic<bool>> alive_token();
+
     bool event(Event *event) override;
 
 private:
