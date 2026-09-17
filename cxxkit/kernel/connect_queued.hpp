@@ -60,6 +60,13 @@ struct type_identity
  * enqueued before the disconnect still run. To undo safely, stop the emit source first or use
  * a safety flag (PendingTaskSafetyFlag, spec M5/S8).
  *
+ * Same-thread contract (W1/D10, OQ1 pre-commitment): calling a @c wait-style helper that
+ * blocks the loop on work that must run on that same loop is fatal BY DESIGN — deadlock
+ * prevention is deliberately stronger than Qt's runtime warning for BlockingQueuedConnection.
+ * Anti-pattern warning: do not block a loop thread waiting on async work; the blocking
+ * call_and_wait primitive does not exist yet, and loop-thread blocking (join, wait_for,
+ * poll) stalls all queued work and timers until it returns.
+ *
  * @param sig Signal to connect (thread-safe signals::Signal).
  * @param loop Target loop for delivery; null is a fatal error.
  * @param fn Slot invoked on the loop thread.

@@ -46,12 +46,8 @@ public:
     enum class ProcessFlag
     {
         kAllEvents = 0x00,
-        kExcludeUserInputEvents = 0x01,
-        kExcludeSocketNotifiers = 0x02,
         kWaitForMoreEvents = 0x04,
-        kX11ExcludeTimers = 0x08,
-        kEventLoopExec = 0x20,
-        kDialogExec = 0x40
+        kEventLoopExec = 0x20
     };
     CXXKIT_DECLARE_ENUM_FLAGS(ProcessFlags, ProcessFlag)
 
@@ -75,6 +71,21 @@ public:
 
     /**
      * @brief Processes pending events without blocking; returns what the dispatcher returned.
+     *
+     * Drain contract, in two parts:
+     *
+     * (a) Posted-task queue = snapshot semantics. The whole queue is swapped out in one shot
+     * (take_post_queue) and the snapshot is drained to completion. Tasks posted during that
+     * round land in the fresh queue and run on the NEXT round — they do not extend the current
+     * one. Bound your own drain loops; a task that re-posts itself every round runs once per
+     * round, forever (that is the intended idiom for periodic work).
+     *
+     * (b) Event queue = drain-until-sentinel. Entries are popped and dispatched one by one
+     * until the queue reports empty. Events posted during dispatch (including events re-posted
+     * by the code being dispatched) join the SAME round. Warning — amplification: a handler
+     * that post_event()s to itself unconditionally therefore never lets the drain terminate;
+     * guard re-posts (e.g. dirty flags) or the loop spins. When you need a bounded time slice
+     * instead, use the process_events(flags, maximum_ms) overload.
      */
     bool process_events(ProcessFlags flags = ProcessFlag::kAllEvents);
 
@@ -106,6 +117,18 @@ public:
      * but no dispatcher entry exists for it, so stop_timer(ghostId) is a no-op (safe to call).
      * repeat == true with interval_ms == 0 still registers through the engine: a zero-period
      * repeating timer fires every loop round (Qt semantics).
+     *
+     * Repeating-timer contract:
+     * - Ordering at interval == 0 is backend-defined: do not rely on where a zero-period
+     *   repeating timer lands relative to posted tasks or other timers within a round.
+     * - Overrun collapse: if a callback overruns its interval (or the loop misses deadlines),
+     *   missed expirations collapse into ONE catch-up fire; the timer never emits a burst.
+     *   Verified for the uv backend (libuv timer.c arms each single-shot fire); asio audit
+     *   pending (tracked separately).
+     * - Precision = backend-native. There is no Qt-style Coarse tolerance tier (qtimer.h only
+     *   applies a >=2s Coarse heuristic upstream; we have no such layer). Qt-behavior sentences
+     *   in this contract paraphrase the Qt QTimer documentation (qtimer.html), not verbatim
+     *   quotes.
      */
     int start_timer(uint64_t interval_ms, std::function<void()> fn, bool repeat = true);
 
@@ -122,7 +145,16 @@ public:
      */
     static EventLoop *current();
 
+    /**
+     * @brief Runs the loop until exit() — the blocking variant of process_events.
+     *
+     * Nested-loop contract is backend-split: the Qt host-bridge dispatcher allows nesting
+     * (Qt itself nests event loops), while the uv engine is fatal on nested iteration (libuv
+     * has no nested uv_run). Cross-backend portable code therefore MUST NOT nest exec()
+     * calls — structure such flows with an inner process_events() slice instead.
+     */
     int exec(ProcessFlags flags = ProcessFlag::kAllEvents);
+
     void wake_up();
 
     void exit(int retCode = 0);

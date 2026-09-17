@@ -499,3 +499,16 @@ sanitizer（ASAN/LSAN/UBSan）与 coverage 用**独立 build 目录**（build-as
 **验证门禁**：uv 主树 88/88；asio 树 90/90；ASAN-asio udp 15/15 零诊断；clang-format 干净；C4/octk 门禁干净。
 
 **Deferred（阶梯）**：multicast v2、DTLS 远期；connected-UDP 已由本波落地。
+
+## D46: G6 prepare/check 迭代钩子处死（2026-09-17，W1-D9，hyperplan D1 修订裁定）
+
+**裁定**：G6（AbstractEventDispatcher prepare/check 每轮迭代钩子，仿 glib prepare/query/check/dispatch 阶段）正式处死，不进入任何波次——§四"明确不做"栅栏 + 本墓志铭。
+
+**处死理由（语义不可移植，非消费面论证）**：三后端无统一轮次锚点——`run_before_poll` 语义漂移：uv = 每次 poll 迭代（uv_prepare/uv_check 粒度）、shell dispatcher = 每次 process_events 调用、qt host bridge = 无 poll 边界（Qt 内部循环不外露钩子点）。同一 API 三种轮次语义 = 契约不可写，用户代码跨后端行为漂移。
+注：处死论证**拒绝采信**"零消费者"（最弱论据——0.x 库消费者尚未出现不能证明未来不需要）；语义不可移植才是根因。
+
+**复活条件（两者同时成立才重开）**：
+1. **shell 级锚点**：抽象出以 process_events 调用为轮次边界的统一语义（各后端在同一抽象层可映射）；
+2. **has_poll_hooks()**：dispatcher 构造期能力查询——无钩子能力的后端（qt）在构造/注册期即拒绝（capability rejection），而非运行期静默降级。
+
+**关联**：hyperplan 修订记录第 11 条（skeptic-S4 + architect-A5）；`docs/superpowers/plans/2026-09-17-signal-loop-gap-plan.md` §四 G6 栅栏行。

@@ -29,7 +29,6 @@ set(CXXKIT_THREAD_SOURCES
     concurrent.cpp
     context_checker.cpp
     event_loop_thread.cpp
-    future.cpp
     platform_thread.cpp
     race_checker.cpp
     repeating_task.cpp

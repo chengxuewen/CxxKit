@@ -72,6 +72,10 @@ CXXKIT_BEGIN_NAMESPACE
  * For emissions that produce a value, see @c SignalR / @c SignalUnsafeR and
  * their combiner documentation (@c optional_last_value, @c maximum, custom
  * combiners).
+ *
+ * @b Dead-object slots: a tracked slot whose owner has died (weak reference
+ * expired) is silently skipped at emission — no exception is thrown, unlike
+ * sigc++ which throws/exposes expired_slot.
  * @{
  */
 

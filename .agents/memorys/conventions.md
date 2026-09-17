@@ -102,3 +102,5 @@ add_library(cxxkit_xxx ${_cxxkit_headers} xxx.cpp)   # header-only 用 add_libra
 - **C16⑥（2026-08-28）**：移植代码中的所有公开标识符（函数名/成员变量/枚举值）必须在同 PR 内迁移到本项目命名规范（spec §1 矩阵 + §2 前缀规则），不留豁免层。上游 C API 限定调用（如 libyuv::I420Copy）保持原名。
 
 - **C18（2026-09-10）**：提交消息与代码注释**必须使用英文**；计划文档与 AI 对话交互使用中文。检查：`git log --format="%s" -20 | grep -P "[\x{4e00}-\x{9fff}]" | wc -l` 应为 0；新代码注释抽查无中文。
+
+- **C19（2026-09-17，W1-D6）**：信号连接的 lambda **禁裸捕获 `this`**——连接体捕获 `this` 而无生命周期挂钩 = slot 对象析构后 UAF 反模式（PIT-46 同族）。必须经三轨之一：tracked slot（weak_ptr 跟踪）/ Observer / ScopedConnection（或 EventLoopThread 式显式 join-before-free）。检查（连接体内裸 this 捕获，人工审核命中项）：`grep -rnE "\[[^]]*this[^]]*\]\s*\(" cxxkit/ --include="*.hpp" --include="*.cpp" | grep -v "weak\|Observer\|ScopedConnection" || true`
