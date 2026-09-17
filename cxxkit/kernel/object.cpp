@@ -87,6 +87,15 @@ Object::Object(ObjectPrivate *d)
 Object::~Object()
 {
     CXXKIT_D(Object);
+    // HC9 (design §2.4): flip the receiver liveness token FIRST — before timer stop and
+    // before destroying(). Derived-class members are already dead when this body runs, so
+    // waiting for the ObjectPrivate member destruction (natural expiry) would leave a window
+    // where in-flight queued closures still deliver into a half-dead object. Release order:
+    // store(false, release) pairs with token_alive()'s lock/acquire.
+    if (d->mAliveToken)
+    {
+        d->mAliveToken->store(false, std::memory_order_release);
+    }
     // A1 (Momus): stop every live timer FIRST — armed dispatcher-side ticks must never fire
     // into a destroyed object (UAF). Best-effort and affinity-thread-only: uv timer stop is
     // not thread-safe, so off-thread destruction leaves them armed (documented caller
@@ -101,6 +110,13 @@ Object::~Object()
         }
     }
     this->destroying(); // 预销毁锚点：派生成员仍存活、children 未级联（析构期派发只到 Object 层）
+    // G3 eager release (design §3.2): disconnect_all between destroying() and purge_pending —
+    // "close the producer first, then clear the residue": stops new emit→post generation
+    // before the queue sweep, and completes before the children cascade (a cross-thread emit
+    // into a half-destructed this during cascade = UAF; this closes that path). Each
+    // ScopedConnection's dtor detaches via SlotState atomics without taking the signal lock
+    // (design §3.4: no observer→signal lock edge).
+    d->mConnections.disconnect_all();
     // T3/T2: clear pending entries (incl. DeferredDeleteEvent) — the foundation of the parent-child
     // same-queue delete_later contract. A purge triggered by a parent dtor during dispatch removes the
     // child's undelivered entries from the queue body under the lock (mutually exclusive with
@@ -202,6 +218,26 @@ void Object::delete_later()
     // dispatcher blocks in a wait, this wake is the liveness signal; a same-thread wake is
     // harmless (idempotent doorbell).
     loop->wake_up();
+}
+
+void Object::add_connection(signals::Connection conn)
+{
+    // G3 (design §3.0): forward into the embedded observer; the observer mutex serializes
+    // against emit-time disconnect_all from any thread (std::mutex variant ruling, §3.1).
+    this->d_func()->mConnections.add_connection(std::move(conn));
+}
+
+std::weak_ptr<std::atomic<bool>> Object::alive_token() const
+{
+    // HC9 (design §2.4): lazily create the token; the mutex protects against two threads
+    // lazily creating concurrently (connect_queued form 2 is callable cross-thread).
+    ObjectPrivate *d = const_cast<ObjectPrivate *>(this->d_func());
+    std::lock_guard<std::mutex> guard(d->mTokenMutex);
+    if (!d->mAliveToken)
+    {
+        d->mAliveToken = std::make_shared<std::atomic<bool>>(true); // true = alive
+    }
+    return d->mAliveToken;
 }
 
 void Object::post_event(Object *receiver, Event *event, int priority)

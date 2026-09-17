@@ -25,10 +25,13 @@
 #pragma once
 
 #include <cxxkit/kernel/object.hpp>
+#include <cxxkit/kernel/signals.hpp>
 
+#include <atomic>
 #include <list>
 #include <map>
 #include <memory>
+#include <mutex>
 #include <string>
 #include <vector>
 
@@ -57,6 +60,18 @@ public:
     std::vector<int> mActiveTimers;  // A1: live timer ids (dispatcher-side armed); same-thread only
     std::string mObjectName;         // name follows the object (not touched by move_to_loop)
     std::map<const void *, std::unique_ptr<Object::UserData>> mUserData; // owned; released by member dtor
+
+    /** G3 (design §3.0): connection registry — every signal connection registered through
+     *  Object::add_connection lives here; ~Object eagerly disconnect_all()s it after
+     *  destroying() and before purge_pending. std::mutex variant: connect/emit/destroy can
+     *  cross threads (queued connections). */
+    signals::observer mConnections;
+    /** HC9 (design §2.4): receiver liveness token — lazily created by alive_token(); manual
+     *  early flip store(false) at the very top of ~Object (BEFORE timer stop), because
+     *  derived members are already dead when the ~Object body runs; natural private-destructor
+     *  expiry would leave an in-flight queued closure delivering into a half-dead object. */
+    std::shared_ptr<std::atomic<bool>> mAliveToken;
+    std::mutex mTokenMutex; // guards lazy mAliveToken creation (form-2 connect is cross-thread)
 
     /** @brief T7 funnel bridge: Application::notify (a plain member of the DERIVED Application
      *  class) cannot call Object's private send_event_internal directly — ObjectPrivate is the

@@ -1539,7 +1539,6 @@ TEST(Object, delete_later_compression_works_across_priority_mix)
 }
 
 
-
 // =============================================================================================
 // W3 Task 2 — G3 receiver-liveness + eager-release + composition pins (design §2/§3)
 // =============================================================================================
@@ -1580,7 +1579,7 @@ TEST_F(W3LoopTest, ConnectQueuedReceiverDeathSkipsDelivery)
                            {
                                delivered = v; // stand-in for receiver-adjacent state writes
                            });
-    sig(1); // enqueued on mLoop
+    sig(1);           // enqueued on mLoop
     receiver.reset(); // receiver dies before the drain — token flips early in ~Object (§2.4)
     mLoop->process_events(cxxkit::EventLoop::ProcessFlag::kAllEvents);
     EXPECT_EQ(0, delivered); // zero delivery + ASAN zero UAF
@@ -1592,11 +1591,11 @@ TEST_F(W3LoopTest, DestructorEagerlyDisconnectsConnections)
 {
     cxxkit::Signal<int> sig;
     auto receiver = std::make_shared<cxxkit::Object>();
-    cxxkit::connect_queued(sig, mLoop.get(), receiver.get(), [](int) {});
+    cxxkit::connect_queued(sig, mLoop.get(), receiver.get(), [](int) { });
     EXPECT_GT(sig.slot_count(), 0u); // connected
-    receiver.reset(); // ~Object: eager disconnect_all drops the slot from the signal
+    receiver.reset();                // ~Object: eager disconnect_all drops the slot from the signal
     EXPECT_EQ(0u, sig.slot_count()); // H4: released eagerly, not left dangling
-    sig(1); // no slot: no post, no crash
+    sig(1);                          // no slot: no post, no crash
     mLoop->process_events(cxxkit::EventLoop::ProcessFlag::kAllEvents);
 }
 
@@ -1608,7 +1607,7 @@ TEST_F(W3LoopTest, AddConnectionRegistersAndReleasesOnDestruction)
 {
     cxxkit::Signal<int> sig;
     auto receiver = std::make_shared<cxxkit::Object>();
-    auto conn = sig.connect([](int) {});
+    auto conn = sig.connect([](int) { });
     receiver->add_connection(conn);
     EXPECT_TRUE(conn.connected());
     receiver.reset(); // ~Object disconnect_all — connection dies with the owner
@@ -1625,8 +1624,8 @@ TEST_F(W3LoopTest, MoveToLoopDoesNotRedirectQueuedConnections)
     int viaOldLoop = 0;
     auto receiver = std::make_shared<cxxkit::Object>();
     cxxkit::connect_queued(sig, mLoop.get(), receiver.get(), [&](int v) { viaOldLoop = v; });
-    receiver->move_to_loop(dst.get()); // affinity migrates; queued binding must not
-    sig(2); // emit post-migration
+    receiver->move_to_loop(dst.get());                                 // affinity migrates; queued binding must not
+    sig(2);                                                            // emit post-migration
     mLoop->process_events(cxxkit::EventLoop::ProcessFlag::kAllEvents); // OLD loop drain
     EXPECT_EQ(2, viaOldLoop); // still delivered on the ORIGINAL loop (explicit binding)
 }
@@ -1640,7 +1639,7 @@ TEST_F(W3LoopTest, ExpiredLoopDrainsInFlightButBlocksNewPosts)
     int inflight = 0;
     auto receiver = std::make_shared<cxxkit::Object>();
     cxxkit::connect_queued(sig, mLoop.get(), receiver.get(), [&](int v) { inflight = v; });
-    sig(7); // enqueued while the loop is alive
+    sig(7);        // enqueued while the loop is alive
     mLoop.reset(); // ~EventLoop drain executes the in-flight closure (receiver still alive)
     EXPECT_EQ(7, inflight);
     sig(9); // loop dead now — emit-side loop-token check intercepts (silent skip)

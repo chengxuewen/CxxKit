@@ -54,8 +54,8 @@ namespace detail
  *
  * Unified token shape std::weak_ptr<std::atomic<bool>>: lock success = alive. Natural
  * expiry = the owner's control block died (EventLoop private destroyed — the loop token
- * is never flipped by hand); a future manual store(false) flip (receiver token, Task 2)
- * composes with the same check.
+ * is never flipped by hand); the receiver token (Object, design §2.4) is manually flipped
+ * false at the very top of ~Object — both compose with this single check.
  */
 inline bool token_alive(const std::weak_ptr<std::atomic<bool>> &token) noexcept
 {
@@ -116,6 +116,68 @@ signals::Connection connect_queued(Signal<Args...> &sig,
             }
             loop->post(std::bind(fn, args...));
         });
+}
+
+/**
+ * @brief Receiver form (design §1.2 shape 2 / §2 / §3): double liveness protection for a
+ * queued connection whose slot logically belongs to an Object receiver.
+ *
+ * ① Producer side: the returned Connection is registered into the receiver's embedded
+ *    connection observer (Object::add_connection) — ~Object eagerly disconnect_all()s it
+ *    (after destroying(), before purge_pending), so no NEW emit produces a NEW post into
+ *    a dead receiver's loop binding.
+ * ② Consumer side: the posted closure embeds the receiver liveness token — if the receiver
+ *    died between enqueue and drain, the delivery silently skips (SafetyFlag precedent).
+ *    The two tokens are orthogonal: the loop token gates "before enqueue" (emit side), the
+ *    receiver token gates "before execution" (drain side).
+ *
+ * Same value-copy semantics, same silent-skip contract and same instruction-level TOCTOU
+ * window as form 1. Thread-safety: all three touchpoints (connect, emit, receiver dtor)
+ * may run on different threads — the std::mutex observer variant is mandatory (design §3.1).
+ *
+ * @param sig Signal to connect (thread-safe signals::Signal).
+ * @param loop Target loop for delivery; null is a fatal error. Static binding: the loop
+ *        argument is NOT redirected by receiver move_to_loop (design §3 axis-3 ruling).
+ * @param receiver Owner of the slot; null is a fatal error. Must outlive every in-flight
+ *        delivery or rely on the token skip (which it does automatically).
+ * @param fn Slot invoked on the loop thread.
+ * @return signals::Connection (also registered with @p receiver).
+ */
+template <typename... Args>
+signals::Connection connect_queued(Signal<Args...> &sig,
+                                   EventLoop *loop,
+                                   Object *receiver,
+                                   typename type_identity<std::function<void(Args...)>>::type fn)
+{
+    CXXKIT_CHECK(loop != nullptr) << "connect_queued requires a loop";
+    CXXKIT_CHECK(receiver != nullptr) << "connect_queued receiver form requires a receiver";
+    const std::weak_ptr<std::atomic<bool>> loopToken = loop->alive_token();
+    const std::weak_ptr<std::atomic<bool>> receiverToken = receiver->alive_token();
+    // Register the connection into the receiver's observer FIRST (producer-side guard): the
+    // returned Connection also lands there, so ~Object disconnects it eagerly (design §3.0).
+    signals::Connection conn = sig.connect(
+        [loop, loopToken, receiverToken, fn](const Args &...args)
+        {
+            // Emit-side loop check (same as form 1): dead loop → silent skip, no post.
+            if (!detail::token_alive(loopToken))
+            {
+                return;
+            }
+            loop->post(std::bind(
+                [receiverToken, fn](const Args &...copiedArgs)
+                {
+                    // Drain-side receiver check: dead receiver → silently drop the delivery
+                    // (SafetyFlag precedent). Runs on the loop thread, outside any lock (PIT-40).
+                    if (!detail::token_alive(receiverToken))
+                    {
+                        return;
+                    }
+                    fn(copiedArgs...);
+                },
+                args...));
+        });
+    receiver->add_connection(conn);
+    return conn;
 }
 
 CXXKIT_END_NAMESPACE

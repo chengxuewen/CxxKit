@@ -24,8 +24,10 @@
 
 #pragma once
 
+#include <cxxkit/kernel/signals.hpp>
 #include <cxxkit/kernel/event.hpp>
 
+#include <atomic>
 #include <cstdint>
 #include <list>
 #include <map>
@@ -298,6 +300,16 @@ public:
      * @since 0.2
      */
     void delete_later();
+
+    /** G3 (design §3.0): registers @p conn into this object's embedded connection observer —
+     *  ~Object eagerly disconnects every registered connection (design §3.2: after
+     *  destroying(), before purge_pending). Composition, not inheritance (D33). @since 0.2 */
+    void add_connection(signals::Connection conn);
+
+    /** HC9 (design §2.4): receiver liveness token for the queued-closure delivery check.
+     *  Manually flipped false at the very top of ~Object (derived members are dead by then);
+     *  opposite lifetime strategy to EventLoop::alive_token (natural expiry). @since 0.2 */
+    std::weak_ptr<std::atomic<bool>> alive_token() const;
 
 protected:
     virtual void timer_event(TimerEvent *event);

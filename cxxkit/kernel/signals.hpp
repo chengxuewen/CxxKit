@@ -864,13 +864,15 @@ struct ObserverBase : private detail::ObserverType
 {
     virtual ~ObserverBase() = default;
 
-protected:
+public:
     /**
      * Disconnect all signals connected to this object.
      *
      * To avoid invocation of slots on a semi-destructed instance, which may happen
-     * in multi-threaded contexts, derived classes should call this method in their
-     * destructor. This will ensure proper disconnection prior to the destruction.
+     * in multi-threaded contexts, the owner should call this method in its destructor.
+     * This ensures proper disconnection prior to the destruction. Public (W3 G3, design
+     * §3.0): composites that EMBED an observer as a member (ObjectPrivate::mConnections)
+     * have no derived-class access; the owner drives the eager release from its own dtor.
      */
     void disconnect_all()
     {
@@ -878,16 +880,18 @@ protected:
         m_connections.clear();
     }
 
-private:
-    template <typename, typename...>
-    friend class SignalBase;
-
+    /** Public (W3 G3, design §3.0): connection registration into an EMBEDDED observer
+     *  (ObjectPrivate composition) — SignalBase::connect's observer-PMF overload is PMF-only
+     *  and cannot serve the G3 lambda-slot path. */
     void add_connection(Connection conn)
     {
         std::unique_lock<Lockable> _{m_mutex};
         m_connections.emplace_back(std::move(conn));
     }
 
+private:
+    template <typename, typename...>
+    friend class SignalBase;
     Lockable m_mutex;
     std::vector<ScopedConnection> m_connections;
 };
