@@ -394,3 +394,9 @@
 - **解法**: 用例传字面量（静态存储）；API 契约：StringView Initializer 传参禁临时（Cookie::Initializer 同形——review 时 grep {std::string）。
 - **验证**: ASAN http 31/31 零诊断；grep 全测试无 {std::string 形态。
 - **禁止**: StringView 字段的花括号初始化列表里传临时 std::string。
+
+## PIT-59: gtest death-test 父进程残留 post 任务 = teardown 引爆 (2026-09-17)
+- **症状**: `EXPECT_DEATH(loop.exec(), "")` 形态的死亡测试挂死/整个测试进程 SIGABRT，verdict 无法打印；单条 fatal 日志后无输出。
+- **根因**: gtest fork 式 death test 中**父进程在 statement 后继续存活**且持有 fork 前的全部状态——父进程的 loop post 队列里仍停着 fatal-path 任务；`EXPECT_DEATH` 返回后 fixture teardown → `~EventLoop` 排空 → 在父进程 loop 线程执行 call_and_wait → 同环 fatal → abort，杀死整个测试进程（含 gtest 主进程）。
+- **解法**: post+exec 全部放进 EXPECT_DEATH 的 statement lambda（IIFE）内，用局部 throwaway loop；父进程的 loop 永远不接收任务，析构排空为 no-op。
+- **验证**: `./build/tests/cxxkit_tst_event_loop` 全绿 exit=0；规则：**死亡测试 statement 不得向任何活过 EXPECT_DEATH 的 loop/队列投递任务**。
